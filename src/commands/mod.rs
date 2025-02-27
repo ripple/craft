@@ -1,11 +1,50 @@
 use anyhow::{Context, Result};
 use colored::*;
 use inquire::{Confirm, Select};
-use std::path::PathBuf;
-use std::process::Command;
+use std::path::{PathBuf, Path};
+use std::process::{Command, Output};
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
+
+fn handle_build_output(output: &Output, config: &Config, project_dir: &Path) -> Result<()> {
+    let _stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Check for filename collision warning
+    if stderr.contains("output filename collision") {
+        let target_dir = project_dir.join("target");
+        let base_path = target_dir
+            .join(config.wasm_target.to_string())
+            .join(config.build_mode.to_string());
+        
+        println!("{}", "\nWarning: Output filename collision detected.".yellow());
+        println!("This happens when both a library and binary target share the same name.");
+        println!("\nPotential colliding files:");
+        println!("Library target: {}", base_path.join(format!("lib{}.wasm", project_dir.file_name().unwrap().to_string_lossy())).display());
+        println!("Binary target:  {}", base_path.join(format!("{}.wasm", project_dir.file_name().unwrap().to_string_lossy())).display());
+        println!("\nExplanation:");
+        println!("- A library target (.lib) is used when your code is meant to be used as a dependency");
+        println!("- A binary target (.bin) is used when your code is meant to be an executable");
+        println!("When both exist with the same name, Cargo needs to know which one to use.");
+        
+        if Confirm::new("Would you like to proceed with the build anyway?")
+            .with_default(true)
+            .prompt()?
+        {
+            println!("Proceeding with build...");
+        } else {
+            anyhow::bail!("Build cancelled by user");
+        }
+    }
+
+    // Print any other warnings or errors
+    if !stderr.is_empty() {
+        println!("\n{}", stderr);
+    }
+
+    Ok(())
+}
 
 pub async fn build(config: &Config) -> Result<PathBuf> {
     println!("{}", "Building WASM module...".cyan());
@@ -29,13 +68,15 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     println!("{}", "Running cargo build...".cyan());
-    let status = Command::new("cargo")
+    let output = Command::new("cargo")
         .current_dir(project_dir)
         .args(&args)
-        .status()
+        .output()
         .context("Failed to execute cargo build")?;
 
-    if !status.success() {
+    handle_build_output(&output, config, project_dir)?;
+
+    if !output.status.success() {
         anyhow::bail!("Build failed");
     }
 
@@ -50,7 +91,13 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
         anyhow::bail!("WASM file not found at expected location: {:?}", wasm_file);
     }
 
-    println!("{}", "Build completed successfully!".green());
+    println!("{}", "\nBuild completed successfully!".green());
+    println!("{}", "\nWASM file location:".cyan());
+    println!("{}", wasm_file.display().to_string().white().bold());
+    
+    let size = std::fs::metadata(&wasm_file)?.len();
+    println!("Size: {} bytes", size);
+
     Ok(wasm_file)
 }
 
@@ -73,6 +120,32 @@ pub async fn optimize(wasm_path: &PathBuf, opt_level: &OptimizationLevel) -> Res
 
 pub async fn configure() -> Result<Config> {
     println!("{}", "Configuring WASM build settings...".cyan());
+
+    // Find all WASM projects
+    let current_dir = std::env::current_dir()?;
+    let projects = utils::find_wasm_projects(&current_dir);
+    
+    let project_path = if projects.is_empty() {
+        println!("{}", "No WASM projects found in the projects directory.".yellow());
+        println!("Using current directory...");
+        current_dir
+    } else {
+        let project_choices: Vec<_> = projects
+            .iter()
+            .filter_map(|p| utils::get_project_name(p))
+            .collect();
+
+        if project_choices.len() == 1 {
+            println!("{}", format!("Using project: {}", project_choices[0]).cyan());
+            projects[0].clone()
+        } else {
+            let selected = Select::new("Select WASM project:", project_choices.clone()).prompt()?;
+            projects.iter()
+                .find(|p| utils::get_project_name(p).as_deref() == Some(&selected))
+                .unwrap()
+                .clone()
+        }
+    };
 
     let targets = vec![
         "wasm32-unknown-unknown (for most blockchain deployments)",
@@ -118,7 +191,7 @@ pub async fn configure() -> Result<Config> {
         build_mode,
         optimization_level,
         use_wee_alloc,
-        project_path: std::env::current_dir()?,
+        project_path,
     })
 }
 
@@ -149,5 +222,49 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 "#.yellow());
     }
 
+    Ok(())
+}
+
+pub async fn test(wasm_path: &PathBuf, function: Option<String>) -> Result<()> {
+    println!("{}", "Testing WASM contract...".cyan());
+
+    // Build wasm-host first
+    println!("Building wasm-host...");
+    let status = Command::new("cargo")
+        .args(["build", "--release", "-p", "wasm-host"])
+        .status()
+        .context("Failed to build wasm-host")?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to build wasm-host");
+    }
+
+    // Get the path to the wasm-host binary
+    let wasm_host_path = std::env::current_dir()?
+        .join("target")
+        .join("release")
+        .join("wasm-host");
+
+    // Run wasm-host with the appropriate arguments
+    let function = function.unwrap_or_else(|| "get_greeting".to_string());
+    println!("Testing function: {}", function);
+
+    let output = Command::new(&wasm_host_path)
+        .args([
+            "--wasm-path",
+            wasm_path.to_str().unwrap(),
+            "--function",
+            &function,
+        ])
+        .output()
+        .context("Failed to run wasm-host")?;
+
+    // Print the output
+    if !output.status.success() {
+        println!("{}", String::from_utf8_lossy(&output.stderr).red());
+        anyhow::bail!("Test failed");
+    }
+
+    println!("{}", String::from_utf8_lossy(&output.stdout));
     Ok(())
 } 

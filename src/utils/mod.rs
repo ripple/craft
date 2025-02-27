@@ -3,6 +3,27 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use walkdir::WalkDir;
 
+pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
+    let mut projects = Vec::new();
+    
+    if let Ok(entries) = std::fs::read_dir(base_path.join("projects")) {
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_dir() && path.join("Cargo.toml").exists() {
+                projects.push(path);
+            }
+        }
+    }
+    
+    projects
+}
+
+pub fn get_project_name(path: &Path) -> Option<String> {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .map(|s| s.to_string())
+}
+
 pub fn find_cargo_toml(start_path: &Path) -> Option<PathBuf> {
     WalkDir::new(start_path)
         .max_depth(3)

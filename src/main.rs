@@ -24,6 +24,12 @@ enum Commands {
     ExportHex,
     /// Setup wee_alloc for smaller binary size
     SetupWeeAlloc,
+    /// Test a WASM smart contract
+    Test {
+        /// Function to test (default: get_greeting)
+        #[arg(short, long)]
+        function: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -36,9 +42,7 @@ async fn main() -> Result<()> {
                 let config = commands::configure().await?;
                 let wasm_path = commands::build(&config).await?;
                 
-                if matches!(config.optimization_level, config::OptimizationLevel::None) {
-                    println!("{}", "WASM build complete!".green());
-                } else {
+                if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
 
@@ -48,11 +52,13 @@ async fn main() -> Result<()> {
 
                 let choices = vec![
                     "Export as hex",
+                    "Test contract",
                     "Exit",
                 ];
 
                 match Select::new("What would you like to do next?", choices).prompt()? {
                     "Export as hex" => commands::export_hex(&wasm_path).await?,
+                    "Test contract" => commands::test(&wasm_path, None).await?,
                     _ => (),
                 }
             }
@@ -68,12 +74,18 @@ async fn main() -> Result<()> {
             Commands::SetupWeeAlloc => {
                 commands::setup_wee_alloc(&std::env::current_dir()?).await?;
             }
+            Commands::Test { function } => {
+                let config = commands::configure().await?;
+                let wasm_path = commands::build(&config).await?;
+                commands::test(&wasm_path, function).await?;
+            }
         },
         None => {
             let choices = vec![
                 "Build WASM module",
                 "Configure settings",
                 "Export WASM as hex",
+                "Test contract",
                 "Setup wee_alloc",
                 "Exit",
             ];
@@ -99,6 +111,11 @@ async fn main() -> Result<()> {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
                     commands::export_hex(&wasm_path).await?;
+                }
+                "Test contract" => {
+                    let config = commands::configure().await?;
+                    let wasm_path = commands::build(&config).await?;
+                    commands::test(&wasm_path, None).await?;
                 }
                 "Setup wee_alloc" => {
                     commands::setup_wee_alloc(&std::env::current_dir()?).await?;

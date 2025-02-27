@@ -1,6 +1,9 @@
+[workspace]
+members = [".", "wasm-host"]
+
 [package]
 name = "craft"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 description = "An interactive CLI tool for building and testing WASM smart contracts"
 authors = ["Your Name <your.email@example.com>"]

@@ -5,69 +5,47 @@ use wasmedge_sdk::{wasi::WasiModule, Module, Store, Vm};
 use clap::Parser;
 use anyhow::{Context, Result};
 
-#[derive(Parser)]
-#[command(author, version, about = "Test runner for WASM smart contracts")]
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
 struct Cli {
-    /// Path to the WASM file to test
+    /// Path to the wasm file
     #[arg(short, long)]
-    wasm_path: String,
+    wasm_file: String,
 
     /// Function to test
-    #[arg(short, long, default_value = "get_greeting")]
+    #[arg(short, long)]
     function: String,
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    
-    // Initialize WasmEdge VM
-    let mut wasi_module = WasiModule::create(None, None, None)
-        .context("Failed to create WASI module")?;
-    let mut instances = HashMap::new();
-    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
-    let mut vm = Vm::new(Store::new(None, instances)
-        .context("Failed to create store")?);
 
-    // Load the WASM module
-    println!("Loading WASM module from: {}", cli.wasm_path);
-    let wasm_module = Module::from_file(None, &cli.wasm_path)
-        .context("Failed to load WASM module")?;
-    vm.register_module(None, wasm_module.clone())
-        .context("Failed to register module")?;
+    // Test transaction JSON
+    let tx_json = r#"{
+        "escrow": {
+            "accountId": "alice.near",
+            "amount": "100",
+            "receiver": "bob.near",
+            "lockHeight": 1000
+        }
+    }"#.as_bytes().to_vec();
 
-    // Create a new contract instance
-    println!("Creating new contract instance...");
-    vm.run_func(None, "new", vec![])
-        .context("Failed to create contract instance")?;
+    // Test ledger object JSON
+    let lo_json = r#"{
+        "accountId": "alice.near",
+        "balance": "1000",
+        "nonce": 5
+    }"#.as_bytes().to_vec();
 
-    // Test the specified function
-    println!("Testing function: {}", cli.function);
-    match cli.function.as_str() {
-        "get_greeting" => {
-            let result = vm::run_string_func(&mut vm, "get_greeting")?;
-            println!("Greeting: {}", result);
-        }
-        "reset_to_default" => {
-            vm.run_func(None, "reset_to_default", vec![])
-                .context("Failed to reset greeting")?;
-            let result = vm::run_string_func(&mut vm, "get_greeting")?;
-            println!("Reset greeting to: {}", result);
-        }
-        "set_greeting" => {
-            let new_greeting = "Hello from WasmEdge!";
-            vm::run_set_greeting(&mut vm, new_greeting)?;
-            let result = vm::run_string_func(&mut vm, "get_greeting")?;
-            println!("Set new greeting: {}", result);
-        }
-        _ => {
-            println!("Unknown function: {}", cli.function);
-            println!("Available functions:");
-            println!("  - get_greeting");
-            println!("  - set_greeting");
-            println!("  - reset_to_default");
-        }
-    }
+    // Run the function
+    let result = vm::run_func(
+        &cli.wasm_file,
+        &cli.function,
+        tx_json,
+        lo_json,
+    ).map_err(|e| anyhow::anyhow!("WasmEdge error: {}", e))?;
 
+    println!("Function result: {}", result);
     Ok(())
 }
 

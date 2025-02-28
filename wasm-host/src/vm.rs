@@ -1,85 +1,68 @@
-use wasmedge_sdk::{params, Vm, WasmVal, WasmEdgeResult, AsInstance};
-use anyhow::{Context, Result};
+use std::collections::HashMap;
+use wasmedge_sdk::{
+    params, Vm, WasmEdgeResult, AsInstance, Store, Module, Instance, CallingFrame,
+    WasmValue, ImportObjectBuilder,
+};
+use wasmedge_sdk::error::CoreError;
+use wasmedge_sdk::vm::SyncInst;
+use wasmedge_sdk::wasi::WasiModule;
 
-pub fn run_string_func<T: wasmedge_sdk::vm::SyncInst>(
-    vm: &mut Vm<T>,
-    func_name: impl AsRef<str>,
-) -> Result<String> {
-    let result = vm.run_func(None, func_name, vec![])
-        .context("Failed to run function")?;
-    
-    // Get the pointer and length of the returned string
-    let ptr = result[0].to_i32() as u32;
-    let len = result[1].to_i32() as u32;
-    
-    // Read the string from memory
-    let memory = vm.active_module_mut()
-        .context("No active module")?
-        .get_memory("memory")
-        .context("No memory found")?;
-    
-    let mut buffer = vec![0u8; len as usize];
-    memory.get_data(&mut buffer, ptr)
-        .context("Failed to read memory")?;
-    
-    String::from_utf8(buffer)
-        .context("Failed to convert bytes to string")
+#[derive(Clone, Debug)]
+struct LedgerData {
+    sqn: i32,
 }
 
-pub fn run_set_greeting<T: wasmedge_sdk::vm::SyncInst>(
-    vm: &mut Vm<T>,
-    greeting: &str,
-) -> Result<()> {
-    // Allocate memory for the string
-    let size = greeting.len() as i32;
-    let ptr = vm.run_func(None, "allocate", params!(size))
-        .context("Failed to allocate memory")?[0].to_i32();
-    
-    // Write the string to memory
-    let memory = vm.active_module_mut()
-        .context("No active module")?
-        .get_memory_mut("memory")
-        .context("No memory found")?;
-    
-    memory.set_data(greeting.as_bytes().to_vec(), ptr as u32)
-        .context("Failed to write to memory")?;
-    
-    // Call set_greeting with the pointer and length
-    vm.run_func(None, "set_greeting", params!(ptr, size))
-        .context("Failed to set greeting")?;
-    
-    Ok(())
+fn get_ledger_sqn(
+    data: &mut LedgerData,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _input: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    Ok(vec![WasmValue::from_i32(data.sqn)])
 }
 
-pub fn run_func<T: wasmedge_sdk::vm::SyncInst>(
-    vm : &mut Vm<T>,
-    func_name: impl AsRef<str>,
+pub fn run_func<T: AsRef<str>>(
+    wasm_path: &str,
+    func_name: T,
     tx_json: Vec<u8>,
     lo_json: Vec<u8>,
 ) -> WasmEdgeResult<bool> {
+    // Create WASI module
+    let mut wasi_module = WasiModule::create(None, None, None)?;
 
+    // Create host functions
+    let ledger = LedgerData { sqn: 5 };
+    let mut import_builder = ImportObjectBuilder::new("host_lib", ledger)?;
+    import_builder
+        .with_func::<(), i32>("get_ledger_sqn", get_ledger_sqn)?;
+    let mut import_object = import_builder.build();
+
+    // Set up instances
+    let mut instances: HashMap<String, &mut dyn SyncInst> = HashMap::new();
+    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
+    instances.insert(import_object.name().unwrap(), &mut import_object);
+
+    // Create VM and load module
+    let mut vm = Vm::new(Store::new(None, instances)?);
+    let wasm_module = Module::from_file(None, wasm_path)?;
+    vm.register_module(None, wasm_module)?;
+
+    // Allocate memory for transaction JSON
     let tx_size = tx_json.len() as i32;
-    let tx_pointer = match vm.run_func(None, "allocate", params!(tx_size)) {
-        Ok(res) => res[0].to_i32(),
-        Err(err) => {
-            return Err(err);
-        }
-    };
+    let tx_pointer = vm.run_func(None, "allocate", params!(tx_size))?[0].to_i32();
     println!("host tx alloc {} {}", tx_pointer, tx_size);
 
+    // Allocate memory for ledger object JSON
     let lo_size = lo_json.len() as i32;
-    let lo_pointer = match vm.run_func(None, "allocate", params!(lo_size)) {
-        Ok(res) => res[0].to_i32(),
-        Err(err) => {
-            return Err(err);
-        }
-    };
+    let lo_pointer = vm.run_func(None, "allocate", params!(lo_size))?[0].to_i32();
     println!("host lo alloc {} {}", lo_pointer, lo_size);
 
+    // Write data to memory
     let mut memory = vm.active_module_mut().unwrap().get_memory_mut("memory")?;
-    memory.set_data(tx_json, tx_pointer as u32).unwrap();
-    memory.set_data(lo_json, lo_pointer as u32).unwrap();
+    memory.set_data(tx_json, tx_pointer as u32)?;
+    memory.set_data(lo_json, lo_pointer as u32)?;
 
+    // Call the function
     let rets = vm.run_func(None, func_name, params!(tx_pointer, tx_size, lo_pointer, lo_size))?;
     Ok(rets[0].to_i32() == 1)
 }

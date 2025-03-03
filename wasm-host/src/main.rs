@@ -4,6 +4,10 @@ use std::collections::HashMap;
 use wasmedge_sdk::{wasi::WasiModule, Module, Store, Vm};
 use crate::vm::run_func;
 use clap::Parser;
+use log::{info, debug, error};
+use env_logger::Builder;
+use log::LevelFilter;
+use std::io::Write;
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -11,31 +15,101 @@ use clap::Parser;
 struct Args {
     /// Path to the WASM file
     #[arg(short, long)]
-    wasm_file: String,
+    wasm_file: Option<String>,
+
+    /// Path to the WASM file (alias for backward compatibility)
+    #[arg(long)]
+    wasm_path: Option<String>,
 
     /// Function to execute
     #[arg(short, long, default_value = "compare_accountID")]
     function: String,
+    
+    /// Verbose logging
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() {
     let args = Args::parse();
-
-    let mut wasi_module = WasiModule::create(None, None, None).unwrap();
-    let mut instances = HashMap::new();
-    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
-    let mut vm = Vm::new(Store::new(None, instances).unwrap());
-
-    let wasm_module = match Module::from_file(None, &args.wasm_file) {
-        Ok(module) => module,
+    
+    // Use wasm_file if provided, otherwise use wasm_path
+    let wasm_file = match (&args.wasm_file, &args.wasm_path) {
+        (Some(file), _) => file.clone(),
+        (None, Some(path)) => path.clone(),
+        (None, None) => {
+            eprintln!("Error: Either --wasm-file or --wasm-path must be provided");
+            std::process::exit(1);
+        }
+    };
+    
+    // Initialize logger with appropriate level
+    let log_level = if args.verbose { LevelFilter::Debug } else { LevelFilter::Info };
+    
+    Builder::new()
+        .format(|buf, record| {
+            writeln!(
+                buf,
+                "[{} {}] {}",
+                record.level(),
+                record.target(),
+                record.args()
+            )
+        })
+        .filter(None, log_level)
+        .init();
+    
+    info!("Starting WasmEdge host application");
+    info!("Loading WASM module from: {}", wasm_file);
+    info!("Target function: {}", args.function);
+    
+    debug!("Initializing WasiModule");
+    let mut wasi_module = match WasiModule::create(None, None, None) {
+        Ok(module) => {
+            debug!("WasiModule initialized successfully");
+            module
+        },
         Err(e) => {
-            eprintln!("Failed to load WASM module from {}: {}", args.wasm_file, e);
+            error!("Failed to create WasiModule: {}", e);
             return;
         }
     };
     
-    vm.register_module(None, wasm_module.clone()).unwrap();
+    debug!("Setting up instance map");
+    let mut instances = HashMap::new();
+    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
+    
+    info!("Creating new Vm instance");
+    let store = match Store::new(None, instances) {
+        Ok(store) => store,
+        Err(e) => {
+            error!("Failed to create Store: {}", e);
+            return;
+        }
+    };
+    
+    let mut vm = Vm::new(store);
 
+    info!("Loading WASM module from file: {}", wasm_file);
+    let wasm_module = match Module::from_file(None, &wasm_file) {
+        Ok(module) => {
+            debug!("WASM module loaded successfully");
+            module
+        },
+        Err(e) => {
+            error!("Failed to load WASM module from {}: {}", wasm_file, e);
+            return;
+        }
+    };
+    
+    info!("Registering WASM module to VM");
+    if let Err(e) = vm.register_module(None, wasm_module.clone()) {
+        error!("Failed to register module: {}", e);
+        return;
+    }
+    debug!("WASM module registered successfully");
+
+    info!("Preparing test data");
     let escrow_tx_json_str =  r#"{
        "Account" : "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
        "Fee" : "10",
@@ -65,9 +139,28 @@ fn main() {
        "index" : "9BC6631F3EC761CF9BD846D006560E2D57B0A5C91D4570AEB209645B189A702F"
     }"#;
 
+    info!("Executing function: {}", args.function);
     match run_func(&mut vm, &args.function, escrow_tx_json_str.as_bytes().to_vec(), escrow_lo_json_str.as_bytes().to_vec()) {
-        Ok(result) => println!("Function result: {}", result),
-        Err(e) => println!("Error: {}", e),
+        Ok(result) => {
+            println!("\n-------------------------------------------------");
+            println!("| WASM FUNCTION EXECUTION RESULT               |");
+            println!("-------------------------------------------------");
+            println!("| Function: {:<35} |", args.function);
+            println!("| Result:   {:<35} |", result);
+            println!("-------------------------------------------------");
+            info!("Function completed successfully with result: {}", result);
+        },
+        Err(e) => {
+            println!("\n-------------------------------------------------");
+            println!("| WASM FUNCTION EXECUTION ERROR                |");
+            println!("-------------------------------------------------");
+            println!("| Function: {:<35} |", args.function);
+            println!("| Error:    {:<35} |", e);
+            println!("-------------------------------------------------");
+            error!("Function execution failed: {}", e);
+        }
     }
+    
+    info!("WasmEdge host application execution completed");
 }
 

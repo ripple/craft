@@ -119,7 +119,3 @@ If you encounter any issues:
 3. Check that your Rust project has a valid Cargo.toml file
 4. The tool will automatically install required WASM targets if they're missing
 5. For testing issues, ensure your contract implements the expected interface
-
-## License
-
-MIT

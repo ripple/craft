@@ -1,0 +1,15 @@
+[package]
+name = "json_account_id_compare"
+version = "0.1.0"
+edition = "2021"
+
+# This empty workspace definition keeps this project independent
+# from the parent workspace
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0" 

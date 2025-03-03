@@ -246,12 +246,20 @@ pub async fn test(wasm_path: &PathBuf, function: Option<String>) -> Result<()> {
         .join("wasm-host");
 
     // Run wasm-host with the appropriate arguments
-    let function = function.unwrap_or_else(|| "get_greeting".to_string());
+    // Default function depends on the project being tested
+    let function = function.unwrap_or_else(|| {
+        if wasm_path.to_string_lossy().contains("json_account_id_compare") {
+            "compare_accountID".to_string()
+        } else {
+            "get_greeting".to_string()
+        }
+    });
+    
     println!("Testing function: {}", function);
 
     let output = Command::new(&wasm_host_path)
         .args([
-            "--wasm-path",
+            "--wasm-file",  // Changed from --wasm-path to --wasm-file
             wasm_path.to_str().unwrap(),
             "--function",
             &function,

@@ -1,13 +1,9 @@
-use std::collections::HashMap;
 use wasmedge_sdk::{
-    params, Vm, WasmEdgeResult, AsInstance, Store, Module, Instance, CallingFrame,
-    WasmValue, ImportObjectBuilder,
+    params, Vm, Instance, CallingFrame, AsInstance,
+    WasmValue, WasmVal, vm::SyncInst
 };
 use wasmedge_sdk::error::CoreError;
-use wasmedge_sdk::vm::SyncInst;
-use wasmedge_sdk::wasi::WasiModule;
 
-#[derive(Clone, Debug)]
 struct LedgerData {
     sqn: i32,
 }
@@ -21,48 +17,37 @@ fn get_ledger_sqn(
     Ok(vec![WasmValue::from_i32(data.sqn)])
 }
 
-pub fn run_func<T: AsRef<str>>(
-    wasm_path: &str,
-    func_name: T,
-    tx_json: Vec<u8>,
-    lo_json: Vec<u8>,
-) -> WasmEdgeResult<bool> {
-    // Create WASI module
-    let mut wasi_module = WasiModule::create(None, None, None)?;
+/// Run a WASM function with two JSON data parameters
+/// 
+/// This function is designed to handle WASM smart contract functions that take:
+/// - A transaction JSON (tx_data)
+/// - A ledger object JSON (lo_data)
+///
+/// The function expects the WASM module to expose an "allocate" function that allocates memory
+/// for the host to write data into.
+pub fn run_func<T: SyncInst>(vm: &mut Vm<T>, func_name: &str, tx_data: Vec<u8>, lo_data: Vec<u8>) -> Result<bool, Box<dyn std::error::Error>> {
+    let tx_size = tx_data.len() as i32;
+    let lo_size = lo_data.len() as i32;
 
-    // Create host functions
-    let ledger = LedgerData { sqn: 5 };
-    let mut import_builder = ImportObjectBuilder::new("host_lib", ledger)?;
-    import_builder
-        .with_func::<(), i32>("get_ledger_sqn", get_ledger_sqn)?;
-    let mut import_object = import_builder.build();
-
-    // Set up instances
-    let mut instances: HashMap<String, &mut dyn SyncInst> = HashMap::new();
-    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
-    instances.insert(import_object.name().unwrap(), &mut import_object);
-
-    // Create VM and load module
-    let mut vm = Vm::new(Store::new(None, instances)?);
-    let wasm_module = Module::from_file(None, wasm_path)?;
-    vm.register_module(None, wasm_module)?;
-
-    // Allocate memory for transaction JSON
-    let tx_size = tx_json.len() as i32;
+    // Allocate memory for transaction data
     let tx_pointer = vm.run_func(None, "allocate", params!(tx_size))?[0].to_i32();
-    println!("host tx alloc {} {}", tx_pointer, tx_size);
-
-    // Allocate memory for ledger object JSON
-    let lo_size = lo_json.len() as i32;
+    
+    // Allocate memory for ledger object data
     let lo_pointer = vm.run_func(None, "allocate", params!(lo_size))?[0].to_i32();
-    println!("host lo alloc {} {}", lo_pointer, lo_size);
 
+    // Get mutable access to the memory
+    let active_module = vm.active_module_mut()
+        .ok_or("Failed to get active module")?;
+    
+    let mut memory = active_module.get_memory_mut("memory")?;
+    
     // Write data to memory
-    let mut memory = vm.active_module_mut().unwrap().get_memory_mut("memory")?;
-    memory.set_data(tx_json, tx_pointer as u32)?;
-    memory.set_data(lo_json, lo_pointer as u32)?;
+    memory.set_data(tx_data, tx_pointer as u32)?;
+    memory.set_data(lo_data, lo_pointer as u32)?;
 
-    // Call the function
+    // Call the target function with pointers and sizes
     let rets = vm.run_func(None, func_name, params!(tx_pointer, tx_size, lo_pointer, lo_size))?;
+    
+    // Convert the result to a boolean (1 = true, 0 = false)
     Ok(rets[0].to_i32() == 1)
 }

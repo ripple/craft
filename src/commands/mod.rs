@@ -247,11 +247,20 @@ pub async fn test(wasm_path: &PathBuf, _function: Option<String>) -> Result<()> 
     
     println!("Testing escrow finish condition...");
 
+    // Check if we're running in verbose mode
+    let verbose = std::env::var("RUST_LOG").map(|v| v.to_lowercase().contains("debug")).unwrap_or(false);
+    
+    let mut args = vec![
+        "--wasm-file",
+        wasm_path.to_str().unwrap(),
+    ];
+    
+    if verbose {
+        args.push("--verbose");
+    }
+
     let output = Command::new(&wasm_host_path)
-        .args([
-            "--wasm-file",
-            wasm_path.to_str().unwrap(),
-        ])
+        .args(&args)
         .output()
         .context("Failed to run wasm-host")?;
 

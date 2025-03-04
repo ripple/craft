@@ -10,24 +10,41 @@ The wasm-host tool:
 3. Calls the `finish` function as specified in XLS-100d
 4. Reports execution results and any errors
 
+## Test Fixtures
+
+The tool includes a set of test fixtures in the `fixtures/escrow` directory:
+
+### Success Case (`fixtures/escrow/success/`)
+- `tx.json`: Transaction with the correct notary account
+- `ledger_object.json`: Corresponding escrow object
+
+### Failure Case (`fixtures/escrow/failure/`)
+- `tx.json`: Transaction with an incorrect notary account
+- `ledger_object.json`: Corresponding escrow object
+
 ## Usage
 
 ### Direct Usage
 
 From the `wasm-host` directory:
 ```bash
-cargo run -- --wasm-file ../path/to/your/module.wasm
+# Run with success test case
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success
+
+# Run with failure test case
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
 ```
 
 From any workspace directory:
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm
+cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success
 ```
 
 ### Command Line Options
 
 - `--wasm-file <PATH>`: Path to the WebAssembly module to test
 - `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
+- `--test-case <CASE>`: Test case to run (success/failure)
 - `--verbose`: Enable detailed logging
 - `-h, --help`: Show help information
 
@@ -36,14 +53,10 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
 ```bash
-# From wasm-host directory
-cargo run -- --wasm-file ../projects/notary/target/wasm32-unknown-unknown/release/notary.wasm --verbose
-
-# From workspace root
-cargo run -p wasm-host -- --wasm-file projects/notary/target/wasm32-unknown-unknown/release/notary.wasm --verbose
+cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --verbose
 ```
 
-The verbose output may include:
+The verbose output includes:
 - Memory allocation details
 - JSON data being processed
 - Function execution steps
@@ -52,8 +65,9 @@ The verbose output may include:
 Example verbose output:
 ```
 [INFO wasm_host] Starting WasmEdge host application
-[INFO wasm_host] Loading WASM module from: ../projects/notary/target/wasm32-unknown-unknown/release/notary.wasm
+[INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
+[INFO wasm_host] Using test case: success
 [DEBUG wasm_host] Initializing WasiModule
 [DEBUG wasm_host] WasiModule initialized successfully
 [INFO wasm_host::vm] Executing WASM function: finish
@@ -65,7 +79,7 @@ Example verbose output:
 
 ### Integration with `craft`
 
-The wasm-host tool is typically used through the `craft test` command, which handles building and running the tool with appropriate arguments:
+The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
 
 ```bash
 # Test a WASM module
@@ -75,6 +89,10 @@ craft test
 RUST_LOG=debug craft test
 ```
 
+The interactive interface will prompt you to select:
+1. Test case (success/failure)
+2. Other build and test options
+
 ## Test Data
 
 The tool provides test data that simulates:
@@ -83,13 +101,21 @@ The tool provides test data that simulates:
 
 This data is used to test the module's `finish` function implementation.
 
+### Adding New Test Cases
+
+To add new test cases:
+1. Create a new directory under `fixtures/escrow/`
+2. Add `tx.json` and `ledger_object.json` files
+3. Update the test case selection in the craft tool
+
 ## Error Handling
 
 If the WebAssembly module execution fails, the tool will:
 1. Display an error message explaining the failure
 2. Show the function name that failed
-3. Provide context about the error
-4. Exit with a non-zero status code
+3. Show the test case being run
+4. Provide context about the error
+5. Exit with a non-zero status code
 
 Example error output:
 ```
@@ -97,6 +123,7 @@ Example error output:
 | WASM FUNCTION EXECUTION ERROR                 |
 -------------------------------------------------
 | Function: finish                              |
+| Test Case: failure                           |
 | Error:    WASM function execution error       |
 -------------------------------------------------
 ``` 

@@ -245,6 +245,19 @@ pub async fn test(wasm_path: &PathBuf, _function: Option<String>) -> Result<()> 
         .join("release")
         .join("wasm-host");
     
+    // Select test case
+    let test_cases = vec![
+        "success (notary account matches)",
+        "failure (wrong notary account)",
+    ];
+    
+    let test_case = Select::new("Select test case:", test_cases).prompt()?;
+    let test_case = match test_case {
+        "success (notary account matches)" => "success",
+        "failure (wrong notary account)" => "failure",
+        _ => "success",
+    };
+    
     println!("Testing escrow finish condition...");
 
     // Check if we're running in verbose mode
@@ -253,6 +266,8 @@ pub async fn test(wasm_path: &PathBuf, _function: Option<String>) -> Result<()> 
     let mut args = vec![
         "--wasm-file",
         wasm_path.to_str().unwrap(),
+        "--test-case",
+        test_case,
     ];
     
     if verbose {

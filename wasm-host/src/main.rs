@@ -20,10 +20,6 @@ struct Args {
     /// Path to the WASM file (alias for backward compatibility)
     #[arg(long)]
     wasm_path: Option<String>,
-
-    /// Function to execute
-    #[arg(short, long, default_value = "compare_accountID")]
-    function: String,
     
     /// Verbose logging
     #[arg(short, long)]
@@ -61,7 +57,7 @@ fn main() {
     
     info!("Starting WasmEdge host application");
     info!("Loading WASM module from: {}", wasm_file);
-    info!("Target function: {}", args.function);
+    info!("Target function: finish (XLS-100d)");
     
     debug!("Initializing WasiModule");
     let mut wasi_module = match WasiModule::create(None, None, None) {
@@ -139,13 +135,13 @@ fn main() {
        "index" : "9BC6631F3EC761CF9BD846D006560E2D57B0A5C91D4570AEB209645B189A702F"
     }"#;
 
-    info!("Executing function: {}", args.function);
-    match run_func(&mut vm, &args.function, escrow_tx_json_str.as_bytes().to_vec(), escrow_lo_json_str.as_bytes().to_vec()) {
+    info!("Executing function: finish");
+    match run_func(&mut vm, "finish", escrow_tx_json_str.as_bytes().to_vec(), escrow_lo_json_str.as_bytes().to_vec()) {
         Ok(result) => {
             println!("\n-------------------------------------------------");
-            println!("| WASM FUNCTION EXECUTION RESULT               |");
+            println!("| WASM FUNCTION EXECUTION RESULT                |");
             println!("-------------------------------------------------");
-            println!("| Function: {:<35} |", args.function);
+            println!("| Function: {:<35} |", "finish");
             println!("| Result:   {:<35} |", result);
             println!("-------------------------------------------------");
             info!("Function completed successfully with result: {}", result);
@@ -154,7 +150,7 @@ fn main() {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                |");
             println!("-------------------------------------------------");
-            println!("| Function: {:<35} |", args.function);
+            println!("| Function: {:<35} |", "finish");
             println!("| Error:    {:<35} |", e);
             println!("-------------------------------------------------");
             error!("Function execution failed: {}", e);

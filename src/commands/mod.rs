@@ -225,7 +225,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
     Ok(())
 }
 
-pub async fn test(wasm_path: &PathBuf, function: Option<String>) -> Result<()> {
+pub async fn test(wasm_path: &PathBuf, _function: Option<String>) -> Result<()> {
     println!("{}", "Testing WASM contract...".cyan());
 
     // Build wasm-host first
@@ -244,25 +244,13 @@ pub async fn test(wasm_path: &PathBuf, function: Option<String>) -> Result<()> {
         .join("target")
         .join("release")
         .join("wasm-host");
-
-    // Run wasm-host with the appropriate arguments
-    // Default function depends on the project being tested
-    let function = function.unwrap_or_else(|| {
-        if wasm_path.to_string_lossy().contains("json_account_id_compare") {
-            "compare_accountID".to_string()
-        } else {
-            "get_greeting".to_string()
-        }
-    });
     
-    println!("Testing function: {}", function);
+    println!("Testing escrow finish condition...");
 
     let output = Command::new(&wasm_host_path)
         .args([
-            "--wasm-file",  // Changed from --wasm-path to --wasm-file
+            "--wasm-file",
             wasm_path.to_str().unwrap(),
-            "--function",
-            &function,
         ])
         .output()
         .context("Failed to run wasm-host")?;

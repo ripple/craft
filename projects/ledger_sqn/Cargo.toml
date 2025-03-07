@@ -1,0 +1,22 @@
+[package]
+name = "ledger_sqn"
+version = "0.1.0"
+edition = "2021"
+description = ""
+license = "MIT"
+
+# This empty workspace definition keeps this project independent
+# from the parent workspace
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"  # Optimize for size
+lto = true       # Link-time optimization
+codegen-units = 1
+panic = "abort"  # Minimize size by avoiding panic handling code
+
+[dependencies]
+# Add dependencies as needed 

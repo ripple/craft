@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use walkdir::WalkDir;
+use regex;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -117,4 +118,96 @@ pub fn copy_to_clipboard(text: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
+    let project_folder_name = get_project_name(project_path).unwrap_or_default();
+    let cargo_toml_path = project_path.join("Cargo.toml");
+    
+    if !cargo_toml_path.exists() {
+        return Ok(project_path.to_path_buf());
+    }
+    
+    let cargo_content = std::fs::read_to_string(&cargo_toml_path)?;
+    let name_pattern = regex::Regex::new(r#"name\s*=\s*"([^"]*)""#)?;
+    
+    let package_name = if let Some(caps) = name_pattern.captures(&cargo_content) {
+        caps.get(1).map(|m| m.as_str().to_string()).unwrap_or_default()
+    } else {
+        project_folder_name.clone()
+    };
+    
+    let mut updated_package_name = package_name.clone();
+    let mut package_updated = false;
+    
+    // Check for hyphens in package name
+    if package_name.contains('-') {
+        use colored::*;
+        use inquire::Confirm;
+        
+        println!("{}", "\nWarning: Package name contains hyphens.".yellow());
+        println!("In Rust, crate names with hyphens can cause issues with WASM output filenames.");
+        
+        let fixed_name = package_name.replace('-', "_");
+        
+        println!("\nCurrent package name: {}", package_name.white().bold());
+        println!("Suggested name:       {}", fixed_name.green().bold());
+        
+        if Confirm::new("Would you like to update the package name in Cargo.toml?")
+            .with_default(true)
+            .prompt()?
+        {
+            let updated_content = cargo_content.replace(
+                &format!("name = \"{}\"", package_name),
+                &format!("name = \"{}\"", fixed_name)
+            );
+            
+            std::fs::write(&cargo_toml_path, updated_content)?;
+            println!("{}", "\nUpdated package name in Cargo.toml!".green());
+            
+            updated_package_name = fixed_name;
+            package_updated = true;
+        }
+    }
+    
+    // Check if folder name matches package name
+    if project_folder_name != updated_package_name {
+        use colored::*;
+        use inquire::Confirm;
+        
+        println!("{}", "\nWarning: Folder name doesn't match package name.".yellow());
+        println!("This can cause confusion and issues with WASM output filenames.");
+        
+        println!("\nCurrent folder name: {}", project_folder_name.white().bold());
+        println!("Package name:        {}", updated_package_name.green().bold());
+        
+        if Confirm::new("Would you like to rename the folder to match the package name?")
+            .with_default(true)
+            .prompt()?
+        {
+            // Get the parent directory
+            let parent_dir = project_path.parent().unwrap_or(Path::new(""));
+            let new_path = parent_dir.join(&updated_package_name);
+            
+            // Check if destination already exists
+            if new_path.exists() {
+                println!("{}", format!("\nError: A folder named '{}' already exists.", updated_package_name).red());
+                return Ok(project_path.to_path_buf());
+            }
+            
+            // Rename the directory
+            std::fs::rename(project_path, &new_path)?;
+            println!("{}", format!("\nRenamed folder from '{}' to '{}'!", project_folder_name, updated_package_name).green());
+            
+            return Ok(new_path);
+        }
+    }
+    
+    // If we only updated the package name but not the folder, return the original path
+    if package_updated {
+        let parent = project_path.parent().unwrap_or(Path::new(""));
+        return Ok(parent.join(updated_package_name));
+    }
+    
+    Ok(project_path.to_path_buf())
 } 

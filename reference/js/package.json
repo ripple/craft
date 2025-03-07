@@ -1,0 +1,12 @@
+{
+  "name": "xrpl-escrow-extension",
+  "version": "1.0.0",
+  "description": "XRPL escrow extension example",
+  "main": "reference/js/escrow_extension.js",
+  "scripts": {
+    "test": "node reference/js/escrow_extension.js"
+  },
+  "dependencies": {
+    "xrpl": "^2.14.0"
+  }
+} 

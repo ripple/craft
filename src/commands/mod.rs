@@ -3,6 +3,7 @@ use colored::*;
 use inquire::{Confirm, Select};
 use std::path::{PathBuf, Path};
 use std::process::{Command, Output};
+use regex;
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
@@ -81,14 +82,49 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     let target_dir = project_dir.join("target");
-    let wasm_file = target_dir
+    let build_dir = target_dir
         .join(config.wasm_target.to_string())
-        .join(config.build_mode.to_string())
-        .join(project_dir.file_name().unwrap())
-        .with_extension("wasm");
-
+        .join(config.build_mode.to_string());
+    
+    // Get the project name from Cargo.toml instead of directory name
+    let cargo_toml_path = cargo_toml.clone(); // Clone the PathBuf to avoid borrowing issues
+    let cargo_content = std::fs::read_to_string(&cargo_toml_path)?;
+    let name_pattern = regex::Regex::new(r#"name\s*=\s*"([^"]*)""#)?;
+    
+    let project_name = if let Some(caps) = name_pattern.captures(&cargo_content) {
+        caps.get(1).map(|m| m.as_str().to_string())
+    } else {
+        // Fall back to directory name if we can't extract from Cargo.toml
+        project_dir.file_name().and_then(|name| name.to_str()).map(|s| s.to_string())
+    };
+    
+    let project_name = project_name.unwrap_or_else(|| "unknown".to_string());
+    
+    // Try to find the WASM file with the exact crate name
+    let wasm_file = build_dir.join(&project_name).with_extension("wasm");
+    
     if !wasm_file.exists() {
-        anyhow::bail!("WASM file not found at expected location: {:?}", wasm_file);
+        // If not found, check if the directory name and crate name differ 
+        // (which happens with hyphens vs underscores)
+        let dir_name = project_dir.file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("unknown");
+            
+        let alt_wasm_file = build_dir.join(dir_name).with_extension("wasm");
+        
+        if alt_wasm_file.exists() {
+            println!("{}", "\nFound WASM file with directory name instead of crate name.".yellow());
+            println!("This can happen when directory name contains hyphens but crate name uses underscores.");
+            return Ok(alt_wasm_file);
+        }
+        
+        // Also check for lib prefix, which can happen with library crates
+        let lib_wasm_file = build_dir.join(format!("lib{}", &project_name)).with_extension("wasm");
+        if lib_wasm_file.exists() {
+            return Ok(lib_wasm_file);
+        }
+        
+        anyhow::bail!("WASM file not found at expected location: {:?}\nAlternate location checked: {:?}", wasm_file, alt_wasm_file);
     }
 
     println!("{}", "\nBuild completed successfully!".green());
@@ -97,6 +133,14 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     
     let size = std::fs::metadata(&wasm_file)?.len();
     println!("Size: {} bytes", size);
+
+    // Offer to export as hex
+    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
+        .with_default(false)
+        .prompt()?
+    {
+        export_hex(&wasm_file).await?;
+    }
 
     Ok(wasm_file)
 }
@@ -123,7 +167,7 @@ pub async fn configure() -> Result<Config> {
 
     // Find all WASM projects
     let current_dir = std::env::current_dir()?;
-    let projects = utils::find_wasm_projects(&current_dir);
+    let mut projects = utils::find_wasm_projects(&current_dir);
     
     let project_path = if projects.is_empty() {
         println!("{}", "No WASM projects found in the projects directory.".yellow());
@@ -137,13 +181,41 @@ pub async fn configure() -> Result<Config> {
 
         if project_choices.len() == 1 {
             println!("{}", format!("Using project: {}", project_choices[0]).cyan());
-            projects[0].clone()
+            let validated_path = utils::validate_project_name(&projects[0])?;
+            
+            // If the path was changed (folder was renamed), update our list
+            if validated_path != projects[0] {
+                projects = utils::find_wasm_projects(&current_dir);
+                // If the folder was renamed and we can't find it anymore, use the validated path
+                if !projects.contains(&validated_path) {
+                    println!("{}", format!("Using renamed project at: {}", validated_path.display()).cyan());
+                    validated_path
+                } else {
+                    validated_path
+                }
+            } else {
+                validated_path
+            }
         } else {
             let selected = Select::new("Select WASM project:", project_choices.clone()).prompt()?;
-            projects.iter()
-                .find(|p| utils::get_project_name(p).as_deref() == Some(&selected))
-                .unwrap()
-                .clone()
+            let selected_idx = project_choices.iter().position(|p| p == &selected).unwrap();
+            let selected_path = projects[selected_idx].clone();
+            
+            let validated_path = utils::validate_project_name(&selected_path)?;
+            
+            // If the path was changed (folder was renamed), update our list
+            if validated_path != selected_path {
+                projects = utils::find_wasm_projects(&current_dir);
+                // If the folder was renamed and we can't find it anymore, use the validated path
+                if !projects.contains(&validated_path) {
+                    println!("{}", format!("Using renamed project at: {}", validated_path.display()).cyan());
+                    validated_path
+                } else {
+                    validated_path
+                }
+            } else {
+                validated_path
+            }
         }
     };
 

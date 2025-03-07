@@ -33,6 +33,18 @@ craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
 ```
 
+### Command-Line Options
+
+Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection. Only the `test` command supports direct command-line options:
+
+```bash
+craft test --function <name>  # Test a specific function in your WASM module
+```
+
+#### Non-Interactive Mode
+
+For scripting purposes, you may want to specify options directly without interactive prompts. If there are specific options you'd like to set via command line (for example: `craft build --mode release --opt-level small`), please open a GitHub issue to let us know which interactive prompts you'd like to bypass.
+
 ### Testing WASM Modules
 
 The `test` command provides an interactive environment for testing your WASM modules:

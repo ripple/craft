@@ -31,6 +31,8 @@ craft configure       # Configure build settings
 craft export-hex      # Export WASM as hex
 craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
+craft start-rippled   # Check if rippled is running and start it if needed
+craft list-rippled    # List and manage running rippled processes
 ```
 
 ### Command-Line Options
@@ -101,6 +103,83 @@ The `reference/` directory contains `rippled` as a git submodule. This provides:
 - Technical documentation
 
 See [reference/README.md](reference/README.md) for details on using and updating the reference implementation.
+
+## Submodules
+
+This project includes the following Git submodules:
+
+### 1. rippled
+
+Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
+
+### 2. XRPL Explorer
+
+Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
+
+### Cloning the Repository with Submodules
+
+To clone this repository including all submodules, use:
+
+```bash
+git clone --recurse-submodules https://github.com/your-username/craft.git
+```
+
+Or if you've already cloned the repository without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Updating Submodules
+
+To update all submodules to their latest versions:
+
+```bash
+git submodule update --remote
+```
+
+## Managing rippled
+
+The `craft` tool includes commands to manage a local `rippled` instance:
+
+```bash
+# Check if rippled is running and start it if not (background mode)
+craft start-rippled
+
+# Start rippled with visible console output (can be terminated with Ctrl+C)
+craft start-rippled --foreground
+
+# List running rippled processes and show how to terminate them
+craft list-rippled
+```
+
+### Starting rippled
+
+- **Background Mode (Default)**: Starts rippled in the background
+  ```bash
+  craft start-rippled
+  ```
+
+- **Foreground Mode**: Starts rippled with visible console output, can be terminated with Ctrl+C
+  ```bash
+  craft start-rippled --foreground
+  ```
+
+The tool uses the configuration file at `reference/rippled/cfg/smart-escrow-rippled.cfg`.
+
+### Managing rippled Processes
+
+To see all running rippled processes and how to manage them:
+
+```bash
+craft list-rippled
+```
+
+To terminate rippled:
+
+```bash
+killall rippled
+```
 
 ## Usage
 

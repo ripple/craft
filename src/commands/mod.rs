@@ -359,4 +359,146 @@ pub async fn test(wasm_path: &PathBuf, _function: Option<String>) -> Result<()> 
 
     println!("{}", String::from_utf8_lossy(&output.stdout));
     Ok(())
+}
+
+pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
+    use std::path::Path;
+    use std::process::{Command, Stdio};
+    use std::str;
+    
+    println!("{}", "Checking if rippled is running...".blue());
+    
+    // Define paths using relative paths
+    let rippled_path = Path::new("reference/rippled/Debug/rippled");
+    let config_path = Path::new("reference/rippled/cfg/smart-escrow-rippled.cfg");
+    
+    // Verify rippled exists
+    if !rippled_path.exists() {
+        anyhow::bail!("rippled executable not found at {}", rippled_path.display());
+    }
+    
+    // Verify config exists
+    if !config_path.exists() {
+        anyhow::bail!("rippled config not found at {}", config_path.display());
+    }
+    
+    // Check if rippled is running by executing server_info
+    let check_output = Command::new(rippled_path)
+        .arg("server_info")
+        .arg(format!("--conf={}", config_path.display()))
+        .output()
+        .context("Failed to execute rippled server_info command")?;
+    
+    let output_str = str::from_utf8(&check_output.stdout)?;
+    
+    // If output contains error_code 73, rippled is not running
+    if output_str.contains("\"error_code\" : 73") {
+        println!("{}", "rippled is not running. Starting it now...".yellow());
+        
+        if foreground {
+            // Run rippled in foreground mode with console output visible
+            println!("{}", "Starting rippled in foreground mode. Press Ctrl+C to terminate.".yellow());
+            
+            let status = Command::new(rippled_path)
+                .arg("-a")
+                .arg(format!("--conf={}", config_path.display()))
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
+                .status()
+                .context("Failed to start rippled in foreground mode")?;
+            
+            // This will only execute when rippled is terminated
+            if status.success() {
+                println!("{}", "\nrippled exited successfully.".green());
+            } else {
+                println!("{}", format!("\nrippled exited with status: {}", status).red());
+            }
+        } else {
+            // Start rippled in background mode (as before)
+            let start_cmd = Command::new(rippled_path)
+                .arg("-a")
+                .arg(format!("--conf={}", config_path.display()))
+                .spawn()
+                .context("Failed to start rippled")?;
+            
+            println!("{}", "rippled started successfully with PID: ".green().to_string() + &start_cmd.id().to_string());
+            println!("Started with config: {}", config_path.display());
+            
+            // Give rippled some time to start up
+            println!("Waiting for rippled to start up...");
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            
+            // Verify rippled is now running
+            let verify_output = Command::new(rippled_path)
+                .arg("server_info")
+                .arg(format!("--conf={}", config_path.display()))
+                .output()
+                .context("Failed to verify rippled is running")?;
+            
+            let verify_str = str::from_utf8(&verify_output.stdout)?;
+            
+            if verify_str.contains("\"error_code\" : 73") {
+                println!("{}", "Warning: rippled may still be starting up. Please try again in a moment.".yellow());
+            } else {
+                println!("{}", "✓ rippled is now running and responding to commands.".green());
+            }
+            
+            println!("\n{}", "Note: To see console output, restart with --foreground flag.".blue());
+            println!("{}", "To terminate rippled, run: killall rippled".blue());
+        }
+    } else {
+        println!("{}", "✓ rippled is already running.".green());
+        
+        if foreground {
+            println!("{}", "rippled is already running. To see its console output, first terminate the current process:".yellow());
+            println!("killall rippled");
+            println!("Then start it again with the --foreground flag.");
+        }
+    }
+    
+    Ok(())
+}
+
+pub async fn list_rippled() -> Result<()> {
+    use std::process::Command;
+    
+    println!("{}", "Checking for running rippled processes...".blue());
+    
+    // Use ps to find rippled processes
+    let output = Command::new("ps")
+        .args(&["aux"])
+        .output()
+        .context("Failed to execute ps command")?;
+    
+    let output_str = String::from_utf8_lossy(&output.stdout);
+    
+    // Filter lines containing 'rippled' but exclude our CLI command
+    let rippled_processes: Vec<&str> = output_str
+        .lines()
+        .filter(|line| {
+            line.contains("rippled") && 
+            !line.contains("grep") && 
+            !line.contains("list-rippled") &&
+            !line.contains("craft list")
+        })
+        .collect();
+    
+    if rippled_processes.is_empty() {
+        println!("{}", "No rippled processes found.".yellow());
+    } else {
+        println!("{}", format!("Found {} rippled processes:", rippled_processes.len()).green());
+        
+        for (i, process) in rippled_processes.iter().enumerate() {
+            println!("{}. {}", i + 1, process);
+        }
+        
+        println!("\n{}", "To terminate rippled processes:".blue());
+        println!("1. Use killall: {}", "killall rippled".green());
+        println!("2. Or kill by PID: {} <PID>", "kill".green());
+        
+        println!("\n{}", "To start rippled with console output visible:".blue());
+        println!("{}", "craft start-rippled --foreground".green());
+    }
+    
+    Ok(())
 } 

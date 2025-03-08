@@ -6,6 +6,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use colored::*;
 use inquire::Select;
+use inquire::Confirm;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -30,6 +31,14 @@ enum Commands {
         #[arg(short, long)]
         function: Option<String>,
     },
+    /// Check if rippled is running and start it if not
+    StartRippled {
+        /// Run rippled in foreground with visible console output (can be terminated with Ctrl+C)
+        #[arg(short, long)]
+        foreground: bool,
+    },
+    /// List running rippled processes and show how to terminate them
+    ListRippled,
 }
 
 #[tokio::main]
@@ -79,6 +88,12 @@ async fn main() -> Result<()> {
                 let wasm_path = commands::build(&config).await?;
                 commands::test(&wasm_path, function).await?;
             }
+            Commands::StartRippled { foreground } => {
+                commands::start_rippled_with_foreground(foreground).await?;
+            }
+            Commands::ListRippled => {
+                commands::list_rippled().await?;
+            }
         },
         None => {
             let choices = vec![
@@ -87,6 +102,8 @@ async fn main() -> Result<()> {
                 "Export WASM as hex",
                 "Test WASM library function",
                 "Setup wee_alloc",
+                "Start rippled",
+                "List rippled processes",
                 "Exit",
             ];
 
@@ -119,6 +136,16 @@ async fn main() -> Result<()> {
                 }
                 "Setup wee_alloc" => {
                     commands::setup_wee_alloc(&std::env::current_dir()?).await?;
+                }
+                "Start rippled" => {
+                    let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
+                        .with_default(false)
+                        .prompt()?;
+                    
+                    commands::start_rippled_with_foreground(foreground).await?;
+                }
+                "List rippled processes" => {
+                    commands::list_rippled().await?;
                 }
                 _ => (),
             }

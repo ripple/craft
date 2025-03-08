@@ -10,6 +10,16 @@ cargo install --path .
 
 To update the tool, use the same command.
 
+### Auto-Update Detection
+
+The tool automatically detects when source code changes haven't been installed yet. When this happens:
+
+1. `craft` will notify you that changes have been detected
+2. It will offer to automatically run `cargo install --path .` for you
+3. After updating, you can re-run your command with the latest version
+
+This ensures you're always using the latest version without having to remember to manually update.
+
 ## Requirements
 
 - Rust
@@ -33,6 +43,7 @@ craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
 craft start-rippled   # Check if rippled is running and start it if needed
 craft list-rippled    # List and manage running rippled processes
+craft start-explorer  # Set up and run the XRPL Explorer
 ```
 
 ### Command-Line Options
@@ -180,6 +191,44 @@ To terminate rippled:
 ```bash
 killall rippled
 ```
+
+## Running the XRPL Explorer
+
+The `craft` tool includes commands to set up and run the XRPL Explorer:
+
+```bash
+# Set up and run the Explorer (foreground mode by default)
+craft start-explorer
+
+# Run Explorer in background mode without visible console output
+craft start-explorer --background
+```
+
+### Setting Up the Explorer
+
+When you run `start-explorer` for the first time, it will:
+
+1. Create the necessary `.env` file if it doesn't exist
+2. Check your Node.js version (warning if it doesn't match the required version)
+3. Install dependencies using `npm install`
+4. Start the Explorer
+
+### Explorer Features
+
+The XRPL Explorer provides a web interface for exploring XRPL transactions and data:
+
+- View account information, transactions, and objects
+- Explore the XRPL ledger
+- Monitor network activity
+- Test API calls
+
+The Explorer should be available at: http://localhost:3000
+
+### Managing the Explorer
+
+To stop the Explorer:
+- If running in foreground mode: Press `Ctrl+C` in the terminal
+- If running in background mode: Run `killall node`
 
 ## Usage
 

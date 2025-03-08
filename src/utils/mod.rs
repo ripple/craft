@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use walkdir::WalkDir;
 use regex;
+use std::env;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -210,4 +211,74 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
     }
     
     Ok(project_path.to_path_buf())
+}
+
+/// Checks if the installed CLI binary is outdated compared to the source code
+pub fn needs_cli_update() -> Result<bool> {
+    // Get the path to the currently running binary
+    let current_exe = env::current_exe().context("Failed to get current executable path")?;
+    
+    // Get the timestamp of the current binary
+    let binary_modified = current_exe
+        .metadata()
+        .context("Failed to get binary metadata")?
+        .modified()
+        .context("Failed to get binary modification time")?;
+    
+    // Get paths to important source files
+    let workspace_dir = env::current_dir().context("Failed to get current directory")?;
+    let source_files = vec![
+        workspace_dir.join("src/main.rs"),
+        workspace_dir.join("src/commands/mod.rs"),
+        workspace_dir.join("src/utils/mod.rs"),
+        workspace_dir.join("src/config/mod.rs"),
+        workspace_dir.join("Cargo.toml"),
+    ];
+    
+    // Check if any source file is newer than the binary
+    for source_file in source_files {
+        if !source_file.exists() {
+            continue;
+        }
+        
+        let source_modified = source_file
+            .metadata()
+            .context(format!("Failed to get metadata for {:?}", source_file))?
+            .modified()
+            .context(format!("Failed to get modification time for {:?}", source_file))?;
+        
+        // If source file is newer than binary, update is needed
+        if source_modified > binary_modified {
+            return Ok(true);
+        }
+    }
+    
+    Ok(false)
+}
+
+/// Installs the CLI from the current directory
+pub fn install_cli() -> Result<()> {
+    use colored::*;
+    use std::io::{self, Write};
+    
+    println!("{}", "Installing updated craft CLI...".blue());
+    
+    // Run cargo install
+    let output = Command::new("cargo")
+        .args(["install", "--path", "."])
+        .output()
+        .context("Failed to run cargo install")?;
+    
+    // Display the output
+    io::stdout().write_all(&output.stdout)?;
+    io::stderr().write_all(&output.stderr)?;
+    
+    if output.status.success() {
+        println!("{}", "✅ craft CLI updated successfully!".green());
+    } else {
+        println!("{}", "❌ Failed to update craft CLI".red());
+        return Err(anyhow::anyhow!("Installation failed"));
+    }
+    
+    Ok(())
 } 

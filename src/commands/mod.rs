@@ -4,6 +4,7 @@ use inquire::{Confirm, Select};
 use std::path::{PathBuf, Path};
 use std::process::{Command, Output};
 use regex;
+use std::env;
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
@@ -499,6 +500,154 @@ pub async fn list_rippled() -> Result<()> {
         println!("\n{}", "To start rippled with console output visible:".blue());
         println!("{}", "craft start-rippled --foreground".green());
     }
+    
+    Ok(())
+}
+
+pub async fn start_explorer(background: bool) -> Result<()> {
+    use colored::*;
+    use std::fs;
+    use std::path::Path;
+    use std::process::{Command, Stdio};
+    
+    println!("{}", "Setting up and running XRPL Explorer...".blue());
+    
+    // Define path to the explorer directory
+    let explorer_dir = Path::new("reference/explorer");
+    
+    // Check if the explorer directory exists
+    if !explorer_dir.exists() {
+        anyhow::bail!("XRPL Explorer not found at {}. Make sure you have initialized the git submodule.", explorer_dir.display());
+    }
+    
+    // Check if .env file exists, create it if not
+    let env_file_path = explorer_dir.join(".env");
+    if !env_file_path.exists() {
+        println!("{}", "Creating .env file for XRPL Explorer...".yellow());
+        
+        // Get the template content
+        let template_path = Path::new("src/utils/explorer_env_template.txt");
+        if !template_path.exists() {
+            anyhow::bail!("Explorer .env template not found at {}", template_path.display());
+        }
+        
+        let template_content = fs::read_to_string(template_path)
+            .context("Failed to read explorer .env template")?;
+        
+        // Write the template content to the .env file
+        fs::write(&env_file_path, template_content)
+            .context("Failed to create explorer .env file")?;
+        
+        println!("{}", "✅ Created .env file at reference/explorer/.env".green());
+    } else {
+        println!("{}", "✅ .env file already exists".green());
+    }
+    
+    // Change to the explorer directory
+    std::env::set_current_dir(explorer_dir)
+        .context("Failed to change to explorer directory")?;
+    
+    // Check Node.js version (looking for the version in .nvmrc)
+    println!("{}", "Checking Node.js version...".blue());
+    
+    // Get required Node.js version from .nvmrc
+    let nvmrc_path = Path::new(".nvmrc");
+    let required_node_version = if nvmrc_path.exists() {
+        fs::read_to_string(nvmrc_path)
+            .context("Failed to read .nvmrc file")?
+            .trim()
+            .to_string()
+    } else {
+        // Default node version if .nvmrc doesn't exist
+        "18".to_string()
+    };
+    
+    // Check current Node.js version
+    let node_version_output = Command::new("node")
+        .arg("-v")
+        .output()
+        .context("Failed to execute 'node -v'. Make sure Node.js is installed.")?;
+    
+    let current_node_version = String::from_utf8_lossy(&node_version_output.stdout)
+        .trim()
+        .replace("v", "")
+        .to_string();
+    
+    // Check if the current version matches or is compatible with the required version
+    if !current_node_version.starts_with(&required_node_version[..required_node_version.len().min(2)]) {
+        println!("{}", format!("⚠️  Warning: Current Node.js version (v{}) may not be compatible with the required version (v{})",
+            current_node_version, required_node_version).yellow());
+        println!("{}", "You might want to switch to the correct Node.js version using nvm:".yellow());
+        println!("nvm use {}", required_node_version);
+        
+        if !Confirm::new("Continue anyway?")
+            .with_default(false)
+            .prompt()?
+        {
+            anyhow::bail!("Operation cancelled by user");
+        }
+    } else {
+        println!("{}", format!("✅ Using Node.js v{}", current_node_version).green());
+    }
+    
+    // Install dependencies if node_modules doesn't exist or force reinstall is requested
+    let node_modules_path = Path::new("node_modules");
+    if !node_modules_path.exists() {
+        println!("{}", "Installing dependencies (this may take a while)...".blue());
+        
+        let npm_install_status = Command::new("npm")
+            .arg("install")
+            .stdout(if background { Stdio::null() } else { Stdio::inherit() })
+            .stderr(Stdio::inherit())
+            .status()
+            .context("Failed to execute 'npm install'")?;
+        
+        if !npm_install_status.success() {
+            anyhow::bail!("npm install failed with status: {}", npm_install_status);
+        }
+        
+        println!("{}", "✅ Dependencies installed successfully".green());
+    } else {
+        println!("{}", "✅ Dependencies already installed".green());
+    }
+    
+    // Start the explorer
+    println!("{}", "Starting XRPL Explorer...".blue());
+    
+    if background {
+        // Run in background mode
+        let npm_start = Command::new("npm")
+            .arg("start")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .context("Failed to start XRPL Explorer")?;
+        
+        println!("{}", format!("✅ XRPL Explorer started in background with PID: {}", npm_start.id()).green());
+        println!("{}", "The Explorer should be available at: http://localhost:3000".blue());
+        println!("{}", "To stop the Explorer, use: killall node".yellow());
+    } else {
+        // Run in foreground mode with visible console output
+        println!("{}", "Starting XRPL Explorer in foreground mode. Press Ctrl+C to terminate.".yellow());
+        println!("{}", "The Explorer should be available at: http://localhost:3000".blue());
+        
+        let status = Command::new("npm")
+            .arg("start")
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status()
+            .context("Failed to run XRPL Explorer")?;
+        
+        if status.success() {
+            println!("{}", "\nXRPL Explorer exited successfully.".green());
+        } else {
+            println!("{}", format!("\nXRPL Explorer exited with status: {}", status).red());
+        }
+    }
+    
+    // Return to original directory
+    std::env::set_current_dir("../../")
+        .context("Failed to change back to original directory")?;
     
     Ok(())
 } 

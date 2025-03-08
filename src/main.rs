@@ -39,10 +39,29 @@ enum Commands {
     },
     /// List running rippled processes and show how to terminate them
     ListRippled,
+    /// Set up and run the XRPL Explorer
+    StartExplorer {
+        /// Run in background mode without visible console output
+        #[arg(short, long)]
+        background: bool,
+    },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Check if the CLI binary needs to be updated
+    if utils::needs_cli_update().unwrap_or(false) {
+        println!("{}", "\nDetected changes to the CLI source code that haven't been installed yet.".yellow());
+        if Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
+            .with_default(true)
+            .prompt()?
+        {
+            utils::install_cli()?;
+            println!("{}", "Please run the command again to use the updated version.".blue());
+            return Ok(());
+        }
+    }
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -94,6 +113,9 @@ async fn main() -> Result<()> {
             Commands::ListRippled => {
                 commands::list_rippled().await?;
             }
+            Commands::StartExplorer { background } => {
+                commands::start_explorer(background).await?;
+            }
         },
         None => {
             let choices = vec![
@@ -104,6 +126,7 @@ async fn main() -> Result<()> {
                 "Setup wee_alloc",
                 "Start rippled",
                 "List rippled processes",
+                "Start Explorer",
                 "Exit",
             ];
 
@@ -139,13 +162,20 @@ async fn main() -> Result<()> {
                 }
                 "Start rippled" => {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
-                        .with_default(false)
+                        .with_default(true)
                         .prompt()?;
                     
                     commands::start_rippled_with_foreground(foreground).await?;
                 }
                 "List rippled processes" => {
                     commands::list_rippled().await?;
+                }
+                "Start Explorer" => {
+                    let background = Confirm::new("Run Explorer in background mode without visible console output")
+                        .with_default(false)
+                        .prompt()?;
+                    
+                    commands::start_explorer(background).await?;
                 }
                 _ => (),
             }

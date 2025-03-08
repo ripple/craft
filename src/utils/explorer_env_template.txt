@@ -1,0 +1,35 @@
+VITE_RIPPLED_WS_PORT=6006
+# VITE_RIPPLED_PEER_PORT=51235
+# Your Rippled Primary Host. Also supports a comma separated string of hosts.
+VITE_RIPPLED_HOST=localhost
+# Your Rippled Host That Can Run Gateway Balances URL
+VITE_P2P_RIPPLED_HOST=
+#s1 and s2 are set up to make gateway_balances and account_lines admin only
+
+VITE_GTM_ID=
+VITE_OSANO_ID=
+VITE_MAINNET_LINK=
+VITE_TESTNET_LINK=
+VITE_DEVNET_LINK=
+VITE_XAHAU_MAINNET_LINK=
+VITE_XAHAU_TESTNET_LINK=
+VITE_CUSTOMNETWORK_LINK=
+# VITE_VALIDATOR=vl.ripple.com
+
+#External data source - XRPLMeta node for token search results
+# XRPL_META_URL=s1.xrplmeta.org
+
+#XRPL Environment: mainnet, testnet, devnet, amm, hooks_testnet, custom
+VITE_ENVIRONMENT=custom
+
+#VHS endpoint url
+# VITE_DATA_URL=https://data.xrpl.org/v1/network
+
+# Whether to use ws instead of wss (boolean)
+# Only used locally (the deployed Explorer requires wss)
+VITE_INSECURE_WS=1
+
+#Google Credentials for BigQuery, DO NOT COMMIT THESE
+GOOGLE_APP_PROJECT_ID=
+GOOGLE_APP_PRIVATE_KEY=
+GOOGLE_APP_CLIENT_EMAIL= 

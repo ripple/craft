@@ -5,7 +5,7 @@ use serde_json::Value;
 const NOTARY_ACCOUNT: &str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
 
 #[no_mangle]
-pub extern fn allocate(size: usize) -> *mut u8 {
+pub fn allocate(size: usize) -> *mut u8 {
     log("allocate called");
     log(&format!("allocating {} bytes", size));
     let mut buffer = Vec::with_capacity(size);
@@ -16,7 +16,7 @@ pub extern fn allocate(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub extern fn finish(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool {
+pub fn finish(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool {
     log("finish function called");
     log(&format!("tx_json_ptr: {:p}, tx_json_size: {}", tx_json_ptr, tx_json_size));
     
@@ -67,4 +67,4 @@ fn log(message: &str) {
     // When not compiled to WASM (e.g., for testing), we can use standard Rust println
     #[cfg(not(target_arch = "wasm32"))]
     println!("[WASM] {}", message);
-} 
+}

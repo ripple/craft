@@ -215,6 +215,8 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
 
 /// Checks if the installed CLI binary is outdated compared to the source code
 pub fn needs_cli_update() -> Result<bool> {
+    use colored::*;
+    
     // Get the path to the currently running binary
     let current_exe = env::current_exe().context("Failed to get current executable path")?;
     
@@ -227,6 +229,16 @@ pub fn needs_cli_update() -> Result<bool> {
     
     // Get paths to important source files
     let workspace_dir = env::current_dir().context("Failed to get current directory")?;
+    
+    // Check if we're in the project root directory
+    let is_in_project_root = workspace_dir.join("src").exists() && 
+                             workspace_dir.join("Cargo.toml").exists();
+    
+    if !is_in_project_root {
+        println!("{}", "\nWarning: Not running from the project root directory.".yellow());
+        println!("Update detection may not work correctly. Current dir: {}", workspace_dir.display());
+    }
+    
     let source_files = vec![
         workspace_dir.join("src/main.rs"),
         workspace_dir.join("src/commands/mod.rs"),
@@ -260,20 +272,19 @@ pub fn needs_cli_update() -> Result<bool> {
 pub fn install_cli() -> Result<()> {
     use colored::*;
     use std::io::{self, Write};
+    use std::process::Stdio;
     
     println!("{}", "Installing updated craft CLI...".blue());
     
-    // Run cargo install
-    let output = Command::new("cargo")
+    // Run cargo install with real-time output
+    let status = Command::new("cargo")
         .args(["install", "--path", "."])
-        .output()
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
         .context("Failed to run cargo install")?;
     
-    // Display the output
-    io::stdout().write_all(&output.stdout)?;
-    io::stderr().write_all(&output.stderr)?;
-    
-    if output.status.success() {
+    if status.success() {
         println!("{}", "✅ craft CLI updated successfully!".green());
     } else {
         println!("{}", "❌ Failed to update craft CLI".red());

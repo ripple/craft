@@ -5,6 +5,7 @@ use std::path::{PathBuf, Path};
 use std::process::{Command, Output};
 use regex;
 use std::env;
+use walkdir::WalkDir;
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
@@ -366,17 +367,71 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
     use std::path::Path;
     use std::process::{Command, Stdio};
     use std::str;
+    use walkdir::WalkDir;
+    use inquire::Select;
     
     println!("{}", "Checking if rippled is running...".blue());
     
-    // Define paths using relative paths
-    let rippled_path = Path::new("reference/rippled/Debug/rippled");
-    let config_path = Path::new("reference/rippled/cfg/smart-escrow-rippled.cfg");
+    // Define config path
+    let config_path = Path::new("reference/rippled-cfg/smart-escrow-rippled.cfg");
     
-    // Verify rippled exists
-    if !rippled_path.exists() {
-        anyhow::bail!("rippled executable not found at {}", rippled_path.display());
+    // Find all rippled executables in build-rippled-* directories
+    let mut rippled_paths = Vec::new();
+    
+    // Use standard library glob pattern matching instead of relying on WalkDir to handle the glob
+    let build_rippled_dir = Path::new("reference");
+    if build_rippled_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(build_rippled_dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() && 
+                   path.file_name()
+                       .and_then(|name| name.to_str())
+                       .map_or(false, |name| name.starts_with("build-rippled-")) {
+                    // Check for rippled executable in this directory
+                    let rippled_path = path.join("rippled");
+                    if rippled_path.exists() && rippled_path.is_file() {
+                        rippled_paths.push(rippled_path);
+                    }
+                }
+            }
+        }
     }
+    
+    // Also check the original path
+    let fallback_path = Path::new("reference/rippled/Debug/rippled").to_path_buf();
+    if fallback_path.exists() {
+        rippled_paths.push(fallback_path);
+    }
+    
+    // Verify at least one rippled exists
+    if rippled_paths.is_empty() {
+        anyhow::bail!("rippled executable not found in reference/build-rippled-* or reference/rippled/Debug/");
+    }
+    
+    // Choose rippled executable
+    let rippled_path = if rippled_paths.len() == 1 {
+        println!("{}", format!("Found rippled at: {}", rippled_paths[0].display()).green());
+        rippled_paths[0].clone()
+    } else {
+        // Convert paths to strings for selection
+        let path_strings: Vec<String> = rippled_paths.iter()
+            .map(|p| p.display().to_string())
+            .collect();
+        
+        // Let user select which rippled to use
+        let selected = Select::new("Multiple rippled executables found. Please select one:", path_strings)
+            .prompt()?;
+            
+        // Find the matching path
+        let selected_path = rippled_paths.iter()
+            .find(|p| p.display().to_string() == selected)
+            .unwrap()
+            .clone();
+            
+        println!("{}", format!("Selected rippled at: {}", selected_path.display()).green());
+        selected_path
+    };
     
     // Verify config exists
     if !config_path.exists() {
@@ -384,13 +439,24 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
     }
     
     // Check if rippled is running by executing server_info
-    let check_output = Command::new(rippled_path)
+    let check_output = Command::new(&rippled_path)
         .arg("server_info")
         .arg(format!("--conf={}", config_path.display()))
         .output()
         .context("Failed to execute rippled server_info command")?;
     
     let output_str = str::from_utf8(&check_output.stdout)?;
+    let error_str = str::from_utf8(&check_output.stderr)?;
+    
+    // Print the command and output for debugging
+    println!("{}", format!("Running command: {} server_info --conf={}", rippled_path.display(), config_path.display()).blue());
+    println!("{}", "Server info output:".blue());
+    println!("{}", output_str);
+    
+    if !error_str.is_empty() {
+        println!("{}", "Server info stderr:".blue());
+        println!("{}", error_str);
+    }
     
     // If output contains error_code 73, rippled is not running
     if output_str.contains("\"error_code\" : 73") {
@@ -400,7 +466,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
             // Run rippled in foreground mode with console output visible
             println!("{}", "Starting rippled in foreground mode. Press Ctrl+C to terminate.".yellow());
             
-            let status = Command::new(rippled_path)
+            let status = Command::new(&rippled_path)
                 .arg("-a")
                 .arg(format!("--conf={}", config_path.display()))
                 .stdout(Stdio::inherit())
@@ -416,13 +482,14 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
             }
         } else {
             // Start rippled in background mode (as before)
-            let start_cmd = Command::new(rippled_path)
+            let start_cmd = Command::new(&rippled_path)
                 .arg("-a")
                 .arg(format!("--conf={}", config_path.display()))
                 .spawn()
                 .context("Failed to start rippled")?;
             
             println!("{}", "rippled started successfully with PID: ".green().to_string() + &start_cmd.id().to_string());
+            println!("Using rippled from: {}", rippled_path.display());
             println!("Started with config: {}", config_path.display());
             
             // Give rippled some time to start up
@@ -430,7 +497,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
             std::thread::sleep(std::time::Duration::from_secs(2));
             
             // Verify rippled is now running
-            let verify_output = Command::new(rippled_path)
+            let verify_output = Command::new(&rippled_path)
                 .arg("server_info")
                 .arg(format!("--conf={}", config_path.display()))
                 .output()
@@ -448,7 +515,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
             println!("{}", "To terminate rippled, run: killall rippled".blue());
         }
     } else {
-        println!("{}", "✓ rippled is already running.".green());
+        println!("{}", "✓ rippled may be already running.".green());
         
         if foreground {
             println!("{}", "rippled is already running. To see its console output, first terminate the current process:".yellow());
@@ -624,12 +691,12 @@ pub async fn start_explorer(background: bool) -> Result<()> {
             .context("Failed to start XRPL Explorer")?;
         
         println!("{}", format!("✅ XRPL Explorer started in background with PID: {}", npm_start.id()).green());
-        println!("{}", "The Explorer should be available at: http://localhost:3000".blue());
+        println!("{}", "The Explorer should be available at: http://localhost:3000/localhost:6006".blue());
         println!("{}", "To stop the Explorer, use: killall node".yellow());
     } else {
         // Run in foreground mode with visible console output
         println!("{}", "Starting XRPL Explorer in foreground mode. Press Ctrl+C to terminate.".yellow());
-        println!("{}", "The Explorer should be available at: http://localhost:3000".blue());
+        println!("{}", "The Explorer should be available at: http://localhost:3000/localhost:6006".blue());
         
         let status = Command::new("npm")
             .arg("start")

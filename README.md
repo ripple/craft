@@ -176,8 +176,6 @@ craft list-rippled
   craft start-rippled --foreground
   ```
 
-The tool uses the configuration file at `reference/rippled/cfg/smart-escrow-rippled.cfg`.
-
 ### Managing rippled Processes
 
 To see all running rippled processes and how to manage them:

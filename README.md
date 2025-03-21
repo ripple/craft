@@ -10,16 +10,6 @@ cargo install --path .
 
 To update the tool, use the same command.
 
-### Auto-Update Detection
-
-The tool automatically detects when source code changes haven't been installed yet. When this happens:
-
-1. `craft` will notify you that changes have been detected
-2. It will offer to automatically run `cargo install --path .` for you
-3. After updating, you can re-run your command with the latest version
-
-This ensures you're always using the latest version without having to remember to manually update.
-
 ## Requirements
 
 - Rust
@@ -37,8 +27,6 @@ Or use specific commands:
 
 ```bash
 craft build           # Build a WASM module
-craft configure       # Configure build settings
-craft export-hex      # Export WASM as hex
 craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
 craft start-rippled   # Check if rippled is running and start it if needed
@@ -48,7 +36,9 @@ craft start-explorer  # Set up and run the XRPL Explorer
 
 ### Command-Line Options
 
-Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection. Only the `test` command supports direct command-line options:
+Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+
+The `test` command supports direct command-line options:
 
 ```bash
 craft test --function <name>  # Test a specific function in your WASM module
@@ -68,7 +58,7 @@ craft test
 
 ## Project Structure
 
-Organize your WASM modules in a `projects` directory:
+Organize your WASM modules in the `projects` directory:
 
 ```
 .
@@ -96,7 +86,7 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project, but they can be generlized or reused for future projects.
+The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project. The intent is to generalize or reuse for future projects.
 
 ### Success Case (`fixtures/escrow/success/`)
 - `tx.json`: Transaction with the correct notary account
@@ -106,18 +96,9 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory. Cur
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
-## Reference Implementation
+## Reference Submodules
 
-The `reference/` directory contains `rippled` as a git submodule. This provides:
-- Authoritative implementation details
-- Test vectors and scenarios
-- Technical documentation
-
-See [reference/README.md](reference/README.md) for details on using and updating the reference implementation.
-
-## Submodules
-
-This project includes the following Git submodules:
+See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
 
 ### 1. rippled
 
@@ -164,27 +145,7 @@ craft start-rippled --foreground
 craft list-rippled
 ```
 
-### Starting rippled
-
-- **Background Mode (Default)**: Starts rippled in the background
-  ```bash
-  craft start-rippled
-  ```
-
-- **Foreground Mode**: Starts rippled with visible console output, can be terminated with Ctrl+C
-  ```bash
-  craft start-rippled --foreground
-  ```
-
-### Managing rippled Processes
-
-To see all running rippled processes and how to manage them:
-
-```bash
-craft list-rippled
-```
-
-To terminate rippled:
+To terminate `rippled`:
 
 ```bash
 killall rippled

@@ -724,49 +724,6 @@ pub async fn start_explorer(background: bool) -> Result<()> {
     std::env::set_current_dir(explorer_dir)
         .context("Failed to change to explorer directory")?;
     
-    // Check Node.js version (looking for the version in .nvmrc)
-    println!("{}", "Checking Node.js version...".blue());
-    
-    // Get required Node.js version from .nvmrc
-    let nvmrc_path = Path::new(".nvmrc");
-    let required_node_version = if nvmrc_path.exists() {
-        fs::read_to_string(nvmrc_path)
-            .context("Failed to read .nvmrc file")?
-            .trim()
-            .to_string()
-    } else {
-        // Default node version if .nvmrc doesn't exist
-        "18".to_string()
-    };
-    
-    // Check current Node.js version
-    let node_version_output = Command::new("node")
-        .arg("-v")
-        .output()
-        .context("Failed to execute 'node -v'. Make sure Node.js is installed.")?;
-    
-    let current_node_version = String::from_utf8_lossy(&node_version_output.stdout)
-        .trim()
-        .replace("v", "")
-        .to_string();
-    
-    // Check if the current version matches or is compatible with the required version
-    if !current_node_version.starts_with(&required_node_version[..required_node_version.len().min(2)]) {
-        println!("{}", format!("⚠️  Warning: Current Node.js version (v{}) may not be compatible with the required version (v{})",
-            current_node_version, required_node_version).yellow());
-        println!("{}", "You might want to switch to the correct Node.js version using nvm:".yellow());
-        println!("nvm use {}", required_node_version);
-        
-        if !Confirm::new("Continue anyway?")
-            .with_default(false)
-            .prompt()?
-        {
-            anyhow::bail!("Operation cancelled by user");
-        }
-    } else {
-        println!("{}", format!("✅ Using Node.js v{}", current_node_version).green());
-    }
-    
     // Install dependencies if node_modules doesn't exist or force reinstall is requested
     let node_modules_path = Path::new("node_modules");
     if !node_modules_path.exists() {

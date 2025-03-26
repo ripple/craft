@@ -14,6 +14,39 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
+- WasmEdge
+
+### Installing WasmEdge
+
+If you don't already have WasmEdge, you can install it:
+
+```bash
+curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
+```
+
+After installation, source the updated environment variables:
+
+```bash
+source ~/.zshenv  # For zsh users
+# OR
+source ~/.bashrc  # For bash users
+```
+
+To verify the installation:
+
+```bash
+which wasmedge
+```
+
+If you encounter any dynamic library loading errors when running WASM tests, set the library path:
+
+```bash
+# For macOS
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.wasmedge/lib
+
+# For Linux
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
+```
 
 ## Usage
 
@@ -168,9 +201,8 @@ craft start-explorer --background
 When you run `start-explorer` for the first time, it will:
 
 1. Create the necessary `.env` file if it doesn't exist
-2. Check your Node.js version (warning if it doesn't match the required version)
-3. Install dependencies using `npm install`
-4. Start the Explorer
+2. Install dependencies using `npm install`
+3. Start the Explorer
 
 ### Explorer Features
 

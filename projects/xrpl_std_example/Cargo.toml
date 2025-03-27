@@ -1,0 +1,18 @@
+[package]
+edition = "2021"
+name = "xrpl_std_example"
+version = "0.0.1"
+
+# This empty workspace definition keeps this project independent
+# from the parent workspace
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+opt-level = 's'
+
+[dependencies]
+xrpl-std = { path = "../../xrpl-std" }

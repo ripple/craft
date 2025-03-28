@@ -4,8 +4,6 @@ use inquire::{Confirm, Select};
 use std::path::{PathBuf, Path};
 use std::process::{Command, Output};
 use regex;
-use std::env;
-use walkdir::WalkDir;
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
@@ -367,7 +365,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
     use std::path::Path;
     use std::process::{Command, Stdio};
     use std::str;
-    use walkdir::WalkDir;
+    
     use inquire::Select;
     
     println!("{}", "Checking if rippled is running...".blue());

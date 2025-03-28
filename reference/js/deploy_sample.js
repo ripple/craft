@@ -4,7 +4,7 @@ const path = require('path')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-if (process.argv.length != 2) {
+if (process.argv.length != 3) {
   console.error(
     'Usage: ' +
       process.argv[0] +
@@ -48,8 +48,8 @@ async function submit(tx, seed, debug = true) {
 async function deploy() {
   await client.connect()
   console.log("connected")
-  const {wallet} = await client.fundWallet(null, {faucetHost: 'wasmfaucet.devnet.rippletest.net', faucetPath: '/accounts'})
-  const {wallet: wallet2 } = await client.fundWallet(null, {faucetHost: 'wasmfaucet.devnet.rippletest.net', faucetPath: '/accounts'})
+  const {wallet} = await client.fundWallet(null)
+  const {wallet: wallet2 } = await client.fundWallet(null)
   console.log(`Funded two accounts: ${wallet.address} and ${wallet2.address}`)
 
   const close_time = (

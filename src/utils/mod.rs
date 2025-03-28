@@ -271,7 +271,7 @@ pub fn needs_cli_update() -> Result<bool> {
 /// Installs the CLI from the current directory
 pub fn install_cli() -> Result<()> {
     use colored::*;
-    use std::io::{self, Write};
+    
     use std::process::Stdio;
     
     println!("{}", "Installing updated craft CLI...".blue());

@@ -1,9 +1,11 @@
+use std::ffi::CString;
 use wasmedge_sdk::{
     params, Vm, Instance, CallingFrame, AsInstance,
     WasmValue, WasmVal, vm::SyncInst
 };
-use wasmedge_sdk::error::CoreError;
+use wasmedge_sdk::error::{CoreError, CoreValidationError};
 use log::{info, debug, error};
+use wasmedge_sdk::error::CoreExecutionError::{CastFailed, MemoryOutOfBounds};
 
 /// Run a WASM function with two JSON data parameters
 /// 
@@ -13,7 +15,8 @@ use log::{info, debug, error};
 ///
 /// The function expects the WASM module to expose an "allocate" function that allocates memory
 /// for the host to write data into.
-pub fn run_func<T: SyncInst>(vm: &mut Vm<T>, func_name: &str, tx_data: Vec<u8>, lo_data: Vec<u8>) -> Result<bool, Box<dyn std::error::Error>> {
+pub fn run_func<T: SyncInst>(vm: &mut Vm<T>, func_name: &str, tx_data: Vec<u8>, lo_data: Vec<u8>)
+                             -> Result<bool, Box<dyn std::error::Error>> {
     info!("Executing WASM function: {}", func_name);
     debug!("TX data size: {} bytes, LO data size: {} bytes", tx_data.len(), lo_data.len());
     
@@ -123,4 +126,79 @@ pub fn run_func<T: SyncInst>(vm: &mut Vm<T>, func_name: &str, tx_data: Vec<u8>, 
     info!("Function '{}' returned: {}", func_name, result);
     
     Ok(result)
+}
+
+type Bytes = Vec<u8>;
+
+#[derive(Clone, Debug)]
+struct MockLedgerTransactionData {
+    sqn: i32,
+    time: i32,
+}
+
+fn getLedgerSqn(
+    data: &mut MockLedgerTransactionData,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _input: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    Ok(vec![WasmValue::from_i32(data.sqn)])
+}
+
+fn getParentLedgerTime(
+    data: &mut MockLedgerTransactionData,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _input: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    Ok(vec![WasmValue::from_i32(data.time)])
+}
+
+fn getParameterData(
+    caller: &mut CallingFrame,
+    input: Vec<WasmValue>,
+    index: usize,
+) -> Result<Bytes, CoreError> {
+    let offset = input[index].to_i32() as u32;
+    let len = input[index + 1].to_i32() as u32;
+
+    let mut memory = match caller.memory_mut(0) {
+        Some(mem) => mem,
+        None => {
+            error!("getParameterData, failed to get memory");
+            return Err(CoreError::Validation(CoreValidationError::InvalidMemoryIdx));
+        }
+    };
+
+    match memory.get_data(offset, len){
+        Ok(data) => Ok(data),
+        Err(e) => {
+            error!("getParameterData, failed to get data: {}", e);
+            Err(CoreError::Execution(MemoryOutOfBounds))
+        },
+    }
+}
+
+fn getFieldName(
+    caller: &mut CallingFrame,
+    input: Vec<WasmValue>,
+    index: usize,
+) -> Result<String, CoreError> {
+    let data = getParameterData(caller, input, index)?;
+        match String::from_utf8(data){
+        Ok(s) => Ok(s),
+        Err(e) => {
+            error!("getFieldName, failed to convert data to string: {}", e);
+            Err(CoreError::Execution(CastFailed))
+        },
+    }
+}
+
+fn setData(
+    caller: &mut CallingFrame,
+    data: &Bytes
+) -> Result<WasmValue, CoreError> {
+    let alloc  = |data_len: i32| -> i32 {
+        let ex = caller.
+    };
 }

@@ -27,7 +27,7 @@ enum Commands {
     SetupWeeAlloc,
     /// Test a WASM smart contract
     Test {
-        /// Function to test (default: get_greeting)
+        /// Function to test
         #[arg(short, long)]
         function: Option<String>,
     },
@@ -78,13 +78,24 @@ async fn main() -> Result<()> {
                     commands::setup_wee_alloc(&config.project_path).await?;
                 }
 
+                // After build, ask what to do next
                 let choices = vec![
+                    "Deploy to WASM Devnet",
+                    "Copy WASM hex to clipboard",
                     "Test WASM library function",
                     "Exit",
                 ];
 
                 match Select::new("What would you like to do next?", choices).prompt()? {
-                    "Test WASM library function" => commands::test(&wasm_path, None).await?,
+                    "Deploy to WASM Devnet" => {
+                        commands::deploy_to_wasm_devnet(&wasm_path).await?;
+                    }
+                    "Copy WASM hex to clipboard" => {
+                        commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
+                    }
+                    "Test WASM library function" => {
+                        commands::test(&wasm_path, None).await?;
+                    }
                     _ => (),
                 }
             }
@@ -95,7 +106,7 @@ async fn main() -> Result<()> {
             Commands::ExportHex => {
                 let config = commands::configure().await?;
                 let wasm_path = commands::build(&config).await?;
-                commands::export_hex(&wasm_path).await?;
+                commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
             }
             Commands::SetupWeeAlloc => {
                 commands::setup_wee_alloc(&std::env::current_dir()?).await?;
@@ -115,7 +126,7 @@ async fn main() -> Result<()> {
                 commands::start_explorer(background).await?;
             }
         },
-        None => {
+        None => { // Nothing from the CLI was provided, so we'll interactively ask the user what they want to do
             let choices = vec![
                 "Build WASM module",
                 "Test WASM library function",
@@ -137,6 +148,27 @@ async fn main() -> Result<()> {
 
                     if config.use_wee_alloc {
                         commands::setup_wee_alloc(&config.project_path).await?;
+                    }
+
+                    // After build, ask what to do next
+                    let choices = vec![
+                        "Deploy to WASM Devnet",
+                        "Copy WASM hex to clipboard",
+                        "Test WASM library function",
+                        "Exit",
+                    ];
+
+                    match Select::new("What would you like to do next?", choices).prompt()? {
+                        "Deploy to WASM Devnet" => {
+                            commands::deploy_to_wasm_devnet(&wasm_path).await?;
+                        }
+                        "Copy WASM hex to clipboard" => {
+                            commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
+                        }
+                        "Test WASM library function" => {
+                            commands::test(&wasm_path, None).await?;
+                        }
+                        _ => (),
                     }
                 }
                 "Test WASM library function" => {

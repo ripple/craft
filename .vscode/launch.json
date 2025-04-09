@@ -5,18 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb",
+            "type": "node",
             "request": "launch",
-            "name": "Debug CLI",
-            "cargo": {
-                "args": ["build", "--bin=craft"],
-                "filter": {
-                    "name": "craft",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "name": "Launch Program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/reference/js/ledger-sqn.js",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
         }
     ]
 }

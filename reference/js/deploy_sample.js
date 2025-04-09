@@ -50,11 +50,7 @@ async function deploy() {
   console.log("connected")
   const {wallet} = await client.fundWallet(null)
   const {wallet: wallet2 } = await client.fundWallet(null)
-  console.log(`\nFunded accounts:`)
-  console.log(`Account 1 - Address: ${wallet.address}`)
-  console.log(`Account 1 - Secret: ${wallet.seed}`)
-  console.log(`Account 2 - Address: ${wallet2.address}`)
-  console.log(`Account 2 - Secret: ${wallet2.seed}\n`)
+  console.log(`Funded two accounts: ${wallet.address} and ${wallet2.address}`)
 
   const close_time = (
     await client.request({

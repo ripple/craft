@@ -134,7 +134,11 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let size = std::fs::metadata(&wasm_file)?.len();
     println!("Size: {} bytes", size);
 
-    // Offer to export as hex
+    // Calculate and display WASM fingerprint
+    let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
+    println!("WASM Fingerprint: {}", fingerprint);
+
+    // Ask if user wants to export as hex
     if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
         .with_default(false)
         .prompt()?

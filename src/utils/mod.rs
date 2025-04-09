@@ -4,6 +4,9 @@ use std::process::Command;
 use walkdir::WalkDir;
 use regex;
 use std::env;
+use sha2::{Sha256, Digest};
+use ripemd::Ripemd160;
+use bs58;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -293,3 +296,38 @@ pub fn install_cli() -> Result<()> {
     
     Ok(())
 } 
+
+pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
+    // Read WASM file
+    let wasm_bytes = std::fs::read(wasm_path)
+        .map_err(|e| anyhow::anyhow!("Failed to read WASM file: {:?}", e))?;
+    
+    // Compute RIPEMD-160 hash of the WASM file
+    let mut ripemd = Ripemd160::new();
+    ripemd.update(&wasm_bytes);
+    let ripemd_hash = ripemd.finalize();  // 20 bytes
+
+    // Prepend WASM type prefix (0x17)
+    let mut prefixed = vec![0x17];
+    prefixed.extend_from_slice(&ripemd_hash);
+
+    // Compute double SHA-256 checksum
+    let first_hash = Sha256::digest(&prefixed);
+    let second_hash = Sha256::digest(&first_hash);
+    let checksum = &second_hash[..4];
+
+    // Append checksum to the prefixed bytes
+    let mut with_checksum = prefixed;
+    with_checksum.extend_from_slice(checksum);
+
+    // Specify the XRP Ledger Base58 alphabet
+    let xrp_alphabet = bs58::Alphabet::new(b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz")
+        .expect("Provided alphabet is invalid");
+
+    // Encode in Base58 using the custom XRP Ledger alphabet
+    let fingerprint = bs58::encode(&with_checksum)
+        .with_alphabet(&xrp_alphabet)
+        .into_string();
+
+    Ok(fingerprint)
+}

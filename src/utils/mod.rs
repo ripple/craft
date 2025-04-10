@@ -7,6 +7,8 @@ use std::env;
 use sha2::{Sha256, Digest};
 use ripemd::Ripemd160;
 use bs58;
+use std::time::Duration;
+use std::thread;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -274,7 +276,6 @@ pub fn needs_cli_update() -> Result<bool> {
 /// Installs the CLI from the current directory
 pub fn install_cli() -> Result<()> {
     use colored::*;
-    
     use std::process::Stdio;
     
     println!("{}", "Installing updated craft CLI...".blue());
@@ -288,6 +289,8 @@ pub fn install_cli() -> Result<()> {
         .context("Failed to run cargo install")?;
     
     if status.success() {
+        // Add minimal delay to ensure filesystem updates timestamp
+        thread::sleep(Duration::from_millis(10));
         println!("{}", "✅ craft CLI updated successfully!".green());
     } else {
         println!("{}", "❌ Failed to update craft CLI".red());
@@ -302,12 +305,12 @@ pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
     let wasm_bytes = std::fs::read(wasm_path)
         .map_err(|e| anyhow::anyhow!("Failed to read WASM file: {:?}", e))?;
     
-    // Compute RIPEMD-160 hash of the WASM file
+    // Compute RIPEMD-160 hash
     let mut ripemd = Ripemd160::new();
     ripemd.update(&wasm_bytes);
     let ripemd_hash = ripemd.finalize();  // 20 bytes
 
-    // Prepend WASM type prefix (0x17)
+    // Prepend custom type prefix (0x17) which ensures the result starts with "w" (for 20-byte payload)
     let mut prefixed = vec![0x17];
     prefixed.extend_from_slice(&ripemd_hash);
 
@@ -320,11 +323,11 @@ pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
     let mut with_checksum = prefixed;
     with_checksum.extend_from_slice(checksum);
 
-    // Specify the XRP Ledger Base58 alphabet
+    // Use XRP Ledger Base58 alphabet
     let xrp_alphabet = bs58::Alphabet::new(b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz")
         .expect("Provided alphabet is invalid");
 
-    // Encode in Base58 using the custom XRP Ledger alphabet
+    // Encode in Base58
     let fingerprint = bs58::encode(&with_checksum)
         .with_alphabet(&xrp_alphabet)
         .into_string();

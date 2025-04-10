@@ -36,48 +36,36 @@ A WASM module fingerprint must:
    - Result always starts with "w" (for "wasm")
 
 ### Output Format
-- 35-character string (including the "w" prefix)
+- Between 25 and 35 characters in length
 - Characters from XRPL's base58 dictionary
 - Always starts with "w"
-- Example: `wQr9wpGtwK3Mro4jvpKLMmN8LoPqRsTUVWXYZ2abcd`
+- Example: `wZxE7bPnQkZPs41g9wGYfgvNXX55HvnTX8`
 
-### Example
-```javascript
-// Example implementation
-const crypto = require('crypto');
-const bs58 = require('bs58');
+### Example JavaScript Implementation
 
-function generateFingerprint(wasmBinary) {
-    // 1. Compute RIPEMD160
-    const hash = crypto.createHash('ripemd160')
-        .update(wasmBinary)
-        .digest();
-    
-    // 2. Use all 20 bytes
-    const fingerprintBytes = hash;
-    
-    // 3. Prepend WASM type prefix (0x17)
-    const prefix = Buffer.from([0x17]);
-    const prefixed = Buffer.concat([prefix, fingerprintBytes]);
-    
-    // 4. Compute double SHA-256 checksum
-    const firstHash = crypto.createHash('sha256')
-        .update(prefixed)
-        .digest();
-    const secondHash = crypto.createHash('sha256')
-        .update(firstHash)
-        .digest();
-    const checksum = secondHash.slice(0, 4);
-    
-    // 5. Append checksum
-    const withChecksum = Buffer.concat([prefixed, checksum]);
-    
-    // 6. Encode in XRPL Base58
-    const xrplAlphabet = 'rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz';
-    const fingerprint = bs58.encode(withChecksum, xrplAlphabet);
-    
-    return fingerprint;
-}
+[reference/js/wasm-fingerprint/wasm-fingerprint.js](reference/js/wasm-fingerprint/wasm-fingerprint.js)
+
+#### Usage
+
+```bash
+# Install dependencies
+npm install --prefix reference/js/wasm-fingerprint
+
+# Generate fingerprint from WASM file
+./reference/js/wasm-fingerprint/wasm-fingerprint.js ./projects/notary/target/wasm32-unknown-unknown/release/notary.wasm
+```
+
+### Example Rust Implementation
+
+[src/wasm_fingerprint.rs](src/wasm_fingerprint.rs)
+
+#### Usage
+
+```rust
+use crate::utils::wasm_fingerprint::calculate_wasm_fingerprint;
+
+// Calculate fingerprint for a WASM file
+let fingerprint = calculate_wasm_fingerprint(&Path::new("path/to/your.wasm"))?;
 ```
 
 ## Properties

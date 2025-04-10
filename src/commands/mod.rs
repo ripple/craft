@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use colored::*;
 use inquire::{Confirm, Select};
 use std::path::{PathBuf, Path};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 use regex;
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
@@ -134,15 +134,66 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let size = std::fs::metadata(&wasm_file)?.len();
     println!("Size: {} bytes", size);
 
+    Ok(wasm_file)
+}
+
+pub async fn deploy_to_wasm_devnet(wasm_file: &PathBuf) -> Result<()> {
+    println!("{}", "Deploying to WASM Devnet...".cyan());
+    
+    // Convert WASM to hex and save to file
+    let hex = utils::wasm_to_hex(&wasm_file)?;
+    let hex_file = wasm_file.with_extension("hex");
+    std::fs::write(&hex_file, &hex)
+        .context("Failed to write hex file")?;
+    
+    println!("{}", format!("Saved WASM hex to: {}", hex_file.display()).cyan());
+    
+    // Always install dependencies
+    println!("{}", "Installing required Node.js dependencies...".yellow());
+    
+    // Install dependencies in the reference/js directory
+    let install_status = Command::new("npm")
+        .current_dir("reference/js")
+        .arg("install")
+        .status()
+        .context("Failed to install Node.js dependencies")?;
+
+    if !install_status.success() {
+        anyhow::bail!("Failed to install Node.js dependencies");
+    }
+    
+    println!("{}", "Dependencies installed successfully!".green());
+    
+    // Run deploy_sample.js with Node.js, passing the hex file
+    let output = Command::new("node")
+        .arg("reference/js/deploy_sample.js")
+        .arg(&hex_file)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+        .context("Failed to execute deploy_sample.js")?;
+
+    if !output.success() {
+        println!("{}", "Deployment failed!".red());
+    } else {
+        println!("{}", "Deployment completed successfully!".green());
+    }
+    
+    Ok(())
+}
+
+pub async fn copy_wasm_hex_to_clipboard(wasm_file: &PathBuf) -> Result<()> {
     // Offer to export as hex
-    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
-        .with_default(false)
+    if Confirm::new("Would you like to copy the WASM hex to clipboard?")
+        .with_default(true)
         .prompt()?
     {
-        export_hex(&wasm_file).await?;
+        let hex = utils::wasm_to_hex(&wasm_file)?;
+        utils::copy_to_clipboard(&hex)?;
+        println!("{}", "Hex copied to clipboard!".green());
     }
-
-    Ok(wasm_file)
+    
+    Ok(())
 }
 
 pub async fn optimize(wasm_path: &PathBuf, opt_level: &OptimizationLevel) -> Result<()> {

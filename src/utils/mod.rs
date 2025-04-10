@@ -4,6 +4,8 @@ use std::process::Command;
 use walkdir::WalkDir;
 use regex;
 use std::env;
+use std::time::Duration;
+use std::thread;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -271,7 +273,6 @@ pub fn needs_cli_update() -> Result<bool> {
 /// Installs the CLI from the current directory
 pub fn install_cli() -> Result<()> {
     use colored::*;
-    
     use std::process::Stdio;
     
     println!("{}", "Installing updated craft CLI...".blue());
@@ -285,6 +286,8 @@ pub fn install_cli() -> Result<()> {
         .context("Failed to run cargo install")?;
     
     if status.success() {
+        // Add minimal delay to ensure filesystem updates timestamp
+        thread::sleep(Duration::from_millis(10));
         println!("{}", "✅ craft CLI updated successfully!".green());
     } else {
         println!("{}", "❌ Failed to update craft CLI".red());
@@ -292,4 +295,4 @@ pub fn install_cli() -> Result<()> {
     }
     
     Ok(())
-} 
+}

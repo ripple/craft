@@ -4,9 +4,6 @@ use std::process::Command;
 use walkdir::WalkDir;
 use regex;
 use std::env;
-use sha2::{Sha256, Digest};
-use ripemd::Ripemd160;
-use bs58;
 use std::time::Duration;
 use std::thread;
 
@@ -301,3 +298,4 @@ pub fn install_cli() -> Result<()> {
 }
 
 pub mod wasm_fingerprint;
+pub use wasm_fingerprint::calculate_wasm_fingerprint;

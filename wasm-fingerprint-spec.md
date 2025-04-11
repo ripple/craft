@@ -57,7 +57,7 @@ npm install --prefix reference/js/wasm-fingerprint
 
 ### Example Rust Implementation
 
-[src/wasm_fingerprint.rs](src/wasm_fingerprint.rs)
+[src/utils/wasm_fingerprint.rs](src/utils/wasm_fingerprint.rs)
 
 #### Usage
 

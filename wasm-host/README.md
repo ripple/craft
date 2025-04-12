@@ -1,6 +1,6 @@
 # WASM Host Testing Tool
 
-This tool provides a testing environment for XLS-100d compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
+This tool provides a testing environment for FinishFunction WebAssembly modules structured according to [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270). It simulates the host environment that will execute escrow finish functions on the XRPL.
 
 ## Purpose
 

@@ -2,7 +2,7 @@ pub use xrpl_std::{allocate, deallocate};
 use xrpl_std::{get_account_balance, get_current_escrow_account_id, get_current_escrow_data, get_current_escrow_destination, get_current_escrow_finish_after, get_tx_account_id, host_lib, print_data, print_number};
 
 #[no_mangle]
-pub extern fn finish() -> bool {
+pub extern fn ready() -> bool {
     unsafe {
         let sender = get_tx_account_id();
         let owner = get_current_escrow_account_id();

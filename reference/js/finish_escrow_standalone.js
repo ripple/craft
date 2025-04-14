@@ -32,6 +32,7 @@ async function finishEscrow() {
   try {
     await client.connect()
     console.log(`Connected to ${url}`)
+    await client.request({command: 'ledger_accept'})
     
     interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},1000)
 

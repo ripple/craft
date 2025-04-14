@@ -4,13 +4,14 @@ const path = require('path')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-if (process.argv.length != 3) {
+if (process.argv.length < 3) {
   console.error(
     'Usage: ' +
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' path/to/file.wasm',
+      ' path/to/file.wasm' + 
+      '[Account1 Account1Seed [Account2 Account2Seed]]',
   )
   process.exit(1)
 }
@@ -45,27 +46,48 @@ async function submit(tx, wallet, debug = true) {
   return txResult
 }
 
-async function fundWallet() {
+async function fundWallet(wallet = undefined) {
   const master = xrpl.Wallet.fromSeed("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", { algorithm: xrpl.ECDSA.secp256k1 })
   
-  const wallet = xrpl.Wallet.generate()
+  const walletToFund = wallet || xrpl.Wallet.generate()
   await submit({
     TransactionType: 'Payment',
     Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     Amount: xrpl.xrpToDrops(10000),
-    Destination: wallet.address,
+    Destination: walletToFund.address,
   }, master)
-  return { wallet }
+  return { walletToFund }
 }
 
 async function deploy() {
   await client.connect()
   console.log("connected")
+  await client.request({command: 'ledger_accept'})
 
   const interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},1000)
+  
+  let wallet, wallet2
+  if (process.argv.length > 3) {
+    const account = process.argv[3]
+    const accountSecret = process.argv[4]
+    console.log(account, accountSecret)
+    wallet = xrpl.Wallet.fromSeed(accountSecret, {masterAddress: account})
 
-  const {wallet} = await fundWallet()
-  const {wallet: wallet2 } = await fundWallet()
+    if (process.argv.length > 5) {
+      const account2 = process.argv[5]
+      const accountSecret2 = process.argv[6]
+      wallet2 = xrpl.Wallet.fromSeed(accountSecret2, {masterAddress: account2})
+    } else {
+      wallet2 = xrpl.Wallet.generate()
+    }
+  } else {
+    wallet = xrpl.Wallet.generate()
+    wallet2 = xrpl.Wallet.generate()
+  }
+
+  await fundWallet(wallet)
+  await fundWallet(wallet2)
+
   console.log(`\nFunded accounts:`)
   console.log(`Account 1 - Address: ${wallet.address}`)
   console.log(`Account 1 - Secret: ${wallet.seed}`)
@@ -79,8 +101,7 @@ async function deploy() {
     })
   ).result.ledger.close_time
 
-  const filePath = process.argv[2]
-  const finish = getFinishFunctionFromFile(filePath)
+  const finish = getFinishFunctionFromFile(process.argv[2])
 
   const response1 = await submit({
     TransactionType: 'EscrowCreate',

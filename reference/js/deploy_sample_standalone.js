@@ -1,0 +1,105 @@
+const xrpl = require("xrpl")
+const fs = require('fs')
+const path = require('path')
+
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+if (process.argv.length != 3) {
+  console.error(
+    'Usage: ' +
+      process.argv[0] +
+      ' ' +
+      process.argv[1] +
+      ' path/to/file.wasm',
+  )
+  process.exit(1)
+}
+
+const client = new xrpl.Client("ws://localhost:6006")
+
+function getFinishFunctionFromFile(filePath) {
+  if (!filePath) {
+    console.error("Please provide a file path as a CLI argument.")
+    process.exit(1)
+  }
+
+  const absolutePath = path.resolve(filePath)
+  try {
+    const data = fs.readFileSync(absolutePath, 'utf8').trim()
+    return data.replace("\n","").replace(" ", "")
+  } catch (err) {
+    console.error(`Error reading file at ${absolutePath}:`, err.message)
+    process.exit(1)
+  }
+}
+
+async function submit(tx, wallet, debug = true) {
+  tx.Fee = "10000"
+  const txResult = await client.submitAndWait(tx, {autofill: true, wallet})
+  console.log("SUBMITTED " + tx.TransactionType)
+
+  if (debug)
+    console.log(txResult.result ?? txResult)
+  else
+    console.log("Result code: " + txResult.result?.meta?.TransactionResult)
+  return txResult
+}
+
+async function fundWallet() {
+  const master = xrpl.Wallet.fromSeed("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", { algorithm: xrpl.ECDSA.secp256k1 })
+  
+  const wallet = xrpl.Wallet.generate()
+  await submit({
+    TransactionType: 'Payment',
+    Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+    Amount: xrpl.xrpToDrops(10000),
+    Destination: wallet.address,
+  }, master)
+  return { wallet }
+}
+
+async function deploy() {
+  await client.connect()
+  console.log("connected")
+
+  const interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},1000)
+
+  const {wallet} = await fundWallet()
+  const {wallet: wallet2 } = await fundWallet()
+  console.log(`\nFunded accounts:`)
+  console.log(`Account 1 - Address: ${wallet.address}`)
+  console.log(`Account 1 - Secret: ${wallet.seed}`)
+  console.log(`Account 2 - Address: ${wallet2.address}`)
+  console.log(`Account 2 - Secret: ${wallet2.seed}\n`)
+
+  const close_time = (
+    await client.request({
+      command: 'ledger',
+      ledger_index: 'validated',
+    })
+  ).result.ledger.close_time
+
+  const filePath = process.argv[2]
+  const finish = getFinishFunctionFromFile(filePath)
+
+  const response1 = await submit({
+    TransactionType: 'EscrowCreate',
+    Account: wallet.address,
+    Amount: "100000",
+    Destination: wallet2.address,
+    CancelAfter: close_time + 200,
+    FinishAfter: close_time + 5,
+    FinishFunction: finish,
+    Data: xrpl.xrpToDrops(70),
+  }, wallet)
+
+  if (response1.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1)
+  const sequence = response1.result.tx_json.Sequence
+
+  await client.disconnect()
+  clearInterval(interval)
+}
+
+
+
+deploy()

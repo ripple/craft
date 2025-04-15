@@ -33,9 +33,8 @@ function getFinishFunctionFromFile(filePath) {
   }
 }
 
-async function submit(tx, seed, debug = true) {
+async function submit(tx, wallet, debug = true) {
   tx.Fee = "10000"
-  const wallet = xrpl.Wallet.fromSeed(seed)
   const result = await client.submitAndWait(tx, {autofill: true, wallet})
   console.log("SUBMITTED " + tx.TransactionType)
   if (debug)
@@ -48,8 +47,8 @@ async function submit(tx, seed, debug = true) {
 async function deploy() {
   await client.connect()
   console.log("connected")
-  const {wallet} = await client.fundWallet(null)
-  const {wallet: wallet2 } = await client.fundWallet(null)
+  const {wallet} = await client.fundWallet()
+  const {wallet: wallet2 } = await client.fundWallet()
   console.log(`\nFunded accounts:`)
   console.log(`Account 1 - Address: ${wallet.address}`)
   console.log(`Account 1 - Secret: ${wallet.seed}`)
@@ -75,10 +74,9 @@ async function deploy() {
     FinishAfter: close_time + 5,
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),
-  }, wallet.seed, true)
-  // console.log(JSON.stringify(response1.result, null, 4))
+  }, wallet)
+
   if (response1.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1)
-  const sequence = response1.result.tx_json.Sequence
 
   await client.disconnect()
 }

@@ -15,4 +15,4 @@ lto = true
 opt-level = 's'
 
 [dependencies]
-xrpl-std = { path = "../../xrpl-std" }
+xrpl-std-lib = { path = "../../xrpl-std-lib" }

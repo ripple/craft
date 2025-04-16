@@ -1,0 +1,144 @@
+
+//     // pub unsafe extern "C" fn getLedgerSqn() -> i32 {
+//     //     println!("Mock getLedgerSqn called");
+//     //     12345
+//     // }
+//     //
+//     // pub unsafe extern "C" fn getTxField(fname_ptr: i32, fname_len: i32) -> i32 {
+//     //     println!("Mock getTxField called with ptr={} and len={}", fname_ptr, fname_len);
+//     //     0
+//     // }
+//     pub unsafe extern "C" fn print(str_ptr: i32, str_len: i32) {
+//         #[cfg(feature = "mock_host")]
+//         {
+//             println!("Mock print called with ptr={} and len={}", str_ptr, str_len);
+//         }
+//     }
+//
+//     pub unsafe extern "C" fn add(a: i32, b: i32) -> i32 {
+//         #[cfg(feature = "mock_host")]
+//         {
+//             a + b
+//         }
+//     }
+}
+
+// unsafe fn read_data(ptr: i32) -> Vec<u8> {
+//     let int_buf = Vec::from_raw_parts(ptr as *mut u8, 8, 8);
+//     let mut ptr_array: [u8; 4] = [0; 4];
+//     let mut len_array: [u8; 4] = [0; 4];
+//     ptr_array.clone_from_slice(&int_buf[0..4]);
+//     len_array.clone_from_slice(&int_buf[4..8]);
+//     let ptr = i32::from_le_bytes(ptr_array);
+//     let len = i32::from_le_bytes(len_array);
+//     Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize)
+// }
+//
+// unsafe fn read_string(ptr: i32) -> String {
+//     let mut ptr_array: [u8; 4] = [0; 4];
+//     let mut len_array: [u8; 4] = [0; 4];
+//     let int_buf = Vec::from_raw_parts(ptr as *mut u8, 8, 8);
+//     ptr_array.clone_from_slice(&int_buf[0..4]);
+//     len_array.clone_from_slice(&int_buf[4..8]);
+//     let ptr = i32::from_le_bytes(ptr_array);
+//     let len = i32::from_le_bytes(len_array);
+//     String::from_raw_parts(ptr as *mut u8, len as usize, len as usize)
+// }
+//
+
+// pub unsafe fn get_tx_account_id() -> AccountID {
+//     let mut fname = String::from("Account");
+//     let pointer = fname.as_mut_ptr();
+//     let len = fname.len();
+//     let r_ptr = host::getTxField(pointer as i32, len as i32);
+//     // assert_eq!(r_len, 20);
+//     let r = read_data(r_ptr);
+//     AccountID::from(r)
+// }
+//
+// pub unsafe fn get_current_escrow_account_id() -> AccountID {
+//     let mut fname = String::from("Account");
+//     let pointer = fname.as_mut_ptr();
+//     let len = fname.len();
+//     let r_ptr = host::getCurrentLedgerEntryField(pointer as i32, len as i32);
+//     // assert_eq!(r_len, 20);
+//     let r = read_data(r_ptr);
+//     AccountID::from(r)
+// }
+//
+// pub unsafe fn get_current_escrow_destination() -> AccountID {
+//     let mut fname = String::from("Destination");
+//     let pointer = fname.as_mut_ptr();
+//     let len = fname.len();
+//     let r_ptr = host::getCurrentLedgerEntryField(pointer as i32, len as i32);
+//     // assert_eq!(r_len, 20);
+//     let r = read_data(r_ptr);
+//     AccountID::from(r)
+// }
+//
+// pub unsafe fn get_current_escrow_data() -> Vec<u8> {
+//     let mut fname = String::from("Data");
+//     let pointer = fname.as_mut_ptr();
+//     let len = fname.len();
+//     let r_ptr = host::getCurrentLedgerEntryField(pointer as i32, len as i32);
+//     // assert_eq!(r_len, 20);
+//     read_data(r_ptr)
+// }
+//
+// pub unsafe fn get_current_escrow_finish_after() -> i32 {
+//     let mut fname = String::from("FinishAfter");
+//     let pointer = fname.as_mut_ptr();
+//     let len = fname.len();
+//     let r_ptr = host::getCurrentLedgerEntryField(pointer as i32, len as i32);
+//     // assert_eq!(r_len, 20);
+//     let r = read_string(r_ptr);
+//     r.parse::<i32>().unwrap()
+// }
+//
+// pub unsafe fn get_current_escrow_cancel_after() -> i32 {
+//     let mut fname = String::from("CancelAfter");
+//     let pointer = fname.as_mut_ptr();
+//     let len = fname.len();
+//     let r_ptr = host::getCurrentLedgerEntryField(pointer as i32, len as i32);
+//     // assert_eq!(r_len, 20);
+//     let r = read_string(r_ptr);
+//     r.parse::<i32>().unwrap()
+// }
+//
+// pub unsafe fn get_account_balance(aid: &AccountID) -> u64 {
+//     let key_ptr = aid.as_ptr();
+//     let key_len = aid.len();
+//     let mut fname = String::from("Balance");
+//     let fname_ptr = fname.as_mut_ptr();
+//     let fname_len = fname.len();
+//     let r_ptr = host::getLedgerEntryField(
+//         0x0061,
+//         key_ptr as i32,
+//         key_len as i32,
+//         fname_ptr as i32,
+//         fname_len as i32,
+//     );
+//     let r = read_string(r_ptr);
+//     r.parse::<u64>().unwrap()
+// }
+//
+// pub unsafe fn update_current_escrow_data(data: Vec<u8>) {
+//     let pointer = data.as_ptr();
+//     let len = data.len();
+//     host::updateData(pointer as i32, len as i32);
+// }
+//
+// pub unsafe fn print_data(s: &Vec<u8>) {
+//     let s_ptr = s.as_ptr();
+//     let s_len = s.len();
+//     host::print(s_ptr as i32, s_len as i32);
+// }
+//
+// pub unsafe fn print_number(number: i32) {
+//     // let s = number.to_string();
+//     // let s_ptr = s.as_ptr();
+//     // let s_len = s.len();
+//     unsafe {
+//         host::print(number as i32, number as i32);
+//     }
+// }

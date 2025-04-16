@@ -1,0 +1,103 @@
+# -------- https://rust-lang.github.io/rustfmt/?search={key} --------
+
+# Run rustfmt with this config (it should be picked up automatically).
+style_edition = "2024"
+unstable_features = true
+
+# Prevent carriage returns
+newline_style = "Unix"
+
+# Maximum line width of 120 characters
+max_width = 120
+# Fine-grained width values are calculated as a proportion of `max_width`.
+use_small_heuristics = "Default"
+# (default) P.FMT.02 Indent with 4 spaces
+tab_spaces = 4
+# (default) P.FMT.02 Disallow the use of hard tabs for indentation
+hard_tabs = false
+
+# (default) P.FMT.03 Minimum blank lines between code lines: 0
+blank_lines_lower_bound = 0
+# (default) P.FMT.03 Maximum blank lines between code lines: 1
+blank_lines_upper_bound = 1
+
+# (default) P.FMT.04 Use the same line brace style for most language constructs (functions, structs, etc.)
+brace_style = "SameLineWhere"
+# (default) P.FMT.04 Place the opening brace of `where` clauses on the next line
+where_single_line = false
+# (default) P.FMT.04 Use the same line brace style for control structures (e.g. `if`, `match`)
+control_brace_style = "AlwaysSameLine"
+
+# (default) P.FMT.05 Use block indentation style for multiple identifier definitions
+indent_style = "Block"
+
+# (default) P.FMT.06 Place operators at the start of new lines for multi-line expressions
+binop_separator = "Front"
+
+# (default) P.FMT.07 Do not align discriminants of enum variants
+enum_discrim_align_threshold = 0
+# (default) P.FMT.07 Do not align struct fields
+struct_field_align_threshold = 0
+
+# (default) P.FMT.08 For up to five function parameters, place them on a single line; use block style for more
+fn_params_layout = "Tall"
+# (default) P.FMT.08 Place import statements on new lines if more than four per line
+imports_layout = "Mixed"
+
+# (default) P.FMT.09 Do not add spaces before colons
+space_before_colon = false
+# (default) P.FMT.09 Add spaces after colons
+space_after_colon = true
+# (default) P.FMT.09 Do not add spaces around range operators (`..`, `..=`)
+spaces_around_ranges = false
+# (default) P.FMT.09 Add spaces around `+` and `=` operators (in type annotations)
+type_punctuation_density = "Wide"
+
+# (default) P.FMT.10 Use block style when match arms are too long to fit on the same line as `=>`
+match_arm_blocks = true
+# (default) P.FMT.10 Do not prepend match arms with extra leading pipes (`|`)
+match_arm_leading_pipes = "Never"
+
+# P.FMT.11 Put imports from the same module within the same group
+imports_granularity = "Crate"
+# P.FMT.11 Group module imports as follows:
+#   * Imports from `std`, `core`, and `alloc` come first.
+#   * Imports from third-party crates come next.
+#   * Imports from local crates (with `self`, `super`, and `crate` prefixes) come last.
+group_imports = "StdExternalCrate"
+# (default) P.FMT.11 Order imports within groups in lexicographical order
+reorder_imports = true
+
+# P.FMT.12 Use compact format for macro matchers (left-hand side of `=>`) in macro definitions
+format_macro_matchers = true
+# (default) P.FMT.12 Use relaxed format for macro bodies (right-hand side of `=>`) in macro definitions
+format_macro_bodies = true
+
+# (default) P.FMT.13 Do not use field initialization shorthand
+use_field_init_shorthand = false
+
+# (default) P.FMT.14 Always explicitly specify the ABI for external functions
+force_explicit_abi = true
+
+# P.FMT.15 Allow the use of `..` to denote remaining elements when destructuring tuples
+condense_wildcard_suffixes = true
+
+# P.FMT.16 Do not merge unrelated traits into a single line in derive macros
+merge_derives = false
+
+# Replace `try!` macro with the `?` operator
+use_try_shorthand = true
+# (default) P.CMT.02 Set the maximum width for a single-line comment to 80 characters
+comment_width = 80
+# P.CMT.02 Automatically wrap multi-line comments at the maximum width
+wrap_comments = true
+
+# P.CMT.03 Convert block comments (`/* */`) to line comments (`//`) where possible
+normalize_comments = true
+# (default) P.CMT.03 Convert `#![doc]` and `#[doc]` attributes to `//!` and `///` respectively
+normalize_doc_attributes = false
+
+
+# By default, ignore everything in the repository
+# Tidy only checks files which are not ignored; each entry follows gitignore style
+ignore = []

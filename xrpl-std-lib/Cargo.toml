@@ -1,0 +1,14 @@
+[package]
+edition = "2024"
+name = "xrpl-std-lib"
+version = "0.0.1"
+
+[workspace]
+
+[lib]
+crate-type = ["lib"]
+
+[features]
+default = [] # Optional: define default features if any
+# Add your new feature here:
+mock_host = []

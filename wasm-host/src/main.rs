@@ -10,11 +10,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
-use wasmedge_sdk::error::CoreError;
-use wasmedge_sdk::{
-    params, wasi::WasiModule, AsInstance, CallingFrame, ImportObject, ImportObjectBuilder, Instance, Module, Store, ValType,
-    Vm, WasmVal, WasmValue,
-};
+use wasmedge_sdk::{AsInstance, ImportObject, ImportObjectBuilder, Module, Store, Vm};
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -119,16 +115,16 @@ fn main() {
     info!("Using test case: {}", args.test_case);
 
     debug!("Initializing WasiModule");
-    let mut wasi_module = match WasiModule::create(None, None, None) {
-        Ok(module) => {
-            debug!("WasiModule initialized successfully");
-            module
-        }
-        Err(e) => {
-            error!("Failed to create WasiModule: {}", e);
-            return;
-        }
-    };
+    // let mut wasi_module = match WasiModule::create(None, None, None) {
+    //     Ok(module) => {
+    //         debug!("WasiModule initialized successfully");
+    //         module
+    //     }
+    //     Err(e) => {
+    //         error!("Failed to create WasiModule: {}", e);
+    //         return;
+    //     }
+    // };
 
     // No WASI!
 
@@ -144,6 +140,10 @@ fn main() {
     // import_builder.with_func::<(i32, i32), i32>("add", my_add).unwrap();
     info!("Linking `log` function");
     import_builder.with_func::<(i32, i32), ()>("log", host::log).unwrap();
+    info!("Linking `getCurrentTxField` function");
+    import_builder
+        .with_func::<i32, i32>("getCurrentTxField", host::get_current_tx_field)
+        .unwrap();
     let mut import_object = import_builder.build();
     let mut instances = HashMap::new();
     instances.insert(import_object.name().unwrap(), &mut import_object);

@@ -1,3 +1,4 @@
+use xrpl_std_lib::host;
 use xrpl_std_lib::model::ledger_objects::Escrow;
 use xrpl_std_lib::model::transactions::EscrowFinish;
 
@@ -16,14 +17,13 @@ use xrpl_std_lib::model::transactions::EscrowFinish;
 #[no_mangle]
 pub extern "C" fn finish() -> bool {
     unsafe {
-        
         // 1. Get otxn (EscrowFinish)?
-        
-        // Access a field from the current EscrowFinish transaction that triggered this WASM 
+
+        // Access a field from the current EscrowFinish transaction that triggered this WASM
         // execution.
         // pub fn getCurrentTxField(
-        // 
-        // 
+        //
+        //
         // fname_ptr: i32, fname_len: i32
         // ) -> i32;
 
@@ -33,20 +33,22 @@ pub extern "C" fn finish() -> bool {
 
         // Option2: Dynamic allocation
         // let accountId:AccountID = getCurrentTxField(field);
-        
+
         // TODO: What allocator would we use?
         // TODO: Does WasmGC do allocation, or just Garbage Collection/cleanup.
-        
+
         // accountId:AccountID = getCurrentTxField(Account); -->
 
-        xrpl_std_lib::util::log("$$ HELLO WORLD $$");
+        let accountId = host::getCurrentTxField(1);
+        let s_ref: &str = &format!("{}", accountId);
+        xrpl_std_lib::util::log(s_ref);
 
         // TODO: Get fields from EscrowFinish TX (the otxn)
-            // TODO: 1) `Owner` (source AccountID of the account that funded the escrow). 
-            // TODO: Tx common fields and other EscrowFinish fields.
+        // TODO: 1) `Owner` (source AccountID of the account that funded the escrow).
+        // TODO: Tx common fields and other EscrowFinish fields.
         // TODO: Get fields from Escrow ledger object
         // TODO: Get arbitrary fields from an AccountRoot object.
-        
+
         // let _result = host::add(1, 2);
         // let sender = get_tx_account_id();
         // let owner = get_current_escrow_account_id();
@@ -77,7 +79,7 @@ pub extern "C" fn finish() -> bool {
 // fn process_finish(escrow: &mut Escrow, finish_tx: &mut EscrowFinish) -> bool {
 //     println!("Processing Escrow ID: {}", escrow.id);
 //     println!("Finish Transaction Nonce: {}", finish_tx.nonce);
-// 
+//
 //     // --- Your actual logic goes here ---
 //     // Example: Check conditions, modify the escrow status, etc.
 //     if escrow.status == 0 {

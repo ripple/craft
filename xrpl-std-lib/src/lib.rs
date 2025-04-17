@@ -2,11 +2,11 @@
 #![no_main]
 
 pub mod core;
+mod field;
 mod mocks;
+pub mod model;
 pub mod string;
 pub mod util;
-pub mod model;
-mod field;
 
 // #[cfg(target_arch = "wasm32")]
 pub mod host {
@@ -16,7 +16,7 @@ pub mod host {
         pub fn log(str_ptr: *const u8, len: usize);
 
         // pub fn getLedgerSqn() -> i32;
-        // pub fn getTxField(fname_ptr: i32, fname_len: i32) -> i32;
+        pub fn getCurrentTxField(sfield: i32) -> i32;
         // pub fn print(str_ptr: i32, str_len: i32);
 
         pub fn add(a: i32, b: i32) -> i32;

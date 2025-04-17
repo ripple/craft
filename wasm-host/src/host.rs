@@ -1,7 +1,7 @@
 use log::{error, info};
 use std::borrow::Cow;
 use wasmedge_sdk::error::CoreExecutionError;
-use wasmedge_sdk::{error::CoreError, CallingFrame, Instance, ValType, WasmValue};
+use wasmedge_sdk::{CallingFrame, Instance, ValType, WasmValue, error::CoreError};
 
 /// NOTE: This file emulates a host by implementing expected host functions. These implementations
 /// are wired into the WASM VM from the main.rs, and expect to be called by that code only.
@@ -41,6 +41,56 @@ use wasmedge_sdk::{error::CoreError, CallingFrame, Instance, ValType, WasmValue}
 //     let c = 0;
 //     Ok(vec![WasmValue::from_i32(c)])
 // }
+
+// helper function to write data to the VM memory
+pub fn write_data(caller: &mut CallingFrame, data: &[u8]) -> Result<WasmValue, CoreError> {
+    // Access memory
+    let mut memory = caller
+        .memory_mut(0)
+        .ok_or_else(|| CoreError::Execution(wasmedge_sdk::error::CoreExecutionError::HostFuncFailed))?;
+
+    // Write the actual data
+    let start_addr = memory.size() as i32;
+
+    memory
+        .write(start_addr as usize, &data)
+        .ok_or_else(|| CoreError::Execution(wasmedge_sdk::error::CoreExecutionError::HostFuncFailed))?;
+
+    // Return the start address of the allocated buffer
+    Ok(WasmValue::from_i32(start_addr))
+}
+
+// function signature:
+// get_current_tx_field(
+//     field: i32 // SField value
+// )
+pub fn get_current_tx_field(
+    _: &mut (),
+    _inst: &mut Instance,
+    caller: &mut CallingFrame,
+    input: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    if input.len() != 1 {
+        return Err(CoreError::Execution(
+            wasmedge_sdk::error::CoreExecutionError::FuncSigMismatch,
+        ));
+    }
+
+    // parse the first input of WebAssembly value type into Rust built-in value type
+    let _sfield = if input[0].ty() == ValType::I32 {
+        input[0].to_i32()
+    } else {
+        return Err(CoreError::Execution(
+            wasmedge_sdk::error::CoreExecutionError::FuncSigMismatch,
+        ));
+    };
+
+    let field_data = b"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
+
+    let ret_ptr = write_data(caller, field_data)?;
+
+    Ok(vec![ret_ptr])
+}
 
 pub fn add(
     _: &mut (),
@@ -145,4 +195,3 @@ pub fn log(
     // Return an empty vec! to satisfy the `void` return type.
     Ok(vec![])
 }
-

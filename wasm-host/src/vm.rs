@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-use log::{debug, error, info};
-use wasmedge_sdk::error::CoreError;
-use wasmedge_sdk::{params, vm::SyncInst, AsInstance, CallingFrame, ImportObjectBuilder, Instance, Vm, WasmVal, WasmValue};
-use crate::host;
+use log::{error, info};
+use wasmedge_sdk::{Vm, params, vm::SyncInst};
 
 /// Run a WASM function with two JSON data parameters
 ///
@@ -35,8 +32,8 @@ pub fn run_func<T: SyncInst>(
     //     }
     // }
 
-    let tx_size = 100; // tx_data.len() as i32;
-    let lo_size = 99; // lo_data.len() as i32;
+    // let tx_size = 100; // tx_data.len() as i32;
+    // let lo_size = 99; // lo_data.len() as i32;
 
     let rets = match vm.run_func(
         None,
@@ -62,9 +59,6 @@ pub fn run_func<T: SyncInst>(
     Ok(result)
 }
 
-
-
-
 // TODO:
 // WRITE_WASM_MEMORY_AND_RETURN(
 // write_ptr,
@@ -73,22 +67,17 @@ pub fn run_func<T: SyncInst>(
 // txID.size(),
 // memory,
 // memory_length);
-pub fn write_wasm_memory_and_return(){
-    
-    
+pub fn write_wasm_memory_and_return() {
+
     // TODO: Calls write_wasm_memory
 }
 
-pub fn write_wasm_memory(
-    // bytes_written,                                                          \
+pub fn write_wasm_memory(// bytes_written,                                                          \
     // guest_dst_ptr,                                                          \
     // guest_dst_len,                                                          \
     // host_src_ptr,                                                           \
     // host_src_len,                                                           \
     // host_memory_ptr,                                                        \
     // guest_memory_length)                                                    \
-    
-    
-){
-
+) {
 }

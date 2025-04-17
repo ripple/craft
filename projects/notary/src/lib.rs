@@ -1,6 +1,7 @@
 use serde_json::Value;
 use std::mem;
 use xrpl_std_lib::host;
+use xrpl_std_lib::host::get_current_tx_field;
 use xrpl_std_lib::host::log;
 // Notary account that is authorized to finish the escrow
 const NOTARY_ACCOUNT: &str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
@@ -20,7 +21,6 @@ const NOTARY_ACCOUNT: &str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
 pub fn finish(escrow_ptr: *mut usize, finish_tx_ptr: *mut usize) -> bool {
 
     // xrpl_std_lib::core::()
-
 
     // return false;
 }

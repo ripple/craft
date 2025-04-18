@@ -115,7 +115,7 @@ fn main() {
 
     info!("Starting WasmEdge host application");
     info!("Loading WASM module from: {}", wasm_file);
-    info!("Target function: finish (XLS-100d)");
+    info!("Target function: ready (XLS-100d)");
     info!("Using test case: {}", args.test_case);
 
     debug!("Initializing WasiModule");
@@ -197,16 +197,16 @@ fn main() {
     //     }
     // };
 
-    info!("Executing function: finish");
+    info!("Executing function: ready");
     match run_func(
-        &mut vm, "finish",
+        &mut vm, "ready",
         // tx_json.as_bytes().to_vec(), lo_json.as_bytes().to_vec()
     ) {
         Ok(result) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
             println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", "finish");
+            println!("| Function:   {:<33} |", "ready");
             println!("| Test Case:  {:<33} |", args.test_case);
             println!("| Result:     {:<33} |", result);
             println!("-------------------------------------------------");
@@ -216,7 +216,7 @@ fn main() {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
             println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", "finish");
+            println!("| Function:   {:<33} |", "ready");
             println!("| Test Case:  {:<33} |", args.test_case);
             println!("| Error:      {:<33} |", e);
             println!("-------------------------------------------------");

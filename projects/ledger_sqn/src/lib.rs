@@ -1,11 +1,11 @@
 #[no_mangle]
 pub fn ready() -> bool {
-    unsafe { host::get_ledger_sqn() >= 5}
+    unsafe { host::getLedgerSqn() >= 5}
 }
 
-pub mod host {
-    #[link(wasm_import_module = "host")]
+pub mod host_lib {
+    #[link(wasm_import_module = "host_lib")]
     extern "C" {
-        pub fn get_ledger_sqn() -> i32;
+        pub fn getLedgerSqn() -> i32;
     }
 }

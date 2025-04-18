@@ -1,6 +1,9 @@
 use xrpl_std_lib::model::ledger_objects::Escrow;
 use xrpl_std_lib::model::transactions::EscrowFinish;
 
+// pub use xrpl_std::{allocate, deallocate};
+// use xrpl_std::{get_account_balance, get_current_escrow_account_id, get_current_escrow_data, get_current_escrow_destination, get_current_escrow_finish_after, get_tx_account_id, host_lib, print_data, print_number};
+
 /// This function is the low-level WASM entry point for Smart Escrows. It assumes:
 /// 1. `escrow_ptr` is a valid pointer to a mutable `Escrow` struct instance
 ///    in the WASM module's linear memory.
@@ -14,16 +17,16 @@ use xrpl_std_lib::model::transactions::EscrowFinish;
 /// The `*mut usize` type is often used in FFI/WASM as a way to pass an opaque pointer
 /// (memory address) which needs to be cast back to the actual type.
 #[no_mangle]
-pub extern "C" fn finish() -> bool {
+pub extern fn ready() -> bool {
     unsafe {
-        
+
         // 1. Get otxn (EscrowFinish)?
-        
-        // Access a field from the current EscrowFinish transaction that triggered this WASM 
+
+        // Access a field from the current EscrowFinish transaction that triggered this WASM
         // execution.
         // pub fn getCurrentTxField(
-        // 
-        // 
+        //
+        //
         // fname_ptr: i32, fname_len: i32
         // ) -> i32;
 
@@ -33,20 +36,20 @@ pub extern "C" fn finish() -> bool {
 
         // Option2: Dynamic allocation
         // let accountId:AccountID = getCurrentTxField(field);
-        
+
         // TODO: What allocator would we use?
         // TODO: Does WasmGC do allocation, or just Garbage Collection/cleanup.
-        
+
         // accountId:AccountID = getCurrentTxField(Account); -->
 
         xrpl_std_lib::util::log("$$ HELLO WORLD $$");
 
         // TODO: Get fields from EscrowFinish TX (the otxn)
-            // TODO: 1) `Owner` (source AccountID of the account that funded the escrow). 
+            // TODO: 1) `Owner` (source AccountID of the account that funded the escrow).
             // TODO: Tx common fields and other EscrowFinish fields.
         // TODO: Get fields from Escrow ledger object
         // TODO: Get arbitrary fields from an AccountRoot object.
-        
+
         // let _result = host::add(1, 2);
         // let sender = get_tx_account_id();
         // let owner = get_current_escrow_account_id();
@@ -77,7 +80,7 @@ pub extern "C" fn finish() -> bool {
 // fn process_finish(escrow: &mut Escrow, finish_tx: &mut EscrowFinish) -> bool {
 //     println!("Processing Escrow ID: {}", escrow.id);
 //     println!("Finish Transaction Nonce: {}", finish_tx.nonce);
-// 
+//
 //     // --- Your actual logic goes here ---
 //     // Example: Check conditions, modify the escrow status, etc.
 //     if escrow.status == 0 {

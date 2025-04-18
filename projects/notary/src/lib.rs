@@ -1,29 +1,31 @@
-use serde_json::Value;
-use std::mem;
-use xrpl_std_lib::host;
-use xrpl_std_lib::host::log;
-// Notary account that is authorized to finish the escrow
-const NOTARY_ACCOUNT: &str = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
+use std::str;
+use xrpl_std_lib::get_tx_account_id;
 
-// #[no_mangle]
-// pub fn allocate(size: usize) -> *mut u8 {
-//     log("allocate called");
-//     log(&format!("allocating {} bytes", size));
-//     let mut buffer = Vec::with_capacity(size);
-//     let pointer = buffer.as_mut_ptr();
-//     log(&format!("allocation address: {:p}", pointer));
-//     mem::forget(buffer);
-//     pointer
-// }
+// Notary account that is authorized to finish the escrow
+const NOTARY_ACCOUNT: &str = "rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 2 (example)
 
 #[no_mangle]
-pub fn finish(escrow_ptr: *mut usize, finish_tx_ptr: *mut usize) -> bool {
+pub fn ready() -> bool {
+    unsafe {
+        let tx_account = get_tx_account_id();
 
-    // xrpl_std_lib::core::()
+        // Convert account bytes to string for comparison
+        let tx_account_str = match str::from_utf8(&tx_account) {
+            Ok(s) => s,
+            Err(_) => return false
+        };
 
-
-    // return false;
+        tx_account_str == NOTARY_ACCOUNT
+    }
 }
+
+// pub fn finish(escrow_ptr: *mut usize, finish_tx_ptr: *mut usize) -> bool {
+//
+//     // xrpl_std_lib::core::()
+//
+//
+//     // return false;
+// }
 
 // #[no_mangle]
 // pub fn finish2(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool {

@@ -39,9 +39,9 @@ pub extern "C" fn finish() -> bool {
 
         // accountId:AccountID = getCurrentTxField(Account); -->
 
-        let accountId = host::getCurrentTxField(1);
-        let s_ref: &str = &format!("{}", accountId);
-        xrpl_std_lib::util::log(s_ref);
+        let accountIdPtr = host::getCurrentTxField(1);
+        let buffer: &[u8] = unsafe { core::slice::from_raw_parts(accountIdPtr as *const u8, 34 as usize) };
+        host::log(buffer.as_ptr(), 34);
 
         // TODO: Get fields from EscrowFinish TX (the otxn)
         // TODO: 1) `Owner` (source AccountID of the account that funded the escrow).

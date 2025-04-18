@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{debug, error, info};
 use std::borrow::Cow;
 use wasmedge_sdk::error::CoreExecutionError;
 use wasmedge_sdk::{CallingFrame, Instance, ValType, WasmValue, error::CoreError};
@@ -50,14 +50,29 @@ pub fn write_data(caller: &mut CallingFrame, data: &[u8]) -> Result<WasmValue, C
         .ok_or_else(|| CoreError::Execution(wasmedge_sdk::error::CoreExecutionError::HostFuncFailed))?;
 
     // Write the actual data
-    let start_addr = memory.size() as i32;
+    let start_addr = memory.size() * 65536;
+    info!("write_data: start_addr = {:?}", start_addr);
 
-    memory
-        .write(start_addr as usize, &data)
-        .ok_or_else(|| CoreError::Execution(wasmedge_sdk::error::CoreExecutionError::HostFuncFailed))?;
+    // Allocate memory for the data
+    memory.grow(1).map_err(|err| {
+        error!("Failed to grow memory: {}", err);
+        CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
+    })?;
+    info!("write_data: memory size after grow = {:?}", memory.size());
+    info!("write_data: data = {:?}, {:?}", data.as_ptr() as usize, start_addr);
+
+    memory.set_data(data, start_addr).map_err(|err| {
+        error!("Failed to write data to memory: {}", err);
+        CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
+    })?;
+
+    info!("write_data: data written to memory");
+
+    // print all the memory
+    // info!("memory = {:?}", memory.get_data(0, 18 * 65536));
 
     // Return the start address of the allocated buffer
-    Ok(WasmValue::from_i32(start_addr))
+    Ok(WasmValue::from_i32(start_addr as i32))
 }
 
 // function signature:
@@ -88,6 +103,38 @@ pub fn get_current_tx_field(
     let field_data = b"rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
 
     let ret_ptr = write_data(caller, field_data)?;
+
+    info!("get_current_tx_field: field_data = {:?}", field_data);
+    info!("get_current_tx_field: ret_ptr = {:?}", ret_ptr.to_i32() as u32);
+
+    // double check that you can read
+    let length = 34;
+
+    let mut memory = caller
+        .memory_ref(0)
+        .ok_or_else(|| CoreError::Execution(wasmedge_sdk::error::CoreExecutionError::HostFuncFailed))?;
+
+    info!("Printing (a={}, b={})", ret_ptr.to_i32() as u32, length);
+
+    let data: Vec<u8> = memory.get_data(ret_ptr.to_i32() as u32, length).map_err(|err| {
+        error!(
+            "Failed to read memory at ptr={} len={}: {}",
+            ret_ptr.to_i32(),
+            length,
+            err
+        );
+        // Map the wasmedge MemoryError to your CoreError::Execution type
+        CoreError::Execution(CoreExecutionError::MemoryOutOfBounds) // Example mapping
+    })?;
+    info!("Printing (data={:?})", data);
+
+    // 4. Convert the byte slice to a Rust String.
+    //    Using from_utf8_lossy is robust against invalid UTF-8 sequences from Wasm.
+    //    It replaces invalid sequences with the U+FFFD replacement character.
+    let message: Cow<str> = String::from_utf8_lossy(&data);
+
+    // 5. Print the message (or use a proper logging framework).
+    info!("{}", message);
 
     Ok(vec![ret_ptr])
 }
@@ -175,6 +222,8 @@ pub fn log(
     let ptr = message_ptr as u32;
     let length = len as u32;
 
+    info!("Printing (a={}, b={})", ptr, length);
+
     // 3. Read the data from memory.
     //    `read` returns a Result<Vec<u8>, MemoryError>. Map the error.
     let data: Vec<u8> = memory.get_data(ptr, length).map_err(|err| {
@@ -182,6 +231,7 @@ pub fn log(
         // Map the wasmedge MemoryError to your CoreError::Execution type
         CoreError::Execution(CoreExecutionError::MemoryOutOfBounds) // Example mapping
     })?;
+    info!("Printing (data={:?})", data);
 
     // 4. Convert the byte slice to a Rust String.
     //    Using from_utf8_lossy is robust against invalid UTF-8 sequences from Wasm.
@@ -189,7 +239,7 @@ pub fn log(
     let message: Cow<str> = String::from_utf8_lossy(&data);
 
     // 5. Print the message (or use a proper logging framework).
-    info!("{}", message);
+    info!("LOGGING: {}", message);
 
     // --- Return Void ---
     // Return an empty vec! to satisfy the `void` return type.

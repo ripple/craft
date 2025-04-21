@@ -1,1 +1,0 @@
-cargo run --example basic_usage --features mock_host

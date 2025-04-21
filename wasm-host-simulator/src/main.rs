@@ -74,6 +74,16 @@ fn main() {
         .with_func::<(i32, i32), ()>("log", host_functions::log)
         .unwrap();
 
+    info!("Linking `log_ln` function");
+    import_builder
+        .with_func::<(i32, i32), ()>("log_ln", host_functions::log_ln)
+        .unwrap();
+
+    info!("Linking `log_hex` function");
+    import_builder
+        .with_func::<(i32, i32), ()>("log_hex", host_functions::log_hex)
+        .unwrap();
+
     info!("Linking `escrow_finish::get_tx_hash` function");
     import_builder
         .with_func::<i32, ()>("get_tx_hash", host_functions::get_tx_hash)
@@ -83,7 +93,7 @@ fn main() {
     let mut instances = HashMap::new();
     instances.insert(import_object.name().unwrap(), &mut import_object);
 
-    info!("Creating new Vm instance");
+    info!("Creating new VM instance");
     // TODO: Config for determinism
     let store: Store<ImportObject<()>> = match Store::new(None, instances) {
         Ok(store) => store,
@@ -113,30 +123,7 @@ fn main() {
         return;
     }
     debug!("WASM module registered successfully");
-
-    // TODO: Remove this.
-    // let a: i32 = 5;
-    // let b: i32 = 3;
-    // let res = vm.run_func(Some("host"), "add", params!(a, b)).unwrap();
-    // println!("add({}, {}) = {}", a, b, res[0].to_i32());
-
-    // info!("Loading test data from fixtures");
-    // let (tx_json, lo_json) = match load_test_data(&args.test_case) {
-    //     Ok((tx, lo)) => {
-    //         debug!("Test data loaded successfully");
-    //         (tx, lo)
-    //     }
-    //     Err(e) => {
-    //         error!("Failed to load test data: {}", e);
-    //         return;
-    //     }
-    // };
-
-    info!("Executing function: ready");
-    match run_func(
-        &mut vm, "ready",
-        // tx_json.as_bytes().to_vec(), lo_json.as_bytes().to_vec()
-    ) {
+    match run_func(&mut vm, "ready") {
         Ok(result) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");

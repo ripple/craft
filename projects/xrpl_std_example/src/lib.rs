@@ -1,4 +1,5 @@
 use xrpl_std_lib::core::types::Hash256;
+use {xrpl_std_lib::utils::escrow_finish, xrpl_std_lib::utils::logging};
 
 /// This function is the low-level WASM entry point for Smart Escrows. It assumes:
 /// 1. `escrow_ptr` is a valid pointer to a mutable `Escrow` struct instance
@@ -15,31 +16,27 @@ use xrpl_std_lib::core::types::Hash256;
 #[no_mangle]
 pub extern "C" fn ready() -> bool {
     // unsafe {
-    xrpl_std_lib::utils::logging::log("$$ STARTING WASM EXECUTION");
-
+    logging::log("$$ STARTING WASM EXECUTION");
+    
     // TODO: Get a handle to the EscrowFinish as a Transaction?
     // 1. Get otxn (EscrowFinish)?
-    let escrow_finish_tx_id: Hash256 = xrpl_std_lib::utils::escrow_finish::get_tx_id();
-    // unsafe {
-    //         let value_via_pointer: &Hash256 = &*address_ptr;
-    //         println!("Value accessed via pointer: {:?}", value_via_pointer);
-    //         assert_eq!(escrow_finish_tx_id, *value_via_pointer);
-    // }
-    let address_ptr: *const Hash256 = &escrow_finish_tx_id;
+    let escrow_finish_tx_id: Hash256 = escrow_finish::get_tx_id();
+    logging::log_hash_ref("EscrowFinish TxId: ", &escrow_finish_tx_id);
 
-    xrpl_std_lib::utils::logging::log_hash_ref("EscrowFinish TxId: ", &escrow_finish_tx_id);
-    // xrpl_std_lib::utils::logging::log_hash_ptr("EscrowFinish TxId: ", address_ptr);
-
-    // TODO: Get fields from EscrowFinish TX (the otxn)
-    // TODO: 1) `Owner` (source AccountID of the account that funded the escrow).
-    // TODO: Tx common fields and other EscrowFinish fields.
-    // TODO: Get fields from Escrow ledger object
+    // TODO: Get fields from an EscrowFinish
+    // let account:AccountID = escrow_finish::get_account();
+    // let transaction_type:TransactionType = escrow_finish::get_transaction_type();
+    // etc.
+    // EscrowFinish Fields
+    // TODO: Get Account
+    // TODO: Get Owner
+    // TODO: OfferSequence
+    // TODO: Condition
+    // TODO: CredentialIDs array
+    // TODO: Fulfillment
+    
     // TODO: Get arbitrary fields from an AccountRoot object.
-
-    // let _result = host::add(1, 2);
     // let sender = get_tx_account_id();
-    // let owner = get_current_escrow_account_id();
-    // let dest = get_current_escrow_destination();
     // let dest_balance = get_account_balance(&dest);
     // let escrow_data = get_current_escrow_data();
     // let ed_str = String::from_utf8(escrow_data.clone()).unwrap();
@@ -58,7 +55,7 @@ pub extern "C" fn ready() -> bool {
 
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
 
-    xrpl_std_lib::utils::logging::log("$$ WASM EXECUTION COMPLETE!");
+    logging::log("$$ WASM EXECUTION COMPLETE!");
 
     return true;
     // }

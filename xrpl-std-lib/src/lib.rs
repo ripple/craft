@@ -1,7 +1,5 @@
 #![no_std]
 #![no_main]
-extern crate alloc;
-
 pub mod core;
 mod field;
 pub mod model;
@@ -11,20 +9,21 @@ pub mod utils;
 pub mod host {
     #[link(wasm_import_module = "host")]
     unsafe extern "C" {
-        /// Log a string to std_out using the host for actual emission.
+        /// Log a byte array of size `len` as a UTF-8 string.
         pub fn log(str_ptr: *const u8, len: usize);
 
-        // pub fn getLedgerSqn() -> i32;
-        // pub fn getTxField(fname_ptr: i32, fname_len: i32) -> i32;
-        // pub fn print(str_ptr: i32, str_len: i32);
+        /// Log a byte array of size `len` as a UTF-8 string (with a trailing newline).
+        pub fn log_ln(str_ptr: *const u8, len: usize);
 
-        pub fn add(a: i32, b: i32) -> i32;
+        /// Log a byte array of size `len` as a hex string.
+        pub fn log_hex(byte_ptr: *const u8, len: usize);
 
         /// Get the transaction id of the EscrowFinish transaction that instigated a Smart Escrow
-        /// Execution.
+        /// WASM execution.
         pub fn get_tx_hash(arr_ptr: *const u8);
-
-        // Obtain the specified account's current IOU balance.
-        // pub fn getAccountBalanceSTAmount() -> u64;
     }
 }
+
+// TODO: For testing purposes, uncomment the cfg directive above and below, and implement Rust
+// variants of the host functions. This would be for testing purposes only.
+// #[cfg(not(target_arch = "wasm32"))]

@@ -1,7 +1,4 @@
-// --- Placeholder functions mimicking C++ object methods ---
-// In a real implementation, these would contain actual logic
-
-use std::fmt::{Formatter, LowerHex, UpperHex, Write};
+use std::fmt::{Formatter, UpperHex};
 
 // Represents the context retrieved by HOOK_SETUP
 #[derive(Debug, Clone)]
@@ -47,35 +44,10 @@ impl Hash256 {
     }
 }
 
-// Helper trait/function for hex formatting (replace with hex crate if available/preferred)
-trait ToHex {
-    fn write_hex<W: Write>(&self, writer: &mut W) -> core::fmt::Result;
-}
-
-impl ToHex for Hash256 {
-    fn write_hex<W: Write>(&self, writer: &mut W) -> core::fmt::Result {
-        for byte in self.0 {
-            // Accessing the inner [u8; 32]
-            write!(writer, "{:02X}", byte)?;
-        }
-        Ok(())
-    }
-}
-
 impl UpperHex for Hash256 {
-    // fn write_hex<W: Write>(&self, writer: &mut W) -> core::fmt::Result {
-    //     for byte in self.0 {
-    //         // Accessing the inner [u8; 32]
-    //         write!(writer, "{:02X}", byte)?
-    //     }
-    //     Ok(())
-    // }
-
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for byte in self.0 {
-            // Accessing the inner [u8; 32]
-            write!(f, "{:02X}", byte)?
-        }
+        let hex_string_upper = hex::encode_upper(self.0);
+        write!(f, "{}", &hex_string_upper)?;
         Ok(())
     }
 }

@@ -15,15 +15,7 @@ pub(crate) struct Transaction {
 }
 
 impl Transaction {
-    // fn get_field_h256(&self, _field_id: &str) -> Hash256 {
-    //     Placeholder logic
-    // println!("Called get_field_h256(sfTransactionHash)");
-    // Hash256::dummy_tx_hash()
-    // }
-
     pub(crate) fn get_transaction_id(&self) -> Hash256 {
-        // Placeholder logic
-        println!("Called get_transaction_id");
         Hash256::dummy_tx_id()
     }
 }

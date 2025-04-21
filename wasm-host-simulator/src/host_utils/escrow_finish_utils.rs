@@ -1,5 +1,4 @@
 use crate::types::core::{ApplyContext, Hash256};
-use log::info;
 use wasmedge_sdk::error::CoreError;
 use wasmedge_sdk::{CallingFrame, ValType, WasmValue};
 
@@ -11,17 +10,6 @@ use wasmedge_sdk::{CallingFrame, ValType, WasmValue};
 const OUT_OF_BOUNDS: i64 = -4; // Example value
 // const UNKNOWN_ERROR: i64 = -5;
 // const SUCCESS_PLACEHOLDER: i64 = 0; // A generic success code if needed, though returning size is common
-
-// The signature matches what `wasmedge-sdk` expects for host functions.
-// We assume HookContext is retrievable as mutable data associated with the Caller/Instance.
-// If HookContext is immutable or globally accessible, adjust the signature.
-
-/// Copies the transaction hash of the EscrowFinish transaction into WASM memory for access by the
-/// finish contract.
-///
-
-// Needed: WASM Address of the array to write bytes into.
-// Needed: # of bytes to write (32 for now, hard-coded).
 
 pub(crate) fn get_tx_hash_helper(
     apply_ctx: ApplyContext, // <-- In rippled this is accessible via PreclaimResult or otherwise.
@@ -36,8 +24,6 @@ pub(crate) fn get_tx_hash_helper(
         ));
     }
 
-    println!("Input1: {:?}", inputs[0]);
-
     // parse the first input of WebAssembly value type into Rust built-in value type
     let guest_write_ptr = if inputs[0].ty() == ValType::I32 {
         inputs[0].to_i32()
@@ -48,7 +34,6 @@ pub(crate) fn get_tx_hash_helper(
     };
 
     let guest_write_ptr_u32: u32 = guest_write_ptr as u32;
-    // println!("guest_write_ptr: {}", guest_write_ptr_u32);
 
     // 2. Context Retrieval (Replaces reinterpret_cast<hook::HookContext*>(data_ptr) and HOOK_SETUP)
     // Get memory. Assumes memory index 0.
@@ -61,7 +46,7 @@ pub(crate) fn get_tx_hash_helper(
     // 3. Get Transaction ID (Matches C++ logic)
     let tx_id: Hash256 = apply_ctx.tx.get_transaction_id();
     // match write!(writer, "{:02X}", byte) {
-    info!("Simulated tx_id from apply_ctx: {:02X}", tx_id);
+    // info!("Simulated tx_id from apply_ctx: {:02X}", tx_id);
 
     let tx_id_size = tx_id.size() as u32;
 

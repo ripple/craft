@@ -3,16 +3,12 @@ use crate::host;
 
 /// Helper to log a `&str` to the host's standard out.
 pub fn log(message: &str) {
-    log_with_newline(message, false)
+    unsafe { host::log(message.as_ptr(), message.len()) }
 }
 
-/// Helper to log a `&str` (with an optional newline) to the host's standard out.
-pub fn log_with_newline(message: &str, with_newline: bool) {
-    if with_newline {
-        unsafe { host::log_ln(message.as_ptr(), message.len()) }
-    } else {
-        unsafe { host::log(message.as_ptr(), message.len()) }
-    }
+/// Helper to log a `&str` (with a newline) to the host's standard out.
+pub fn log_ln(message: &str) {
+    unsafe { host::log_ln(message.as_ptr(), message.len()) }
 }
 
 /// Log a byte array of size `len` as a hex string.

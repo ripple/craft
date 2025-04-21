@@ -1,5 +1,6 @@
 /// Represents a 256-bit hash (like transaction ID)
-#[derive(Debug, Clone, PartialEq, Eq)]
+// #[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(C)]
 pub struct Hash256(pub [u8; 32]);
 
 // Implement From<[u8; 32]> to create Hash256 from the array type
@@ -23,4 +24,8 @@ impl TryFrom<&[u8]> for Hash256 {
             Err("Slice must be 32 bytes long")
         }
     }
-} // end of hash_module
+}
+
+// #[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(C)]
+pub struct AccountID(pub [u8; 20]);

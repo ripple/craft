@@ -15,6 +15,7 @@ use xrpl_std_lib::model::transactions::EscrowFinish;
 /// The `*mut usize` type is often used in FFI/WASM as a way to pass an opaque pointer
 /// (memory address) which needs to be cast back to the actual type.
 #[no_mangle]
+#[no_std]
 pub extern "C" fn finish() -> bool {
     unsafe {
         // 1. Get otxn (EscrowFinish)?

@@ -1,15 +1,17 @@
+mod host_functions;
 mod vm;
 
-use std::collections::HashMap;
-use std::path::PathBuf;
-use wasmedge_sdk::{wasi::WasiModule, Module, Store, Vm};
+mod host_utils;
+mod types;
+
 use crate::vm::run_func;
 use clap::Parser;
-use log::{info, debug, error};
 use env_logger::Builder;
 use log::LevelFilter;
+use log::{debug, error, info};
+use std::collections::HashMap;
 use std::io::Write;
-use std::fs;
+use wasmedge_sdk::{AsInstance, ImportObject, ImportObjectBuilder, Module, Store, Vm};
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -32,21 +34,6 @@ struct Args {
     verbose: bool,
 }
 
-fn load_test_data(test_case: &str) -> Result<(String, String), Box<dyn std::error::Error>> {
-    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("fixtures")
-        .join("escrow")
-        .join(test_case);
-
-    let tx_path = base_path.join("tx.json");
-    let lo_path = base_path.join("ledger_object.json");
-
-    let tx_json = fs::read_to_string(tx_path)?;
-    let lo_json = fs::read_to_string(lo_path)?;
-
-    Ok((tx_json, lo_json))
-}
-
 fn main() {
     let args = Args::parse();
 
@@ -61,44 +48,44 @@ fn main() {
     };
 
     // Initialize logger with appropriate level
-    let log_level = if args.verbose { LevelFilter::Debug } else { LevelFilter::Info };
+    let log_level = if args.verbose {
+        LevelFilter::Debug
+    } else {
+        LevelFilter::Info
+    };
 
     Builder::new()
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "[{} {}] {}",
-                record.level(),
-                record.target(),
-                record.args()
-            )
-        })
+        .format(|buf, record| writeln!(buf, "[{} {}] {}", record.level(), record.target(), record.args()))
         .filter(None, log_level)
         .init();
 
     info!("Starting WasmEdge host application");
     info!("Loading WASM module from: {}", wasm_file);
-    info!("Target function: finish (XLS-100d)");
+    info!("Target function: ready (XLS-100d)");
     info!("Using test case: {}", args.test_case);
 
-    debug!("Initializing WasiModule");
-    let mut wasi_module = match WasiModule::create(None, None, None) {
-        Ok(module) => {
-            debug!("WasiModule initialized successfully");
-            module
-        },
-        Err(e) => {
-            error!("Failed to create WasiModule: {}", e);
-            return;
-        }
-    };
+    info!("Setting up import module");
+    let mut import_builder = ImportObjectBuilder::new("host", ()).unwrap();
+    // ### Register Host Functions Here!
+    // debug!("Linking `add` function");
+    // import_builder.with_func::<(i32, i32), i32>("add", my_add).unwrap();
+    info!("Linking `log` function");
+    import_builder
+        .with_func::<(i32, i32), ()>("log", host_functions::log)
+        .unwrap();
 
-    debug!("Setting up instance map");
+    info!("Linking `escrow_finish::get_tx_hash` function");
+    import_builder
+        .with_func::<i32, ()>("get_tx_hash", host_functions::get_tx_hash)
+        .unwrap();
+
+    let mut import_object = import_builder.build();
     let mut instances = HashMap::new();
-    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
+    instances.insert(import_object.name().unwrap(), &mut import_object);
 
     info!("Creating new Vm instance");
-    let store = match Store::new(None, instances) {
+    // TODO: Config for determinism
+    let store: Store<ImportObject<()>> = match Store::new(None, instances) {
         Ok(store) => store,
         Err(e) => {
             error!("Failed to create Store: {}", e);
@@ -113,7 +100,7 @@ fn main() {
         Ok(module) => {
             debug!("WASM module loaded successfully");
             module
-        },
+        }
         Err(e) => {
             error!("Failed to load WASM module from {}: {}", wasm_file, e);
             return;
@@ -127,35 +114,44 @@ fn main() {
     }
     debug!("WASM module registered successfully");
 
-    info!("Loading test data from fixtures");
-    let (tx_json, lo_json) = match load_test_data(&args.test_case) {
-        Ok((tx, lo)) => {
-            debug!("Test data loaded successfully");
-            (tx, lo)
-        },
-        Err(e) => {
-            error!("Failed to load test data: {}", e);
-            return;
-        }
-    };
+    // TODO: Remove this.
+    // let a: i32 = 5;
+    // let b: i32 = 3;
+    // let res = vm.run_func(Some("host"), "add", params!(a, b)).unwrap();
+    // println!("add({}, {}) = {}", a, b, res[0].to_i32());
 
-    info!("Executing function: finish");
-    match run_func(&mut vm, "finish", tx_json.as_bytes().to_vec(), lo_json.as_bytes().to_vec()) {
+    // info!("Loading test data from fixtures");
+    // let (tx_json, lo_json) = match load_test_data(&args.test_case) {
+    //     Ok((tx, lo)) => {
+    //         debug!("Test data loaded successfully");
+    //         (tx, lo)
+    //     }
+    //     Err(e) => {
+    //         error!("Failed to load test data: {}", e);
+    //         return;
+    //     }
+    // };
+
+    info!("Executing function: ready");
+    match run_func(
+        &mut vm, "ready",
+        // tx_json.as_bytes().to_vec(), lo_json.as_bytes().to_vec()
+    ) {
         Ok(result) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
             println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", "finish");
+            println!("| Function:   {:<33} |", "ready");
             println!("| Test Case:  {:<33} |", args.test_case);
             println!("| Result:     {:<33} |", result);
             println!("-------------------------------------------------");
             info!("Function completed successfully with result: {}", result);
-        },
+        }
         Err(e) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
             println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", "finish");
+            println!("| Function:   {:<33} |", "ready");
             println!("| Test Case:  {:<33} |", args.test_case);
             println!("| Error:      {:<33} |", e);
             println!("-------------------------------------------------");

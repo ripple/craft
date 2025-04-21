@@ -12,3 +12,5 @@ crate-type = ["lib"]
 default = [] # Optional: define default features if any
 # Add your new feature here:
 mock_host = []
+[dependencies]
+arrayvec = "0.7.6"

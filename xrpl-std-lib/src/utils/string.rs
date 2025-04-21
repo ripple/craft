@@ -1,7 +1,7 @@
 // A simple helper struct to write into a byte slice buffer
-struct BufferWriter<'a> {
-    buffer: &'a mut [u8],
-    cursor: usize,
+pub(crate) struct BufferWriter<'a> {
+    pub(crate) buffer: &'a mut [u8],
+    pub(crate) cursor: usize,
 }
 
 impl<'a> BufferWriter<'a> {

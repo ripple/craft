@@ -1,11 +1,3 @@
-// Represents the type of Ledger Entry.
-// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-// #[repr(u16)]
-// pub enum LedgerEntryType {
-//     AccountRoot = 0x0061,
-//     // Add other ledger entry types as needed...
-// }
-
 // Represents the field codes.
 // #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 // #[repr(u16)]

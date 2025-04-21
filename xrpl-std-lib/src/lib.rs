@@ -1,12 +1,11 @@
 #![no_std]
 #![no_main]
+extern crate alloc;
 
 pub mod core;
-mod mocks;
-pub mod string;
-pub mod util;
-pub mod model;
 mod field;
+pub mod model;
+pub mod utils;
 
 // #[cfg(target_arch = "wasm32")]
 pub mod host {
@@ -20,6 +19,10 @@ pub mod host {
         // pub fn print(str_ptr: i32, str_len: i32);
 
         pub fn add(a: i32, b: i32) -> i32;
+
+        /// Get the transaction id of the EscrowFinish transaction that instigated a Smart Escrow
+        /// Execution.
+        pub fn get_tx_hash(arr_ptr: *const u8);
 
         // Obtain the specified account's current IOU balance.
         // pub fn getAccountBalanceSTAmount() -> u64;

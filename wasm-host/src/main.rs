@@ -144,6 +144,9 @@ fn main() {
     import_builder
         .with_func::<i32, i32>("getCurrentTxField", host::get_current_tx_field)
         .unwrap();
+    import_builder
+        .with_func::<(i32, i32), i32>("getCurrentTxField_Peng", host::get_current_tx_field_peng)
+        .unwrap();
     let mut import_object = import_builder.build();
     let mut instances = HashMap::new();
     instances.insert(import_object.name().unwrap(), &mut import_object);

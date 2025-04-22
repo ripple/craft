@@ -1,6 +1,6 @@
-use xrpl_std_lib::host;
-use xrpl_std_lib::model::ledger_objects::Escrow;
-use xrpl_std_lib::model::transactions::EscrowFinish;
+use xrpl_std_lib::{host, LocatorPacker};
+// use xrpl_std_lib::model::ledger_objects::Escrow;
+// use xrpl_std_lib::model::transactions::EscrowFinish;
 
 /// This function is the low-level WASM entry point for Smart Escrows. It assumes:
 /// 1. `escrow_ptr` is a valid pointer to a mutable `Escrow` struct instance
@@ -39,8 +39,11 @@ pub extern "C" fn finish() -> bool {
 
         // accountId:AccountID = getCurrentTxField(Account); -->
 
-        let accountIdPtr = host::getCurrentTxField(1);
-        let buffer: &[u8] = unsafe { core::slice::from_raw_parts(accountIdPtr as *const u8, 34 as usize) };
+        let mut locator_packer = LocatorPacker::new();
+        locator_packer.pack_sfield(1);
+        let len = host::getCurrentTxField_Peng(locator_packer.get_addr(), locator_packer.bytes_packed());
+        let buffer: &[u8] = core::slice::from_raw_parts(locator_packer.get_addr(), len as usize);
+
         host::log(buffer.as_ptr(), 34);
 
         // TODO: Get fields from EscrowFinish TX (the otxn)

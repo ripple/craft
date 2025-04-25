@@ -1,27 +1,18 @@
+use xrpl_std::{account_keylet, get_tx_account_id, print_data};
+// use xrpl_std::{
+//     account_keylet, credential_keylet, escrow_keylet, get_tx_account_id, oracle_keylet, print_data,
+//     print_number,
+// };
 pub use xrpl_std::{allocate, deallocate};
-use xrpl_std::{get_account_balance, get_current_escrow_account_id, get_current_escrow_data, get_current_escrow_destination, get_current_escrow_finish_after, get_tx_account_id, host_lib, print_data, print_number};
 
 #[no_mangle]
-pub extern fn ready() -> bool {
+pub extern "C" fn ready() -> bool {
     unsafe {
         let sender = get_tx_account_id();
-        let owner = get_current_escrow_account_id();
-        let dest = get_current_escrow_destination();
-        let dest_balance = get_account_balance(&dest);
-        let escrow_data = get_current_escrow_data();
-        let ed_str = String::from_utf8(escrow_data.clone()).unwrap();
-        let threshold_balance = ed_str.parse::<u64>().unwrap();
-        let pl_time = host_lib::getParentLedgerTime();
-        let e_time = get_current_escrow_finish_after();
+        let account_keylet = account_keylet(&sender);
 
-        print_data(&sender);
-        print_data(&owner);
-        print_data(&dest);
-        print_data(&escrow_data);
-        print_number(&dest_balance);
-        print_number(&pl_time);
-        print_number(&e_time);
+        print_data(&account_keylet);
 
-        sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
+        true
     }
 }

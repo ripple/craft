@@ -318,14 +318,6 @@ pub async fn configure() -> Result<Config> {
     })
 }
 
-pub async fn export_hex(wasm_path: &PathBuf) -> Result<()> {
-    println!("{}", "Converting WASM to hex...".cyan());
-    let hex = utils::wasm_to_hex(wasm_path)?;
-    utils::copy_to_clipboard(&hex)?;
-    println!("{}", "Hex copied to clipboard!".green());
-    Ok(())
-}
-
 pub async fn setup_wee_alloc(project_path: &PathBuf) -> Result<()> {
     let cargo_toml = utils::find_cargo_toml(project_path)
         .context("Could not find Cargo.toml")?;

@@ -5,6 +5,7 @@ pub mod core;
 mod field;
 mod mocks;
 pub mod model;
+pub mod sfield;
 pub mod string;
 pub mod util;
 

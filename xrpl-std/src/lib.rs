@@ -1,7 +1,7 @@
 use std::mem;
 
 #[no_mangle]
-pub extern fn allocate(size: usize) -> *mut u8 {
+pub extern "C" fn allocate(size: usize) -> *mut u8 {
     let mut buffer = Vec::with_capacity(size);
     let pointer = buffer.as_mut_ptr();
     mem::forget(buffer);
@@ -10,26 +10,48 @@ pub extern fn allocate(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub extern fn deallocate(pointer: *mut u8, capacity: usize) {
+pub extern "C" fn deallocate(pointer: *mut u8, capacity: usize) {
     unsafe {
         println!("deallocate {:?}", pointer);
         let _ = Vec::from_raw_parts(pointer, 0, capacity);
     }
 }
 
-
 pub type AccountID = Vec<u8>;
 
 pub mod host_lib {
     #[link(wasm_import_module = "host_lib")]
     extern "C" {
+        // fetch ledger data
         pub fn getLedgerSqn() -> i32;
         pub fn getParentLedgerTime() -> i32;
         pub fn getTxField(fname_ptr: i32, fname_len: i32) -> i32;
-        pub fn getLedgerEntryField(le_type: i32, key_ptr: i32, key_len: i32, fname_ptr: i32, fname_len: i32) -> i32;
+        pub fn getLedgerEntryField(
+            le_type: i32,
+            key_ptr: i32,
+            key_len: i32,
+            fname_ptr: i32,
+            fname_len: i32,
+        ) -> i32;
         pub fn getCurrentLedgerEntryField(fname_ptr: i32, fname_len: i32) -> i32;
+        pub fn getNFT(account_ptr: i32, account_len: i32, nft_id_ptr: i32, nft_id_len: i32) -> i32;
+
+        // update ledger data
         pub fn updateData(data_ptr: i32, data_len: i32);
+
+        // utils
         pub fn computeSha512HalfHash(data_ptr: i32, data_len: i32) -> i32;
+        pub fn accountKeylet(account_ptr: i32, account_len: i32) -> i32;
+        pub fn credentialKeylet(
+            subject_ptr: i32,
+            subject_len: i32,
+            issuer_ptr: i32,
+            issuer_len: i32,
+            cred_type_ptr: i32,
+            cred_type_len: i32,
+        ) -> i32;
+        pub fn escrowKeylet(account_ptr: i32, account_len: i32, sequence: i32) -> i32;
+        pub fn oracleKeylet(account_ptr: i32, account_len: i32, document_id: i32) -> i32;
         pub fn print(str_ptr: i32, str_len: i32);
     }
 }
@@ -121,7 +143,13 @@ pub unsafe fn get_account_balance(aid: &AccountID) -> u64 {
     let mut fname = String::from("Balance");
     let fname_ptr = fname.as_mut_ptr();
     let fname_len = fname.len();
-    let r_ptr = host_lib::getLedgerEntryField(0x0061, key_ptr as i32, key_len as i32, fname_ptr as i32, fname_len as i32);
+    let r_ptr = host_lib::getLedgerEntryField(
+        0x0061,
+        key_ptr as i32,
+        key_len as i32,
+        fname_ptr as i32,
+        fname_len as i32,
+    );
     let r = read_string(r_ptr);
     r.parse::<u64>().unwrap()
 }

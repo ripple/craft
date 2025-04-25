@@ -154,6 +154,73 @@ pub unsafe fn get_account_balance(aid: &AccountID) -> u64 {
     r.parse::<u64>().unwrap()
 }
 
+pub unsafe fn account_keylet(aid: &AccountID) -> i32 {
+    let key_ptr = aid.as_ptr();
+    let key_len = aid.len();
+    host_lib::accountKeylet(key_ptr as i32, key_len as i32)
+}
+
+pub unsafe fn credential_keylet(
+    subject: &AccountID,
+    issuer: &AccountID,
+    cred_type: &Vec<u8>,
+) -> i32 {
+    let subject_ptr = subject.as_ptr();
+    let subject_len = subject.len();
+    let issuer_ptr = issuer.as_ptr();
+    let issuer_len = issuer.len();
+    let cred_type_ptr = cred_type.as_ptr();
+    let cred_type_len = cred_type.len();
+    host_lib::credentialKeylet(
+        subject_ptr as i32,
+        subject_len as i32,
+        issuer_ptr as i32,
+        issuer_len as i32,
+        cred_type_ptr as i32,
+        cred_type_len as i32,
+    )
+}
+
+pub unsafe fn escrow_keylet(aid: &AccountID, sequence: i32) -> i32 {
+    let key_ptr = aid.as_ptr();
+    let key_len = aid.len();
+    host_lib::escrowKeylet(key_ptr as i32, key_len as i32, sequence)
+}
+
+pub unsafe fn oracle_keylet(aid: &AccountID, document_id: i32) -> i32 {
+    let key_ptr = aid.as_ptr();
+    let key_len = aid.len();
+    host_lib::oracleKeylet(key_ptr as i32, key_len as i32, document_id)
+}
+
+pub unsafe fn compute_sha512_half_hash(data: &Vec<u8>) -> Vec<u8> {
+    let pointer = data.as_ptr();
+    let len = data.len();
+    let r_ptr = host_lib::computeSha512HalfHash(pointer as i32, len as i32);
+    read_data(r_ptr)
+}
+
+pub unsafe fn get_ledger_sequence() -> i32 {
+    host_lib::getLedgerSqn()
+}
+
+pub unsafe fn get_parent_ledger_time() -> i32 {
+    host_lib::getParentLedgerTime()
+}
+
+pub unsafe fn get_nft(account: &AccountID, nft_id: &String) -> i32 {
+    let account_ptr = account.as_ptr();
+    let account_len = account.len();
+    let nft_id_ptr = nft_id.as_ptr();
+    let nft_id_len = nft_id.len();
+    host_lib::getNFT(
+        account_ptr as i32,
+        account_len as i32,
+        nft_id_ptr as i32,
+        nft_id_len as i32,
+    )
+}
+
 pub unsafe fn update_current_escrow_data(data: Vec<u8>) {
     let pointer = data.as_ptr();
     let len = data.len();

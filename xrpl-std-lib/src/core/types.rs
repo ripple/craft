@@ -29,3 +29,9 @@ impl TryFrom<&[u8]> for Hash256 {
 // #[derive(Debug, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub struct AccountID(pub [u8; 20]);
+
+impl From<[u8; 20]> for AccountID {
+    fn from(bytes: [u8; 20]) -> Self {
+        Self(bytes) // Access private field legally here
+    }
+}

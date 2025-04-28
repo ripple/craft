@@ -12,6 +12,10 @@ pub(crate) struct ApplyContext {
 pub(crate) struct Transaction {
     // Example methods mimicking the C++ code
     // In a real scenario, these would interact with your blockchain state
+    
+    
+    
+    
 }
 
 impl Transaction {

@@ -1,6 +1,8 @@
-use crate::core::types::Hash256;
+use crate::core::field_codes::SF_ACCOUNT;
+use crate::core::types::{AccountID, Hash256};
 use crate::host;
 
+#[inline(always)]
 pub fn get_tx_id() -> Hash256 {
     // 1. Allocate a buffer on the stack
     let buffer = [0u8; 32]; // Allocate memory to read into.
@@ -13,5 +15,21 @@ pub fn get_tx_id() -> Hash256 {
     }
 
     // 3. Return the transactionId as a Hash256.
+    buffer.into()
+}
+
+#[inline(always)]
+pub fn get_account_id() -> AccountID {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 20]; // Allocate memory to read into.
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
+        // host function for proper logging.
+        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_ACCOUNT);
+    }
+
+    // 3. Return the data as an AccountID
     buffer.into()
 }

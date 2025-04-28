@@ -1,5 +1,8 @@
-use xrpl_std_lib::core::types::Hash256;
-use {xrpl_std_lib::utils::escrow_finish, xrpl_std_lib::utils::logging};
+use xrpl_std_lib::core::types::{AccountID, Hash256};
+use xrpl_std_lib::host::trace::DataRepr;
+use {
+    host::trace::trace_msg, host::trace::trace_msg_with_data, xrpl_std_lib::host, xrpl_std_lib::utils::escrow_finish,
+};
 
 /// This function is the low-level WASM entry point for Smart Escrows. It assumes:
 /// 1. `escrow_ptr` is a valid pointer to a mutable `Escrow` struct instance
@@ -15,15 +18,17 @@ use {xrpl_std_lib::utils::escrow_finish, xrpl_std_lib::utils::logging};
 /// (memory address) which needs to be cast back to the actual type.
 #[no_mangle]
 pub extern "C" fn ready() -> bool {
-    logging::log_ln("$$ STARTING WASM EXECUTION");
+    let _ = trace_msg("$$ STARTING WASM EXECUTION $$");
 
     // TODO: Get a handle to the EscrowFinish as a Transaction?
-    // 1. Get otxn (EscrowFinish)?
-    let escrow_finish_tx_id: Hash256 = escrow_finish::get_tx_id();
-    logging::log_hash_ref("EscrowFinish TxId: ", &escrow_finish_tx_id);
 
     // Step #1: Get fields from an EscrowFinish
-    // let account:AccountID = escrow_finish::get_account();
+    let escrow_finish_tx_id: Hash256 = escrow_finish::get_tx_id();
+    let _ = trace_msg_with_data("EscrowFinish TxId: ", &escrow_finish_tx_id.0, DataRepr::AsHex);
+
+    let account: AccountID = escrow_finish::get_account_id();
+    let _ = trace_msg_with_data("EscrowFinish TxId: ", &account.0, DataRepr::AsHex);
+
     // let transaction_type:TransactionType = escrow_finish::get_transaction_type();
     // etc.
     // EscrowFinish Fields
@@ -60,8 +65,7 @@ pub extern "C" fn ready() -> bool {
     // let e_time = get_current_escrow_finish_after();
 
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
-
-    logging::log_ln("$$ WASM EXECUTION COMPLETE!");
+    let _ = trace_msg("$$ WASM EXECUTION COMPLETE $$");
 
     true
 }

@@ -7,7 +7,7 @@ use wasmedge_sdk::{CallingFrame, ValType, WasmValue};
 // const RC_ROLLBACK: i64 = -1; // Example value
 // const RC_ACCEPT: i64 = -2; // Example value
 // const TOO_SMALL: i64 = -3; // Example value
-const OUT_OF_BOUNDS: i64 = -4; // Example value
+pub const OUT_OF_BOUNDS: i64 = -4; // Example value
 // const UNKNOWN_ERROR: i64 = -5;
 // const SUCCESS_PLACEHOLDER: i64 = 0; // A generic success code if needed, though returning size is common
 

@@ -11,3 +11,4 @@ wasmedge-sdk = { version = "0.14.0", features = ["standalone"] }
 log = "0.4"
 env_logger = "0.11.8"
 hex = "0.4.3"
+xrpl-std-lib = { path = "../xrpl-std-lib" }

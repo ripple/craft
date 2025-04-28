@@ -1,14 +1,6 @@
 use log::{error, info};
-use wasmedge_sdk::{
-    // WasmVal,
-    // WasmValue
-    params,
-    vm::SyncInst,
-    // CallingFrame,
-    // ImportObjectBuilder,
-    // Instance,
-    Vm,
-};
+use std::error::Error;
+use wasmedge_sdk::{Vm, params, vm::SyncInst};
 
 /// Run a WASM function with two JSON data parameters
 ///
@@ -18,12 +10,7 @@ use wasmedge_sdk::{
 ///
 /// The function expects the WASM module to expose an "allocate" function that allocates memory
 /// for the host to write data into.
-pub fn run_func<T: SyncInst>(
-    vm: &mut Vm<T>,
-    func_name: &str,
-    // tx_data: Vec<u8>,
-    // lo_data: Vec<u8>
-) -> Result<bool, Box<dyn std::error::Error>> {
+pub fn run_func<T: SyncInst>(vm: &mut Vm<T>, func_name: &str) -> Result<bool, Box<dyn Error>> {
     info!("Executing WASM function: {}", func_name);
 
     let rets = match vm.run_func(None, func_name, params!()) {

@@ -14,3 +14,4 @@ default = [] # Optional: define default features if any
 mock_host = []
 [dependencies]
 arrayvec = "0.7.6"
+log = "0.4.27"

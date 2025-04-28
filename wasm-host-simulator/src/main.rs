@@ -69,25 +69,25 @@ fn main() {
     // ### Register Host Functions Here!
     // debug!("Linking `add` function");
     // import_builder.with_func::<(i32, i32), i32>("add", my_add).unwrap();
-    info!("Linking `log` function");
+    info!("Linking `trace` function");
     import_builder
-        .with_func::<(i32, i32), ()>("log", host_functions::log)
-        .unwrap();
-
-    info!("Linking `log_ln` function");
-    import_builder
-        .with_func::<(i32, i32), ()>("log_ln", host_functions::log_ln)
-        .unwrap();
-
-    info!("Linking `log_hex` function");
-    import_builder
-        .with_func::<(i32, i32), ()>("log_hex", host_functions::log_hex)
+        .with_func::<(i32, i32, i32, i32, i32), i64>("trace", host_functions::trace)
         .unwrap();
 
     info!("Linking `escrow_finish::get_tx_hash` function");
     import_builder
         .with_func::<i32, ()>("get_tx_hash", host_functions::get_tx_hash)
         .unwrap();
+
+    info!("Linking `get_current_escrow_finish_field` function");
+    import_builder
+        .with_func::<(i32, i32, i32), ()>(
+            "get_current_escrow_finish_field",
+            host_functions::get_current_escrow_finish_field,
+        )
+        .unwrap();
+
+    //pub fn (dst_ptr: *const u8, dst_len: usize, field_code: i32);
 
     let mut import_object = import_builder.build();
     let mut instances = HashMap::new();

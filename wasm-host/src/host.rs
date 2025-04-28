@@ -2,6 +2,7 @@ use log::{debug, error, info};
 use std::borrow::Cow;
 use wasmedge_sdk::error::CoreExecutionError;
 use wasmedge_sdk::{CallingFrame, Instance, ValType, WasmValue, error::CoreError};
+use crate::mock_data::LocatorUnpacker;
 
 /// NOTE: This file emulates a host by implementing expected host functions. These implementations
 /// are wired into the WASM VM from the main.rs, and expect to be called by that code only.
@@ -177,66 +178,6 @@ pub fn write_data_peng(caller: &mut CallingFrame, data: &[u8], start_addr: u32) 
 
     // Return the start address of the allocated buffer
     Ok(WasmValue::from_i32(start_addr as i32))
-}
-
-#[derive(Debug)]
-enum LocatorItemType {
-    Sfield,
-    ArrayIndex,
-}
-
-#[derive(Debug)]
-struct LocatorItem {
-    item_type: LocatorItemType,
-    value: i32,
-}
-
-impl LocatorItem {
-    pub fn unpack(data: &[u8], data_unpacked: &mut usize) -> Option<Self> {
-        let item_type = match data[0] {
-            0 => LocatorItemType::Sfield,
-            1 => LocatorItemType::ArrayIndex,
-            _ => {
-                return None;
-            }
-        };
-
-        if *data_unpacked < 5 {
-            return None;
-        }
-        let value = i32::from_le_bytes(data[1..5].try_into().unwrap());
-        *data_unpacked -= 5;
-
-        Some(Self {
-            item_type,
-            value,
-        })
-    }
-}
-
-#[derive(Debug)]
-pub struct LocatorUnpacker {
-    pub items: Vec<LocatorItem>,
-}
-
-impl LocatorUnpacker {
-    pub fn unpack(data: Vec<u8>) -> Option<Self> {
-        let mut items = vec![];
-        let data_total = data.len();
-        let mut data_unpacked = data_total;
-
-        while data_unpacked > 0 {
-            if let Some(item) = LocatorItem::unpack(
-                &data[data_total - data_unpacked..], &mut data_unpacked) {
-                items.push(item);
-            } else {
-                return None;
-            }
-        }
-        Some(Self {
-            items
-        })
-    }
 }
 
 pub fn get_current_tx_field_peng(

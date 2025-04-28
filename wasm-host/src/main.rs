@@ -1,5 +1,6 @@
 mod host;
 mod vm;
+mod mock_data;
 
 use crate::vm::run_func;
 use clap::Parser;

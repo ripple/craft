@@ -1,4 +1,5 @@
 mod vm;
+mod mock_data;
 
 use std::collections::HashMap;
 use std::path::PathBuf;

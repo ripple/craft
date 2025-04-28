@@ -1,4 +1,5 @@
 use std::mem;
+pub mod sfield;
 
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut u8 {

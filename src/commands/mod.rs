@@ -134,6 +134,18 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let size = std::fs::metadata(&wasm_file)?.len();
     println!("Size: {} bytes", size);
 
+    // Calculate and display WASM fingerprint
+    let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
+    println!("WASM Fingerprint: {}", fingerprint);
+
+    // Ask if user wants to export as hex
+    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
+        .with_default(false)
+        .prompt()?
+    {
+        copy_wasm_hex_to_clipboard(&wasm_file).await?;
+    }
+
     Ok(wasm_file)
 }
 
@@ -183,16 +195,9 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &PathBuf) -> Result<()> {
 }
 
 pub async fn copy_wasm_hex_to_clipboard(wasm_file: &PathBuf) -> Result<()> {
-    // Offer to export as hex
-    if Confirm::new("Would you like to copy the WASM hex to clipboard?")
-        .with_default(true)
-        .prompt()?
-    {
-        let hex = utils::wasm_to_hex(&wasm_file)?;
-        utils::copy_to_clipboard(&hex)?;
-        println!("{}", "Hex copied to clipboard!".green());
-    }
-    
+    let hex = utils::wasm_to_hex(&wasm_file)?;
+    utils::copy_to_clipboard(&hex)?;
+    println!("{}", "WASM hex copied to clipboard!".green());
     Ok(())
 }
 
@@ -316,14 +321,6 @@ pub async fn configure() -> Result<Config> {
         use_wee_alloc,
         project_path,
     })
-}
-
-pub async fn export_hex(wasm_path: &PathBuf) -> Result<()> {
-    println!("{}", "Converting WASM to hex...".cyan());
-    let hex = utils::wasm_to_hex(wasm_path)?;
-    utils::copy_to_clipboard(&hex)?;
-    println!("{}", "Hex copied to clipboard!".green());
-    Ok(())
 }
 
 pub async fn setup_wee_alloc(project_path: &PathBuf) -> Result<()> {

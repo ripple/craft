@@ -63,9 +63,9 @@ unsafe fn read_data(ptr: i32) -> Vec<u8> {
     let mut len_array: [u8; 4] = [0; 4];
     ptr_array.clone_from_slice(&int_buf[0..4]);
     len_array.clone_from_slice(&int_buf[4..8]);
-    let ptr = i32::from_le_bytes(ptr_array);
+    let new_ptr = i32::from_le_bytes(ptr_array);
     let len = i32::from_le_bytes(len_array);
-    Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize)
+    Vec::from_raw_parts(new_ptr as *mut u8, len as usize, len as usize)
 }
 
 unsafe fn read_string(ptr: i32) -> String {
@@ -202,6 +202,31 @@ pub unsafe fn update_current_escrow_data(data: Vec<u8>) {
     let pointer = data.as_ptr();
     let len = data.len();
     host_lib::updateData(pointer as i32, len as i32);
+}
+
+pub unsafe fn print_vector(vector: &Vec<u8>) {
+    let mut output = Vec::new();
+    for (i, b) in vector.iter().enumerate() {
+        append_u8_decimal(*b, &mut output);
+        if i != vector.len() - 1 {
+            output.push(b' '); // space between numbers
+        }
+    }
+    print_data(&output);
+}
+
+fn append_u8_decimal(mut n: u8, buf: &mut Vec<u8>) {
+    let mut tmp = [0u8; 3];
+    let mut i = 3;
+    loop {
+        i -= 1;
+        tmp[i] = b'0' + (n % 10);
+        n /= 10;
+        if n == 0 {
+            break;
+        }
+    }
+    buf.extend_from_slice(&tmp[i..]);
 }
 
 pub unsafe fn print_data(s: &Vec<u8>) {

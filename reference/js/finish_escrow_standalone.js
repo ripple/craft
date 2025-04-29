@@ -11,7 +11,7 @@ if (process.argv.length != 6) {
   process.exit(1)
 }
 
-const url = "wss://wasm.devnet.rippletest.net:51233"
+const url = "ws://localhost:6006"
 const client = new xrpl.Client(url)
 
 const [, , account, accountSecret, owner, offerSequence] = process.argv
@@ -28,9 +28,13 @@ async function submit(tx, wallet, debug = true) {
 }
 
 async function finishEscrow() {
+  let interval
   try {
     await client.connect()
     console.log(`Connected to ${url}`)
+    await client.request({command: 'ledger_accept'})
+    
+    interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},1000)
 
     const wallet = xrpl.Wallet.fromSeed(accountSecret)
     
@@ -65,6 +69,7 @@ async function finishEscrow() {
     console.error("Error:", error.message)
   } finally {
     await client.disconnect()
+    clearInterval(interval)
     console.log("Disconnected")
   }
 }

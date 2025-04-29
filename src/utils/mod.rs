@@ -296,3 +296,6 @@ pub fn install_cli() -> Result<()> {
     
     Ok(())
 }
+
+pub mod wasm_fingerprint;
+pub use wasm_fingerprint::calculate_wasm_fingerprint;

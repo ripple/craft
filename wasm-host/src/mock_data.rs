@@ -83,7 +83,7 @@ impl DataSource {
 
 #[derive(Debug)]
 pub struct LocatorUnpacker {
-    pub data_source: DataSource,
+    pub data_source: DataSource,//computation cost
     pub items: Vec<LocatorPathItem>,
 }
 
@@ -130,7 +130,7 @@ pub struct MockLedgerTransactionData {
     hosting_ledger_obj: serde_json::Value,
     header: serde_json::Value,
     ledger: HashMap<Hash, serde_json::Value>,
-    cached_ledger_objs: HashMap<Hash, serde_json::Value>,
+    cached_ledger_objs: HashMap<Hash, serde_json::Value>,//capped
     field_names: HashMap<i32, String>,
 }
 
@@ -174,7 +174,11 @@ impl MockLedgerTransactionData {
                         let sf_name = self.field_names.get(&p.value);
                         if let Some(sf_name) = sf_name {
                             match jv.get(sf_name) {
-                                Some(value) => value,
+                                Some(value) => {
+                                    
+                                    value
+                                },
+                                
                                 None => return DataResult::FieldNotFound,
                             }
                         } else {
@@ -199,6 +203,10 @@ impl MockLedgerTransactionData {
                 return DataResult::PathError;
             }
 
+            //TODO depends on sfield, call a coder to translate to binary
+            //https://github.com/sephynox/xrpl-rust/tree/main/src/core/binarycodec
+            //base58: account, LedgerEntryType, RegularKey, etc
+            //hex: 
             return DataResult::ReadSuccess(Bytes::from(jv.as_str().unwrap()));
         }
         

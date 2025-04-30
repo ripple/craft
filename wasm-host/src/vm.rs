@@ -1,54 +1,64 @@
-use log::{error, info};
-use wasmedge_sdk::{Vm, params, vm::SyncInst};
+use std::collections::HashMap;
+use log::{debug, error, info};
+use wasmedge_sdk::{Vm, params, vm::SyncInst, ImportObjectBuilder, AsInstance, Store, Module};
+use wasmedge_sdk::error::WasmEdgeError;
+use crate::mock_data::MockLedgerTransactionData;
 
-/// Run a WASM function with two JSON data parameters
-///
-/// This function is designed to handle WASM smart contract functions that take:
-/// - A transaction JSON (tx_data)
-/// - A ledger object JSON (lo_data)
-///
-/// The function expects the WASM module to expose an "allocate" function that allocates memory
-/// for the host to write data into.
-pub fn run_func<T: SyncInst>(
-    vm: &mut Vm<T>,
-    func_name: &str,
-    // tx_data: Vec<u8>,
-    // lo_data: Vec<u8>
-) -> Result<bool, Box<dyn std::error::Error>> {
+/// Run a WASM function 
+pub fn run_func(wasm_file: String, func_name: &str, data_provider: MockLedgerTransactionData)
+                -> Result<bool, Box<WasmEdgeError>> {
+
+    let mut import_builder = ImportObjectBuilder::new("host_lib", data_provider).unwrap();
+    import_builder.with_func::<i32, ()>("getLedgerSqn", get_ledger_sqn)?;
+    import_builder.with_func::<(), i32>("getParentLedgerTime", get_parent_ledger_time)?;
+    let mut import_object = import_builder.build();
+
+    let mut instances: HashMap<String, &mut dyn SyncInst> = HashMap::new();
+    // instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
+    instances.insert(import_object.name().unwrap(), &mut import_object);
+
+    info!("Creating new Vm instance");
+    let store = match Store::new(None, instances) {
+        Ok(store) => store,
+        Err(e) => {
+            error!("Failed to create Store: {}", e);
+            return Err(e);
+        }
+    };
+
+    let mut vm = Vm::new(store);
+
+    info!("Loading WASM module from file: {}", wasm_file);
+    let wasm_module = match Module::from_file(None, &wasm_file) {
+        Ok(module) => {
+            debug!("WASM module loaded successfully");
+            module
+        },
+        Err(e) => {
+            error!("Failed to load WASM module from {}: {}", wasm_file, e);
+            return Err(e);
+        }
+    };
+
+    info!("Registering WASM module to VM");
+    if let Err(e) = vm.register_module(None, wasm_module.clone()) {
+        error!("Failed to register module: {}", e);
+        return Err(e);
+    }
+    debug!("WASM module registered successfully");
+    
+    
+    
     info!("Executing WASM function: {}", func_name);
-    // debug!(
-    //     "TX data size: {} bytes, LO data size: {} bytes",
-    //     tx_data.len(),
-    //     lo_data.len()
-    // );
-
-    // Parse and log JSON data for debugging
-    // if log::log_enabled!(log::Level::Debug) {
-    //     if let Ok(tx_json) = std::str::from_utf8(&tx_data) {
-    //         debug!("TX JSON: {}", tx_json);
-    //     }
-    //     if let Ok(lo_json) = std::str::from_utf8(&lo_data) {
-    //         debug!("LO JSON: {}", lo_json);
-    //     }
-    // }
-
-    // let tx_size = 100; // tx_data.len() as i32;
-    // let lo_size = 99; // lo_data.len() as i32;
-
     let rets = match vm.run_func(
         None,
         func_name,
-        params!(
-            // tx_pointer, tx_size, lo_pointer, lo_size
-        ),
+        params!(),
     ) {
         Ok(values) => values,
         Err(e) => {
             error!("Function execution failed: {}", e);
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("WASM function execution error: {}", e),
-            )));
+            return Err(e);
         }
     };
 

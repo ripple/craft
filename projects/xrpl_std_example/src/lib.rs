@@ -17,6 +17,11 @@ use xrpl_std_lib::{host, LocatorPacker};
 #[no_mangle]
 pub extern "C" fn finish() -> bool {
     unsafe {
+        
+        // let acc
+        // acc.id();
+        
+        
         // 1. Get otxn (EscrowFinish)?
 
         // Access a field from the current EscrowFinish transaction that triggered this WASM
@@ -41,9 +46,9 @@ pub extern "C" fn finish() -> bool {
 
         let mut locator_packer = LocatorPacker::new();
         locator_packer.pack_sfield(1);
-        let len = host::getCurrentTxField_Peng(locator_packer.get_addr(), locator_packer.bytes_packed());
-        let buffer: &[u8] = core::slice::from_raw_parts(locator_packer.get_addr(), len as usize);
-
+        // let len = host::getCurrentTxField_Peng(locator_packer.get_addr(), locator_packer.bytes_packed());
+        // let buffer: &[u8] = core::slice::from_raw_parts(locator_packer.get_addr(), len as usize);
+        let foo :[u8;20] = buffer.try_into().unwrap();
         host::log(buffer.as_ptr(), 34);
 
         // TODO: Get fields from EscrowFinish TX (the otxn)

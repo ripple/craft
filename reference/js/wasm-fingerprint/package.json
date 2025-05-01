@@ -1,0 +1,18 @@
+{
+  "name": "wasm-fingerprint",
+  "version": "1.0.0",
+  "description": "Tool for generating WASM module fingerprints",
+  "main": "wasm-fingerprint.js",
+  "bin": {
+    "wasm-fingerprint": "./wasm-fingerprint.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bs58": "^5.0.0",
+    "ripple-address-codec": "^1.6.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

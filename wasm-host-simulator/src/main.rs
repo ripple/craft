@@ -73,6 +73,10 @@ fn main() {
     import_builder
         .with_func::<(i32, i32, i32, i32, i32), i64>("trace", host_functions::trace)
         .unwrap();
+    info!("Linking `trace_num` function");
+    import_builder
+        .with_func::<(i32, i32, i64), i64>("trace_num", host_functions::trace_num)
+        .unwrap();
 
     info!("Linking `escrow_finish::get_tx_hash` function");
     import_builder
@@ -81,7 +85,7 @@ fn main() {
 
     info!("Linking `get_current_escrow_finish_field` function");
     import_builder
-        .with_func::<(i32, i32, i32), ()>(
+        .with_func::<(i32, i32, i32), i64>(
             "get_current_escrow_finish_field",
             host_functions::get_current_escrow_finish_field,
         )

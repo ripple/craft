@@ -16,3 +16,4 @@ opt-level = 's'
 
 [dependencies]
 xrpl-std-lib = { path = "../../xrpl-std-lib" }
+log = "0.4.27"

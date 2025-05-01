@@ -2,14 +2,7 @@ use log::{error, info};
 use std::error::Error;
 use wasmedge_sdk::{Vm, params, vm::SyncInst};
 
-/// Run a WASM function with two JSON data parameters
-///
-/// This function is designed to handle WASM smart contract functions that take:
-/// - A transaction JSON (tx_data)
-/// - A ledger object JSON (lo_data)
-///
-/// The function expects the WASM module to expose an "allocate" function that allocates memory
-/// for the host to write data into.
+/// Run a WASM function with optional parameters.
 pub fn run_func<T: SyncInst>(vm: &mut Vm<T>, func_name: &str) -> Result<bool, Box<dyn Error>> {
     info!("Executing WASM function: {}", func_name);
 

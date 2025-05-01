@@ -20,4 +20,7 @@ pub(crate) struct Transaction {
     pub network_id: u32,
     pub source_tag: u32,
     pub ticket_sequence: u32,
+
+    pub owner: AccountID,
+    pub offer_sequence: u32,
 }

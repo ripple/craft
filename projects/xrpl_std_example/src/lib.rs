@@ -1,7 +1,6 @@
-use std::hash::Hash;
 use xrpl_std_lib::core::amount::Amount;
 use xrpl_std_lib::core::amount::xrp_amount::XrpAmount;
-use xrpl_std_lib::core::constants::ACCOUNT_ONE;
+use xrpl_std_lib::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std_lib::core::types::{AccountID, Hash256, TransactionType};
 use xrpl_std_lib::host;
 use xrpl_std_lib::host::trace::DataRepr;
@@ -90,20 +89,32 @@ pub extern "C" fn ready() -> bool {
     let ticket_sequence: u32 = escrow_finish::get_ticket_sequence();
     let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
 
-    // TODO: Memos
-    // TODO: Signers
-    // TODO: SigningPubKey
-    // TODO: TxnSignature
+    // TODO: Memos (Array)
+    // TODO: Signers (Array)
+    // TODO: SigningPubKey (Blob)
+    // TODO: TxnSignature  (Blob)
 
     // ########################################
     // Step #2: Access & Emit Specific fields from an EscrowFinish
     // ########################################
     let _ = trace_msg("  -- EscrowFinish Fields");
-    // TODO: Get Owner
-    // TODO: OfferSequence
-    // TODO: Condition
-    // TODO: CredentialIDs array
-    // TODO: Fulfillment
+    // TODO: Condition (Blob)
+    // TODO: CredentialIDs (Array of Strings)
+    // TODO: Fulfillment (Blob)
+
+    // Field: Account
+    let owner: AccountID = escrow_finish::get_owner();
+    let _ = trace_msg_with_data("  Owner:", &owner.0, DataRepr::AsHex);
+    if owner.0[0].eq(&ACCOUNT_ZERO.0[0]) {
+        let _ = trace_msg("    AccountID == ACCOUNT_ZERO => TRUE");
+    } else {
+        let _ = trace_msg("    AccountID == ACCOUNT_ZERO => FALSE");
+        assert_eq!(owner, ACCOUNT_ZERO);
+    }
+
+    // Field: OfferSequence
+    let offer_sequence: u32 = escrow_finish::get_offer_sequence();
+    let _ = trace_num("  OfferSequence:", offer_sequence as i64);
 
     // Step #2: Get fields from the Escrow being finished....
 

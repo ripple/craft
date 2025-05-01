@@ -5,11 +5,11 @@ use wasmedge_sdk::error::CoreExecutionError;
 use wasmedge_sdk::{CallingFrame, Instance, ValType, WasmValue, error::CoreError};
 use xrpl_std_lib::core::amount::Amount;
 use xrpl_std_lib::core::amount::xrp_amount::XrpAmount;
-use xrpl_std_lib::core::constants::ACCOUNT_ONE;
+use xrpl_std_lib::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std_lib::core::error_codes::OUT_OF_BOUNDS;
 use xrpl_std_lib::core::field_codes::{
-    SF_ACCOUNT, SF_FEE, SF_FLAGS, SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_SEQUENCE, SF_SOURCE_TAG,
-    SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE,SF_ACCOUNT_TXN_ID,
+    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_FEE, SF_FLAGS, SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE,
+    SF_OWNER, SF_SEQUENCE, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE,
 };
 use xrpl_std_lib::core::types::{Hash256, TransactionType};
 // NOTE: This file emulates a host by implementing expected host functions. These implementations
@@ -27,6 +27,9 @@ const DEFAULT_TX: Transaction = Transaction {
     network_id: 2,
     source_tag: 37,
     ticket_sequence: 99,
+
+    owner: ACCOUNT_ZERO,
+    offer_sequence: 999_998,
 };
 
 /// Given a pointer to memory in WASM, writes the current EscrowFinish transactions `transactionId`
@@ -275,6 +278,13 @@ fn get_field_bytes(tx: Transaction, field_code: i32) -> Result<Vec<u8>, CoreErro
         SF_SOURCE_TAG => Ok(tx.source_tag.to_be_bytes().to_vec()),
         SF_TICKET_SEQUENCE => Ok(tx.ticket_sequence.to_be_bytes().to_vec()),
         SF_ACCOUNT_TXN_ID => Ok(tx.account_txn_id.0.to_vec()),
+
+        SF_OWNER => {
+            let owner = tx.owner.0;
+            debug!("Owner: {}", hex::encode(owner));
+            Ok(owner.clone().into())
+        }
+        SF_OFFER_SEQUENCE => Ok(tx.offer_sequence.to_be_bytes().to_vec()),
         // SF_HASH => {
         //     let tx_type: TransactionType = tx.;
         //     let vec: Vec<u8> = tx_type.into();

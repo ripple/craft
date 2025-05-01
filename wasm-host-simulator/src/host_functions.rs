@@ -7,7 +7,10 @@ use xrpl_std_lib::core::amount::Amount;
 use xrpl_std_lib::core::amount::xrp_amount::XrpAmount;
 use xrpl_std_lib::core::constants::ACCOUNT_ONE;
 use xrpl_std_lib::core::error_codes::OUT_OF_BOUNDS;
-use xrpl_std_lib::core::field_codes::{SF_ACCOUNT, SF_FEE, SF_TRANSACTION_TYPE};
+use xrpl_std_lib::core::field_codes::{
+    SF_ACCOUNT, SF_FEE, SF_FLAGS, SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_SEQUENCE, SF_SOURCE_TAG,
+    SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE,SF_ACCOUNT_TXN_ID,
+};
 use xrpl_std_lib::core::types::{Hash256, TransactionType};
 // NOTE: This file emulates a host by implementing expected host functions. These implementations
 // are wired into the WASM VM from the main.rs, and expect to be called by that code only.
@@ -17,6 +20,13 @@ const DEFAULT_TX: Transaction = Transaction {
     account_id: ACCOUNT_ONE,
     transaction_type: TransactionType::EscrowFinish,
     fee: Amount::Xrp(XrpAmount(12)),
+    sequence: 1_000_001,
+    account_txn_id: Hash256([0xDD; 32]),
+    flags: 1,
+    last_ledger_sequence: 999_999,
+    network_id: 2,
+    source_tag: 37,
+    ticket_sequence: 99,
 };
 
 /// Given a pointer to memory in WASM, writes the current EscrowFinish transactions `transactionId`
@@ -254,6 +264,17 @@ fn get_field_bytes(tx: Transaction, field_code: i32) -> Result<Vec<u8>, CoreErro
             let vec: Vec<u8> = fee_wrapper.into();
             Ok(vec)
         }
+        SF_SEQUENCE => {
+            let sequence = tx.sequence;
+            let vec: Vec<u8> = sequence.to_be_bytes().to_vec();
+            Ok(vec)
+        }
+        SF_FLAGS => Ok(tx.flags.to_be_bytes().to_vec()),
+        SF_LAST_LEDGER_SEQUENCE => Ok(tx.last_ledger_sequence.to_be_bytes().to_vec()),
+        SF_NETWORK_ID => Ok(tx.network_id.to_be_bytes().to_vec()),
+        SF_SOURCE_TAG => Ok(tx.source_tag.to_be_bytes().to_vec()),
+        SF_TICKET_SEQUENCE => Ok(tx.ticket_sequence.to_be_bytes().to_vec()),
+        SF_ACCOUNT_TXN_ID => Ok(tx.account_txn_id.0.to_vec()),
         // SF_HASH => {
         //     let tx_type: TransactionType = tx.;
         //     let vec: Vec<u8> = tx_type.into();

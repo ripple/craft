@@ -1,10 +1,14 @@
 use crate::core::amount::Amount;
 use crate::core::amount::Amount::Xrp;
 use crate::core::amount::xrp_amount::XrpAmount;
-use crate::core::field_codes::{SF_ACCOUNT, SF_FEE, SF_TRANSACTION_TYPE};
+use crate::core::field_codes::{
+    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_FEE, SF_FLAGS, SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_SEQUENCE,
+    SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE,
+};
 use crate::core::types::{AccountID, Hash256, TransactionType};
 use crate::host;
 use crate::host::trace::trace_msg;
+use core::hash::Hash;
 
 #[inline(always)]
 pub fn get_tx_id() -> Hash256 {
@@ -81,4 +85,69 @@ pub fn get_fee() -> Amount {
 
     let amount = i64::from_be_bytes(buffer);
     Xrp(XrpAmount(amount as u64))
+}
+
+#[inline(always)]
+pub fn get_sequence() -> u32 {
+    get_u32_field(SF_SEQUENCE)
+}
+
+#[inline(always)]
+pub fn get_account_txn_id() -> Hash256 {
+    get_hash_256_field(SF_ACCOUNT_TXN_ID)
+}
+
+#[inline(always)]
+pub fn get_flags() -> u32 {
+    get_u32_field(SF_FLAGS)
+}
+
+#[inline(always)]
+pub fn get_last_ledger_sequence() -> u32 {
+    get_u32_field(SF_LAST_LEDGER_SEQUENCE)
+}
+
+#[inline(always)]
+pub fn get_network_id() -> u32 {
+    get_u32_field(SF_NETWORK_ID)
+}
+
+#[inline(always)]
+pub fn get_source_tag() -> u32 {
+    get_u32_field(SF_SOURCE_TAG)
+}
+
+#[inline(always)]
+pub fn get_ticket_sequence() -> u32 {
+    get_u32_field(SF_TICKET_SEQUENCE)
+}
+
+#[inline(always)]
+fn get_u32_field(field_code: i32) -> u32 {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 4]; // Enough to hold an u32
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
+        // host function for proper logging.
+        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+    }
+
+    u32::from_be_bytes(buffer)
+}
+
+fn get_hash_256_field(field_code: i32) -> Hash256 {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 32]; // Allocate memory to read into.
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
+        // host function for proper logging.
+        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+    }
+
+    // 3. Return the transactionId as a Hash256.
+    buffer.into()
 }

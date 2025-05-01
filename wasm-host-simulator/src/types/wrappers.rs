@@ -2,6 +2,7 @@
 // foreign members.
 
 use xrpl_std_lib::core::amount::Amount;
+use xrpl_std_lib::core::types::Hash256;
 
 pub struct AmountWrapper(pub Amount);
 

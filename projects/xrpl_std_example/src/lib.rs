@@ -1,3 +1,4 @@
+use std::hash::Hash;
 use xrpl_std_lib::core::amount::Amount;
 use xrpl_std_lib::core::amount::xrp_amount::XrpAmount;
 use xrpl_std_lib::core::constants::ACCOUNT_ONE;
@@ -30,51 +31,74 @@ pub extern "C" fn ready() -> bool {
     // let account:AccountID = escrow_finish.account_id();
 
     // ########################################
-    // Step #1: Get fields from an EscrowFinish
+    // Step #1: Access & Emit Common Transaction fields from an EscrowFinish
     // ########################################
-    let _ = trace_msg("## EscrowFinish Common Fields ##");
+    let _ = trace_msg("{");
+    let _ = trace_msg("  -- EscrowFinish Common Fields");
+
     // Field: TransactionID
     let escrow_finish_tx_id: Hash256 = escrow_finish::get_tx_id();
-    let _ = trace_msg_with_data("EscrowFinish TxId:", &escrow_finish_tx_id.0, DataRepr::AsHex);
+    let _ = trace_msg_with_data("  EscrowFinish TxId:", &escrow_finish_tx_id.0, DataRepr::AsHex);
 
     // Field: Account
     let account: AccountID = escrow_finish::get_account();
-    let _ = trace_msg_with_data("Account:", &account.0, DataRepr::AsHex);
+    let _ = trace_msg_with_data("  Account:", &account.0, DataRepr::AsHex);
     if account.0[0].eq(&ACCOUNT_ONE.0[0]) {
-        let _ = trace_msg("AccountID == ACCOUNT_ONE => TRUE");
+        let _ = trace_msg("    AccountID == ACCOUNT_ONE => TRUE");
     } else {
-        let _ = trace_msg("AccountID == ACCOUNT_ONE => FALSE");
+        let _ = trace_msg("    AccountID == ACCOUNT_ONE => FALSE");
         assert_eq!(account, ACCOUNT_ONE);
     }
 
     // Field: TransactionType
     let transaction_type: TransactionType = escrow_finish::get_transaction_type();
     let tx_type_bytes: [u8; 2] = transaction_type.into();
-    let _ = trace_msg_with_data("TransactionType (EscrowFinish):", &tx_type_bytes, DataRepr::AsHex);
+    let _ = trace_msg_with_data("  TransactionType (EscrowFinish):", &tx_type_bytes, DataRepr::AsHex);
 
-    // Field Fee
+    // Field: Fee
     let fee: Amount = escrow_finish::get_fee();
     let fee_as_xrp_amount: XrpAmount = match fee {
         Amount::Xrp(xrp_amount) => xrp_amount,
     };
-    let _ = trace_num("Fee:", fee_as_xrp_amount.0 as i64);
+    let _ = trace_num("  Fee:", fee_as_xrp_amount.0 as i64);
 
-    // etc.
-    // EscrowFinish Fields
-    // TODO: Fee
-    // TODO: Sequence
-    // TODO: AccountTxnID
-    // TODO: Flags
-    // TODO: LastLedgerSequence
+    // Field: Sequence
+    let sequence: u32 = escrow_finish::get_sequence();
+    let _ = trace_num("  Sequence:", sequence as i64);
+
+    // Field: AccountTxnID
+    let account_txn_id: Hash256 = escrow_finish::get_account_txn_id();
+    let _ = trace_msg_with_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
+
+    // Field: Flags
+    let flags: u32 = escrow_finish::get_flags();
+    let _ = trace_num("  Flags:", flags as i64);
+
+    // Field: LastLedgerSequence
+    let last_ledger_sequence: u32 = escrow_finish::get_last_ledger_sequence();
+    let _ = trace_num("  LastLedgerSequence:", last_ledger_sequence as i64);
+
+    // Field: NetworkID
+    let network_id: u32 = escrow_finish::get_network_id();
+    let _ = trace_num("  NetworkID:", network_id as i64);
+
+    // Field: SourceTag
+    let source_tag: u32 = escrow_finish::get_source_tag();
+    let _ = trace_num("  SourceTag:", source_tag as i64);
+
+    // Field: TicketSequence
+    let ticket_sequence: u32 = escrow_finish::get_ticket_sequence();
+    let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
+
     // TODO: Memos
-    // TODO: NetworkID
     // TODO: Signers
-    // TODO: SourceTag
     // TODO: SigningPubKey
-    // TODO: TicketSequence
     // TODO: TxnSignature
 
-    let _ = trace_msg("## EscrowFinish Fields ##");
+    // ########################################
+    // Step #2: Access & Emit Specific fields from an EscrowFinish
+    // ########################################
+    let _ = trace_msg("  -- EscrowFinish Fields");
     // TODO: Get Owner
     // TODO: OfferSequence
     // TODO: Condition
@@ -91,7 +115,7 @@ pub extern "C" fn ready() -> bool {
     // let threshold_balance = ed_str.parse::<u64>().unwrap();
     // let pl_time = host::getParentLedgerTime();
     // let e_time = get_current_escrow_finish_after();
-
+    let _ = trace_msg("}");
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
     let _ = trace_msg("$$$$$ WASM EXECUTION COMPLETE $$$$$");
 

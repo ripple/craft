@@ -1,9 +1,8 @@
 use alloc::vec::Vec;
 
 /// Represents a 256-bit hash (like transaction ID)
-// #[derive(Debug, Clone, PartialEq, Eq)]
 #[repr(C)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Hash256(pub [u8; 32]);
 
 // Implement From<[u8; 32]> to create Hash256 from the array type
@@ -13,39 +12,10 @@ impl From<[u8; 32]> for Hash256 {
     }
 }
 
-// Optional: Implement TryFrom<&[u8]> for safe creation from slices
-// impl TryFrom<&[u8]> for Hash256 {
-//     type Error = &'static str; // Example error type
-//
-//     fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
-//         if slice.len() == 32 {
-//             // Convert slice to array (requires an intermediate step or unsafe)
-//             let mut array = [0u8; 32];
-//             array.copy_from_slice(slice);
-//             Ok(Self(array)) // Access private field legally here
-//         } else {
-//             Err("Slice must be 32 bytes long")
-//         }
-//     }
-// }
-
 // #[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(C)]
 pub struct AccountID(pub [u8; 20]);
-
-// impl From<[u8; 20]> for AccountID {
-//     fn from(bytes: [u8; 20]) -> Self {
-//         if bytes.len() == 20 {
-//             let mut array = [0u8; 20];
-//             array.copy_from_slice(bytes.as_slice());
-//             Self(array) // Access private field legally here
-//         } else {
-//             // TODO: FixMe?
-//             panic!("Slice must be 32 bytes long")
-//         }
-//     }
-// }
 
 /// The type of any given XRPL transaction
 #[repr(i16)]
@@ -173,13 +143,6 @@ impl From<i16> for TransactionType {
     }
 }
 
-// --- The Manual TryFrom Implementation ---
-// impl TryFrom<i16> for TransactionType {
-//     type Error = ();
-//
-//     fn try_from(value: i16) -> Result<Self, Self::Error> {}
-// }
-
 impl From<TransactionType> for Vec<u8> {
     fn from(value: TransactionType) -> Self {
         // 1. Cast the enum variant `self` to its underlying i16 value.
@@ -213,22 +176,3 @@ impl From<TransactionType> for [u8; 2] {
         bytes_array
     }
 }
-
-// impl From<TransactionType> for [u8; 4] {
-//     fn from(value: TransactionType) -> Self {
-//         // 1. Cast the enum variant `self` to its underlying i16 value.
-//         let value: i32 = value.into();
-//
-//         // 2. Convert the i16 value into a fixed-size byte array ([u8; 2]).
-//         //    We choose little-endian here. Use .from_le_bytes() for big-endian.
-//         let bytes_array: [u8; 4] = value.to_be_bytes();
-//
-//         bytes_array
-//     }
-// }
-//
-// impl From<TransactionType> for i32 {
-//     fn from(value: TransactionType) -> Self {
-//         value.into()
-//     }
-// }

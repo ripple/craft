@@ -13,4 +13,11 @@ pub(crate) struct Transaction {
     pub account_id: AccountID,
     pub transaction_type: TransactionType,
     pub fee: Amount,
+    pub sequence: u32,
+    pub account_txn_id: Hash256,
+    pub flags: u32,
+    pub last_ledger_sequence: u32,
+    pub network_id: u32,
+    pub source_tag: u32,
+    pub ticket_sequence: u32,
 }

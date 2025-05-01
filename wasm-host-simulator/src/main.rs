@@ -1,8 +1,6 @@
 mod host_functions;
-mod vm;
-
-mod host_utils;
 mod types;
+mod vm;
 
 use crate::vm::run_func;
 use clap::Parser;

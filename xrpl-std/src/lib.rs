@@ -1,7 +1,7 @@
 use std::mem;
 
 #[no_mangle]
-pub extern fn allocate(size: usize) -> *mut u8 {
+pub extern "C" fn allocate(size: usize) -> *mut u8 {
     let mut buffer = Vec::with_capacity(size);
     let pointer = buffer.as_mut_ptr();
     mem::forget(buffer);
@@ -10,26 +10,49 @@ pub extern fn allocate(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub extern fn deallocate(pointer: *mut u8, capacity: usize) {
+pub extern "C" fn deallocate(pointer: *mut u8, capacity: usize) {
     unsafe {
         println!("deallocate {:?}", pointer);
         let _ = Vec::from_raw_parts(pointer, 0, capacity);
     }
 }
 
-
 pub type AccountID = Vec<u8>;
+pub type Keylet = Vec<u8>;
 
 pub mod host_lib {
     #[link(wasm_import_module = "host_lib")]
     extern "C" {
+        // fetch ledger data
         pub fn getLedgerSqn() -> i32;
         pub fn getParentLedgerTime() -> i32;
         pub fn getTxField(fname_ptr: i32, fname_len: i32) -> i32;
-        pub fn getLedgerEntryField(le_type: i32, key_ptr: i32, key_len: i32, fname_ptr: i32, fname_len: i32) -> i32;
+        pub fn getLedgerEntryField(
+            le_type: i32,
+            key_ptr: i32,
+            key_len: i32,
+            fname_ptr: i32,
+            fname_len: i32,
+        ) -> i32;
         pub fn getCurrentLedgerEntryField(fname_ptr: i32, fname_len: i32) -> i32;
+        pub fn getNFT(account_ptr: i32, account_len: i32, nft_id_ptr: i32, nft_id_len: i32) -> i32;
+
+        // update ledger data
         pub fn updateData(data_ptr: i32, data_len: i32);
+
+        // utils
         pub fn computeSha512HalfHash(data_ptr: i32, data_len: i32) -> i32;
+        pub fn accountKeylet(account_ptr: i32, account_len: i32) -> i32;
+        pub fn credentialKeylet(
+            subject_ptr: i32,
+            subject_len: i32,
+            issuer_ptr: i32,
+            issuer_len: i32,
+            cred_type_ptr: i32,
+            cred_type_len: i32,
+        ) -> i32;
+        pub fn escrowKeylet(account_ptr: i32, account_len: i32, sequence: i32) -> i32;
+        pub fn oracleKeylet(account_ptr: i32, account_len: i32, document_id: i32) -> i32;
         pub fn print(str_ptr: i32, str_len: i32);
     }
 }
@@ -40,9 +63,9 @@ unsafe fn read_data(ptr: i32) -> Vec<u8> {
     let mut len_array: [u8; 4] = [0; 4];
     ptr_array.clone_from_slice(&int_buf[0..4]);
     len_array.clone_from_slice(&int_buf[4..8]);
-    let ptr = i32::from_le_bytes(ptr_array);
+    let new_ptr = i32::from_le_bytes(ptr_array);
     let len = i32::from_le_bytes(len_array);
-    Vec::from_raw_parts(ptr as *mut u8, len as usize, len as usize)
+    Vec::from_raw_parts(new_ptr as *mut u8, len as usize, len as usize)
 }
 
 unsafe fn read_string(ptr: i32) -> String {
@@ -121,15 +144,89 @@ pub unsafe fn get_account_balance(aid: &AccountID) -> u64 {
     let mut fname = String::from("Balance");
     let fname_ptr = fname.as_mut_ptr();
     let fname_len = fname.len();
-    let r_ptr = host_lib::getLedgerEntryField(0x0061, key_ptr as i32, key_len as i32, fname_ptr as i32, fname_len as i32);
+    let r_ptr = host_lib::getLedgerEntryField(
+        0x0061,
+        key_ptr as i32,
+        key_len as i32,
+        fname_ptr as i32,
+        fname_len as i32,
+    );
     let r = read_string(r_ptr);
     r.parse::<u64>().unwrap()
+}
+
+pub unsafe fn account_keylet(aid: &AccountID) -> Keylet {
+    let key_ptr = aid.as_ptr();
+    let key_len = aid.len();
+    let r_ptr = host_lib::accountKeylet(key_ptr as i32, key_len as i32);
+    let r = read_data(r_ptr);
+    Keylet::from(r)
+}
+
+pub unsafe fn credential_keylet(subject: &String, issuer: &String, cred_type: &String) -> Keylet {
+    let subject_ptr = subject.as_ptr();
+    let subject_len = subject.len();
+    let issuer_ptr = issuer.as_ptr();
+    let issuer_len = issuer.len();
+    let cred_type_ptr = cred_type.as_ptr();
+    let cred_type_len = cred_type.len();
+    let r_ptr = host_lib::credentialKeylet(
+        subject_ptr as i32,
+        subject_len as i32,
+        issuer_ptr as i32,
+        issuer_len as i32,
+        cred_type_ptr as i32,
+        cred_type_len as i32,
+    );
+    let r = read_data(r_ptr);
+    Keylet::from(r)
+}
+
+pub unsafe fn escrow_keylet(aid: &AccountID, sequence: i32) -> Keylet {
+    let key_ptr = aid.as_ptr();
+    let key_len = aid.len();
+    let r_ptr = host_lib::escrowKeylet(key_ptr as i32, key_len as i32, sequence);
+    let r = read_data(r_ptr);
+    Keylet::from(r)
+}
+
+pub unsafe fn oracle_keylet(aid: &AccountID, document_id: i32) -> Keylet {
+    let key_ptr = aid.as_ptr();
+    let key_len = aid.len();
+    let r_ptr = host_lib::oracleKeylet(key_ptr as i32, key_len as i32, document_id);
+    let r = read_data(r_ptr);
+    Keylet::from(r)
 }
 
 pub unsafe fn update_current_escrow_data(data: Vec<u8>) {
     let pointer = data.as_ptr();
     let len = data.len();
     host_lib::updateData(pointer as i32, len as i32);
+}
+
+pub unsafe fn print_vector(vector: &Vec<u8>) {
+    let mut output = Vec::new();
+    for (i, b) in vector.iter().enumerate() {
+        append_u8_decimal(*b, &mut output);
+        if i != vector.len() - 1 {
+            output.push(b' '); // space between numbers
+        }
+    }
+    print_data(&output);
+}
+
+fn append_u8_decimal(mut n: u8, buf: &mut Vec<u8>) {
+    let mut tmp = [0u8; 3];
+    let mut i = 3;
+    loop {
+        i -= 1;
+        tmp[i] = b'0' + (n % 10);
+        n /= 10;
+        if n == 0 {
+            break;
+        }
+    }
+    buf.extend_from_slice(&tmp[i..]);
 }
 
 pub unsafe fn print_data(s: &Vec<u8>) {

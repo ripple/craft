@@ -1,6 +1,6 @@
 #[no_mangle]
 pub fn ready() -> bool {
-    unsafe { host_lib::getLedgerSqn() >= 5}
+    unsafe { host_lib::getLedgerSqn() >= 5 }
 }
 
 pub mod host_lib {

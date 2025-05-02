@@ -47,3 +47,27 @@ unsafe extern "C" {
 // TODO: For testing purposes, uncomment the cfg directive above and below, and implement Rust
 // variants of the host functions. This would be for testing purposes only.
 // #[cfg(not(target_arch = "wasm32"))]
+// pub fn trace(
+//     _msg_read_ptr: u32,
+//     _msg_read_len: usize,
+//     _data_read_ptr: u32,
+//     _data_read_len: usize,
+//     _as_hex: u32,
+// ) -> i64 {
+//     return -1;
+// }
+// 
+// #[cfg(not(target_arch = "wasm32"))]
+// pub fn trace_num(_read_ptr: u32, _read_len: u32, _number: i64) -> i64 {
+//     return -1;
+// }
+// 
+// #[cfg(not(target_arch = "wasm32"))]
+// pub fn get_tx_hash(_arr_ptr: *const u8) {
+//     return;
+// }
+// 
+// #[cfg(not(target_arch = "wasm32"))]
+// pub fn get_current_escrow_finish_field(_dst_ptr: *const u8, _dst_len: usize, _field_code: i32) -> i64 {
+//     return -1;
+// }

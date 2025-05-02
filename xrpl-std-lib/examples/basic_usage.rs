@@ -1,12 +1,12 @@
 // use xrpl_std_lib::get_tx_account_id;
 
 // use xrpl_std_lib::host::host_mock::print;
-use xrpl_std_lib::host::{add, print};
+// use xrpl_std_lib::host::{add, print};
 
 fn main() {
     unsafe {
-        print(5, 6);
-        add(5, 6);
+        // print(5, 6);
+        // add(5, 6);
         // let sender = get_tx_account_id();
         // let owner = get_current_escrow_account_id();
         // let dest = get_current_escrow_destination();

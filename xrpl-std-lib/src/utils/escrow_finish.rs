@@ -2,11 +2,18 @@ use crate::core::amount::Amount;
 use crate::core::amount::Amount::Xrp;
 use crate::core::amount::xrp_amount::XrpAmount;
 use crate::core::field_codes::{
-    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_FEE, SF_FLAGS, SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE,
-    SF_OWNER, SF_SEQUENCE, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE,
+    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT, SF_LAST_LEDGER_SEQUENCE,
+    SF_NETWORK_ID, SF_OFFER_SEQUENCE, SF_OWNER, SF_SEQUENCE, SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE,
+    SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
-use crate::core::types::{AccountID, Hash256, TransactionType};
+use crate::core::types::account_id::AccountID;
+use crate::core::types::blob::Blob;
+use crate::core::types::crypto_condition::{Condition, Fulfillment};
+use crate::core::types::hash_256::Hash256;
+use crate::core::types::public_key::PublicKey;
+use crate::core::types::transaction_type::TransactionType;
 use crate::host;
+use crate::host::get_current_escrow_finish_field;
 use crate::host::trace::trace_msg;
 
 #[inline(always)]
@@ -16,8 +23,6 @@ pub fn get_tx_id() -> Hash256 {
 
     // 2. Call the actual host function with a pointer to the above array.
     unsafe {
-        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
-        // host function for proper logging.
         host::get_tx_hash(buffer.as_ptr());
     }
 
@@ -37,9 +42,7 @@ pub fn get_transaction_type() -> TransactionType {
 
     // 2. Call the actual host function with a pointer to the above array.
     unsafe {
-        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
-        // host function for proper logging.
-        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_TRANSACTION_TYPE);
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_TRANSACTION_TYPE);
     }
 
     i16::from_be_bytes(buffer).into()
@@ -52,9 +55,7 @@ pub fn get_fee() -> Amount {
 
     // 2. Call the actual host function with a pointer to the above array.
     unsafe {
-        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
-        // host function for proper logging.
-        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_FEE);
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_FEE);
     }
 
     let amount = i64::from_be_bytes(buffer);
@@ -92,10 +93,19 @@ pub fn get_source_tag() -> u32 {
 }
 
 #[inline(always)]
+pub fn get_signing_pub_key() -> PublicKey {
+    get_public_key_field(SF_SIGNING_PUB_KEY)
+}
+
+#[inline(always)]
 pub fn get_ticket_sequence() -> u32 {
     get_u32_field(SF_TICKET_SEQUENCE)
 }
 
+#[inline(always)]
+pub fn get_txn_signature() -> Blob {
+    get_blob_field(SF_TXN_SIGNATURE)
+}
 pub fn get_owner() -> AccountID {
     get_account_id_field(SF_OWNER)
 }
@@ -106,15 +116,40 @@ pub fn get_offer_sequence() -> u32 {
 }
 
 #[inline(always)]
+pub fn get_condition() -> Condition {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 32]; // Enough to hold the largest field, which is a memo.
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_CONDITION);
+    }
+
+    buffer.into()
+}
+
+// TODO: credential IDS
+#[inline(always)]
+pub fn get_fulfillment() -> Fulfillment {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 256]; // Enough to hold the largest field, which is a memo.
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_FULFILLMENT);
+    }
+
+    buffer.into()
+}
+
+#[inline(always)]
 fn get_u32_field(field_code: i32) -> u32 {
     // 1. Allocate a buffer on the stack
     let buffer = [0u8; 4]; // Enough to hold an u32
 
     // 2. Call the actual host function with a pointer to the above array.
     unsafe {
-        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
-        // host function for proper logging.
-        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
     }
 
     u32::from_be_bytes(buffer)
@@ -126,13 +161,39 @@ fn get_hash_256_field(field_code: i32) -> Hash256 {
 
     // 2. Call the actual host function with a pointer to the above array.
     unsafe {
-        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
-        // host function for proper logging.
-        host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
     }
 
     // 3. Return the transactionId as a Hash256.
     buffer.into()
+}
+
+#[inline(always)]
+fn get_public_key_field(field_code: i32) -> PublicKey {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 33]; // Enough to hold the largest field, which is a memo.
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+    }
+
+    buffer.into()
+}
+
+#[inline(always)]
+fn get_blob_field(field_code: i32) -> Blob {
+    // 1. Allocate a buffer on the stack
+    let buffer = [0u8; 1024]; // Enough to hold the largest field, which is a memo.
+
+    // 2. Call the actual host function with a pointer to the above array.
+    unsafe {
+        let len = get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+        Blob {
+            data: buffer,
+            len: len as usize,
+        }
+    }
 }
 
 #[inline(always)]
@@ -141,10 +202,8 @@ fn get_account_id_field(field_code: i32) -> AccountID {
     let buffer = [0x00; 20]; // Allocate memory to read into.
 
     unsafe {
-        // Pass pointer to the start of our stack buffer (and the number of bytes copied) to the
-        // host function for proper logging.
         // 2. Call the actual host function with a pointer to the above array.
-        let result_code = host::get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
+        let result_code = get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), field_code);
 
         // 3. Check the result code from the host
         //    (This requires the host to return meaningful codes!)

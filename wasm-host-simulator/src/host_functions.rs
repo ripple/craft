@@ -1,4 +1,4 @@
-use crate::types::core::{ApplyContext, Transaction};
+use crate::types::core::{ApplyContext, CommonFields, EscrowFinish};
 use crate::types::wrappers::AmountWrapper;
 use log::{debug, error};
 use wasmedge_sdk::error::CoreExecutionError;
@@ -8,29 +8,46 @@ use xrpl_std_lib::core::amount::xrp_amount::XrpAmount;
 use xrpl_std_lib::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std_lib::core::error_codes::OUT_OF_BOUNDS;
 use xrpl_std_lib::core::field_codes::{
-    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_FEE, SF_FLAGS, SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE,
-    SF_OWNER, SF_SEQUENCE, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE,
+    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT, SF_LAST_LEDGER_SEQUENCE,
+    SF_NETWORK_ID, SF_OFFER_SEQUENCE, SF_OWNER, SF_SEQUENCE, SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE,
+    SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
-use xrpl_std_lib::core::types::{Hash256, TransactionType};
+use xrpl_std_lib::core::types::blob::{Blob, EMPTY_BLOB};
+use xrpl_std_lib::core::types::credentials::{CredentialID, CredentialIDs};
+use xrpl_std_lib::core::types::crypto_condition::{Condition, Fulfillment};
+use xrpl_std_lib::core::types::hash_256::Hash256;
+use xrpl_std_lib::core::types::public_key::PublicKey;
+use xrpl_std_lib::core::types::transaction_type::TransactionType;
 // NOTE: This file emulates a host by implementing expected host functions. These implementations
 // are wired into the WASM VM from the main.rs, and expect to be called by that code only.
 
-const DEFAULT_TX: Transaction = Transaction {
-    transaction_id: Hash256([0xFF; 32]),
-    account_id: ACCOUNT_ONE,
-    transaction_type: TransactionType::EscrowFinish,
-    fee: Amount::Xrp(XrpAmount(12)),
-    sequence: 1_000_001,
-    account_txn_id: Hash256([0xDD; 32]),
-    flags: 1,
-    last_ledger_sequence: 999_999,
-    network_id: 2,
-    source_tag: 37,
-    ticket_sequence: 99,
-
-    owner: ACCOUNT_ZERO,
-    offer_sequence: 999_998,
-};
+fn get_default_escrow_finish() -> EscrowFinish {
+    EscrowFinish {
+        common_fields: CommonFields {
+            transaction_id: Hash256([0xFF; 32]),
+            account_id: ACCOUNT_ONE,
+            transaction_type: TransactionType::EscrowFinish,
+            fee: Amount::Xrp(XrpAmount(12)),
+            sequence: 1_000_001,
+            account_txn_id: Some(Hash256([0xDD; 32])),
+            flags: 1,
+            last_ledger_sequence: Some(999_999),
+            network_id: Some(2),
+            source_tag: Some(37),
+            signing_pub_key: Some(PublicKey([0xED; 33])),
+            ticket_sequence: Some(99),
+            txn_signature: Some(Blob {
+                data: [0xAA; 1024],
+                len: 10,
+            }),
+        },
+        owner: ACCOUNT_ZERO,
+        offer_sequence: 999_998,
+        condition: Some(Condition([0x33; 32])),
+        fulfillment: Some(Fulfillment([0x21; 256])),
+        credential_ids: Some(CredentialIDs::new(&[CredentialID([0x01; 256])])),
+    }
+}
 
 /// Given a pointer to memory in WASM, writes the current EscrowFinish transactions `transactionId`
 /// into WASM guest memory using a supplied pointer passed from the user's program.
@@ -41,7 +58,9 @@ pub fn get_tx_hash(
     inputs: Vec<WasmValue>,
 ) -> Result<Vec<WasmValue>, CoreError> {
     // This block simulates a Transaction
-    let apply_ctx = ApplyContext { tx: DEFAULT_TX };
+    let apply_ctx = ApplyContext {
+        tx: get_default_escrow_finish(),
+    };
 
     // check the number of inputs
     if inputs.len() != 1 {
@@ -70,7 +89,7 @@ pub fn get_tx_hash(
     debug!("memory.size (pages): {}", memory.size());
 
     // 3. Get Transaction ID (Matches C++ logic)
-    let tx_id: Hash256 = apply_ctx.tx.transaction_id;
+    let tx_id: Hash256 = apply_ctx.tx.common_fields.transaction_id;
     // match write!(writer, "{:02X}", byte) {
     // info!("Simulated tx_id from apply_ctx: {:02X}", tx_id);
 
@@ -135,7 +154,9 @@ pub fn get_current_escrow_finish_field(
     inputs: Vec<WasmValue>,
 ) -> Result<Vec<WasmValue>, CoreError> {
     // This block simulates a Transaction
-    let apply_ctx = ApplyContext { tx: DEFAULT_TX };
+    let apply_ctx = ApplyContext {
+        tx: get_default_escrow_finish(),
+    };
 
     // check the number of inputs
     if inputs.len() != 3 {
@@ -244,52 +265,82 @@ pub fn get_current_escrow_finish_field(
         }
     }
 
-    Ok(vec![WasmValue::from_i64(guest_write_len as i64)])
+    Ok(vec![WasmValue::from_i64(data_to_write_len as i64)])
 }
 
-fn get_field_bytes(tx: Transaction, field_code: i32) -> Result<Vec<u8>, CoreError> {
+fn get_field_bytes(tx: EscrowFinish, field_code: i32) -> Result<Vec<u8>, CoreError> {
     match field_code {
         SF_ACCOUNT => {
-            let account = tx.account_id.0;
+            let account = tx.common_fields.account_id.0;
             debug!("AccountID: {}", hex::encode(account));
             Ok(account.clone().into())
         }
         SF_TRANSACTION_TYPE => {
-            let tx_type: TransactionType = tx.transaction_type;
+            let tx_type: TransactionType = tx.common_fields.transaction_type;
             let vec: Vec<u8> = tx_type.into();
             debug!("TransactionType: {}", hex::encode(&vec)); // Add this
             assert_eq!(vec.len(), 2);
             Ok(vec)
         }
         SF_FEE => {
-            let fee = tx.fee;
+            let fee = tx.common_fields.fee;
             let fee_wrapper = AmountWrapper(fee);
             let vec: Vec<u8> = fee_wrapper.into();
             Ok(vec)
         }
         SF_SEQUENCE => {
-            let sequence = tx.sequence;
+            let sequence = tx.common_fields.sequence;
             let vec: Vec<u8> = sequence.to_be_bytes().to_vec();
             Ok(vec)
         }
-        SF_FLAGS => Ok(tx.flags.to_be_bytes().to_vec()),
-        SF_LAST_LEDGER_SEQUENCE => Ok(tx.last_ledger_sequence.to_be_bytes().to_vec()),
-        SF_NETWORK_ID => Ok(tx.network_id.to_be_bytes().to_vec()),
-        SF_SOURCE_TAG => Ok(tx.source_tag.to_be_bytes().to_vec()),
-        SF_TICKET_SEQUENCE => Ok(tx.ticket_sequence.to_be_bytes().to_vec()),
-        SF_ACCOUNT_TXN_ID => Ok(tx.account_txn_id.0.to_vec()),
-
+        SF_FLAGS => Ok(tx.common_fields.flags.to_be_bytes().to_vec()),
+        SF_LAST_LEDGER_SEQUENCE => match tx.common_fields.last_ledger_sequence {
+            Some(last_ledger_sequence) => Ok(last_ledger_sequence.to_be_bytes().to_vec()),
+            None => Ok(vec![0]),
+        },
+        SF_NETWORK_ID => match tx.common_fields.network_id {
+            Some(network_id) => Ok(network_id.to_be_bytes().to_vec()),
+            None => Ok(vec![0]),
+        },
+        SF_SOURCE_TAG => match tx.common_fields.source_tag {
+            Some(source_tag) => Ok(source_tag.to_be_bytes().to_vec()),
+            None => Ok(vec![0]),
+        },
+        SF_SIGNING_PUB_KEY => match tx.common_fields.signing_pub_key {
+            Some(signing_pub_key) => Ok(signing_pub_key.0.to_vec()),
+            None => Ok(vec![0]),
+        },
+        SF_TICKET_SEQUENCE => match tx.common_fields.ticket_sequence {
+            Some(ticket_sequence) => Ok(ticket_sequence.to_be_bytes().to_vec()),
+            None => Ok(vec![0]),
+        },
+        SF_TXN_SIGNATURE => {
+            let len = tx.common_fields.txn_signature.unwrap_or(EMPTY_BLOB).len;
+            Ok(tx.common_fields.txn_signature.unwrap_or(EMPTY_BLOB).data.to_vec()[0..len].to_vec())
+        }
+        SF_ACCOUNT_TXN_ID => match tx.common_fields.account_txn_id {
+            Some(account_txn_id) => Ok(account_txn_id.0.to_vec()),
+            None => Ok(vec![0]),
+        },
         SF_OWNER => {
             let owner = tx.owner.0;
             debug!("Owner: {}", hex::encode(owner));
             Ok(owner.clone().into())
         }
         SF_OFFER_SEQUENCE => Ok(tx.offer_sequence.to_be_bytes().to_vec()),
-        // SF_HASH => {
-        //     let tx_type: TransactionType = tx.;
-        //     let vec: Vec<u8> = tx_type.into();
-        //     assert_eq!(vec.len(), 2);
-        //     Ok(vec)
+        SF_CONDITION => match tx.condition {
+            Some(condition) => Ok(condition.0.to_vec()),
+            None => Ok(vec![0]),
+        },
+        SF_FULFILLMENT => match tx.fulfillment {
+            Some(fulfillment) => Ok(fulfillment.0.to_vec()),
+            None => Ok(vec![0]),
+        },
+        // SF_CREDENTIAL_IDS => {
+        //     match tx.credential_ids {
+        //         Some(credential_ids) => Ok(credential_ids.to_vec()),
+        //         None => Ok(vec![0]),
+        //     },
         // }
         _ => Err(CoreError::Execution(CoreExecutionError::UndefinedElement)),
     }

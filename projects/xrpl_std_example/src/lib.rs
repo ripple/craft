@@ -1,7 +1,12 @@
 use xrpl_std_lib::core::amount::Amount;
 use xrpl_std_lib::core::amount::xrp_amount::XrpAmount;
 use xrpl_std_lib::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
-use xrpl_std_lib::core::types::{AccountID, Hash256, TransactionType};
+use xrpl_std_lib::core::types::account_id::AccountID;
+use xrpl_std_lib::core::types::blob::Blob;
+use xrpl_std_lib::core::types::crypto_condition::{Condition, Fulfillment};
+use xrpl_std_lib::core::types::hash_256::Hash256;
+use xrpl_std_lib::core::types::public_key::PublicKey;
+use xrpl_std_lib::core::types::transaction_type::TransactionType;
 use xrpl_std_lib::host;
 use xrpl_std_lib::host::trace::DataRepr;
 use {
@@ -35,6 +40,14 @@ pub extern "C" fn ready() -> bool {
     let _ = trace_msg("{");
     let _ = trace_msg("  -- EscrowFinish Common Fields");
 
+    // Questions:
+    // 1. What if we don't want to actually draw the bytes of a field across the boundary? It would
+    // be nice to get a "handle" to a field. E.g., 
+    // It would be nice to trace fields without actually copying bytes across the WASM boundary.
+    // WASM needs to be able to do things with bytes (e.g., eq, less-than, etc.
+    // Things like CredentialIDs require a way to access them without loading/copying the entire
+    // array of IDS. E.g., just get the 5th one.
+    
     // Field: TransactionID
     let escrow_finish_tx_id: Hash256 = escrow_finish::get_tx_id();
     let _ = trace_msg_with_data("  EscrowFinish TxId:", &escrow_finish_tx_id.0, DataRepr::AsHex);
@@ -85,22 +98,26 @@ pub extern "C" fn ready() -> bool {
     let source_tag: u32 = escrow_finish::get_source_tag();
     let _ = trace_num("  SourceTag:", source_tag as i64);
 
+    // Field: SigningPubKey
+    let signing_pub_key: PublicKey = escrow_finish::get_signing_pub_key();
+    let _ = trace_msg_with_data("  SigningPubKey:", &signing_pub_key.0, DataRepr::AsHex);
+
     // Field: TicketSequence
     let ticket_sequence: u32 = escrow_finish::get_ticket_sequence();
     let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
 
     // TODO: Memos (Array)
     // TODO: Signers (Array)
-    // TODO: SigningPubKey (Blob)
-    // TODO: TxnSignature  (Blob)
+
+    let txn_signature: Blob = escrow_finish::get_txn_signature();
+    let sliced_data_len: usize = txn_signature.len;
+    let sliced_data: &[u8] = &txn_signature.data[..sliced_data_len];
+    let _ = trace_msg_with_data("  TxnSignature:", &sliced_data, DataRepr::AsHex);
 
     // ########################################
     // Step #2: Access & Emit Specific fields from an EscrowFinish
     // ########################################
     let _ = trace_msg("  -- EscrowFinish Fields");
-    // TODO: Condition (Blob)
-    // TODO: CredentialIDs (Array of Strings)
-    // TODO: Fulfillment (Blob)
 
     // Field: Account
     let owner: AccountID = escrow_finish::get_owner();
@@ -116,9 +133,21 @@ pub extern "C" fn ready() -> bool {
     let offer_sequence: u32 = escrow_finish::get_offer_sequence();
     let _ = trace_num("  OfferSequence:", offer_sequence as i64);
 
+    // Field: Condition
+    let condition: Condition = escrow_finish::get_condition();
+    let _ = trace_msg_with_data("  Condition:", &condition.0, DataRepr::AsHex);
+
+    // TODO: CredentialIDs (Array of Strings)
+
+    // Field: Fulfillment
+    let fulfillment: Fulfillment = escrow_finish::get_fulfillment();
+    let _ = trace_msg_with_data("  Fulfillment:", &fulfillment.0, DataRepr::AsHex);
+
     // Step #2: Get fields from the Escrow being finished....
+    // TODO:
 
     // Step #3: Get arbitrary fields from an AccountRoot object.
+    // TODO:
     // let sender = get_tx_account_id();
     // let dest_balance = get_account_balance(&dest);
     // let escrow_data = get_current_escrow_data();
@@ -126,6 +155,7 @@ pub extern "C" fn ready() -> bool {
     // let threshold_balance = ed_str.parse::<u64>().unwrap();
     // let pl_time = host::getParentLedgerTime();
     // let e_time = get_current_escrow_finish_after();
+
     let _ = trace_msg("}");
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
     let _ = trace_msg("$$$$$ WASM EXECUTION COMPLETE $$$$$");

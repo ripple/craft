@@ -1,4 +1,4 @@
-use crate::core::types::AccountID;
+use crate::core::types::account_id::AccountID;
 
 pub const ACCOUNT_ZERO: AccountID = AccountID([0u8; 20]);
 

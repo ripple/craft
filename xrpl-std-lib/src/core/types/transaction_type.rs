@@ -1,22 +1,5 @@
 use alloc::vec::Vec;
 
-/// Represents a 256-bit hash (like transaction ID)
-#[repr(C)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Hash256(pub [u8; 32]);
-
-// Implement From<[u8; 32]> to create Hash256 from the array type
-impl From<[u8; 32]> for Hash256 {
-    fn from(bytes: [u8; 32]) -> Self {
-        Self(bytes) // Access private field legally here
-    }
-}
-
-// #[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
-pub struct AccountID(pub [u8; 20]);
-
 /// The type of any given XRPL transaction
 #[repr(i16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

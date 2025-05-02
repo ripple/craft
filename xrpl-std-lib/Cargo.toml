@@ -8,9 +8,4 @@ version = "0.0.1"
 [lib]
 crate-type = ["lib"]
 
-[features]
-default = [] # Optional: define default features if any
-# Add your new feature here:
-mock_host = []
 [dependencies]
-log = "0.4.27"

@@ -296,6 +296,7 @@ async function test() {
     Account: wallet.address,
     Owner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     OfferSequence: sequence,
+    ComputationAllowance: "1000000",
   }, wallet.seed)
   // console.log(JSON.stringify(response3.result, null, 4))
 
@@ -304,6 +305,7 @@ async function test() {
     Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     Owner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     OfferSequence: sequence,
+    ComputationAllowance: "1000000",
   }, seed)
 
   await client.disconnect()

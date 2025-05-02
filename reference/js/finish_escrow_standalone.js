@@ -54,6 +54,7 @@ async function finishEscrow() {
       Account: account,
       Owner: owner,
       OfferSequence: parseInt(offerSequence),
+      ComputationAllowance: "1000000",
     }
 
     console.log("Submitting EscrowFinish transaction...")

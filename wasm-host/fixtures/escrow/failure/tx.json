@@ -1,5 +1,6 @@
 {
     "Account" : "rBYn44yhs8cf8G2t79XMUHYQpp2ayhqwcw",
+    "ComputationAllowance": "1000000",
     "Fee" : "10",
     "Flags" : 2147483648,
     "OfferSequence" : 2,

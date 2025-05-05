@@ -42,7 +42,7 @@ pub fn get_transaction_type() -> TransactionType {
 
     // 2. Call the actual host function with a pointer to the above array.
     unsafe {
-        get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_TRANSACTION_TYPE);
+        let bytes_written = get_current_escrow_finish_field(buffer.as_ptr(), buffer.len(), SF_TRANSACTION_TYPE);
     }
 
     i16::from_be_bytes(buffer).into()
@@ -106,6 +106,8 @@ pub fn get_ticket_sequence() -> u32 {
 pub fn get_txn_signature() -> Blob {
     get_blob_field(SF_TXN_SIGNATURE)
 }
+
+#[inline(always)]
 pub fn get_owner() -> AccountID {
     get_account_id_field(SF_OWNER)
 }
@@ -223,6 +225,6 @@ fn get_account_id_field(field_code: i32) -> AccountID {
     }
 
     // 4. Construct the AccountID from the buffer filled by the host
-    let buffer_copy = buffer.clone();
+    let buffer_copy = buffer;
     AccountID(buffer_copy) // Or AccountID::from_bytes(&buffer) etc.
 }

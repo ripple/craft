@@ -218,7 +218,6 @@ pub fn get_current_escrow_finish_field(
     }
 
     // Write into WASM Memory
-    // let data_to_write: [u8; 20] = apply_ctx.tx.account_id.0.clone();
     let data_to_write: Vec<u8> = get_field_bytes(apply_ctx.tx, field_code)?;
     // This is unsafe if an emulated VM supports 128-bit addressing
     let data_to_write_len = data_to_write.as_slice().len(); //as u64 as i64;

@@ -1,3 +1,8 @@
+const NEXT_AVAIALBE_SLOT_NUM: u8 = 0u8;
+const CUR_TX_SLOT_NUM: u8 = 201u8;
+const WASM_CONTEXT_SLOT_NUM: u8 = 202u8;
+const CUR_LEDGER_INFO_SLOT_NUM: u8 = 203u8;
+
 // Defines the host functions advertised by the xrpld host.
 // #[cfg(target_arch = "wasm32")]
 #[link(wasm_import_module = "host")]
@@ -7,6 +12,17 @@ unsafe extern "C" {
     // Definitions
     // #############################
 
+    // * `Slot`: Reserved memory in the host (sort of like a register) that WASM developers can
+    // store ledger data into. Slot numbers are 1 byte (u8), which means valid values are between
+    // `0` and `255`.
+    //  -- Slot `0` is reserved to indicate the "next available slot";
+    //  -- Slot `1 - 200` is available to the user;
+    //  -- Slot `201` is reserved for `CURRENT_TRANSACTION`;
+    //  -- Slot 202 is reserved for the `WASM_CONTEXT` (i.e., the ledger object that the WASM is
+    // attached to).
+    //  -- Slot 203 is reserved for current ledger data.
+    // -- All remaining slots up to 255 are reserved.
+    // RULE: Can only slot a full ledger-object; to get at a field, must use a locator
     // *Slotted Data*: Any data in rippled that can be placed into one of 255 available "slots" in
     //  rippled memory. Slots allow any particular data to be easily be referenced from WASM code.
     //  Currently, slots can hold
@@ -51,84 +67,15 @@ unsafe extern "C" {
     ///     On success (`status_code == 0`), this value will be `34`.
     pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i64;
 
-    // [YES] Data Access Group #4: Ledger Object (by keylet)
-    // [NO] Data Access Group #1: Originating TX --> Not needed, see `otxn` Category.
-    // [NO] Data Access Group #2: Ledger Object with _this_ WASM contract --> See `context_keylet`
-    // [NO] Data Access Group #3: Info about current ledger --> Not needed, see `utils`
+    // [LEDGER] [YES] Data Access Group #4: Ledger Object (by keylet)
+    // [CURRENT_TRANSACTION/TX/TRIGGER] [YES/FIXED SLOT] Data Access Group #1: Originating TX --> Not needed, see `otxn` Category.
+    // [CONTEXT] [YES/FIXED SLOT] Data Access Group #2: Ledger Object with _this_ WASM contract --> See `context_keylet`
+    // [LEDGER_INFO] [NO] Data Access Group #3: Info about current ledger --> Not needed, see `utils`
 
     // ####################################
     // Host Function Category: SLOTTED DATA
+    // (Transactions + Ledger Objects)
     // ####################################
-
-    /// Locate an object based on its keylet and place it into the specified slot number.
-    ///
-    /// # Parameters
-    ///
-    /// * `keylet_ptr`: A pointer to a 34-byte array representing a Keylet.
-    /// * `slot_num`: An index representing a slot number. Valid values are between 1 and 256.
-    ///
-    /// # Returns
-    ///
-    /// Returns a tuple `(i32, i64)`:
-    /// * `_0` (Status Code): An `i32` indicating the result of the operation.
-    ///     A value of `0` signifies success. Non-zero values indicate an error
-    ///     (e.g., incorrect buffer sizes).
-    /// * `_1` (Slot Number): The slot number where the value represented by the Keylet is stored.
-    ///
-    /// # Errors
-    ///
-    /// TODO: Define Error Codes.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use xrpl_std_lib::core::constants::ACCOUNT_ONE;
-    /// use xrpl_std_lib::core::types::account_id::AccountID;
-    /// use xrpl_std_lib::host::{slot_set_by_num};
-    /// use xrpl_std_lib::utils::keylet::{account_keylet, Keylet};
-    ///
-    /// let account_id:AccountID = ACCOUNT_ONE;
-    /// let account_keylet: Keylet = account_keylet(account_id);
-    /// let account_slot:i64 = unsafe {
-    ///     slot_set_by_num(account_keylet.0.as_ptr() as i32, 1).1
-    /// };
-    /// ```
-    pub fn slot_set_by_num(keylet_ptr: i32, slot_num: i32) -> (i32, i64);
-
-    /// Locate an object based on its keylet and place it into the next available slot.
-    ///
-    /// # Parameters
-    ///
-    /// * `keylet_ptr`: A pointer to a 34-byte array representing a Keylet.
-    ///
-    /// # Returns
-    ///
-    /// Returns a tuple `(i32, i64)`:
-    /// * `_0` (Status Code): An `i32` indicating the result of the operation.
-    ///     A value of `0` signifies success. Non-zero values indicate an error
-    ///     (e.g., incorrect buffer sizes).
-    /// * `_1` (Slot Number): The slot number where the value represented by the Keylet is stored.
-    ///
-    /// # Errors
-    ///
-    /// TODO: Define Error Codes.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use xrpl_std_lib::core::constants::ACCOUNT_ONE;
-    /// use xrpl_std_lib::core::types::account_id::AccountID;
-    /// use xrpl_std_lib::host::{slot_set};
-    /// use xrpl_std_lib::utils::keylet::{account_keylet, Keylet};
-    ///
-    /// let account_id:AccountID = ACCOUNT_ONE;
-    /// let account_keylet: Keylet = account_keylet(account_id);
-    /// let account_slot:i64 = unsafe {
-    ///     slot_set(account_keylet.0.as_ptr() as i32).1
-    /// };
-    /// ```
-    // TODO: Consider condensing this into 1 host function, and using sugar to twiddle between 0 (for next avialble slot) and positive num for named slot).
-    pub fn slot_set(keylet_ptr: i32) -> (i32, i64);
 
     /// Read a field from a slotted object using a locator.
     ///
@@ -197,30 +144,65 @@ unsafe extern "C" {
     /// };
     /// ```
     pub fn slot_read_field(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i32, i64);
+
+    // Mayukha's WASM allocation style
+    // return two values: error_code & pointer to the result.
+    // pub fn get_field(locator_ptr: i32, locator_len: i32) -> (i32, *const u8/i64);
+    // TODO: Can we allocate only e.g., 8 bytes for an amount (or do we need a whole page each time)
+    
+    // ##############################
+    // Host Function Category: LEDGER
+    // ##############################
+
+    /// Locate an object based on its keylet and place it into the specified slot number.
+    ///
+    /// # Parameters
+    ///
+    /// * `keylet_ptr`: A pointer to a 34-byte array representing a Keylet.
+    /// * `slot_num`: An index representing a slot number. Valid values are between 1 and 256.
+    ///
+    /// # Returns
+    ///
+    /// Returns a tuple `(i32, i64)`:
+    /// * `_0` (Status Code): An `i32` indicating the result of the operation.
+    ///     A value of `0` signifies success. Non-zero values indicate an error
+    ///     (e.g., incorrect buffer sizes).
+    /// * `_1` (Slot Number): The slot number where the value represented by the Keylet is stored.
+    ///
+    /// # Errors
+    ///
+    /// TODO: Define Error Codes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use xrpl_std_lib::core::constants::ACCOUNT_ONE;
+    /// use xrpl_std_lib::core::types::account_id::AccountID;
+    /// use xrpl_std_lib::host::{slot_set_by_num};
+    /// use xrpl_std_lib::utils::keylet::{account_keylet, Keylet};
+    ///
+    /// let account_id:AccountID = ACCOUNT_ONE;
+    /// let account_keylet: Keylet = account_keylet(account_id);
+    /// let account_slot:i64 = unsafe {
+    ///     slot_set_by_num(account_keylet.0.as_ptr() as i32, 1).1
+    /// };
+    /// ```
+    pub fn ledger_slot_set(keylet_ptr: i32, slot_num: i32) -> (i32, i64);
+    pub fn slot_set(locator_ptr: i32, slot_num: i32) -> (i32, i64);
     
     // #######################################
-    // Host Function Category: CONTEXTUAL DATA
+    // Host Function Category: CURRENT_TRANSACTION
     // #######################################
 
-    /// Retreive the 34-byte Keylet of the object this WASM contract is attached to. Could be an
-    /// `AccountRoot` for general smart contracts, or an `Escrow` for Smart Escrows, etc. Using
-    /// this Keylet, the object can then be slotted and anything inside can be located.
-    ///
-    /// `keylet_ptr`:  A pointer to a byte array of length 34 (for storing a Keylet).
-    pub fn context_keylet(keylet_ptr: i32) -> (i32, i64);
-
-    // #######################################
-    // Host Function Category: ORIGINATING TXN
-    // #######################################
-
-    /// Slot the originating transaction (e.g., `EscrowFinish` into the next available slot.
-    pub fn otxn_slot_set() -> (i32, i64);
-
-    /// Slot the originating transaction (e.g., `EscrowFinish` into the specified slot. 
-    // TODO: Consider condensing this into 1 host function, and using sugar to twiddle between 0 (for next avialble slot) and positive num for named slot).
-    pub fn otxn_slot_set_by_num(slot_num: i32) -> (i32, i64); 
-
-    pub fn otxn_read_field(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i32, i64);
+    // No host functions needed because the current transaction that triggered the executing of 
+    // any WASM is always available in a predefined, reserved slot number.
+    
+    // ###########################################
+    // Host Function Category: WASM_CONTEXT
+    // ###########################################
+    
+    // No host functions needed because the WASM context ledger object is always available in a 
+    // predefined, reserved slot number.
 
     // #############################
     // Host Function Category: KEYLET UTILS
@@ -297,16 +279,18 @@ unsafe extern "C" {
 // #############################
 
 // Functions for each Keylet.
+// pub fn account_keylet(account_id:AccountID);
+// ... --> 26
 // Structs for various types of object (e.g., Hash256, AccountID, etc).
 // Functions for packing and unpacking a Locator (if we keep locators).
 
 // 1. Advantages of Locator
-    // 1. Uses fewer slots to find a field
-    // 2. Reduces # of host functions to deal with slots (i.e., no `slot_subarray`; no `slot_subfield`)
+// 1. Uses fewer slots to find a field
+// 2. Reduces # of host functions to deal with slots (i.e., no `slot_subarray`; no `slot_subfield`)
 // 2. Disadvantages of Locator
-    // 1. Any locator is always 64-bytes, so these bytes get sent across the WASM boundary on every call.
-    // 2. Mental overhead of dealing with slots + locator concepts vs. only slots
-    // 3. # of lines to read one field is slightly more (1 line more) than hooks slot API.
+// 1. Any locator is always 64-bytes, so these bytes get sent across the WASM boundary on every call.
+// 2. Mental overhead of dealing with slots + locator concepts vs. only slots
+// 3. # of lines to read one field is slightly more (1 line more) than hooks slot API.
 
 // #############################
 // Testing this ABI Rust

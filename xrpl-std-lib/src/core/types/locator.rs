@@ -1,25 +1,29 @@
 /// TODO: Cleanup docs!
 /// TODO: Add unit tests for packing!
-// Locator1: `[1u8][1u8][1u8][0u32]`
-// Locator2 (with nested values): `[1u8][1u8][1u8][0u32]...[1u8][0u32]...[1u8][0u32]`
-// 
-// * Byte0: Datasource type (Possibilities: Current TX; Current Ledger Object; Slotted LedgerObject; Metadata, Locator)
-// * Byte1
-// * For Slotted Objects: slot_num (0 - 255)
-// * Other objects: Ignore
-// * Byte2 (Locator Type)
-// * 0 for `sfield`
-// * 1 for `array index`
-// * Byte3 - 7: `field_code` // e.g., "sfAccount" // 524289
+// Locator2 (with nested values): `[1u8]...[1u8][0u32]...[1u8][0u32]...[1u8][0u32]`
+//
+// * Byte0: slot_num
+// * For each Locator
+// * Byte1 (Locator Type)
+// *   -- 0 for `sfield`
+// *   -- 1 for `array index`
+// TODO: Could we remove this byte and pick 0 - 1024 as an index, and everything else as an sField
+// Alt: Reserve 8 MSB of the field code as a field-picker (or fewer bytes)? Risky!
+// * Byte2 - 6: `field_code` // e.g., "sfAccount" // 524289
 const LOCATOR_BUFFER_SIZE: u8 = 64;
+
+/// A Locator may only pack this many levels deep in an object hierarchy (inclusive of first field)
+const MAX_DEPTH:u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
 
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by
 /// specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4
 /// bytes) or an `index` (4 bytes).  
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[repr(C)]
 pub struct Locator {
     // First packed value is 6 bytes; All nested/packed values are 5 bytes; so 64 bytes allows
     // 12 nested levels of access.
-    buffer: [u8; 64],
+    buffer: [u8; LOCATOR_BUFFER_SIZE as usize],
 
     /// An index into `buffer` where the next packing operation can be stored.
     cur_buffer_index: u8,

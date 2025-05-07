@@ -49,7 +49,7 @@ pub fn trace_msg_with_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Resul
 // /// Write an integer to the XRPLD trace log
 #[inline(always)]
 pub fn trace_num(msg: &str, number: i64) -> Result<i64> {
-    let res = unsafe { host::trace_num(msg.as_ptr() as u32, msg.len() as u32, number) };
+    let res = unsafe { host::trace_num(msg.as_ptr() as u32, msg.len(), number) };
 
     Result::Ok(res)
 }

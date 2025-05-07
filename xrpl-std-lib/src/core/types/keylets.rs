@@ -1,0 +1,1 @@
+pub struct AccountKeylet([u8; 34]);

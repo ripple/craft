@@ -174,7 +174,7 @@ pub fn get_current_escrow_finish_field(
     // println!("guest_write_ptr_u32: {}", guest_write_ptr_u32);
 
     let guest_write_len = if inputs[1].ty() == ValType::I32 {
-        inputs[1].to_i32()
+        inputs[1].to_i32() as usize
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
@@ -359,25 +359,25 @@ pub fn trace(
     }
 
     let msg_read_ptr = if input[0].ty() == ValType::I32 {
-        input[0].to_i32()
+        input[0].to_i32()  as u32
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
 
     let msg_read_len = if input[1].ty() == ValType::I32 {
-        input[1].to_i32()
+        input[1].to_i32() as usize
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
 
     let data_read_ptr = if input[2].ty() == ValType::I32 {
-        input[2].to_i32()
+        input[2].to_i32() as u32
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
 
     let data_read_len = if input[3].ty() == ValType::I32 {
-        input[3].to_i32()
+        input[3].to_i32() as usize
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
@@ -401,8 +401,8 @@ pub fn trace(
         msg_read_ptr, msg_read_len, data_read_ptr, data_read_len
     );
 
-    let message = read_utf8_from_wasm(_caller, msg_read_ptr, msg_read_len)?;
-    let data_string = read_hex_from_wasm(_caller, data_read_ptr, data_read_len, data_as_hex)?;
+    let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
+    let data_string = read_hex_from_wasm(_caller, data_read_ptr as i32, data_read_len as i32, data_as_hex)?;
     if data_read_len > 0 {
         // 5. Print the message (or use a proper logging framework).
         println!("WASM TRACE: {message} ({data_string} | {} data bytes)", data_read_len);
@@ -430,13 +430,13 @@ pub fn trace_num(
     }
 
     let msg_read_ptr = if input[0].ty() == ValType::I32 {
-        input[0].to_i32()
+        input[0].to_i32()  as u32
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
 
     let msg_read_len = if input[1].ty() == ValType::I32 {
-        input[1].to_i32()
+        input[1].to_i32() as usize
     } else {
         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
@@ -452,7 +452,7 @@ pub fn trace_num(
         msg_read_ptr, msg_read_len, number
     );
 
-    let message = read_utf8_from_wasm(_caller, msg_read_ptr, msg_read_len)?;
+    let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
     // 5. Print the message (or use a proper logging framework).
     println!("WASM TRACE: {message} {number}");
 

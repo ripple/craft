@@ -155,65 +155,7 @@ pub extern "C" fn ready() -> bool {
     // let threshold_balance = ed_str.parse::<u64>().unwrap();
     // let pl_time = host::getParentLedgerTime();
     // let e_time = get_current_escrow_finish_after();
-
-    // Types of objects WASM needs access to:
-    // # Special Access
-    // 1. Current transaction being processed (like `otxn` in hooks) --> Type: EscrowFinish
-    // 2. Current ledger object associated with WASM code --> Type: Escrow (#2)
-    // # Ledger Objects
-    // 1. Ledger objects (by Keylet) --> High Gas (?) [Limited to 256 in hooks]
-    // # Ledger Metadata/Header Info
-    // 1. Ledger headers (or: Specific useful values like https://xrpl-hooks.readme.io/reference/ledger_seq)
-
-    // (Not Yet, but Later)
-    // 1. Emitted transaction (maybe)
-
-    // # XRPL Programmabilty Data Pipeline
-    /// returns a slot # (renamed from `fetch`) from 3 to 255
-    /// fn slot(keylet_ptr: i32, keylet_len: i32) -> i32
-    // TODO: This returns a slot # from 0 to 255 (in Hashtable in rippled).
-
-    /// return an i32 and an i64. i32 is error code; i64 is the data len for data.
-    /// i64 is value when returning numbers, in this case, output_len is 0.
-    /// [NO] fn read(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i64)
-
-    // Peng: Have four different groups of function for retrieving data.
-    // 1: Originating TX
-    // 2. Associated Ledger Object
-    // 3. Info about current ledger.
-    // 4. Ledger Object (by keylet)
-    // For #1,2,3 --> No datasource required.
-    // For #4, need a register number (0,1,2 are pre-allocated above; from 4 - 256 it's up to WASM to slot these).
-    // Datasource is a register number.
-    // A. Call fetch with a keylet; this returns a "slot" to the programmer.
-    // B.
-
-    /// fn read_by_keylet(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i64)
-    /// fn read_otxn(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i64)
-    /// fn read_hosting_lob(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i64)
-    /// [NO] fn read_ledger_info(locator_ptr: i32, locator_len: i32, output_ptr: i32, output_len: i32) -> (i64)
-    /// fn ledger_hash
-    /// fn ledger_last_time
-    /// ...etc.
-
-    ///
-    /// let status:i32 = fetch(ptr,len);
-    /// const locator:string = "[keylet][sField/index]"; --> Max 256 keylets in any single contract enforced in rippled
-    /// const output = [u8;64];
-    /// let escrowAmountHandle = read(&locator, locator.len, &output, &output.len);
-
-    /// handle(locator_ptr: i32, locator_len: i32);
-    ///
-    /// let locator:string = "keylet1:sfAccount";
-    /// let handle:Handle = host::handle(&locator;locator.len);
-    /// host::trace(handle)
-    /// host::equals(handle1,handle2) --> true/false
-    /// let field = host::get_field(handle, sField)
-    // Access one field in Locator (Escrow2.Account)
-    // 33 bytes --> datasource (ledger, tx, keylet etc)
-    // 1 byte (locator field type) -> index or sfield
-    // 4 bytes (sfield or index)
-    // --> 38 bytes
+    
     let _ = trace_msg("}");
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
     let _ = trace_msg("$$$$$ WASM EXECUTION COMPLETE $$$$$");

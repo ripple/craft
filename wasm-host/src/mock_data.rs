@@ -2,17 +2,25 @@
 
 use std::collections::HashMap;
 
-type Bytes = Vec<u8>;
-type Hash = Vec<u8>; //[u8; 64]; //hex of 32 bytes //[u8; 32];
+pub type Bytes = Vec<u8>;
+pub type Hash256 = Vec<u8>; //TODO use [u8; 32]
+pub type Keylet = Hash256;
 
+pub enum DataSource {
+    Tx,
+    LedgerHeader,
+    CurrentLedgerObj,
+    KeyletLedgerObj(Hash256),
+}
 
 #[derive(Debug)]
 pub struct MockData {
     tx: serde_json::Value,
     hosting_ledger_obj: serde_json::Value,
     header: serde_json::Value,
-    ledger: HashMap<Hash, serde_json::Value>,
+    ledger: HashMap<Keylet, serde_json::Value>,
     field_names: HashMap<i32, String>,
+
 }
 
 impl MockData {
@@ -27,7 +35,60 @@ impl MockData {
         let header = serde_json::from_str(header_str).expect("Ledger header JSON bad formatted");
         let ledger = serde_json::from_str(ledger_str).expect("Ledger JSON bad formatted");
         let field_names = polulate_field_names();
+
         MockData { tx, hosting_ledger_obj, header, ledger, field_names }
+    }
+
+    pub fn obj_exist(&self, keylet: &Keylet) -> bool {
+        self.ledger.get(keylet).is_some()
+    }
+
+    #[inline]
+    pub fn get_field_name(&self, field_id: i32) -> Option<String> {
+        self.field_names.get(&field_id).cloned()
+    }
+
+    fn get_field_value(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<&serde_json::Value> {
+        let mut curr =
+            match source {
+                DataSource::Tx => { &self.tx },
+                DataSource::LedgerHeader => { &self.header },
+                DataSource::CurrentLedgerObj => { &self.hosting_ledger_obj },
+                DataSource::KeyletLedgerObj(obj_hash) => {
+                    self.ledger.get(&obj_hash)?
+                },
+            };
+        
+        for idx_field in idx_fields {
+            if curr.is_array() {
+                curr = curr.as_array().unwrap().get(idx_field as usize)?;
+            } else {
+                curr = curr.get(self.get_field_name(idx_field)?)?;
+            }            
+        }
+        Some(curr)
+    }
+    
+    pub fn get_field_bytes(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<Bytes> {
+        let value = self.get_field_value(source, idx_fields)?;
+        match value {
+            serde_json::Value::String(s) => {
+                Some(Bytes::from(s.as_bytes()))
+            },
+            serde_json::Value::Number(n) => {
+                Some(Bytes::from(n.to_string().as_bytes()))
+            },
+            _ => None
+        }
+    }
+
+    pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<usize> {
+        let value = self.get_field_value(source, idx_fields)?;
+        if value.is_array() {
+            Some(value.as_array()?.len())
+        } else {
+            None
+        }
     }
 }
 

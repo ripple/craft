@@ -1,6 +1,7 @@
 use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use crate::mock_data::{Hash256, MockData, Keylet, DataSource};
+use sha2::{Sha512, Digest};
 
 const LOCATOR_BUFFER_SIZE: usize = 64;
 const NUM_SLOTS: usize = 256;
@@ -11,7 +12,7 @@ pub enum HostError {
     InternalError = -1,
     FieldNotFound = -2,
     BufferTooSmall = -3,
-    NotArray = -4,
+    NoArray = -4,
     NotLeafField = -5,
     LocatorMalformed = -6,
     SlotOutRange = -7,
@@ -23,24 +24,25 @@ pub enum HostError {
 pub struct LocatorUnpacker {
     buffer: Vec<u8>,
     cur_buffer_index: usize,
-    packed_bytes: usize,
+    // packed_bytes: usize,
 }
 
 impl LocatorUnpacker {
-    pub fn from_bytes(buffer: Vec<u8>, packed_bytes: usize) -> Option<LocatorUnpacker> {
+    pub fn from_bytes(buffer: Vec<u8>) -> Option<LocatorUnpacker> {
+        let packed_bytes: usize = buffer.len();
         if packed_bytes > LOCATOR_BUFFER_SIZE || packed_bytes == 0 || packed_bytes % 4 != 0 {
             None
         } else {
             Some(LocatorUnpacker {
                 buffer,
                 cur_buffer_index: 0,
-                packed_bytes,
+                // packed_bytes,
             })
         }
     }
 
     pub fn unpack(&mut self) -> Option<i32> {
-        if self.cur_buffer_index + 4 > self.packed_bytes {
+        if self.cur_buffer_index + 4 > self.buffer.len() {
             return None;
         }
         let mut bytes: [u8; 4] = [0u8; 4];
@@ -50,8 +52,8 @@ impl LocatorUnpacker {
     }
 }
 
-pub fn unpack_locator(buffer: Vec<u8>, packed_bytes: usize) -> Result<Vec<i32>, HostError> {
-    let mut unpacker = LocatorUnpacker::from_bytes(buffer, packed_bytes)
+pub fn unpack_locator(buffer: Vec<u8>) -> Result<Vec<i32>, HostError> {
+    let mut unpacker = LocatorUnpacker::from_bytes(buffer)
         .ok_or(HostError::LocatorMalformed)?;
 
     let mut result = vec![];
@@ -109,6 +111,13 @@ impl DataProvider {
         Self::fill_buf(field_result, buf_cap)
     }
 
+    pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> i32 {
+        match self.data_source.get_array_len(source, idx_fields) {
+            None => { HostError::NoArray as i32 }
+            Some(len) => { len as i32 }
+        }
+    }
+
     pub fn get_ledger_sqn(&self, buf_cap: usize) -> (i32, Vec<u8>) {
         let field_result = self.data_source.get_ledger_sqn();
         Self::fill_buf(field_result, buf_cap)
@@ -124,6 +133,10 @@ impl DataProvider {
         Self::fill_buf(field_result, buf_cap)
     }
 
+    pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
+        self.data_source.set_current_ledger_obj_data(data);
+    }
+    
     pub fn fill_buf(field_result: Option<&serde_json::Value>, buf_cap: usize) -> (i32, Vec<u8>) {
         let mut buf = Vec::with_capacity(buf_cap);
         match field_result {
@@ -185,6 +198,62 @@ impl DataProvider {
         }
     }
 }
+#[repr(u16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LedgerNameSpace {
+    Account = b'a' as u16,
+    DirNode = b'd' as u16,
+    TrustLine = b'r' as u16,
+    Offer = b'o' as u16,
+    OwnerDir = b'O' as u16,
+    BookDir = b'B' as u16,
+    SkipList = b's' as u16,
+    Escrow = b'u' as u16,
+    Amendments = b'f' as u16,
+    FeeSettings = b'e' as u16,
+    Ticket = b'T' as u16,
+    SignerList = b'S' as u16,
+    XrpPaymentChannel = b'x' as u16,
+    Check = b'C' as u16,
+    DepositPreauth = b'p' as u16,
+    DepositPreauthCredentials = b'P' as u16,
+    NegativeUnl = b'N' as u16,
+    NftokenOffer = b'q' as u16,
+    NftokenBuyOffers = b'h' as u16,
+    NftokenSellOffers = b'i' as u16,
+    Amm = b'A' as u16,
+    Bridge = b'H' as u16,
+    XchainClaimId = b'Q' as u16,
+    XchainCreateAccountClaimId = b'K' as u16,
+    Did = b'I' as u16,
+    Oracle = b'R' as u16,
+    MptokenIssuance = b'~' as u16,
+    Mptoken = b't' as u16,
+    Credential = b'D' as u16,
+    PermissionedDomain = b'm' as u16,
+
+    #[deprecated]
+    Contract = b'c' as u16,
+    #[deprecated]
+    Generator = b'g' as u16,
+    #[deprecated]
+    Nickname = b'n' as u16,
+}
+
+pub fn sha512_half(data: &[u8]) -> Hash256 {
+    let mut hasher = Sha512::new();
+    hasher.update(&data);
+    let result = hasher.finalize();
+    result[..32].to_vec()
+}
+
+pub fn index_hash(space: LedgerNameSpace, args: &[u8]) -> Hash256 {
+    let mut data = Vec::with_capacity(2 + args.len());
+    data.extend_from_slice(&(space as u16).to_le_bytes());
+    data.extend_from_slice(args);
+    sha512_half(&data)
+}
+
 
 fn get_data(
     in_buf_ptr: i32,
@@ -344,239 +413,103 @@ pub fn get_ledger_obj_field(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+pub fn get_tx_nested_field(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+    let out_buf_ptr: i32 = _inputs[2].to_i32();
+    let out_buf_cap: i32 = _inputs[3].to_i32();
 
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+
+    let idx_fields: Vec<i32> = match unpack_locator(data) {
+        Ok(fields) => { fields }
+        Err(host_err) => { return Ok(vec![WasmValue::from_i32(host_err as i32)]) }
+    };
+
+    let dp_res = _data_provider.get_field_value(DataSource::Tx, idx_fields, out_buf_cap as usize);
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
 
 // pub fn get_tx_nested_field(locator_ptr: *const u8, locator_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 // pub fn get_current_ledger_obj_nested_field(locator_ptr: *const u8, locator_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 // pub fn get_ledger_obj_nested_field(slot: i32, locator_ptr: *const u8, locator_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-//
-// pub fn get_tx_array_len(field: i32) -> i32;
+
+pub fn get_tx_array_len(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    Ok(vec![WasmValue::from_i32(_data_provider.get_array_len(DataSource::Tx, vec![field]))])
+}
+
 // pub fn get_current_ledger_obj_array_len(field: i32) -> i32;
 // pub fn get_ledger_obj_array_len(slot: i32, field: i32) -> i32;
 //
 // pub fn get_tx_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
 // pub fn get_current_ledger_obj_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
 // pub fn get_ledger_obj_nested_array_len(slot: i32, locator_ptr: *const u8, locator_len: usize) -> i32;
-//
-// pub fn updateData(data_ptr: *const u8, data_len: usize);
-//
-// pub fn computeSha512HalfHash(data_ptr: *const u8, data_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-// pub fn accountKeylet(account_ptr: *const u8, account_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-//
+
+pub fn update_data(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    _data_provider.set_current_ledger_obj_data(data);
+    Ok(vec![])
+}
+
+pub fn compute_sha512_half(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+    let out_buf_ptr: i32 = _inputs[2].to_i32();
+    let out_buf_cap: i32 = _inputs[3].to_i32();
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let hash_half = sha512_half(&data);
+    if hash_half.len() > out_buf_cap as usize {
+        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
+    }
+
+    set_data(hash_half.len() as i32, out_buf_ptr, hash_half, _caller)?;
+    Ok(vec![WasmValue::from_i32(32)])
+}
+
+pub fn account_keylet(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+    let out_buf_ptr: i32 = _inputs[2].to_i32();
+    let out_buf_cap: i32 = _inputs[3].to_i32();
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
+    if keylet_hash.len() > out_buf_cap as usize {
+        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
+    }
+
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
+    Ok(vec![WasmValue::from_i32(32)])
+}
 
 
-// pub fn get_current_escrow_finish_field(
-//     _: &mut (),
-//     _inst: &mut Instance,
-//     _caller: &mut CallingFrame,
-//     inputs: Vec<WasmValue>,
-// ) -> Result<Vec<WasmValue>, CoreError> {
-//     // This block simulates a Transaction
-//     let apply_ctx = ApplyContext {
-//         tx: get_default_escrow_finish(),
-//     };
-//
-//     // check the number of inputs
-//     if inputs.len() != 3 {
-//         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-//     }
-//
-//     // This a pointer to the memory allocated by WASM (i.e., guest memory)
-//     let guest_write_ptr = if inputs[0].ty() == ValType::I32 {
-//         inputs[0].to_i32()
-//     } else {
-//         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-//     };
-//
-//     let guest_write_ptr_u32: u32 = guest_write_ptr as u32;
-//     // println!("guest_write_ptr_u32: {}", guest_write_ptr_u32);
-//
-//     let guest_write_len = if inputs[1].ty() == ValType::I32 {
-//         inputs[1].to_i32() as usize
-//     } else {
-//         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-//     };
-//     // println!("guest_write_len: {}", guest_write_len);
-//
-//     // parse the third input of WebAssembly value type into Rust built-in value type
-//     let field_code = if inputs[2].ty() == ValType::I32 {
-//         inputs[2].to_i32()
-//     } else {
-//         return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-//     };
-//     // println!("field_code: {} (0x{:0x})", field_code, field_code);
-//
-//     // 2. Context Retrieval (Replaces reinterpret_cast<hook::HookContext*>(data_ptr) and HOOK_SETUP)
-//     // Get memory. Assumes memory index 0.
-//     let mut memory = _caller.memory_mut(0).ok_or_else(|| {
-//         eprintln!("get_tx_hash_helper: Error: Failed to get memory instance");
-//         CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
-//     })?;
-//
-//     // 4. Bounds Check (Matches NOT_IN_BOUNDS)
-//     let memory_size = memory.size() * 65536; // Memory size is in pages (64KiB)
-//
-//     // Check if write_ptr + tx_id_size overflows or goes out of bounds
-//     // Using checked_add to prevent overflow issues during check.
-//     let end_ptr = match guest_write_ptr_u32.checked_add(guest_write_len as u32) {
-//         Some(end) => end,
-//         None => {
-//             println!("get_tx_hash_helper: Out of bounds (pointer + size overflow)");
-//             return Ok(vec![WasmValue::from_i64(OUT_OF_BOUNDS as i64)]);
-//         }
-//     };
-//
-//     if end_ptr > memory_size {
-//         println!(
-//             "get_tx_hash_helper: Out of bounds (ptr {} + size {} > memory {})",
-//             guest_write_ptr_u32, guest_write_len, memory_size
-//         );
-//         // Return OUT_OF_BOUNDS as i64
-//         return Ok(vec![WasmValue::from_i64(OUT_OF_BOUNDS as i64)]);
-//     }
-//
-//     // Write into WASM Memory
-//     let data_to_write: Vec<u8> = get_field_bytes(apply_ctx.tx, field_code)?;
-//     // This is unsafe if an emulated VM supports 128-bit addressing
-//     let data_to_write_len = data_to_write.as_slice().len(); //as u64 as i64;
-//
-//     // println!("Data: {}", hex::encode(&data_to_write));
-//     // println!("Guest write_ptr: {}", guest_write_ptr_u32);
-//     // println!("Guest write_len: {}", guest_write_len); // Add logging
-//     // println!("Actual data len: {}", data_to_write_len); // Add logging
-//
-//     // This check ensures the _actual_ data len doesn't exceed what the guest is indicating.
-//     if data_to_write_len > guest_write_len as usize {
-//         eprintln!(
-//             "Error: Data size ({}) exceeds guest buffer size ({}).",
-//             data_to_write.len(),
-//             guest_write_len
-//         );
-//         // Return an appropriate error code to WASM.
-//         // Using a custom error code might be better than reusing OUT_OF_BOUNDS.
-//         // For example, define a BUFFER_TOO_SMALL = -7 or similar.
-//         // Let's use OUT_OF_BOUNDS for now as an example if you haven't defined others.
-//         // Or a new BUFFER_TOO_SMALL code
-//         return Ok(vec![WasmValue::from_i64(OUT_OF_BOUNDS as i64)]);
-//     }
-//
-//     debug!(
-//         "WRITING (ptr={} len={}) DATA: {:?}",
-//         guest_write_ptr_u32,
-//         &data_to_write.len(),
-//         data_to_write
-//     );
-//
-//     let result = memory.set_data(&data_to_write, guest_write_ptr_u32);
-//
-//     match result {
-//         Ok(()) => {
-//             debug!(
-//                 "Success Wasm memory wrote (ptr={} len={}) DATA: {:?}",
-//                 guest_write_ptr_u32, guest_write_len, data_to_write
-//             );
-//         }
-//         Err(error) => {
-//             eprintln!("Error: Wasm memory write failed: {}", error);
-//             return Err(CoreError::Execution(CoreExecutionError::MemoryOutOfBounds));
-//         }
-//     }
-//
-//     Ok(vec![WasmValue::from_i64(data_to_write_len as i64)])
-// }
-
-// pub fn get_tx_hash(
-//     _: &mut (),
-//     _inst: &mut Instance,
-//     _caller: &mut CallingFrame,
-//     inputs: Vec<WasmValue>,
-// ) -> Result<Vec<WasmValue>, CoreError> {
-//     // This block simulates a Transaction
-//     let apply_ctx = ApplyContext {
-//         tx: get_default_escrow_finish(),
-//     };
-//
-//     // check the number of inputs
-//     if inputs.len() != 1 {
-//         return Err(CoreError::Execution(
-//             wasmedge_sdk::error::CoreExecutionError::FuncSigMismatch,
-//         ));
-//     }
-//
-//     // parse the first input of WebAssembly value type into Rust built-in value type
-//     let guest_write_ptr = if inputs[0].ty() == ValType::I32 {
-//         inputs[0].to_i32()
-//     } else {
-//         return Err(CoreError::Execution(
-//             wasmedge_sdk::error::CoreExecutionError::FuncSigMismatch,
-//         ));
-//     };
-//
-//     let guest_write_ptr_u32: u32 = guest_write_ptr as u32;
-//
-//     // 2. Context Retrieval (Replaces reinterpret_cast<hook::HookContext*>(data_ptr) and HOOK_SETUP)
-//     // Get memory. Assumes memory index 0.
-//     let mut memory = _caller.memory_mut(0).ok_or_else(|| {
-//         eprintln!("get_tx_hash_helper: Error: Failed to get memory instance");
-//         CoreError::Execution(wasmedge_sdk::error::CoreExecutionError::MemoryOutOfBounds)
-//     })?;
-//     debug!("memory.size (pages): {}", memory.size());
-//
-//     // 3. Get Transaction ID (Matches C++ logic)
-//     let tx_id: Hash256 = apply_ctx.tx.common_fields.transaction_id;
-//     // match write!(writer, "{:02X}", byte) {
-//     // info!("Simulated tx_id from apply_ctx: {:02X}", tx_id);
-//
-//     let tx_id_size = 32u32;
-//
-//     // 4. Bounds Check (Matches NOT_IN_BOUNDS)
-//     let memory_size = memory.size() * 65536; // Memory size is in pages (64KiB)
-//     debug!("memory_size (KiB): {}", memory_size);
-//
-//     // Check if write_ptr + tx_id_size overflows or goes out of bounds
-//     // Using checked_add to prevent overflow issues during check.
-//     let end_ptr = match guest_write_ptr_u32.checked_add(tx_id_size) {
-//         Some(end) => end,
-//         None => {
-//             println!("get_tx_hash_helper: Out of bounds (pointer + size overflow)");
-//             return Ok(vec![WasmValue::from_i64(OUT_OF_BOUNDS as i64)]);
-//         }
-//     };
-//
-//     if end_ptr > memory_size {
-//         println!(
-//             "get_tx_hash_helper: Out of bounds (ptr {} + size {} > memory {})",
-//             guest_write_ptr_u32, tx_id_size, memory_size
-//         );
-//         // Return OUT_OF_BOUNDS as i64
-//         return Ok(vec![WasmValue::from_i64(OUT_OF_BOUNDS as i64)]);
-//     }
-//
-//     // 6. Write to Memory (Matches WRITE_WASM_MEMORY_AND_RETURN)
-//     debug!(
-//         "get_tx_hash_helper: Writing {} bytes to pointer {}",
-//         tx_id_size, guest_write_ptr_u32
-//     );
-//
-//     let data: [u8; 32] = tx_id.0[..32].try_into().unwrap();
-//     let result = memory.write(guest_write_ptr_u32 as usize, data);
-//     match result {
-//         Some(()) => {
-//             // println!("Wasm memory write succeeded!");
-//             // Proceed
-//         }
-//         None => {
-//             eprintln!("Error: Wasm memory write failed. Check address and bounds.");
-//             // Handle error
-//             // return Err(HostFuncError::User( /* some error code */ ));
-//         }
-//     }
-//
-//     // 7. Result Handling (Matches C++ return logic)
-//     // The C++ returns the number of bytes written (txID.size()) on success.
-//     // let return_code = tx_id_size as i64;
-//     // println!("get_tx_hash_helper: Success, wrote {return_code} bytes");
-//     // TODO: What should WASM Get here? Hooks uses return codes, so we probably need something that's close to `OK`?
-//     // Ok(vec![WasmValue::from_i64(return_code)])
-//     Ok(vec![])
-// }

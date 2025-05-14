@@ -97,27 +97,33 @@ impl MockData {
     pub fn get_parent_ledger_hash(&self) -> Option<&serde_json::Value>{
         self.header.get("parent_hash")
     }
+    
+    pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
+        self.hosting_ledger_obj["data"] = serde_json::Value::from(data);
+    }
 }
-    // pub fn get_field(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<FieldType> {
-    //     let value = self.get_field_value(source, idx_fields)?;
-    //     match value {
-    //         serde_json::Value::String(s) => {
-    //             Some(FieldType::Bytes { v: Bytes::from(s.as_bytes()) })
-    //         },
-    //         serde_json::Value::Number(n) => {
-    //             if n.is_i64() {
-    //                 Some(FieldType::I64 { v: n.as_i64().unwrap() })
-    //             } else if n.is_u64() {
-    //                 Some(FieldType::U64 { v: n.as_u64().unwrap() })
-    //             } else if n.is_f64() {
-    //                 Some(FieldType::F64 { v: n.as_f64().unwrap() })
-    //             } else {
-    //                 None
-    //             }
-    //         },
-    //         _ => None
-    //     }
-    // }
+
+
+// pub fn get_field(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<FieldType> {
+//     let value = self.get_field_value(source, idx_fields)?;
+//     match value {
+//         serde_json::Value::String(s) => {
+//             Some(FieldType::Bytes { v: Bytes::from(s.as_bytes()) })
+//         },
+//         serde_json::Value::Number(n) => {
+//             if n.is_i64() {
+//                 Some(FieldType::I64 { v: n.as_i64().unwrap() })
+//             } else if n.is_u64() {
+//                 Some(FieldType::U64 { v: n.as_u64().unwrap() })
+//             } else if n.is_f64() {
+//                 Some(FieldType::F64 { v: n.as_f64().unwrap() })
+//             } else {
+//                 None
+//             }
+//         },
+//         _ => None
+//     }
+// }
 
 fn polulate_field_names() -> HashMap<i32, String> {
     let mut sfield_names: HashMap<i32, String> = HashMap::new();

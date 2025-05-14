@@ -1,5 +1,7 @@
 mod vm;
 mod mock_data;
+mod host_functions;
+mod sfield;
 
 use std::collections::HashMap;
 use std::path::PathBuf;

@@ -51,34 +51,3 @@ impl LocatorPacker {
         true
     }
 }
-
-//host side
-pub struct LocatorUnpacker {
-    buffer: [u8; LOCATOR_BUFFER_SIZE],
-    cur_buffer_index: usize,
-    packed_bytes: usize,
-}
-
-impl LocatorUnpacker {
-    pub fn from_bytes(buffer: [u8; LOCATOR_BUFFER_SIZE], packed_bytes: usize) -> Option<LocatorUnpacker> {
-        if packed_bytes > LOCATOR_BUFFER_SIZE {
-            None
-        }else {
-            Some(LocatorUnpacker {
-                buffer,
-                cur_buffer_index: 0,
-                packed_bytes,
-            })
-        }
-    }
-
-    pub fn unpack(&mut self) -> Option<i32> {
-        if self.cur_buffer_index + 4 > self.packed_bytes {
-            return None;
-        }
-        let mut bytes: [u8; 4] = [0u8; 4];
-        bytes.copy_from_slice(&self.buffer[self.cur_buffer_index..self.cur_buffer_index + 4]);
-        self.cur_buffer_index += 4;
-        Some(i32::from_le_bytes(bytes))
-    }
-}

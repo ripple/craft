@@ -3,9 +3,7 @@ mod mock_data;
 mod host_functions;
 mod sfield;
 
-use std::collections::HashMap;
 use std::path::PathBuf;
-use wasmedge_sdk::{wasi::WasiModule, Module, Store, Vm};
 use crate::vm::run_func;
 use clap::Parser;
 use log::{info, debug, error};
@@ -13,6 +11,7 @@ use env_logger::Builder;
 use log::LevelFilter;
 use std::io::Write;
 use std::fs;
+use crate::mock_data::MockData;
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -35,7 +34,7 @@ struct Args {
     verbose: bool,
 }
 
-fn load_test_data(test_case: &str) -> Result<(String, String), Box<dyn std::error::Error>> {
+fn load_test_data(test_case: &str) -> Result<(String, String, String, String), Box<dyn std::error::Error>> {
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures")
         .join("escrow")
@@ -43,16 +42,20 @@ fn load_test_data(test_case: &str) -> Result<(String, String), Box<dyn std::erro
     
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");
+    let lh_path = base_path.join("ledger_header.json");
+    let l_path = base_path.join("ledger.json");
     
     let tx_json = fs::read_to_string(tx_path)?;
     let lo_json = fs::read_to_string(lo_path)?;
-    
-    Ok((tx_json, lo_json))
+    let lh_json = fs::read_to_string(lh_path)?;
+    let l_json = fs::read_to_string(l_path)?;
+
+    Ok((tx_json, lo_json, lh_json, l_json))
 }
 
 fn main() {
     let args = Args::parse();
-    
+
     // Use wasm_file if provided, otherwise use wasm_path
     let wasm_file = match (&args.wasm_file, &args.wasm_path) {
         (Some(file), _) => file.clone(),
@@ -79,62 +82,15 @@ fn main() {
         .filter(None, log_level)
         .init();
     
-    info!("Starting WasmEdge host application");
+    info!("Starting WasmEdge host application {:?}", args);
     info!("Loading WASM module from: {}", wasm_file);
     info!("Target function: finish (XLS-100d)");
     info!("Using test case: {}", args.test_case);
-    
-    debug!("Initializing WasiModule");
-    let mut wasi_module = match WasiModule::create(None, None, None) {
-        Ok(module) => {
-            debug!("WasiModule initialized successfully");
-            module
-        },
-        Err(e) => {
-            error!("Failed to create WasiModule: {}", e);
-            return;
-        }
-    };
-    
-    debug!("Setting up instance map");
-    let mut instances = HashMap::new();
-    instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
-    
-    info!("Creating new Vm instance");
-    let store = match Store::new(None, instances) {
-        Ok(store) => store,
-        Err(e) => {
-            error!("Failed to create Store: {}", e);
-            return;
-        }
-    };
-    
-    let mut vm = Vm::new(store);
-
-    info!("Loading WASM module from file: {}", wasm_file);
-    let wasm_module = match Module::from_file(None, &wasm_file) {
-        Ok(module) => {
-            debug!("WASM module loaded successfully");
-            module
-        },
-        Err(e) => {
-            error!("Failed to load WASM module from {}: {}", wasm_file, e);
-            return;
-        }
-    };
-    
-    info!("Registering WASM module to VM");
-    if let Err(e) = vm.register_module(None, wasm_module.clone()) {
-        error!("Failed to register module: {}", e);
-        return;
-    }
-    debug!("WASM module registered successfully");
-
     info!("Loading test data from fixtures");
-    let (tx_json, lo_json) = match load_test_data(&args.test_case) {
-        Ok((tx, lo)) => {
+    let (tx_json, lo_json, lh_json, l_json) = match load_test_data(&args.test_case) {
+        Ok((tx, lo, lh, l)) => {
             debug!("Test data loaded successfully");
-            (tx, lo)
+            (tx, lo, lh, l)
         },
         Err(e) => {
             error!("Failed to load test data: {}", e);
@@ -142,8 +98,9 @@ fn main() {
         }
     };
 
+    let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json);
     info!("Executing function: finish");
-    match run_func(&mut vm, "finish", tx_json.as_bytes().to_vec(), lo_json.as_bytes().to_vec()) {
+    match run_func(wasm_file,  "finish", data_source) {
         Ok(result) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");

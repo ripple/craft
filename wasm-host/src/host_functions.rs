@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::mock_data::{DataSource, Hash256, Keylet, MockData};
 use sha2::{Digest, Sha512};
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
@@ -140,7 +142,7 @@ impl DataProvider {
     }
 
     pub fn fill_buf(field_result: Option<&serde_json::Value>, buf_cap: usize) -> (i32, Vec<u8>) {
-        let mut buf = Vec::with_capacity(buf_cap);
+        let mut buf = vec![0u8;buf_cap];
         match field_result {
             Some(value) => {
                 match value {
@@ -262,7 +264,7 @@ fn get_data(
     in_buf_len: i32,
     _caller: &mut CallingFrame,
 ) -> Result<Vec<u8>, CoreError> {
-    let mut memory = _caller.memory_mut(0).ok_or_else(|| {
+    let memory = _caller.memory_mut(0).ok_or_else(|| {
         eprintln!("get_tx_hash_helper: Error: Failed to get memory instance");
         CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
     })?;

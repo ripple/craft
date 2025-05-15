@@ -1,4 +1,5 @@
 #![allow(non_upper_case_globals)]
+#![allow(dead_code)]
 
 pub const Invalid: i32 = -1;
 pub const Generic: i32 = 0;

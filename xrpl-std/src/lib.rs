@@ -1,6 +1,6 @@
-pub mod sfield;
-pub mod locator;
 pub mod host_lib;
+pub mod locator;
+pub mod sfield;
 
 pub const XRPL_ACCOUNT_ID_SIZE: usize = 40; //TODO size, after json to binary PR
 pub const XRPL_KEYLET_SIZE: usize = 68; //TODO size, after json to binary PR
@@ -11,76 +11,99 @@ pub type Keylet = [u8; XRPL_KEYLET_SIZE];
 pub type Hash256 = [u8; XRPL_HASH256_SIZE];
 pub type ContractData = [u8; XRPL_CONTRACT_DATA_SIZE];
 
-pub fn get_tx_account_id() -> Option<AccountID> { //TODO replace with Tx Object
+pub fn get_tx_account_id() -> Option<AccountID> {
+    //TODO replace with Tx Object
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    if unsafe {
-        host_lib::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len())
-    } == XRPL_ACCOUNT_ID_SIZE as i32 {
+    if unsafe { host_lib::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) }
+        > 0
+    {
+        //TODO size, here and below
         Some(account_id)
     } else {
         None
     }
 }
 
-pub fn get_current_escrow_account_id() -> Option<AccountID> { //TODO replace with escrow Object
+pub fn get_current_escrow_account_id() -> Option<AccountID> {
+    //TODO replace with escrow Object
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
     if unsafe {
-        host_lib::get_current_ledger_obj_field(sfield::Account, account_id.as_mut_ptr(), account_id.len())
-    } == XRPL_ACCOUNT_ID_SIZE as i32 {
+        host_lib::get_current_ledger_obj_field(
+            sfield::Account,
+            account_id.as_mut_ptr(),
+            account_id.len(),
+        )
+    } > 0
+    {
         Some(account_id)
     } else {
         None
     }
 }
 
-pub fn get_current_escrow_destination() -> Option<AccountID> { //TODO replace with escrow Object
+pub fn get_current_escrow_destination() -> Option<AccountID> {
+    //TODO replace with escrow Object
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
     if unsafe {
-        host_lib::get_current_ledger_obj_field(sfield::Destination, account_id.as_mut_ptr(), account_id.len())
-    } == XRPL_ACCOUNT_ID_SIZE as i32 {
+        host_lib::get_current_ledger_obj_field(
+            sfield::Destination,
+            account_id.as_mut_ptr(),
+            account_id.len(),
+        )
+    } > 0
+    {
         Some(account_id)
     } else {
         None
     }
 }
 
-pub fn get_current_escrow_data() -> Option<ContractData> { //TODO replace with escrow Object
+pub fn get_current_escrow_data() -> Option<ContractData> {
+    //TODO replace with escrow Object
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
     if unsafe {
         host_lib::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len())
-    } == XRPL_ACCOUNT_ID_SIZE as i32 {
+    } > 0
+    {
         Some(data)
     } else {
         None
     }
 }
 
-pub fn get_current_escrow_finish_after() -> Option<i32> { //TODO replace with escrow Object
+pub fn get_current_escrow_finish_after() -> Option<i32> {
+    //TODO replace with escrow Object
     let mut after = 0i32;
     if unsafe {
-        host_lib::get_current_ledger_obj_field(sfield::Data, (&mut after) as *mut i32 as *mut u8, 4)
-    } == XRPL_ACCOUNT_ID_SIZE as i32 {
+        host_lib::get_current_ledger_obj_field(sfield::FinishAfter, (&mut after) as *mut i32 as *mut u8, 4)
+    } > 0
+    {
         Some(after)
     } else {
         None
     }
 }
 
-pub fn get_account_balance(aid: &AccountID) -> Option<u64> { //TODO replace with accountRoot
+pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
+    //TODO replace with accountRoot
     let keylet = match account_keylet(aid) {
-        None => { return None }
-        Some(keylet) => { keylet }
+        None => return None,
+        Some(keylet) => keylet,
     };
-    let slot = unsafe {
-        host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0)
-    };
+    let slot = unsafe { host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
     if slot <= 0 {
         return None;
     }
     let mut balance = 0u64;
     if unsafe {
-        host_lib::get_ledger_obj_field(slot, sfield::Balance, (&mut balance) as *mut u64 as *mut u8, 8)
-    } == 8 {
+        host_lib::get_ledger_obj_field(
+            slot,
+            sfield::Balance,
+            (&mut balance) as *mut u64 as *mut u8,
+            8,
+        )
+    } == 8
+    {
         Some(balance)
     } else {
         None
@@ -89,9 +112,10 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> { //TODO replace with
 
 pub fn account_keylet(aid: &AccountID) -> Option<Keylet> {
     let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
-    if XRPL_KEYLET_SIZE as i32 == unsafe {
+    if unsafe {
         host_lib::account_keylet(aid.as_ptr(), aid.len(), key_let.as_mut_ptr(), key_let.len())
-    } {
+    } > 0
+    {
         Some(key_let)
     } else {
         None

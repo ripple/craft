@@ -1,48 +1,52 @@
-{
-  "342F9E0D242EDB43A0FBFC672B302CC8BB904993172E57FBFF4C5D4A1EB85AB9": {
-    "Flags": 0,
-    "TransactionType": "SignerListSet",
-    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-    "Fee": "12",
-    "SignerQuorum": 3,
-    "SignerEntries": [
-      {
-        "SignerEntry": {
-          "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
-          "SignerWeight": 2
+[
+  {
+    "342F9E0D242EDB43A0FBFC672B302CC8BB904993172E57FBFF4C5D4A1EB85AB9": {
+      "Flags": 0,
+      "TransactionType": "SignerListSet",
+      "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+      "Fee": "12",
+      "SignerQuorum": 3,
+      "SignerEntries": [
+        {
+          "SignerEntry": {
+            "Account": "rsA2LpzuawewSBQXkiju3YQTMzW13pAAdW",
+            "SignerWeight": 2
+          }
+        },
+        {
+          "SignerEntry": {
+            "Account": "rUpy3eEg8rqjqfUoLeBnZkscbKbFsKXC3v",
+            "SignerWeight": 1
+          }
+        },
+        {
+          "SignerEntry": {
+            "Account": "raKEEVSGnKSD9Zyvxu4z6Pqpm4ABH8FS6n",
+            "SignerWeight": 1
+          }
         }
-      },
-      {
-        "SignerEntry": {
-          "Account": "rUpy3eEg8rqjqfUoLeBnZkscbKbFsKXC3v",
-          "SignerWeight": 1
-        }
-      },
-      {
-        "SignerEntry": {
-          "Account": "raKEEVSGnKSD9Zyvxu4z6Pqpm4ABH8FS6n",
-          "SignerWeight": 1
-        }
-      }
-    ]
+      ]
+    }
   },
-  "977A4B2767DCAA2DED68630E4039E7EFFDD3739717056610754E7921FED19E98": {
-    "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
-    "AccountTxnID": "932CC7E9BAC1F7B9FA5381679F293EEC0A646E5E7F2F6D14C85FEE2102F0E66C",
-    "Balance": "1138222650",
-    "Domain": "6D64756F31332E636F6D",
-    "EmailHash": "98B4375E1D753E5B91627516F6D70977",
-    "Flags": 9568256,
-    "LedgerEntryType": "AccountRoot",
-    "MessageKey": "0000000000000000000000070000000300",
-    "OwnerCount": 17,
-    "PreviousTxnID": "E5C3578BDBEBDCDE7E1697E3BA6A1CF04B17CCEBDE4939200680FEF530C7978E",
-    "PreviousTxnLgrSeq": 94448149,
-    "RegularKey": "rD9iJmieYHn8jTtPjwwkW2Wm9sVDvPXLoJ",
-    "Sequence": 393,
-    "TicketCount": 5,
-    "TransferRate": 4294967295,
-    "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
-    "urlgravatar": "http://www.gravatar.com/avatar/98b4375e1d753e5b91627516f6d70977"
+  {
+    "977A4B2767DCAA2DED68630E4039E7EFFDD3739717056610754E7921FED19E98": {
+      "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
+      "AccountTxnID": "932CC7E9BAC1F7B9FA5381679F293EEC0A646E5E7F2F6D14C85FEE2102F0E66C",
+      "Balance": "1138222650",
+      "Domain": "6D64756F31332E636F6D",
+      "EmailHash": "98B4375E1D753E5B91627516F6D70977",
+      "Flags": 9568256,
+      "LedgerEntryType": "AccountRoot",
+      "MessageKey": "0000000000000000000000070000000300",
+      "OwnerCount": 17,
+      "PreviousTxnID": "E5C3578BDBEBDCDE7E1697E3BA6A1CF04B17CCEBDE4939200680FEF530C7978E",
+      "PreviousTxnLgrSeq": 94448149,
+      "RegularKey": "rD9iJmieYHn8jTtPjwwkW2Wm9sVDvPXLoJ",
+      "Sequence": 393,
+      "TicketCount": 5,
+      "TransferRate": 4294967295,
+      "index": "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8",
+      "urlgravatar": "http://www.gravatar.com/avatar/98b4375e1d753e5b91627516f6d70977"
+    }
   }
-}
+]

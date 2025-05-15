@@ -27,12 +27,13 @@ extern "C" {
     pub fn compute_sha512_half(data_ptr: * const u8, data_len: usize, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
     
     pub fn account_keylet(account_ptr: * const u8, account_len: usize, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    
     //TODO the following will be in a separate PR
     pub fn credential_keylet(
         subject_ptr: i32, subject_len: i32,
         issuer_ptr: i32, issuer_len: i32,
         cred_type_ptr: i32, cred_type_len: i32,
-        out_buff_ptr: * mut u8, out_buff_len: usize
+        out_buff_ptr: *mut u8, out_buff_len: usize,
     ) -> i32;
     pub fn escrow_keylet(account_ptr: * const u8, account_len: usize, sequence: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
     pub fn oracle_keylet(account_ptr: * const u8, account_len: usize, document_id: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;

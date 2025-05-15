@@ -8,17 +8,9 @@ pub type Keylet = Hash256; //TODO use hash or type together
 
 pub enum DataSource {
     Tx,
-    // LedgerHeader,
     CurrentLedgerObj,
     KeyletLedgerObj(Keylet),
 }
-
-// pub enum FieldType {
-//     I64 { v: i64 },
-//     U64 { v: u64 },
-//     F64 { v: f64 },
-//     Bytes { v: Bytes },
-// }
 
 #[derive(Debug)]
 pub struct MockData {
@@ -27,7 +19,6 @@ pub struct MockData {
     header: serde_json::Value,
     ledger: HashMap<Keylet, serde_json::Value>,
     field_names: HashMap<i32, String>,
-
 }
 
 impl MockData {
@@ -38,12 +29,19 @@ impl MockData {
         ledger_str: &String,
     ) -> Self {
         let tx = serde_json::from_str(tx_str).expect("Tx JSON bad formatted");
-        let hosting_ledger_obj = serde_json::from_str(hosting_ledger_obj_str).expect("Hosting ledger object JSON bad formatted");
+        let hosting_ledger_obj = serde_json::from_str(hosting_ledger_obj_str)
+            .expect("Hosting ledger object JSON bad formatted");
         let header = serde_json::from_str(header_str).expect("Ledger header JSON bad formatted");
         let ledger = serde_json::from_str(ledger_str).expect("Ledger JSON bad formatted");
         let field_names = polulate_field_names();
 
-        MockData { tx, hosting_ledger_obj, header, ledger, field_names }
+        MockData {
+            tx,
+            hosting_ledger_obj,
+            header,
+            ledger,
+            field_names,
+        }
     }
 
     pub fn obj_exist(&self, keylet: &Keylet) -> bool {
@@ -55,27 +53,26 @@ impl MockData {
         self.field_names.get(&field_id).cloned()
     }
 
-    pub fn get_field_value(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<&serde_json::Value> {
-        let mut curr =
-            match source {
-                DataSource::Tx => { &self.tx },
-                // DataSource::LedgerHeader => { &self.header },
-                DataSource::CurrentLedgerObj => { &self.hosting_ledger_obj },
-                DataSource::KeyletLedgerObj(obj_hash) => {
-                    self.ledger.get(&obj_hash)?
-                },
-            };
-        
+    pub fn get_field_value(
+        &self,
+        source: DataSource,
+        idx_fields: Vec<i32>,
+    ) -> Option<&serde_json::Value> {
+        let mut curr = match source {
+            DataSource::Tx => &self.tx,
+            DataSource::CurrentLedgerObj => &self.hosting_ledger_obj,
+            DataSource::KeyletLedgerObj(obj_hash) => self.ledger.get(&obj_hash)?,
+        };
+
         for idx_field in idx_fields {
             if curr.is_array() {
                 curr = curr.as_array().unwrap().get(idx_field as usize)?;
             } else {
                 curr = curr.get(self.get_field_name(idx_field)?)?;
-            }            
+            }
         }
         Some(curr)
     }
-    
 
     pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<usize> {
         let value = self.get_field_value(source, idx_fields)?;
@@ -85,45 +82,23 @@ impl MockData {
             None
         }
     }
-    
-    pub fn get_ledger_sqn(&self) -> Option<&serde_json::Value>{
+
+    pub fn get_ledger_sqn(&self) -> Option<&serde_json::Value> {
         self.header.get("ledger_index")
     }
-    
-    pub fn get_parent_ledger_time(&self) -> Option<&serde_json::Value>{
+
+    pub fn get_parent_ledger_time(&self) -> Option<&serde_json::Value> {
         self.header.get("parent_close_time")
     }
-    
-    pub fn get_parent_ledger_hash(&self) -> Option<&serde_json::Value>{
+
+    pub fn get_parent_ledger_hash(&self) -> Option<&serde_json::Value> {
         self.header.get("parent_hash")
     }
-    
+
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
         self.hosting_ledger_obj["data"] = serde_json::Value::from(data);
     }
 }
-
-
-// pub fn get_field(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<FieldType> {
-//     let value = self.get_field_value(source, idx_fields)?;
-//     match value {
-//         serde_json::Value::String(s) => {
-//             Some(FieldType::Bytes { v: Bytes::from(s.as_bytes()) })
-//         },
-//         serde_json::Value::Number(n) => {
-//             if n.is_i64() {
-//                 Some(FieldType::I64 { v: n.as_i64().unwrap() })
-//             } else if n.is_u64() {
-//                 Some(FieldType::U64 { v: n.as_u64().unwrap() })
-//             } else if n.is_f64() {
-//                 Some(FieldType::F64 { v: n.as_f64().unwrap() })
-//             } else {
-//                 None
-//             }
-//         },
-//         _ => None
-//     }
-// }
 
 fn polulate_field_names() -> HashMap<i32, String> {
     let mut sfield_names: HashMap<i32, String> = HashMap::new();
@@ -417,5 +392,3 @@ fn polulate_field_names() -> HashMap<i32, String> {
     sfield_names.insert(655622401, "Metadata".to_string());
     sfield_names
 }
-
-

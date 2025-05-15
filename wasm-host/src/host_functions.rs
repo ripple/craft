@@ -1,7 +1,7 @@
-use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
+use crate::mock_data::{DataSource, Hash256, Keylet, MockData};
+use sha2::{Digest, Sha512};
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
-use crate::mock_data::{Hash256, MockData, Keylet, DataSource};
-use sha2::{Sha512, Digest};
+use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 
 const LOCATOR_BUFFER_SIZE: usize = 64;
 const NUM_SLOTS: usize = 256;
@@ -24,7 +24,6 @@ pub enum HostError {
 pub struct LocatorUnpacker {
     buffer: Vec<u8>,
     cur_buffer_index: usize,
-    // packed_bytes: usize,
 }
 
 impl LocatorUnpacker {
@@ -36,7 +35,6 @@ impl LocatorUnpacker {
             Some(LocatorUnpacker {
                 buffer,
                 cur_buffer_index: 0,
-                // packed_bytes,
             })
         }
     }
@@ -53,8 +51,7 @@ impl LocatorUnpacker {
 }
 
 pub fn unpack_locator(buffer: Vec<u8>) -> Result<Vec<i32>, HostError> {
-    let mut unpacker = LocatorUnpacker::from_bytes(buffer)
-        .ok_or(HostError::LocatorMalformed)?;
+    let mut unpacker = LocatorUnpacker::from_bytes(buffer).ok_or(HostError::LocatorMalformed)?;
 
     let mut result = vec![];
     while let Some(slot) = unpacker.unpack() {
@@ -106,15 +103,20 @@ impl DataProvider {
         }
     }
 
-    pub fn get_field_value(&self, source: DataSource, idx_fields: Vec<i32>, buf_cap: usize) -> (i32, Vec<u8>) {
+    pub fn get_field_value(
+        &self,
+        source: DataSource,
+        idx_fields: Vec<i32>,
+        buf_cap: usize,
+    ) -> (i32, Vec<u8>) {
         let field_result = self.data_source.get_field_value(source, idx_fields);
         Self::fill_buf(field_result, buf_cap)
     }
 
     pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> i32 {
         match self.data_source.get_array_len(source, idx_fields) {
-            None => { HostError::NoArray as i32 }
-            Some(len) => { len as i32 }
+            None => HostError::NoArray as i32,
+            Some(len) => len as i32,
         }
     }
 
@@ -136,7 +138,7 @@ impl DataProvider {
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
         self.data_source.set_current_ledger_obj_data(data);
     }
-    
+
     pub fn fill_buf(field_result: Option<&serde_json::Value>, buf_cap: usize) -> (i32, Vec<u8>) {
         let mut buf = Vec::with_capacity(buf_cap);
         match field_result {
@@ -191,13 +193,14 @@ impl DataProvider {
                         buf[..bytes.len()].copy_from_slice(bytes);
                         (bytes.len() as i32, buf)
                     }
-                    _ => (HostError::InternalError as i32, buf)
+                    _ => (HostError::InternalError as i32, buf),
                 }
             }
-            None => (HostError::FieldNotFound as i32, buf)
+            None => (HostError::FieldNotFound as i32, buf),
         }
     }
 }
+
 #[repr(u16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LedgerNameSpace {
@@ -254,7 +257,6 @@ pub fn index_hash(space: LedgerNameSpace, args: &[u8]) -> Hash256 {
     sha512_half(&data)
 }
 
-
 fn get_data(
     in_buf_ptr: i32,
     in_buf_len: i32,
@@ -264,10 +266,15 @@ fn get_data(
         eprintln!("get_tx_hash_helper: Error: Failed to get memory instance");
         CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
     })?;
-    let buffer = memory.get_data(in_buf_ptr as u32, in_buf_len as u32).map_err(|e| {
-        eprintln!("get_tx_hash_helper: Error: Failed to get memory data: {}", e);
-        CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
-    })?;
+    let buffer = memory
+        .get_data(in_buf_ptr as u32, in_buf_len as u32)
+        .map_err(|e| {
+            eprintln!(
+                "get_tx_hash_helper: Error: Failed to get memory data: {}",
+                e
+            );
+            CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
+        })?;
     Ok(buffer)
 }
 
@@ -287,9 +294,10 @@ fn get_account_id(
     get_data(in_buf_ptr, in_buf_len, _caller)
 }
 
-fn get_locator_data(in_buf_ptr: i32,
-                    in_buf_len: i32,
-                    _caller: &mut CallingFrame,
+fn get_locator_data(
+    in_buf_ptr: i32,
+    in_buf_len: i32,
+    _caller: &mut CallingFrame,
 ) -> Result<Vec<u8>, CoreError> {
     get_data(in_buf_ptr, in_buf_len, _caller)
 }
@@ -305,10 +313,15 @@ fn set_data(
             eprintln!("get_tx_hash_helper: Error: Failed to get memory instance");
             CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
         })?;
-        memory.set_data(&data_to_write, out_buf_ptr as u32).map_err(|e| {
-            eprintln!("get_tx_hash_helper: Error: Failed to set memory data: {}", e);
-            CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
-        })?;
+        memory
+            .set_data(&data_to_write, out_buf_ptr as u32)
+            .map_err(|e| {
+                eprintln!(
+                    "get_tx_hash_helper: Error: Failed to set memory data: {}",
+                    e
+                );
+                CoreError::Execution(CoreExecutionError::MemoryOutOfBounds)
+            })?;
     }
     Ok(())
 }
@@ -389,7 +402,11 @@ pub fn get_current_ledger_obj_field(
     let field: i32 = _inputs[0].to_i32();
     let out_buf_ptr: i32 = _inputs[1].to_i32();
     let out_buf_cap: i32 = _inputs[2].to_i32();
-    let dp_res = _data_provider.get_field_value(DataSource::CurrentLedgerObj, vec![field], out_buf_cap as usize);
+    let dp_res = _data_provider.get_field_value(
+        DataSource::CurrentLedgerObj,
+        vec![field],
+        out_buf_cap as usize,
+    );
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
@@ -404,11 +421,15 @@ pub fn get_ledger_obj_field(
     let field: i32 = _inputs[1].to_i32();
     let out_buf_ptr: i32 = _inputs[2].to_i32();
     let out_buf_cap: i32 = _inputs[3].to_i32();
-    let keylet = match _data_provider.slot_get(slot as usize){
-        None => {return Ok(vec![WasmValue::from_i32(HostError::SlotOutRange as i32)])}
-        Some(key) => {key.clone()}
+    let keylet = match _data_provider.slot_get(slot as usize) {
+        None => return Ok(vec![WasmValue::from_i32(HostError::SlotOutRange as i32)]),
+        Some(key) => key.clone(),
     };
-    let dp_res = _data_provider.get_field_value(DataSource::KeyletLedgerObj(keylet), vec![field], out_buf_cap as usize);
+    let dp_res = _data_provider.get_field_value(
+        DataSource::KeyletLedgerObj(keylet),
+        vec![field],
+        out_buf_cap as usize,
+    );
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
@@ -425,10 +446,9 @@ pub fn get_tx_nested_field(
     let out_buf_cap: i32 = _inputs[3].to_i32();
 
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
-
     let idx_fields: Vec<i32> = match unpack_locator(data) {
-        Ok(fields) => { fields }
-        Err(host_err) => { return Ok(vec![WasmValue::from_i32(host_err as i32)]) }
+        Ok(fields) => fields,
+        Err(host_err) => return Ok(vec![WasmValue::from_i32(host_err as i32)]),
     };
 
     let dp_res = _data_provider.get_field_value(DataSource::Tx, idx_fields, out_buf_cap as usize);
@@ -436,9 +456,62 @@ pub fn get_tx_nested_field(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
-// pub fn get_tx_nested_field(locator_ptr: *const u8, locator_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-// pub fn get_current_ledger_obj_nested_field(locator_ptr: *const u8, locator_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-// pub fn get_ledger_obj_nested_field(slot: i32, locator_ptr: *const u8, locator_len: usize, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
+pub fn get_current_ledger_obj_nested_field(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+    let out_buf_ptr: i32 = _inputs[2].to_i32();
+    let out_buf_cap: i32 = _inputs[3].to_i32();
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let idx_fields: Vec<i32> = match unpack_locator(data) {
+        Ok(fields) => fields,
+        Err(host_err) => return Ok(vec![WasmValue::from_i32(host_err as i32)]),
+    };
+
+    let dp_res = _data_provider.get_field_value(
+        DataSource::CurrentLedgerObj,
+        idx_fields,
+        out_buf_cap as usize,
+    );
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn get_ledger_obj_nested_field(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let slot: i32 = _inputs[0].to_i32();
+    let in_buf_ptr: i32 = _inputs[1].to_i32();
+    let in_buf_len: i32 = _inputs[2].to_i32();
+    let out_buf_ptr: i32 = _inputs[3].to_i32();
+    let out_buf_cap: i32 = _inputs[4].to_i32();
+    let keylet = match _data_provider.slot_get(slot as usize) {
+        None => return Ok(vec![WasmValue::from_i32(HostError::SlotOutRange as i32)]),
+        Some(key) => key.clone(),
+    };
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let idx_fields: Vec<i32> = match unpack_locator(data) {
+        Ok(fields) => fields,
+        Err(host_err) => return Ok(vec![WasmValue::from_i32(host_err as i32)]),
+    };
+
+    let dp_res = _data_provider.get_field_value(
+        DataSource::KeyletLedgerObj(keylet),
+        idx_fields,
+        out_buf_cap as usize,
+    );
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
 
 pub fn get_tx_array_len(
     _data_provider: &mut DataProvider,
@@ -447,15 +520,104 @@ pub fn get_tx_array_len(
     _inputs: Vec<WasmValue>,
 ) -> Result<Vec<WasmValue>, CoreError> {
     let field: i32 = _inputs[0].to_i32();
-    Ok(vec![WasmValue::from_i32(_data_provider.get_array_len(DataSource::Tx, vec![field]))])
+    Ok(vec![WasmValue::from_i32(
+        _data_provider.get_array_len(DataSource::Tx, vec![field]),
+    )])
 }
 
-// pub fn get_current_ledger_obj_array_len(field: i32) -> i32;
-// pub fn get_ledger_obj_array_len(slot: i32, field: i32) -> i32;
-//
-// pub fn get_tx_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
-// pub fn get_current_ledger_obj_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
-// pub fn get_ledger_obj_nested_array_len(slot: i32, locator_ptr: *const u8, locator_len: usize) -> i32;
+pub fn get_current_ledger_obj_array_len(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    Ok(vec![WasmValue::from_i32(
+        _data_provider.get_array_len(DataSource::CurrentLedgerObj, vec![field]),
+    )])
+}
+
+pub fn get_ledger_obj_array_len(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let slot: i32 = _inputs[0].to_i32();
+    let field: i32 = _inputs[1].to_i32();
+
+    let keylet = match _data_provider.slot_get(slot as usize) {
+        None => return Ok(vec![WasmValue::from_i32(HostError::SlotOutRange as i32)]),
+        Some(key) => key.clone(),
+    };
+    Ok(vec![WasmValue::from_i32(_data_provider.get_array_len(
+        DataSource::KeyletLedgerObj(keylet),
+        vec![field],
+    ))])
+}
+
+pub fn get_tx_nested_array_len(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let idx_fields: Vec<i32> = match unpack_locator(data) {
+        Ok(fields) => fields,
+        Err(host_err) => return Ok(vec![WasmValue::from_i32(host_err as i32)]),
+    };
+    Ok(vec![WasmValue::from_i32(
+        _data_provider.get_array_len(DataSource::Tx, idx_fields),
+    )])
+}
+
+pub fn get_current_ledger_obj_nested_array_len(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let in_buf_ptr: i32 = _inputs[0].to_i32();
+    let in_buf_len: i32 = _inputs[1].to_i32();
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let idx_fields: Vec<i32> = match unpack_locator(data) {
+        Ok(fields) => fields,
+        Err(host_err) => return Ok(vec![WasmValue::from_i32(host_err as i32)]),
+    };
+    Ok(vec![WasmValue::from_i32(
+        _data_provider.get_array_len(DataSource::CurrentLedgerObj, idx_fields),
+    )])
+}
+
+pub fn get_ledger_obj_nested_array_len(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let slot: i32 = _inputs[0].to_i32();
+    let in_buf_ptr: i32 = _inputs[1].to_i32();
+    let in_buf_len: i32 = _inputs[2].to_i32();
+    let keylet = match _data_provider.slot_get(slot as usize) {
+        None => return Ok(vec![WasmValue::from_i32(HostError::SlotOutRange as i32)]),
+        Some(key) => key.clone(),
+    };
+
+    let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+    let idx_fields: Vec<i32> = match unpack_locator(data) {
+        Ok(fields) => fields,
+        Err(host_err) => return Ok(vec![WasmValue::from_i32(host_err as i32)]),
+    };
+    Ok(vec![WasmValue::from_i32(_data_provider.get_array_len(
+        DataSource::KeyletLedgerObj(keylet),
+        idx_fields,
+    ))])
+}
 
 pub fn update_data(
     _data_provider: &mut DataProvider,
@@ -511,5 +673,3 @@ pub fn account_keylet(
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
     Ok(vec![WasmValue::from_i32(32)])
 }
-
-

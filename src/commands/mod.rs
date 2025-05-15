@@ -275,16 +275,8 @@ pub async fn configure() -> Result<Config> {
         }
     };
 
-    let targets = vec![
-        "wasm32-unknown-unknown (for most blockchain deployments)",
-        "wasm32-wasi-preview1 (for WASI compatible environments)",
-    ];
-    
-    let target_idx = Select::new("Select WASM target:", targets).prompt()?;
-    let target = match target_idx {
-        "wasm32-unknown-unknown (for most blockchain deployments)" => WasmTarget::UnknownUnknown,
-        _ => WasmTarget::Wasip1,
-    };
+    // Always use wasm32-unknown-unknown target
+    let target = WasmTarget::UnknownUnknown;
 
     let build_modes = vec![
         "Release (optimized, no debug info)",

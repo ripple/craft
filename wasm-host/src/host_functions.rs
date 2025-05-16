@@ -1,8 +1,5 @@
-#![allow(dead_code)]
-
 use crate::data_provider::{unpack_locator, DataProvider, HostError};
-use crate::decoding::AccountId;
-use crate::hashing::{index_hash, sha512_half, LedgerNameSpace};
+use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
 use crate::mock_data::{DataSource, Keylet};
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
@@ -33,22 +30,6 @@ fn get_keylet(
     in_buf_len: i32,
     _caller: &mut CallingFrame,
 ) -> Result<Keylet, CoreError> {
-    get_data(in_buf_ptr, in_buf_len, _caller)
-}
-
-fn get_account_id(
-    in_buf_ptr: i32,
-    in_buf_len: i32,
-    _caller: &mut CallingFrame,
-) -> Result<AccountId, CoreError> {
-    get_data(in_buf_ptr, in_buf_len, _caller)
-}
-
-fn get_locator_data(
-    in_buf_ptr: i32,
-    in_buf_len: i32,
-    _caller: &mut CallingFrame,
-) -> Result<Vec<u8>, CoreError> {
     get_data(in_buf_ptr, in_buf_len, _caller)
 }
 
@@ -392,15 +373,14 @@ pub fn compute_sha512_half(
     let in_buf_len: i32 = _inputs[1].to_i32();
     let out_buf_ptr: i32 = _inputs[2].to_i32();
     let out_buf_cap: i32 = _inputs[3].to_i32();
-
+    
+    if HASH256_LEN > out_buf_cap as usize {
+        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
+    }    
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
     let hash_half = sha512_half(&data);
-    if hash_half.len() > out_buf_cap as usize {
-        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
-    }
-
     set_data(hash_half.len() as i32, out_buf_ptr, hash_half, _caller)?;
-    Ok(vec![WasmValue::from_i32(32)])
+    Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
 }
 
 pub fn account_keylet(
@@ -413,13 +393,90 @@ pub fn account_keylet(
     let in_buf_len: i32 = _inputs[1].to_i32();
     let out_buf_ptr: i32 = _inputs[2].to_i32();
     let out_buf_cap: i32 = _inputs[3].to_i32();
-
+    
+    if HASH256_LEN > out_buf_cap as usize {
+        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
+    }  
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
-    if keylet_hash.len() > out_buf_cap as usize {
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
+    Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
+}
+
+pub fn credential_keylet(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let subject_ptr: i32 = _inputs[0].to_i32();
+    let subject_len: i32 = _inputs[1].to_i32();    
+    let issuer_ptr: i32 = _inputs[2].to_i32();
+    let issuer_len: i32 = _inputs[3].to_i32();
+    let cred_type_ptr: i32 = _inputs[4].to_i32();
+    let cred_type_len: i32 = _inputs[5].to_i32();    
+    let out_buf_ptr: i32 = _inputs[6].to_i32();
+    let out_buf_cap: i32 = _inputs[7].to_i32();
+    
+    if HASH256_LEN > out_buf_cap as usize {
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
     }
-
+    let subject = get_data(subject_ptr, subject_len, _caller)?;
+    let mut issuer = get_data(issuer_ptr, issuer_len, _caller)?;
+    let mut cred_type = get_data(cred_type_ptr, cred_type_len, _caller)?;
+    let mut data = subject;
+    data.append(&mut issuer);
+    data.append(&mut cred_type);
+    
+    let keylet_hash = index_hash(LedgerNameSpace::Credential, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
-    Ok(vec![WasmValue::from_i32(32)])
+    Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
+}
+
+pub fn escrow_keylet(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let account_ptr: i32 = _inputs[0].to_i32();
+    let account_len: i32 = _inputs[1].to_i32();
+    let sequence: u32 = _inputs[2].to_i32() as u32;
+    let out_buf_ptr: i32 = _inputs[3].to_i32();
+    let out_buf_cap: i32 = _inputs[4].to_i32();
+
+    if HASH256_LEN > out_buf_cap as usize {
+        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
+    }
+    let mut data = get_data(account_ptr, account_len, _caller)?;
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+
+    let keylet_hash = index_hash(LedgerNameSpace::Escrow, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
+    Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
+}
+
+pub fn oracle_keylet(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let account_ptr: i32 = _inputs[0].to_i32();
+    let account_len: i32 = _inputs[1].to_i32();
+    let document_id: u32 = _inputs[2].to_i32() as u32;
+    let out_buf_ptr: i32 = _inputs[3].to_i32();
+    let out_buf_cap: i32 = _inputs[4].to_i32();
+
+    if HASH256_LEN > out_buf_cap as usize {
+        return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
+    }
+    let mut data = get_data(account_ptr, account_len, _caller)?;
+    let sqn_data = document_id.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+
+    let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
+    Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
 }

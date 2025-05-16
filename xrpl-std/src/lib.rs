@@ -2,22 +2,24 @@ pub mod host_lib;
 pub mod locator;
 pub mod sfield;
 
-pub const XRPL_ACCOUNT_ID_SIZE: usize = 40; //TODO size, after json to binary PR
-pub const XRPL_KEYLET_SIZE: usize = 68; //TODO size, after json to binary PR
-pub const XRPL_HASH256_SIZE: usize = 64; //TODO size, after json to binary PR
+pub const XRPL_ACCOUNT_ID_SIZE: usize = 20;
+// use keylet hash only (i.e. without 2-byte LedgerEntryType) for now. 
+// TODO Check rippled  
+pub const XRPL_KEYLET_SIZE: usize = 32;  
+pub const XRPL_HASH256_SIZE: usize = 32;
 pub const XRPL_CONTRACT_DATA_SIZE: usize = 4096; //TODO size??
 pub type AccountID = [u8; XRPL_ACCOUNT_ID_SIZE];
 pub type Keylet = [u8; XRPL_KEYLET_SIZE];
 pub type Hash256 = [u8; XRPL_HASH256_SIZE];
 pub type ContractData = [u8; XRPL_CONTRACT_DATA_SIZE];
 
+//TODO replace some of the helper functions with Objects, e.g. AccountRoot, Escrow, Tx
+
 pub fn get_tx_account_id() -> Option<AccountID> {
-    //TODO replace with Tx Object
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
     if unsafe { host_lib::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) }
         > 0
     {
-        //TODO size, here and below
         Some(account_id)
     } else {
         None
@@ -25,7 +27,6 @@ pub fn get_tx_account_id() -> Option<AccountID> {
 }
 
 pub fn get_current_escrow_account_id() -> Option<AccountID> {
-    //TODO replace with escrow Object
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
     if unsafe {
         host_lib::get_current_ledger_obj_field(
@@ -42,7 +43,6 @@ pub fn get_current_escrow_account_id() -> Option<AccountID> {
 }
 
 pub fn get_current_escrow_destination() -> Option<AccountID> {
-    //TODO replace with escrow Object
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
     if unsafe {
         host_lib::get_current_ledger_obj_field(
@@ -59,7 +59,6 @@ pub fn get_current_escrow_destination() -> Option<AccountID> {
 }
 
 pub fn get_current_escrow_data() -> Option<ContractData> {
-    //TODO replace with escrow Object
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
     if unsafe {
         host_lib::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len())
@@ -72,7 +71,6 @@ pub fn get_current_escrow_data() -> Option<ContractData> {
 }
 
 pub fn get_current_escrow_finish_after() -> Option<i32> {
-    //TODO replace with escrow Object
     let mut after = 0i32;
     if unsafe {
         host_lib::get_current_ledger_obj_field(sfield::FinishAfter, (&mut after) as *mut i32 as *mut u8, 4)
@@ -85,15 +83,16 @@ pub fn get_current_escrow_finish_after() -> Option<i32> {
 }
 
 pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
-    //TODO replace with accountRoot
     let keylet = match account_keylet(aid) {
         None => return None,
         Some(keylet) => keylet,
     };
+    // println!("std-lib keylet {:?}", keylet);    
     let slot = unsafe { host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
     if slot <= 0 {
         return None;
     }
+    // println!("std-lib slot {:?}", slot);
     let mut balance = 0u64;
     if unsafe {
         host_lib::get_ledger_obj_field(

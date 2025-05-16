@@ -3,7 +3,7 @@ use hex;
 use xrpl::core::addresscodec::utils::decode_base58;
 
 pub const ACCOUNT_ID_LEN: usize = 20;
-pub type AccountId = Vec<u8>; //TODO size
+// pub type AccountId = Vec<u8>;
 
 pub enum Decodable {
     UINT256 = 5,

@@ -4,13 +4,15 @@ use crate::host_functions::{
     get_current_ledger_obj_nested_field, get_ledger_obj_array_len, get_ledger_obj_field,
     get_ledger_obj_nested_array_len, get_ledger_obj_nested_field, get_ledger_sqn,
     get_parent_ledger_hash, get_parent_ledger_time, get_tx_array_len, get_tx_field,
-    get_tx_nested_array_len, get_tx_nested_field, ledger_slot_set, update_data, DataProvider,
+    get_tx_nested_array_len, get_tx_nested_field, ledger_slot_set, update_data,
 };
+
 use crate::mock_data::MockData;
 use log::{debug, info};
 use std::collections::HashMap;
 use wasmedge_sdk::{params, AsInstance, ImportObjectBuilder, Module, Store, Vm, WasmEdgeResult};
 use wasmedge_sdk::vm::SyncInst;
+use crate::data_provider::DataProvider;
 
 /// Run a WASM function
 pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> WasmEdgeResult<bool> {

@@ -2,6 +2,9 @@ mod vm;
 mod mock_data;
 mod host_functions;
 mod sfield;
+mod hashing;
+mod data_provider;
+mod decoding;
 
 use std::path::PathBuf;
 use crate::vm::run_func;

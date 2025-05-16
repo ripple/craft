@@ -1,10 +1,11 @@
 #![allow(dead_code)]
 
+use crate::hashing::Hash256;
 use std::collections::HashMap;
 
 pub type Bytes = Vec<u8>;
-pub type Hash256 = Vec<u8>; //TODO use [u8; 32]
-pub type Keylet = Hash256; //TODO use hash or type together
+
+pub type Keylet = Hash256; //TODO use hash or type together?
 
 pub enum DataSource {
     Tx,
@@ -32,8 +33,9 @@ impl MockData {
         let hosting_ledger_obj = serde_json::from_str(hosting_ledger_obj_str)
             .expect("Hosting ledger object JSON bad formatted");
         let header = serde_json::from_str(header_str).expect("Ledger header JSON bad formatted");
-        
-        let parsed_data: Vec<HashMap<String, serde_json::Value>> = serde_json::from_str(ledger_str).expect("Ledger JSON bad formatted");
+
+        let parsed_data: Vec<HashMap<String, serde_json::Value>> =
+            serde_json::from_str(ledger_str).expect("Ledger JSON bad formatted");
         let mut combined_hashmap: HashMap<Keylet, serde_json::Value> = HashMap::new();
         for map_entry in parsed_data {
             for (key, value) in map_entry {
@@ -41,14 +43,14 @@ impl MockData {
                 combined_hashmap.insert(key.into_bytes(), value);
             }
         }
-        
+
         let field_names = polulate_field_names();
 
         MockData {
             tx,
             hosting_ledger_obj,
             header,
-            ledger : combined_hashmap,
+            ledger: combined_hashmap,
             field_names,
         }
     }
@@ -342,8 +344,14 @@ fn polulate_field_names() -> HashMap<i32, String> {
     sfield_names.insert(917531, "AuthAccount".to_string());
     sfield_names.insert(917532, "XChainClaimProofSig".to_string());
     sfield_names.insert(917533, "XChainCreateAccountProofSig".to_string());
-    sfield_names.insert(917534, "XChainClaimAttestationCollectionElement".to_string());
-    sfield_names.insert(917535, "XChainCreateAccountAttestationCollectionElement".to_string());
+    sfield_names.insert(
+        917534,
+        "XChainClaimAttestationCollectionElement".to_string(),
+    );
+    sfield_names.insert(
+        917535,
+        "XChainCreateAccountAttestationCollectionElement".to_string(),
+    );
     sfield_names.insert(917536, "PriceData".to_string());
     sfield_names.insert(917537, "Credential".to_string());
     sfield_names.insert(983043, "Signers".to_string());

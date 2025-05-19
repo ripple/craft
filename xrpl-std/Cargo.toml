@@ -3,8 +3,10 @@ edition = "2021"
 name = "xrpl-std"
 version = "0.0.1"
 
+# This empty workspace definition keeps this project independent of the parent workspace
+[workspace]
+
 [lib]
 crate-type = ["lib"]
-#crate-type = ["cdylib"]
 
 [dependencies]

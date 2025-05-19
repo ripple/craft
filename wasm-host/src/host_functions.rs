@@ -1,8 +1,10 @@
 use crate::data_provider::{unpack_locator, DataProvider, HostError};
 use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
+use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
+use log::debug;
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
-use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
+use wasmedge_sdk::{CallingFrame, Instance, ValType, WasmValue};
 
 fn get_data(
     in_buf_ptr: i32,
@@ -373,10 +375,10 @@ pub fn compute_sha512_half(
     let in_buf_len: i32 = _inputs[1].to_i32();
     let out_buf_ptr: i32 = _inputs[2].to_i32();
     let out_buf_cap: i32 = _inputs[3].to_i32();
-    
+
     if HASH256_LEN > out_buf_cap as usize {
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
-    }    
+    }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
     let hash_half = sha512_half(&data);
     set_data(hash_half.len() as i32, out_buf_ptr, hash_half, _caller)?;
@@ -393,10 +395,10 @@ pub fn account_keylet(
     let in_buf_len: i32 = _inputs[1].to_i32();
     let out_buf_ptr: i32 = _inputs[2].to_i32();
     let out_buf_cap: i32 = _inputs[3].to_i32();
-    
+
     if HASH256_LEN > out_buf_cap as usize {
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
-    }  
+    }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
@@ -410,14 +412,14 @@ pub fn credential_keylet(
     _inputs: Vec<WasmValue>,
 ) -> Result<Vec<WasmValue>, CoreError> {
     let subject_ptr: i32 = _inputs[0].to_i32();
-    let subject_len: i32 = _inputs[1].to_i32();    
+    let subject_len: i32 = _inputs[1].to_i32();
     let issuer_ptr: i32 = _inputs[2].to_i32();
     let issuer_len: i32 = _inputs[3].to_i32();
     let cred_type_ptr: i32 = _inputs[4].to_i32();
-    let cred_type_len: i32 = _inputs[5].to_i32();    
+    let cred_type_len: i32 = _inputs[5].to_i32();
     let out_buf_ptr: i32 = _inputs[6].to_i32();
     let out_buf_cap: i32 = _inputs[7].to_i32();
-    
+
     if HASH256_LEN > out_buf_cap as usize {
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
     }
@@ -427,7 +429,7 @@ pub fn credential_keylet(
     let mut data = subject;
     data.append(&mut issuer);
     data.append(&mut cred_type);
-    
+
     let keylet_hash = index_hash(LedgerNameSpace::Credential, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
     Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
@@ -479,4 +481,129 @@ pub fn oracle_keylet(
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
     Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
+}
+
+pub fn trace(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    // Expect 5 inputs.
+
+    // check the number of inputs
+    if inputs.len() != 5 {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    }
+
+    let msg_read_ptr = if inputs[0].ty() == ValType::I32 {
+        inputs[0].to_i32() as u32
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    let msg_read_len = if inputs[1].ty() == ValType::I32 {
+        inputs[1].to_i32() as usize
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    let data_read_ptr = if inputs[2].ty() == ValType::I32 {
+        inputs[2].to_i32() as u32
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    let data_read_len = if inputs[3].ty() == ValType::I32 {
+        inputs[3].to_i32() as usize
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    let data_as_hex = if inputs[4].ty() == ValType::I32 {
+        // Get the i32 value
+        let value_i32 = inputs[4].to_i32(); // Assuming this directly returns i32
+                                            // Match the value to convert to bool or return an error
+        match value_i32 {
+            0 => false,
+            1 => true,
+            // If an invalid value is supplied, assume `true`
+            _ => true,
+        }
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    debug!(
+        "trace() params: msg_read_ptr={} msg_read_len={} data_read_ptr={} data_read_len={}",
+        msg_read_ptr, msg_read_len, data_read_ptr, data_read_len
+    );
+
+    let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
+    let data_string = read_hex_from_wasm(
+        _caller,
+        data_read_ptr as i32,
+        data_read_len as i32,
+        data_as_hex,
+    )?;
+    if data_read_len > 0 {
+        // 5. Print the message (or use a proper logging framework).
+        println!(
+            "WASM TRACE: {message} ({data_string} | {} data bytes)",
+            data_read_len
+        );
+    } else {
+        // 5. Print the message (or use a proper logging framework).
+        println!("WASM TRACE: {message}");
+    }
+
+    // --- Return Void ---
+    // Return an empty vec! to satisfy the `void` return type.
+    Ok(vec![WasmValue::from_i64(
+        (data_read_len + msg_read_len + 1) as i64,
+    )])
+}
+
+pub fn trace_num(
+    // _: &mut (),
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    // Expect 3 inputs.
+
+    // check the number of inputs
+    if inputs.len() != 3 {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    }
+
+    let msg_read_ptr = if inputs[0].ty() == ValType::I32 {
+        inputs[0].to_i32() as u32
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    let msg_read_len = if inputs[1].ty() == ValType::I32 {
+        inputs[1].to_i32() as usize
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    let number = if inputs[2].ty() == ValType::I64 {
+        inputs[2].to_i64()
+    } else {
+        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
+    };
+
+    debug!(
+        "trace() params: msg_read_ptr={} msg_read_len={} number={} ",
+        msg_read_ptr, msg_read_len, number
+    );
+
+    let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
+    // 5. Print the message (or use a proper logging framework).
+    println!("WASM TRACE: {message} {number}");
+
+    Ok(vec![WasmValue::from_i64(0)])
 }

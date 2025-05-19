@@ -1,20 +1,21 @@
-mod vm;
-mod mock_data;
-mod host_functions;
-mod sfield;
-mod hashing;
 mod data_provider;
 mod decoding;
+mod hashing;
+mod host_function_utils;
+mod host_functions;
+mod mock_data;
+mod sfield;
+mod vm;
 
-use std::path::PathBuf;
+use crate::mock_data::MockData;
 use crate::vm::run_func;
 use clap::Parser;
-use log::{info, debug, error};
 use env_logger::Builder;
 use log::LevelFilter;
-use std::io::Write;
+use log::{debug, error, info};
 use std::fs;
-use crate::mock_data::MockData;
+use std::io::Write;
+use std::path::PathBuf;
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -27,27 +28,29 @@ struct Args {
     /// Path to the WASM file (alias for backward compatibility)
     #[arg(long)]
     wasm_path: Option<String>,
-    
+
     /// Test case to run (success/failure)
     #[arg(short, long, default_value = "success")]
     test_case: String,
-    
+
     /// Verbose logging
     #[arg(short, long)]
     verbose: bool,
 }
 
-fn load_test_data(test_case: &str) -> Result<(String, String, String, String), Box<dyn std::error::Error>> {
+fn load_test_data(
+    test_case: &str,
+) -> Result<(String, String, String, String), Box<dyn std::error::Error>> {
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures")
         .join("escrow")
         .join(test_case);
-    
+
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");
     let lh_path = base_path.join("ledger_header.json");
     let l_path = base_path.join("ledger.json");
-    
+
     let tx_json = fs::read_to_string(tx_path)?;
     let lo_json = fs::read_to_string(lo_path)?;
     let lh_json = fs::read_to_string(lh_path)?;
@@ -68,10 +71,14 @@ fn main() {
             std::process::exit(1);
         }
     };
-    
+
     // Initialize logger with appropriate level
-    let log_level = if args.verbose { LevelFilter::Debug } else { LevelFilter::Info };
-    
+    let log_level = if args.verbose {
+        LevelFilter::Debug
+    } else {
+        LevelFilter::Info
+    };
+
     Builder::new()
         .format(|buf, record| {
             writeln!(
@@ -84,7 +91,7 @@ fn main() {
         })
         .filter(None, log_level)
         .init();
-    
+
     info!("Starting WasmEdge host application {:?}", args);
     info!("Loading WASM module from: {}", wasm_file);
     info!("Target function: finish (XLS-100d)");
@@ -94,7 +101,7 @@ fn main() {
         Ok((tx, lo, lh, l)) => {
             debug!("Test data loaded successfully");
             (tx, lo, lh, l)
-        },
+        }
         Err(e) => {
             error!("Failed to load test data: {}", e);
             return;
@@ -103,7 +110,7 @@ fn main() {
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json);
     info!("Executing function: finish");
-    match run_func(wasm_file,  "finish", data_source) {
+    match run_func(wasm_file, "finish", data_source) {
         Ok(result) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
@@ -113,7 +120,7 @@ fn main() {
             println!("| Result:     {:<33} |", result);
             println!("-------------------------------------------------");
             info!("Function completed successfully with result: {}", result);
-        },
+        }
         Err(e) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
@@ -125,7 +132,6 @@ fn main() {
             error!("Function execution failed: {}", e);
         }
     }
-    
+
     info!("WasmEdge host application execution completed");
 }
-

@@ -28,3 +28,4 @@ Cargo.lock
 **/node_modules/
 
 reference/build-rippled-*/
+/.idea

@@ -1,23 +1,23 @@
 #![no_std]
 #![allow(unused_imports)]
-use xrpl_std::{get_account_balance, get_current_escrow_account_id, get_current_escrow_destination, get_current_escrow_finish_after, get_tx_account_id, host_lib};
-use xrpl_std::locator::LocatorPacker;
-use xrpl_std::sfield::{SignerEntries, SignerEntry, SignerWeight};
+use xrpl_std::host::trace::{trace_msg, trace_msg_with_data, trace_num, DataRepr};
+use xrpl_std::{get_account_balance, get_tx_account_id};
 
 #[no_mangle]
 pub extern "C" fn finish() -> i32 {
     {
+        let _ = trace_msg("$$$$$ STARTING WASM EXECUTION $$$$$");
         // let account_id_tx = match get_tx_account_id() {
         //     Some(v) => v,
         //     None => return -1,
         // };
         // println!("wasm finish {:?}", account_id_tx);
-        // 
+        //
         // let account_id_clo = match get_current_escrow_account_id() {
         //     Some(v) => v,
         //     None => return -2,
         // };
-        // 
+        //
         // let destination = match get_current_escrow_destination() {
         //     Some(v) => v,
         //     None => return -3,
@@ -43,12 +43,14 @@ pub extern "C" fn finish() -> i32 {
             Some(v) => v,
             None => return -1,
         };
+        let _ = trace_msg_with_data("  Account:", &account_id_tx, DataRepr::AsHex);
+
         // println!("wasm finish account_id_tx {:?}", account_id_tx);
         let balance = match get_account_balance(&account_id_tx) {
             Some(v) => v,
             None => return -5,
         };
-        // println!("wasm finish balance {:?}", balance);
+        let _ = trace_num("  Fee:", balance as i64);
         if balance <= 0 {
             return -9;
         }
@@ -65,22 +67,22 @@ pub extern "C" fn finish() -> i32 {
         // let s = "342F9E0D242EDB43A0FBFC672B302CC8BB904993172E57FBFF4C5D4A1EB85AB9";
         // let keylet = hex::decode(s).unwrap();
         // println!("wasm finish keylet {:?}", keylet);
-        // 
+        //
         // let slot = unsafe { host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
-        // 
+        //
         // println!("wasm finish slot {:?}", slot);
-        // 
+        //
         // let mut locator = LocatorPacker::new();
         // locator.pack(SignerEntries);
         // let array_len = unsafe {
         //     host_lib::get_ledger_obj_nested_array_len(slot, locator.get_addr(), locator.num_packed_bytes())
         // };
         // println!("wasm finish array_len {:?}", array_len);
-        // 
+        //
         // locator.pack(0);
         // locator.pack(SignerEntry);
         // locator.pack(SignerWeight);
-        // 
+        //
         // let mut weight = 0i32;
         // let nfr = unsafe {
         //     host_lib::get_ledger_obj_nested_field(
@@ -88,9 +90,9 @@ pub extern "C" fn finish() -> i32 {
         //         (&mut weight) as *mut i32 as *mut u8, 4
         //     )
         // };
-        // 
+        //
         // println!("wasm finish get_ledger_obj_nested_field {:?} {}", nfr, weight);
     }
-    
+
     1
 }

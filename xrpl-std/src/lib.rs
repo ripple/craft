@@ -1,7 +1,5 @@
 #![no_std]
 
-// use ::core::panic::PanicInfo;
-
 pub mod core;
 pub mod host;
 pub mod locator;

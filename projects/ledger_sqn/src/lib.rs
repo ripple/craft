@@ -1,5 +1,5 @@
 #[no_mangle]
-pub fn ready() -> bool {
+pub fn finish() -> bool {
     unsafe { host_lib::getLedgerSqn() >= 5 }
 }
 

@@ -24,7 +24,7 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     let mut import_builder = ImportObjectBuilder::new("host_lib", data_provider)?;
 
     info!("Linking `trace` function");
-    import_builder.with_func::<(i32, i32, i32, i32, i32), i64>("trace", trace)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("trace", trace)?;
     info!("Linking `trace_num` function");
     import_builder.with_func::<(i32, i32, i64), i64>("trace_num", trace_num)?;
 

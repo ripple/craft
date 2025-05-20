@@ -1,4 +1,4 @@
-use crate::decoding::{decode, Decodable};
+use crate::decoding::{decode, AccountId, Decodable};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
 
@@ -133,6 +133,16 @@ impl DataProvider {
     pub fn get_parent_ledger_hash(&self, buf_cap: usize) -> (i32, Vec<u8>) {
         let field_result = self.data_source.get_parent_ledger_hash();
         Self::fill_buf(field_result, buf_cap, Decodable::UINT256)
+    }
+
+    pub fn get_nft_uri(
+        &self,
+        nft_id: &Hash256,
+        account_id: &AccountId,
+        buf_cap: usize,
+    ) -> (i32, Vec<u8>) {
+        let field_result = self.data_source.get_nft_uri(nft_id, account_id);
+        Self::fill_buf(field_result, buf_cap, Decodable::NOT)
     }
 
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {

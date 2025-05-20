@@ -7,6 +7,12 @@ extern "C" {
     pub fn ledger_slot_set(keylet_ptr: * const u8, keylet_len: usize, slot_num: i32) -> i32;
 
     pub fn get_tx_field(field: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field2(field: i32, field2: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field3(field: i32, field2: i32, field3: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field4(field: i32, field2: i32, field3: i32, field4: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field5(field: i32, field2: i32, field3: i32, field4: i32, field5: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field6(field: i32, field2: i32, field3: i32, field4: i32, field5: i32, field6: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    
     pub fn get_current_ledger_obj_field(field: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
     pub fn get_ledger_obj_field(slot: i32, field: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
 
@@ -37,8 +43,7 @@ extern "C" {
     pub fn escrow_keylet(account_ptr: * const u8, account_len: usize, sequence: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
     pub fn oracle_keylet(account_ptr: * const u8, account_len: usize, document_id: i32, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
 
-    //TODO the following will be in separate PRs
-    pub fn get_NFT(account_ptr: * const u8, account_len: usize, nft_id_ptr: * const u8, nft_id_len: usize, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
+    pub fn get_NFT(owner_ptr: * const u8, owner_len: usize, nft_id_ptr: * const u8, nft_id_len: usize, out_buff_ptr: * mut u8, out_buff_len: usize) -> i32;
     
     pub fn print(data_ptr: * const u8, data_len: usize); //TODO replace with David's trace
 }

@@ -1,8 +1,5 @@
 use log::{debug, error, info};
-use wasmedge_sdk::error::CoreError;
-use wasmedge_sdk::{
-    params, vm::SyncInst, AsInstance, CallingFrame, Instance, Vm, WasmVal, WasmValue,
-};
+use wasmedge_sdk::{params, vm::SyncInst, AsInstance, Vm};
 
 /// Run a WASM function with two JSON data parameters
 ///

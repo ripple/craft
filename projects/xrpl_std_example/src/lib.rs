@@ -1,12 +1,12 @@
 #![no_std]
 #![allow(unused_imports)]
+use xrpl_std::host::trace::{trace_msg_with_data, trace_num, DataRepr};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield::{SignerEntries, SignerEntry, SignerWeight};
 use xrpl_std::{
     get_account_balance, get_current_escrow_account_id, get_current_escrow_destination,
-    get_current_escrow_finish_after, get_tx_account_id, host_lib,
+    get_current_escrow_finish_after, get_tx_account_id,
 };
-use xrpl_std::host::trace::{trace_msg_with_data, trace_num, DataRepr};
 
 #[no_mangle]
 pub extern "C" fn finish() -> i32 {

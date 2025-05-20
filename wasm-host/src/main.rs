@@ -5,6 +5,7 @@ mod host_functions;
 mod mock_data;
 mod sfield;
 mod vm;
+mod host_function_utils;
 
 use crate::mock_data::MockData;
 use crate::vm::run_func;

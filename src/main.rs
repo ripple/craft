@@ -5,8 +5,8 @@ mod utils;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use colored::*;
-use inquire::Select;
 use inquire::Confirm;
+use inquire::Select;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -51,13 +51,19 @@ enum Commands {
 async fn main() -> Result<()> {
     // Check if the CLI binary needs to be updated
     if utils::needs_cli_update().unwrap_or(false) {
-        println!("{}", "\nDetected changes to the CLI source code that haven't been installed yet.".yellow());
+        println!(
+            "{}",
+            "\nDetected changes to the CLI source code that haven't been installed yet.".yellow()
+        );
         if Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
             .with_default(true)
             .prompt()?
         {
             utils::install_cli()?;
-            println!("{}", "Please run the command again to use the updated version.".blue());
+            println!(
+                "{}",
+                "Please run the command again to use the updated version.".blue()
+            );
             return Ok(());
         }
     }
@@ -69,7 +75,7 @@ async fn main() -> Result<()> {
             Commands::Build => {
                 let config = commands::configure().await?;
                 let wasm_path = commands::build(&config).await?;
-                
+
                 if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
@@ -126,7 +132,8 @@ async fn main() -> Result<()> {
                 commands::start_explorer(background).await?;
             }
         },
-        None => { // Nothing from the CLI was provided, so we'll interactively ask the user what they want to do
+        None => {
+            // Nothing from the CLI was provided, so we'll interactively ask the user what they want to do
             let choices = vec![
                 "Build WASM module",
                 "Test WASM library function",
@@ -141,7 +148,7 @@ async fn main() -> Result<()> {
                 "Build WASM module" => {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
-                    
+
                     if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                         commands::optimize(&wasm_path, &config.optimization_level).await?;
                     }
@@ -183,17 +190,19 @@ async fn main() -> Result<()> {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
                         .with_default(true)
                         .prompt()?;
-                    
+
                     commands::start_rippled_with_foreground(foreground).await?;
                 }
                 "List rippled processes" => {
                     commands::list_rippled().await?;
                 }
                 "Start Explorer" => {
-                    let background = Confirm::new("Run Explorer in background mode without visible console output")
-                        .with_default(false)
-                        .prompt()?;
-                    
+                    let background = Confirm::new(
+                        "Run Explorer in background mode without visible console output",
+                    )
+                    .with_default(false)
+                    .prompt()?;
+
                     commands::start_explorer(background).await?;
                 }
                 _ => (),
@@ -202,4 +211,4 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
-} 
+}

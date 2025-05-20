@@ -121,14 +121,12 @@ pub fn copy_to_clipboard(text: &str) -> Result<()> {
     }
     #[cfg(target_os = "linux")]
     {
-        use anyhow::{Context, Result};
         use std::io::Write;
-        use std::process::{Command, Stdio}; // if using `anyhow` for error handling
 
         let mut child = Command::new("xclip")
             .arg("-selection")
             .arg("clipboard")
-            .stdin(Stdio::piped())
+            .stdin(std::process::Stdio::piped())
             .spawn()
             .context("Failed to spawn xclip")?;
 

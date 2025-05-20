@@ -1,6 +1,6 @@
 #![no_std]
 #![allow(unused_imports)]
-use xrpl_std::host::trace::{trace_msg_with_data, trace_num, DataRepr};
+use xrpl_std::host::trace::{trace_data, trace_num, DataRepr};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield::{SignerEntries, SignerEntry, SignerWeight};
 use xrpl_std::{
@@ -47,7 +47,7 @@ pub extern "C" fn finish() -> i32 {
             Some(v) => v,
             None => return -1,
         };
-        let _ = trace_msg_with_data("  Account:", &account_id_tx, DataRepr::AsHex);
+        let _ = trace_data("  Account:", &account_id_tx, DataRepr::AsHex);
 
         let balance = match get_account_balance(&account_id_tx) {
             Some(v) => v,

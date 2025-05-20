@@ -22,7 +22,7 @@ pub enum DataRepr {
 /// the number of message bytes that were written to the trace function. Non-zero values indicate
 /// an error (e.g., incorrect buffer sizes).
 #[inline(always)] // <-- Inline because this function is very small
-pub fn trace_msg(msg: &str) -> Result<i32> {
+pub fn trace(msg: &str) -> Result<i32> {
     let null_ptr: *const u8 = ptr::null::<u8>();
 
     let res = unsafe {
@@ -49,7 +49,7 @@ pub fn trace_msg(msg: &str) -> Result<i32> {
 /// the number of message bytes that were written to the trace function. Non-zero values indicate
 /// an error (e.g., incorrect buffer sizes).
 #[inline(always)] // <-- Inline because this function is very small
-pub fn trace_msg_with_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
+pub fn trace_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
     let res = unsafe {
         let data_ptr = data.as_ptr();
         let data_len = data.len();

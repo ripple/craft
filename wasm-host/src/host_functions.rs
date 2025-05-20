@@ -489,49 +489,20 @@ pub fn trace(
     _caller: &mut CallingFrame,
     inputs: Vec<WasmValue>,
 ) -> Result<Vec<WasmValue>, CoreError> {
-    // Expect 5 inputs.
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
 
-    // check the number of inputs
-    if inputs.len() != 5 {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    }
-
-    let msg_read_ptr = if inputs[0].ty() == ValType::I32 {
-        inputs[0].to_i32() as u32
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
-
-    let msg_read_len = if inputs[1].ty() == ValType::I32 {
-        inputs[1].to_i32() as usize
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
-
-    let data_read_ptr = if inputs[2].ty() == ValType::I32 {
-        inputs[2].to_i32() as u32
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
-
-    let data_read_len = if inputs[3].ty() == ValType::I32 {
-        inputs[3].to_i32() as usize
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
-
-    let data_as_hex = if inputs[4].ty() == ValType::I32 {
-        // Get the i32 value
-        let value_i32 = inputs[4].to_i32(); // Assuming this directly returns i32
-                                            // Match the value to convert to bool or return an error
-        match value_i32 {
+    let msg_read_ptr: u32 = inputs[0].to_i32() as u32;
+    let msg_read_len: u32 = inputs[1].to_i32() as u32;
+    let data_read_ptr: u32 = inputs[2].to_i32() as u32;
+    let data_read_len: u32 = inputs[3].to_i32() as u32;
+    let data_as_hex = {
+        match inputs[4].to_i32() {
             0 => false,
             1 => true,
             // If an invalid value is supplied, assume `true`
             _ => true,
         }
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
     };
 
     debug!(
@@ -547,54 +518,31 @@ pub fn trace(
         data_as_hex,
     )?;
     if data_read_len > 0 {
-        // 5. Print the message (or use a proper logging framework).
         println!(
             "WASM TRACE: {message} ({data_string} | {} data bytes)",
             data_read_len
         );
     } else {
-        // 5. Print the message (or use a proper logging framework).
         println!("WASM TRACE: {message}");
     }
 
-    // --- Return Void ---
-    // Return an empty vec! to satisfy the `void` return type.
     Ok(vec![WasmValue::from_i32(
         (data_read_len + msg_read_len + 1) as i32,
     )])
 }
 
 pub fn trace_num(
-    // _: &mut (),
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
     _caller: &mut CallingFrame,
     inputs: Vec<WasmValue>,
 ) -> Result<Vec<WasmValue>, CoreError> {
-    // Expect 3 inputs.
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
 
-    // check the number of inputs
-    if inputs.len() != 3 {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    }
-
-    let msg_read_ptr = if inputs[0].ty() == ValType::I32 {
-        inputs[0].to_i32() as u32
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
-
-    let msg_read_len = if inputs[1].ty() == ValType::I32 {
-        inputs[1].to_i32() as usize
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
-
-    let number = if inputs[2].ty() == ValType::I64 {
-        inputs[2].to_i64()
-    } else {
-        return Err(CoreError::Execution(CoreExecutionError::FuncSigMismatch));
-    };
+    let msg_read_ptr: u32 = inputs[0].to_i32() as u32;
+    let msg_read_len: u32 = inputs[1].to_i32() as u32;
+    let number: u64 = inputs[2].to_i64() as u64;
 
     debug!(
         "trace() params: msg_read_ptr={} msg_read_len={} number={} ",

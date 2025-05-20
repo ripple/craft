@@ -11,9 +11,25 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  clippy_check:
+  clippy_linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
+
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run fmt
+        run: cargo fmt --all -- --check
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run fmt
+        run: |
+          cargo build
+          cargo test

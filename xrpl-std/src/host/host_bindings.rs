@@ -121,8 +121,10 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// Returns an integer representing the result of the operation. A value of `0` signifies
-    /// success. Non-zero values indicate an error (e.g., incorrect buffer sizes).
+    /// Returns an integer representing the result of the operation. A value of `0` or higher
+    /// signifies the number of message bytes that were written to the trace function. Non-zero
+    /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
+    /// sizes).
     pub fn trace(
         msg_read_ptr: u32,
         msg_read_len: usize,
@@ -141,11 +143,9 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// Returns a tuple `(i32, i64)`:
-    /// * `_0` (Status Code): An `i32` indicating the result of the operation.
-    ///     A value of `0` signifies success. Non-zero values indicate an error
-    ///     (e.g., incorrect buffer sizes).
-    /// * `_1` (Bytes Written): The number of bytes written into `keylet_buf`.
-    ///     On success (`status_code == 0`), this value will be `34`.
+    /// Returns an integer representing the result of the operation. A value of `0` or higher
+    /// signifies the number of message bytes that were written to the trace function. Non-zero
+    /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
+    /// sizes).
     pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32;
 }

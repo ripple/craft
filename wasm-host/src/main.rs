@@ -1,15 +1,15 @@
 mod vm;
 
-use std::collections::HashMap;
-use std::path::PathBuf;
-use wasmedge_sdk::{wasi::WasiModule, Module, Store, Vm};
 use crate::vm::run_func;
 use clap::Parser;
-use log::{info, debug, error};
 use env_logger::Builder;
 use log::LevelFilter;
-use std::io::Write;
+use log::{debug, error, info};
+use std::collections::HashMap;
 use std::fs;
+use std::io::Write;
+use std::path::PathBuf;
+use wasmedge_sdk::{wasi::WasiModule, Module, Store, Vm};
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -22,11 +22,11 @@ struct Args {
     /// Path to the WASM file (alias for backward compatibility)
     #[arg(long)]
     wasm_path: Option<String>,
-    
+
     /// Test case to run (success/failure)
     #[arg(short, long, default_value = "success")]
     test_case: String,
-    
+
     /// Verbose logging
     #[arg(short, long)]
     verbose: bool,
@@ -37,19 +37,19 @@ fn load_test_data(test_case: &str) -> Result<(String, String), Box<dyn std::erro
         .join("fixtures")
         .join("escrow")
         .join(test_case);
-    
+
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");
-    
+
     let tx_json = fs::read_to_string(tx_path)?;
     let lo_json = fs::read_to_string(lo_path)?;
-    
+
     Ok((tx_json, lo_json))
 }
 
 fn main() {
     let args = Args::parse();
-    
+
     // Use wasm_file if provided, otherwise use wasm_path
     let wasm_file = match (&args.wasm_file, &args.wasm_path) {
         (Some(file), _) => file.clone(),
@@ -59,10 +59,14 @@ fn main() {
             std::process::exit(1);
         }
     };
-    
+
     // Initialize logger with appropriate level
-    let log_level = if args.verbose { LevelFilter::Debug } else { LevelFilter::Info };
-    
+    let log_level = if args.verbose {
+        LevelFilter::Debug
+    } else {
+        LevelFilter::Info
+    };
+
     Builder::new()
         .format(|buf, record| {
             writeln!(
@@ -75,28 +79,28 @@ fn main() {
         })
         .filter(None, log_level)
         .init();
-    
+
     info!("Starting WasmEdge host application");
     info!("Loading WASM module from: {}", wasm_file);
     info!("Target function: finish (XLS-100d)");
     info!("Using test case: {}", args.test_case);
-    
+
     debug!("Initializing WasiModule");
     let mut wasi_module = match WasiModule::create(None, None, None) {
         Ok(module) => {
             debug!("WasiModule initialized successfully");
             module
-        },
+        }
         Err(e) => {
             error!("Failed to create WasiModule: {}", e);
             return;
         }
     };
-    
+
     debug!("Setting up instance map");
     let mut instances = HashMap::new();
     instances.insert(wasi_module.name().to_string(), wasi_module.as_mut());
-    
+
     info!("Creating new Vm instance");
     let store = match Store::new(None, instances) {
         Ok(store) => store,
@@ -105,7 +109,7 @@ fn main() {
             return;
         }
     };
-    
+
     let mut vm = Vm::new(store);
 
     info!("Loading WASM module from file: {}", wasm_file);
@@ -113,13 +117,13 @@ fn main() {
         Ok(module) => {
             debug!("WASM module loaded successfully");
             module
-        },
+        }
         Err(e) => {
             error!("Failed to load WASM module from {}: {}", wasm_file, e);
             return;
         }
     };
-    
+
     info!("Registering WASM module to VM");
     if let Err(e) = vm.register_module(None, wasm_module.clone()) {
         error!("Failed to register module: {}", e);
@@ -132,7 +136,7 @@ fn main() {
         Ok((tx, lo)) => {
             debug!("Test data loaded successfully");
             (tx, lo)
-        },
+        }
         Err(e) => {
             error!("Failed to load test data: {}", e);
             return;
@@ -140,7 +144,12 @@ fn main() {
     };
 
     info!("Executing function: finish");
-    match run_func(&mut vm, "finish", tx_json.as_bytes().to_vec(), lo_json.as_bytes().to_vec()) {
+    match run_func(
+        &mut vm,
+        "finish",
+        tx_json.as_bytes().to_vec(),
+        lo_json.as_bytes().to_vec(),
+    ) {
         Ok(result) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
@@ -150,7 +159,7 @@ fn main() {
             println!("| Result:     {:<33} |", result);
             println!("-------------------------------------------------");
             info!("Function completed successfully with result: {}", result);
-        },
+        }
         Err(e) => {
             println!("\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
@@ -162,7 +171,6 @@ fn main() {
             error!("Function execution failed: {}", e);
         }
     }
-    
+
     info!("WasmEdge host application execution completed");
 }
-

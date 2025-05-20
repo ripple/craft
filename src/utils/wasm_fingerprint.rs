@@ -1,8 +1,8 @@
 use anyhow::Result;
-use ripemd::Ripemd160;
-use sha2::{Sha256, Digest};
-use std::path::Path;
 use bs58;
+use ripemd::Ripemd160;
+use sha2::{Digest, Sha256};
+use std::path::Path;
 
 /// Calculates a fingerprint for a WASM module using the following algorithm:
 /// 1. Compute RIPEMD-160 hash of the WASM binary
@@ -22,11 +22,11 @@ pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
     // Read WASM file
     let wasm_bytes = std::fs::read(wasm_path)
         .map_err(|e| anyhow::anyhow!("Failed to read WASM file: {:?}", e))?;
-    
+
     // Compute RIPEMD-160 hash
     let mut ripemd = Ripemd160::new();
     ripemd.update(&wasm_bytes);
-    let ripemd_hash = ripemd.finalize();  // 20 bytes
+    let ripemd_hash = ripemd.finalize(); // 20 bytes
 
     // Prepend custom type prefix (0x17) which ensures the result starts with "w" (for 20-byte payload)
     let mut prefixed = vec![0x17];
@@ -42,8 +42,9 @@ pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
     with_checksum.extend_from_slice(checksum);
 
     // Use XRP Ledger Base58 alphabet
-    let xrp_alphabet = bs58::Alphabet::new(b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz")
-        .expect("Provided alphabet is invalid");
+    let xrp_alphabet =
+        bs58::Alphabet::new(b"rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz")
+            .expect("Provided alphabet is invalid");
 
     // Encode in Base58
     let fingerprint = bs58::encode(&with_checksum)
@@ -51,4 +52,4 @@ pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
         .into_string();
 
     Ok(fingerprint)
-} 
+}

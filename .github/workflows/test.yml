@@ -57,14 +57,12 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build and test
-        run: |
-          cargo build
-          cargo test
-
       - name: Build xrpl-std
         run: |
           (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown)
+
+      - name: Build wasm-host
+        run: (cd wasm-host && cargo build)
 
       - name: Build all examples
         run: |
@@ -75,5 +73,7 @@ jobs:
             fi
           done
 
-      - name: Build wasm-host
-        run: (cd wasm-host && cargo build)
+      - name: Build and test
+        run: |
+          cargo build
+          cargo test

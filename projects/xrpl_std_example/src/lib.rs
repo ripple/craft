@@ -8,14 +8,29 @@ use xrpl_std::{
 };
 
 #[no_mangle]
-pub extern "C" fn finish() -> bool {
-    unsafe {
-        let sender = get_tx_account_id();
-        let account_keylet = account_keylet(&sender);
-
-        print_data(&account_keylet);
-
-        true
+pub extern "C" fn finish() -> i32 {
+    {
+        // let account_id_tx = match get_tx_account_id() {
+        //     Some(v) => v,
+        //     None => return -1,
+        // };
+        // println!("wasm finish {:?}", account_id_tx);
+        //
+        // let account_id_clo = match get_current_escrow_account_id() {
+        //     Some(v) => v,
+        //     None => return -2,
+        // };
+        //
+        // let destination = match get_current_escrow_destination() {
+        //     Some(v) => v,
+        //     None => return -3,
+        // };
+        // if account_id_clo != account_id_tx {
+        //     return -6;
+        // }
+        // if destination == account_id_tx {
+        //     return -7;
+        // }
     }
     {
         // let finish_after = match get_current_escrow_finish_after() {
@@ -50,8 +65,10 @@ pub extern "C" fn finish() -> bool {
         // }
     }
     {
-        // let s = "342F9E0D242EDB43A0FBFC672B302CC8BB904993172E57FBFF4C5D4A1EB85AB9";
-        // let keylet = hex::decode(s).unwrap();
+        // let keylet = [
+        //     52, 47, 158, 13, 36, 46, 219, 67, 160, 251, 252, 103, 43, 48, 44, 200, 187, 144, 73,
+        //     147, 23, 46, 87, 251, 255, 76, 93, 74, 30, 184, 90, 185,
+        // ];
         // println!("wasm finish keylet {:?}", keylet);
         //
         // let slot = unsafe { host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
@@ -78,6 +95,31 @@ pub extern "C" fn finish() -> bool {
         // };
         //
         // println!("wasm finish get_ledger_obj_nested_field {:?} {}", nfr, weight);
+    }
+    {
+        // let nft_id = [
+        //     0, 8, 39, 16, 104, 7, 191, 132, 143, 172, 217, 114, 242, 246, 23, 226, 112, 3, 215, 91,
+        //     44, 170, 201, 129, 108, 238, 20, 132, 5, 33, 209, 233,
+        // ];
+        // let owner = get_tx_account_id().unwrap();
+        // if owner.len() != 20 {
+        //     return -21;
+        // }
+        // let mut arr = [0u8; 256];
+        // let res = unsafe {
+        //     host_lib::get_NFT(
+        //         owner.as_ptr(),
+        //         owner.len(),
+        //         nft_id.as_ptr(),
+        //         nft_id.len(),
+        //         arr.as_mut_ptr(),
+        //         arr.len(),
+        //     )
+        // };
+        // 
+        // if res != 106 {
+        //     return -22;
+        // }
     }
 
     1

@@ -235,8 +235,8 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn copy_wasm_hex_to_clipboard(wasm_file: &PathBuf) -> Result<()> {
-    let hex = utils::wasm_to_hex(&wasm_file)?;
+pub async fn copy_wasm_hex_to_clipboard(wasm_file: &Path) -> Result<()> {
+    let hex = utils::wasm_to_hex(wasm_file)?;
     utils::copy_to_clipboard(&hex)?;
     println!("{}", "WASM hex copied to clipboard!".green());
     Ok(())
@@ -480,10 +480,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
     // Check for config in current directory first
     let current_dir_config = Path::new("rippled.cfg").to_path_buf();
     if current_dir_config.exists() && current_dir_config.is_file() {
-        println!(
-            "{}",
-            format!("Found rippled.cfg in current directory").green()
-        );
+        println!("{}", "Found rippled.cfg in current directory".green());
         config_paths.push(current_dir_config);
     }
 
@@ -500,7 +497,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
     // Check current directory first
     let current_dir_rippled = Path::new("rippled").to_path_buf();
     if current_dir_rippled.exists() && current_dir_rippled.is_file() {
-        println!("{}", format!("Found rippled in current directory").green());
+        println!("{}", "Found rippled in current directory".green());
         rippled_paths.push(current_dir_rippled);
     }
 
@@ -509,10 +506,7 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
     {
         let current_dir_rippled_exe = Path::new("rippled.exe").to_path_buf();
         if current_dir_rippled_exe.exists() && current_dir_rippled_exe.is_file() {
-            println!(
-                "{}",
-                format!("Found rippled.exe in current directory").green()
-            );
+            println!("{}", "Found rippled.exe in current directory".green());
             rippled_paths.push(current_dir_rippled_exe);
         }
     }
@@ -527,7 +521,8 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
                     && path
                         .file_name()
                         .and_then(|name| name.to_str())
-                        .map_or(false, |name| name.starts_with("build-rippled-"))
+                        .map(|name| name.starts_with("build-rippled-"))
+                        .unwrap_or(false)
                 {
                     // Check for rippled executable in this directory
                     let rippled_path = path.join("rippled");
@@ -884,7 +879,7 @@ pub async fn list_rippled() -> Result<()> {
 
     // Use ps to find rippled processes
     let output = Command::new("ps")
-        .args(&["aux"])
+        .args(["aux"])
         .output()
         .context("Failed to execute ps command")?;
 

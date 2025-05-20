@@ -34,7 +34,7 @@ pub fn calculate_wasm_fingerprint(wasm_path: &Path) -> Result<String> {
 
     // Compute double SHA-256 checksum
     let first_hash = Sha256::digest(&prefixed);
-    let second_hash = Sha256::digest(&first_hash);
+    let second_hash = Sha256::digest(first_hash);
     let checksum = &second_hash[..4];
 
     // Append checksum to the prefixed bytes

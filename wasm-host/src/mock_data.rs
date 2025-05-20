@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
+use crate::decoding::{decode, Decodable};
 use crate::hashing::Hash256;
 use std::collections::HashMap;
-use crate::decoding::{decode, Decodable};
 
 pub type Bytes = Vec<u8>;
 
@@ -40,7 +40,8 @@ impl MockData {
         let mut combined_hashmap: HashMap<Keylet, serde_json::Value> = HashMap::new();
         for map_entry in parsed_data {
             for (key, value) in map_entry {
-                let keylet : Keylet = decode(&key, Decodable::UINT256).expect("ledger file, bad keylet");
+                let keylet: Keylet =
+                    decode(&key, Decodable::UINT256).expect("ledger file, bad keylet");
                 // println!("MockData keylet {:?}", keylet);
                 combined_hashmap.insert(keylet, value);
             }

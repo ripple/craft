@@ -559,8 +559,8 @@ pub fn trace(
 
     // --- Return Void ---
     // Return an empty vec! to satisfy the `void` return type.
-    Ok(vec![WasmValue::from_i64(
-        (data_read_len + msg_read_len + 1) as i64,
+    Ok(vec![WasmValue::from_i32(
+        (data_read_len + msg_read_len + 1) as i32,
     )])
 }
 
@@ -605,5 +605,5 @@ pub fn trace_num(
     // 5. Print the message (or use a proper logging framework).
     println!("WASM TRACE: {message} {number}");
 
-    Ok(vec![WasmValue::from_i64(0)])
+    Ok(vec![WasmValue::from_i32(0)])
 }

@@ -1,0 +1,79 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Make sure CI fails on all warnings, including Clippy lints
+env:
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  clippy_linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features
+
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run fmt
+        run: cargo fmt --all -- --check
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Add target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build xrpl-std
+        run: |
+          (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown)
+
+      - name: Build wasm-host
+        run: (cd wasm-host && cargo build)
+
+      - name: Build all examples
+        run: |
+          for dir in **/projects; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Building in $dir"
+              (cd "$dir" && cargo build && cargo build --target wasm32-unknown-unknown) || exit 1
+            fi
+          done
+
+      - name: Build and test
+        run: |
+          cargo build
+          cargo test

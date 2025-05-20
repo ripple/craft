@@ -129,7 +129,7 @@ unsafe extern "C" {
         data_read_ptr: u32,
         data_read_len: usize,
         as_hex: u32,
-    ) -> i64;
+    ) -> i32;
 
     /// Print a number to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will
     /// see this.
@@ -147,5 +147,5 @@ unsafe extern "C" {
     ///     (e.g., incorrect buffer sizes).
     /// * `_1` (Bytes Written): The number of bytes written into `keylet_buf`.
     ///     On success (`status_code == 0`), this value will be `34`.
-    pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i64;
+    pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32;
 }

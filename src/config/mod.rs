@@ -67,4 +67,4 @@ impl Default for Config {
             project_path: std::env::current_dir().unwrap_or_default(),
         }
     }
-} 
+}

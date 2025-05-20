@@ -70,17 +70,18 @@ jobs:
           cargo build
           cargo test
 
-      - name: Build all projects
+      - name: Build xrpl-std
+        run: |
+          (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown)
+
+      - name: Build all examples
         run: |
           for dir in **/projects; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Building in $dir"
-              (cd "$dir" && cargo build) || exit 1
+              (cd "$dir" && cargo build && cargo build --target wasm32-unknown-unknown) || exit 1
             fi
           done
-
-      - name: Build xrpl-std
-        run: (cd xrpl-std && cargo build --target wasm32-unknown-unknown)
 
       - name: Build wasm-host
         run: (cd wasm-host && cargo build)

@@ -4,7 +4,7 @@ use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
-use wasmedge_sdk::{CallingFrame, Instance, ValType, WasmValue};
+use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 
 fn get_data(
     in_buf_ptr: i32,
@@ -122,6 +122,109 @@ pub fn get_tx_field(
     let out_buf_ptr: i32 = _inputs[1].to_i32();
     let out_buf_cap: i32 = _inputs[2].to_i32();
     let dp_res = _data_provider.get_field_value(DataSource::Tx, vec![field], out_buf_cap as usize);
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn get_tx_field2(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    let field2: i32 = _inputs[1].to_i32();
+    let out_buf_ptr: i32 = _inputs[2].to_i32();
+    let out_buf_cap: i32 = _inputs[3].to_i32();
+    let dp_res =
+        _data_provider.get_field_value(DataSource::Tx, vec![field, field2], out_buf_cap as usize);
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn get_tx_field3(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    let field2: i32 = _inputs[1].to_i32();
+    let field3: i32 = _inputs[2].to_i32();
+    let out_buf_ptr: i32 = _inputs[3].to_i32();
+    let out_buf_cap: i32 = _inputs[4].to_i32();
+    let dp_res = _data_provider.get_field_value(
+        DataSource::Tx,
+        vec![field, field2, field3],
+        out_buf_cap as usize,
+    );
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn get_tx_field4(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    let field2: i32 = _inputs[1].to_i32();
+    let field3: i32 = _inputs[2].to_i32();
+    let field4: i32 = _inputs[3].to_i32();
+    let out_buf_ptr: i32 = _inputs[4].to_i32();
+    let out_buf_cap: i32 = _inputs[5].to_i32();
+    let dp_res = _data_provider.get_field_value(
+        DataSource::Tx,
+        vec![field, field2, field3, field4],
+        out_buf_cap as usize,
+    );
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn get_tx_field5(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    let field2: i32 = _inputs[1].to_i32();
+    let field3: i32 = _inputs[2].to_i32();
+    let field4: i32 = _inputs[3].to_i32();
+    let field5: i32 = _inputs[4].to_i32();
+    let out_buf_ptr: i32 = _inputs[5].to_i32();
+    let out_buf_cap: i32 = _inputs[6].to_i32();
+    let dp_res = _data_provider.get_field_value(
+        DataSource::Tx,
+        vec![field, field2, field3, field4, field5],
+        out_buf_cap as usize,
+    );
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn get_tx_field6(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let field: i32 = _inputs[0].to_i32();
+    let field2: i32 = _inputs[1].to_i32();
+    let field3: i32 = _inputs[2].to_i32();
+    let field4: i32 = _inputs[3].to_i32();
+    let field5: i32 = _inputs[4].to_i32();
+    let field6: i32 = _inputs[5].to_i32();
+
+    let out_buf_ptr: i32 = _inputs[6].to_i32();
+    let out_buf_cap: i32 = _inputs[7].to_i32();
+    let dp_res = _data_provider.get_field_value(
+        DataSource::Tx,
+        vec![field, field2, field3, field4, field5, field6],
+        out_buf_cap as usize,
+    );
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
@@ -481,6 +584,26 @@ pub fn oracle_keylet(
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
     Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
+}
+
+pub fn get_nft(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    _inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    let owner_ptr: i32 = _inputs[0].to_i32();
+    let owner_len: i32 = _inputs[1].to_i32();
+    let nft_id_ptr: i32 = _inputs[2].to_i32();
+    let nft_id_len: i32 = _inputs[3].to_i32();
+    let out_buf_ptr: i32 = _inputs[4].to_i32();
+    let out_buf_cap: i32 = _inputs[5].to_i32();
+
+    let owner_id = get_data(owner_ptr, owner_len, _caller)?;
+    let nft_id = get_data(nft_id_ptr, nft_id_len, _caller)?;
+    let dp_res = _data_provider.get_nft_uri(&nft_id, &owner_id, out_buf_cap as usize);
+    set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
+    Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
 pub fn trace(

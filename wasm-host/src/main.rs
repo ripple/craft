@@ -1,7 +1,6 @@
 mod data_provider;
 mod decoding;
 mod hashing;
-mod host_function_utils;
 mod host_functions;
 mod mock_data;
 mod sfield;
@@ -40,7 +39,7 @@ struct Args {
 
 fn load_test_data(
     test_case: &str,
-) -> Result<(String, String, String, String), Box<dyn std::error::Error>> {
+) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures")
         .join("escrow")
@@ -50,13 +49,15 @@ fn load_test_data(
     let lo_path = base_path.join("ledger_object.json");
     let lh_path = base_path.join("ledger_header.json");
     let l_path = base_path.join("ledger.json");
+    let nfts_path = base_path.join("nfts.json");
 
     let tx_json = fs::read_to_string(tx_path)?;
     let lo_json = fs::read_to_string(lo_path)?;
     let lh_json = fs::read_to_string(lh_path)?;
     let l_json = fs::read_to_string(l_path)?;
+    let nft_json = fs::read_to_string(nfts_path)?;
 
-    Ok((tx_json, lo_json, lh_json, l_json))
+    Ok((tx_json, lo_json, lh_json, l_json, nft_json))
 }
 
 fn main() {
@@ -97,10 +98,10 @@ fn main() {
     info!("Target function: finish (XLS-100d)");
     info!("Using test case: {}", args.test_case);
     info!("Loading test data from fixtures");
-    let (tx_json, lo_json, lh_json, l_json) = match load_test_data(&args.test_case) {
-        Ok((tx, lo, lh, l)) => {
+    let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_test_data(&args.test_case) {
+        Ok((tx, lo, lh, l, nft)) => {
             debug!("Test data loaded successfully");
-            (tx, lo, lh, l)
+            (tx, lo, lh, l, nft)
         }
         Err(e) => {
             error!("Failed to load test data: {}", e);
@@ -108,7 +109,7 @@ fn main() {
         }
     };
 
-    let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json);
+    let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: finish");
     match run_func(wasm_file, "finish", data_source) {
         Ok(result) => {

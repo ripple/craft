@@ -1,12 +1,12 @@
 #![no_std]
 #![allow(unused_imports)]
-use xrpl_std::host::trace::{trace_msg, trace_msg_with_data, trace_num, DataRepr};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield::{SignerEntries, SignerEntry, SignerWeight};
 use xrpl_std::{
     get_account_balance, get_current_escrow_account_id, get_current_escrow_destination,
-    get_current_escrow_finish_after, get_tx_account_id,
+    get_current_escrow_finish_after, get_tx_account_id, host_lib,
 };
+use xrpl_std::host::trace::{trace_msg_with_data, trace_num, DataRepr};
 
 #[no_mangle]
 pub extern "C" fn finish() -> i32 {
@@ -68,8 +68,10 @@ pub extern "C" fn finish() -> i32 {
         // }
     }
     {
-        // let s = "342F9E0D242EDB43A0FBFC672B302CC8BB904993172E57FBFF4C5D4A1EB85AB9";
-        // let keylet = hex::decode(s).unwrap();
+        // let keylet = [
+        //     52, 47, 158, 13, 36, 46, 219, 67, 160, 251, 252, 103, 43, 48, 44, 200, 187, 144, 73,
+        //     147, 23, 46, 87, 251, 255, 76, 93, 74, 30, 184, 90, 185,
+        // ];
         // println!("wasm finish keylet {:?}", keylet);
         //
         // let slot = unsafe { host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
@@ -96,6 +98,31 @@ pub extern "C" fn finish() -> i32 {
         // };
         //
         // println!("wasm finish get_ledger_obj_nested_field {:?} {}", nfr, weight);
+    }
+    {
+        // let nft_id = [
+        //     0, 8, 39, 16, 104, 7, 191, 132, 143, 172, 217, 114, 242, 246, 23, 226, 112, 3, 215, 91,
+        //     44, 170, 201, 129, 108, 238, 20, 132, 5, 33, 209, 233,
+        // ];
+        // let owner = get_tx_account_id().unwrap();
+        // if owner.len() != 20 {
+        //     return -21;
+        // }
+        // let mut arr = [0u8; 256];
+        // let res = unsafe {
+        //     host_lib::get_NFT(
+        //         owner.as_ptr(),
+        //         owner.len(),
+        //         nft_id.as_ptr(),
+        //         nft_id.len(),
+        //         arr.as_mut_ptr(),
+        //         arr.len(),
+        //     )
+        // };
+        //
+        // if res != 106 {
+        //     return -22;
+        // }
     }
 
     1

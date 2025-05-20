@@ -26,7 +26,7 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     info!("Linking `trace` function");
     import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("trace", trace)?;
     info!("Linking `trace_num` function");
-    import_builder.with_func::<(i32, i32, i64), i64>("trace_num", trace_num)?;
+    import_builder.with_func::<(i32, i32, i64), i32>("trace_num", trace_num)?;
 
     import_builder.with_func::<(i32, i32), i32>("get_ledger_sqn", get_ledger_sqn)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_time", get_parent_ledger_time)?;

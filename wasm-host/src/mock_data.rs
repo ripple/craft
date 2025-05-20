@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::decoding::{decode, Decodable};
+use crate::decoding::{decode, AccountId, Decodable};
 use crate::hashing::Hash256;
 use std::collections::HashMap;
 
@@ -20,6 +20,7 @@ pub struct MockData {
     hosting_ledger_obj: serde_json::Value,
     header: serde_json::Value,
     ledger: HashMap<Keylet, serde_json::Value>,
+    nfts: HashMap<Hash256, (AccountId, serde_json::Value)>,
     field_names: HashMap<i32, String>,
 }
 
@@ -29,23 +30,52 @@ impl MockData {
         hosting_ledger_obj_str: &String,
         header_str: &String,
         ledger_str: &String,
+        nfts_str: &String,
     ) -> Self {
         let tx = serde_json::from_str(tx_str).expect("Tx JSON bad formatted");
         let hosting_ledger_obj = serde_json::from_str(hosting_ledger_obj_str)
             .expect("Hosting ledger object JSON bad formatted");
         let header = serde_json::from_str(header_str).expect("Ledger header JSON bad formatted");
 
-        let parsed_data: Vec<HashMap<String, serde_json::Value>> =
-            serde_json::from_str(ledger_str).expect("Ledger JSON bad formatted");
-        let mut combined_hashmap: HashMap<Keylet, serde_json::Value> = HashMap::new();
-        for map_entry in parsed_data {
-            for (key, value) in map_entry {
-                let keylet: Keylet =
-                    decode(&key, Decodable::UINT256).expect("ledger file, bad keylet");
-                // println!("MockData keylet {:?}", keylet);
-                combined_hashmap.insert(keylet, value);
+        let ledger = {
+            let parsed_data: Vec<HashMap<String, serde_json::Value>> =
+                serde_json::from_str(ledger_str).expect("Ledger JSON bad formatted");
+            let mut combined_hashmap: HashMap<Keylet, serde_json::Value> = HashMap::new();
+            for map_entry in parsed_data {
+                for (key, value) in map_entry {
+                    let keylet: Keylet =
+                        decode(&key, Decodable::UINT256).expect("ledger file, bad keylet");
+                    // println!("MockData keylet {:?}", keylet);
+                    combined_hashmap.insert(keylet, value);
+                }
             }
-        }
+            combined_hashmap
+        };
+
+        let nfts = {
+            let mut nft_map = HashMap::new();
+            let parsed_json: serde_json::Value =
+                serde_json::from_str(nfts_str).expect("Failed to parse NFT JSON");
+            for item in parsed_json.as_array().expect("NFT JSON not an array") {
+                let nft_id = item["nft_id"].as_str();
+                let owner = item["owner"].as_str();
+                let uri = item.get("uri");
+
+                if let (Some(id), Some(owner), Some(uri)) = (nft_id, owner, uri) {
+                    nft_map.insert(
+                        decode(&id.to_string(), Decodable::UINT256).expect("NFT file, bad nft_id"),
+                        (
+                            decode(&owner.to_string(), Decodable::ACCOUNT)
+                                .expect("NFT file, bad owner"),
+                            uri.clone(),
+                        ),
+                    );
+                } else {
+                    panic!("NFT missing field(s)");
+                }
+            }
+            nft_map
+        };
 
         let field_names = polulate_field_names();
 
@@ -53,7 +83,8 @@ impl MockData {
             tx,
             hosting_ledger_obj,
             header,
-            ledger: combined_hashmap,
+            ledger,
+            nfts,
             field_names,
         }
     }
@@ -111,6 +142,23 @@ impl MockData {
 
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
         self.hosting_ledger_obj["data"] = serde_json::Value::from(data);
+    }
+
+    pub fn get_nft_uri(
+        &self,
+        nft_id: &Hash256,
+        account_id: &AccountId,
+    ) -> Option<&serde_json::Value> {
+        match self.nfts.get(nft_id) {
+            None => None,
+            Some((aid, uri)) => {
+                if account_id == aid {
+                    Some(uri)
+                } else {
+                    None
+                }
+            }
+        }
     }
 }
 

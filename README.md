@@ -53,7 +53,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
 Use specific commands:
 
 ```bash
-craft build --project <name> [--mode <debug|release>] [--opt <none|small|aggressive>] [--wee-alloc]   # Build a WASM module
+craft build [projectname] [--mode <debug|release>] [--opt <none|small|aggressive>] [--wee-alloc]   # Build a WASM module
 craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
 craft start-rippled   # Check if rippled is running and start it if needed

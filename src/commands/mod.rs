@@ -147,7 +147,9 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
                 "{}",
                 "\nFound WASM file with directory name instead of crate name.".yellow()
             );
-            println!("This can happen when directory name contains hyphens but crate name uses underscores.");
+            println!(
+                "This can happen when directory name contains hyphens but crate name uses underscores."
+            );
             return Ok(alt_wasm_file);
         }
 
@@ -542,7 +544,9 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
 
     // Verify at least one rippled exists
     if rippled_paths.is_empty() {
-        anyhow::bail!("rippled executable not found in current directory, reference/build-rippled-* or reference/rippled/Debug/");
+        anyhow::bail!(
+            "rippled executable not found in current directory, reference/build-rippled-* or reference/rippled/Debug/"
+        );
     }
 
     // Choose rippled executable
@@ -588,7 +592,9 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
 
     // Verify at least one config exists
     if config_paths.is_empty() {
-        anyhow::bail!("rippled config not found in current directory or at reference/rippled-cfg/smart-escrow-rippled.cfg");
+        anyhow::bail!(
+            "rippled config not found in current directory or at reference/rippled-cfg/smart-escrow-rippled.cfg"
+        );
     }
 
     // Choose config file

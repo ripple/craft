@@ -1,6 +1,8 @@
 use crate::data_provider::{unpack_locator, DataProvider, HostError};
 use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
+use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
+use log::debug;
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 
@@ -602,4 +604,76 @@ pub fn get_nft(
     let dp_res = _data_provider.get_nft_uri(&nft_id, &owner_id, out_buf_cap as usize);
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
+}
+
+pub fn trace(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
+
+    let msg_read_ptr: u32 = inputs[0].to_i32() as u32;
+    let msg_read_len: u32 = inputs[1].to_i32() as u32;
+    let data_read_ptr: u32 = inputs[2].to_i32() as u32;
+    let data_read_len: u32 = inputs[3].to_i32() as u32;
+    let data_as_hex = {
+        match inputs[4].to_i32() {
+            0 => false,
+            1 => true,
+            // If an invalid value is supplied, assume `true`
+            _ => true,
+        }
+    };
+
+    debug!(
+        "trace() params: msg_read_ptr={} msg_read_len={} data_read_ptr={} data_read_len={}",
+        msg_read_ptr, msg_read_len, data_read_ptr, data_read_len
+    );
+
+    let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
+    let data_string = read_hex_from_wasm(
+        _caller,
+        data_read_ptr as i32,
+        data_read_len as i32,
+        data_as_hex,
+    )?;
+    if data_read_len > 0 {
+        println!(
+            "WASM TRACE: {message} ({data_string} | {} data bytes)",
+            data_read_len
+        );
+    } else {
+        println!("WASM TRACE: {message}");
+    }
+
+    Ok(vec![WasmValue::from_i32(
+        (data_read_len + msg_read_len + 1) as i32,
+    )])
+}
+
+pub fn trace_num(
+    _data_provider: &mut DataProvider,
+    _inst: &mut Instance,
+    _caller: &mut CallingFrame,
+    inputs: Vec<WasmValue>,
+) -> Result<Vec<WasmValue>, CoreError> {
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
+
+    let msg_read_ptr: u32 = inputs[0].to_i32() as u32;
+    let msg_read_len: u32 = inputs[1].to_i32() as u32;
+    let number: u64 = inputs[2].to_i64() as u64;
+
+    debug!(
+        "trace() params: msg_read_ptr={} msg_read_len={} number={} ",
+        msg_read_ptr, msg_read_len, number
+    );
+
+    let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
+    println!("WASM TRACE: {message} {number}");
+
+    Ok(vec![WasmValue::from_i32(0)])
 }

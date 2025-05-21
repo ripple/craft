@@ -3,26 +3,25 @@ members = [".", "wasm-host"]
 
 [package]
 name = "craft"
-version = "0.4.0"
+version = "0.5.0-devnet2"
 edition = "2021"
 description = "An interactive CLI tool for building and testing WASM smart contracts"
-authors = ["Your Name <your.email@example.com>"]
 
 [dependencies]
-clap = { version = "4.4", features = ["derive"] }
-inquire = "0.6"
-colored = "2.1"
-tokio = { version = "1.36", features = ["full"] }
 anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+bs58 = "0.5"
+clap = { version = "4.4", features = ["derive"] }
+colored = "2.1"
+console = "0.15"
 dirs = "5.0"
-which = "5.0"
 hex = "0.4"
 indicatif = "0.17"
-console = "0.15"
-walkdir = "2.4"
-regex = "1.10" 
-sha2 = "0.10"
+inquire = "0.6"
+regex = "1.10"
 ripemd = "0.1"
-bs58 = "0.5" 
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+tokio = { version = "1.36", features = ["full"] }
+walkdir = "2.4"
+which = "5.0"

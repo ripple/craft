@@ -6,7 +6,7 @@ use crate::host_functions::{
     get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
     get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_field2, get_tx_field3,
     get_tx_field4, get_tx_field5, get_tx_field6, get_tx_nested_array_len, get_tx_nested_field,
-    ledger_slot_set, oracle_keylet, update_data,
+    ledger_slot_set, oracle_keylet, trace, trace_num, update_data,
 };
 
 use crate::data_provider::DataProvider;
@@ -25,6 +25,12 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     debug!("Setting up instance map and registering host functions");
     let mut instances: HashMap<String, &mut dyn SyncInst> = HashMap::new();
     let mut import_builder = ImportObjectBuilder::new("host_lib", data_provider)?;
+
+    info!("Linking `trace` function");
+    import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("trace", trace)?;
+    info!("Linking `trace_num` function");
+    import_builder.with_func::<(i32, i32, i64), i32>("trace_num", trace_num)?;
+
     import_builder.with_func::<(i32, i32), i32>("get_ledger_sqn", get_ledger_sqn)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_time", get_parent_ledger_time)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_hash", get_parent_ledger_hash)?;

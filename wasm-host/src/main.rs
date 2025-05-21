@@ -1,6 +1,7 @@
 mod data_provider;
 mod decoding;
 mod hashing;
+mod host_function_utils;
 mod host_functions;
 mod mock_data;
 mod sfield;

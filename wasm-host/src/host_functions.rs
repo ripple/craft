@@ -673,7 +673,6 @@ pub fn trace_num(
     );
 
     let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
-    // 5. Print the message (or use a proper logging framework).
     println!("WASM TRACE: {message} {number}");
 
     Ok(vec![WasmValue::from_i32(0)])

@@ -65,12 +65,11 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
 Use specific commands:
 
 ```bash
-craft build                      # Build a WASM module (interactive)
-craft build <project-name>       # Build a specific project
-craft test                       # Test a WASM module
-craft start-rippled              # Check if rippled is running and start it if needed
-craft list-rippled               # List and manage running rippled processes
-craft open-explorer              # Open the XRPL Explorer
+craft build --project <name> [--mode <debug|release>] [--opt <none|small|aggressive>] # Build a WASM module
+craft test            # Test a WASM module
+craft start-rippled   # Check if rippled is running and start it if needed
+craft list-rippled    # List and manage running rippled processes
+craft start-explorer  # Set up and run the XRPL Explorer
 ```
 
 Or, run the tool without any arguments for an interactive experience:

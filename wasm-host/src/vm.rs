@@ -52,7 +52,7 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     import_builder.with_func::<(i32, i32), i32>("get_tx_nested_array_len", get_tx_nested_array_len)?;
     import_builder.with_func::<(i32, i32), i32>("get_current_ledger_obj_nested_array_len", get_current_ledger_obj_nested_array_len)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_ledger_obj_nested_array_len", get_ledger_obj_nested_array_len)?;
-    import_builder.with_func::<(i32, i32), ()>("update_data", update_data)?;
+    import_builder.with_func::<(i32, i32), i32>("update_data", update_data)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("compute_sha512_half", compute_sha512_half)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("account_keylet", account_keylet)?;
     import_builder.with_func::<(i32, i32, i32, i32, i32, i32, i32, i32), i32>("credential_keylet", credential_keylet)?;

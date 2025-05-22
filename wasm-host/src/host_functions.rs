@@ -1,4 +1,4 @@
-use crate::data_provider::{unpack_locator, DataProvider, HostError};
+use crate::data_provider::{unpack_locator, DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE};
 use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
@@ -463,9 +463,14 @@ pub fn update_data(
 ) -> Result<Vec<WasmValue>, CoreError> {
     let in_buf_ptr: i32 = _inputs[0].to_i32();
     let in_buf_len: i32 = _inputs[1].to_i32();
+    if in_buf_len as usize > XRPL_CONTRACT_DATA_SIZE {
+        return Ok(vec![WasmValue::from_i32(
+            HostError::DataFieldTooLarge as i32,
+        )]);
+    }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
     _data_provider.set_current_ledger_obj_data(data);
-    Ok(vec![])
+    Ok(vec![WasmValue::from_i32(0)])
 }
 
 pub fn compute_sha512_half(

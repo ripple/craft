@@ -18,19 +18,6 @@ use crate::core::types::transaction_type::TransactionType;
 use crate::host::get_tx_field;
 use crate::sfield::Fulfillment;
 use core::hash::Hash;
-// TODO: FIXME (need new host function?)
-// #[inline(always)]
-// pub fn get_tx_id() -> Hash256 {
-//     let buffer = [0u8; 32]; // Allocate memory to read into.
-//
-//     unsafe {
-//         get_tx_hash(, buffer.as_mut_ptr(), buffer.len());
-//     }
-//
-//     buffer.into()
-// }
-
-pub fn get_current_transaction() {}
 
 #[inline(always)]
 pub fn get_account() -> AccountID {

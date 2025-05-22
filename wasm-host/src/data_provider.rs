@@ -4,7 +4,9 @@ use crate::mock_data::{DataSource, Keylet, MockData};
 
 const LOCATOR_BUFFER_SIZE: usize = 64;
 const NUM_SLOTS: usize = 256;
+pub const XRPL_CONTRACT_DATA_SIZE: usize = 4096;
 
+#[allow(dead_code)]
 pub enum HostError {
     InternalError = -1,
     FieldNotFound = -2,
@@ -17,6 +19,8 @@ pub enum HostError {
     InvalidSlot = -9,
     LedgerObjNotFound = -10,
     DecodingError = -11,
+    DataFieldTooLarge = -12,
+    OutOfBound = -13,
 }
 
 pub struct LocatorUnpacker {

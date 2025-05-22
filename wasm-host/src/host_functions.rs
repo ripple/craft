@@ -605,7 +605,6 @@ pub fn get_nft(
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
-
 pub fn trace(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -673,7 +672,6 @@ pub fn trace_num(
     );
 
     let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
-    // 5. Print the message (or use a proper logging framework).
     println!("WASM TRACE: {message} {number}");
 
     Ok(vec![WasmValue::from_i32(0)])

@@ -16,3 +16,4 @@ panic = "abort"
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
+#hex = "0.4.3"

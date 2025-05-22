@@ -8,6 +8,7 @@ use xrpl_std::core::types::account_id::AccountID;
 use xrpl_std::core::types::blob::Blob;
 use xrpl_std::core::types::crypto_condition::{Condition, Fulfillment};
 use xrpl_std::core::types::hash_256::Hash256;
+use xrpl_std::core::types::locator::Locator;
 use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
@@ -43,6 +44,7 @@ pub extern "C" fn finish() -> i32 {
 
     // Field: TransactionType
     // TODO: Need to decide where to put the FieldName (maybe in decoding.rs)?
+    // TODO PENG
     let transaction_type: TransactionType = current_transaction::get_transaction_type();
     let tx_type_bytes: [u8; 2] = transaction_type.into();
     let _ = trace_data(
@@ -51,6 +53,7 @@ pub extern "C" fn finish() -> i32 {
         DataRepr::AsHex,
     );
 
+    // TODO PENG
     // TODO: ComputationAllowance
 
     // Field: Fee
@@ -92,9 +95,15 @@ pub extern "C" fn finish() -> i32 {
     let ticket_sequence: u32 = current_transaction::get_ticket_sequence();
     let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
 
+    // TODO PENG
     // TODO: Memos (Array)
-    // TODO: Signers (Array)
-
+    // TODO PENG
+    // TODO: Signers (Array) --> Consider Trace-by-Locator
+    
+    // let third_signer_account_locator:Locator = ...
+    // let third_signer_account = get_cur_tx_field(third_signer_account_locator);
+    // trace("This: {}", third_signer_account);
+    
     let txn_signature: Blob = current_transaction::get_txn_signature();
     let sliced_data_len: usize = txn_signature.len;
     let sliced_data: &[u8] = &txn_signature.data[..sliced_data_len];
@@ -123,6 +132,7 @@ pub extern "C" fn finish() -> i32 {
     let condition: Condition = current_transaction::get_condition();
     let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
 
+    // TODO PENG
     // TODO: CredentialIDs (Array of Strings)
 
     // Field: Fulfillment

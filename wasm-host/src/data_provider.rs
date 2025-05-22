@@ -213,7 +213,7 @@ impl DataProvider {
                     serde_json::Value::String(s) => match decode(s, decodable) {
                         None => (HostError::DecodingError as i32, buf),
                         Some(bytes) => {
-                            info!("bytes: {:?}", bytes);
+                            // info!("bytes: {:?}", bytes);
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
                             }

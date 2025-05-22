@@ -62,6 +62,8 @@ pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::UINT256 => decode_hash(s),
         Decodable::ACCOUNT => decode_account_id(s),
         Decodable::AMOUNT => decode_amount(s),
+        // TODO: Add types for PublicKey, TxnSignature [VL Type], ARRAY, etc. 
+        // UINT16 + String(TransactionType) => UINT16
         Decodable::NOT => Some(hex::decode(s).unwrap()),
     }
 }

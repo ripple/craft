@@ -363,42 +363,12 @@ pub async fn configure() -> Result<Config> {
         _ => OptimizationLevel::Aggressive,
     };
 
-    let use_wee_alloc = Confirm::new("Use wee_alloc for smaller binary size?")
-        .with_default(false)
-        .prompt()?;
-
     Ok(Config {
         wasm_target: target,
         build_mode,
         optimization_level,
-        use_wee_alloc,
         project_path,
     })
-}
-
-pub async fn setup_wee_alloc(project_path: &Path) -> Result<()> {
-    let cargo_toml = utils::find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
-
-    // Read current content
-    let mut content = std::fs::read_to_string(&cargo_toml)?;
-
-    if !content.contains("wee_alloc") {
-        content.push_str("\nwee_alloc = \"0.4.5\"\n");
-        std::fs::write(&cargo_toml, content)?;
-
-        println!("{}", "Added wee_alloc dependency".green());
-        println!("Add this to your lib.rs/main.rs:");
-        println!(
-            "{}",
-            r#"
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-"#
-            .yellow()
-        );
-    }
-
-    Ok(())
 }
 
 pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {

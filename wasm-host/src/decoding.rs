@@ -62,6 +62,6 @@ pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::UINT256 => decode_hash(s),
         Decodable::ACCOUNT => decode_account_id(s),
         Decodable::AMOUNT => decode_amount(s),
-        Decodable::NOT => Some(s.as_bytes().to_vec()),
+        Decodable::NOT => Some(hex::decode(s).unwrap()),
     }
 }

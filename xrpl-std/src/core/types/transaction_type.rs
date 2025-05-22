@@ -1,6 +1,3 @@
-#[cfg(not(target_arch = "wasm32"))]
-use alloc::vec::Vec;
-
 /// The type of any given XRPL transaction
 #[repr(i16)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -124,28 +121,6 @@ impl From<i16> for TransactionType {
             // If the value doesn't match any known variant, return an error
             _ => TransactionType::Invalid,
         }
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl From<TransactionType> for Vec<u8> {
-    fn from(value: TransactionType) -> Self {
-        // 1. Cast the enum variant `self` to its underlying i16 value.
-        let value: i16 = value as i16;
-        // let value: i32 = value as i32;
-
-        // 2. Convert the i16 value into a fixed-size byte array ([u8; 2]).
-        //    We choose little-endian here. Use .to_be_bytes() for big-endian.
-        let bytes_array: [u8; 2] = value.to_be_bytes();
-        // let bytes_array: [u8; 4] = value.to_be_bytes();
-
-        // 3. Convert the byte array into a Vec<u8>.
-        //    .to_vec() allocates a new Vec and copies the bytes.
-        // let bytes_vec: Vec<u8> = bytes_array.to_vec();
-        let bytes_vec: Vec<u8> = Vec::from(bytes_array);
-
-        // 4. Since the operation is infallible for valid enum variants,
-        bytes_vec
     }
 }
 

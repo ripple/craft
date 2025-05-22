@@ -13,7 +13,7 @@ pub(crate) fn get_u32_field(field_code: i32) -> u32 {
         get_tx_field(field_code, buffer.as_mut_ptr(), buffer.len());
     }
 
-    u32::from_be_bytes(buffer)
+    u32::from_le_bytes(buffer)
 }
 
 #[inline(always)]

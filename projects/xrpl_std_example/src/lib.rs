@@ -27,10 +27,9 @@ pub extern "C" fn finish() -> i32 {
     let _ = trace("{");
     let _ = trace("  -- EscrowFinish Common Fields");
 
-    // TODO: FIXME!
     // Field: TransactionID
-    // let current_transaction_tx_id: Hash256 = current_transaction::get_tx_id();
-    // let _ = trace_data("  EscrowFinish TxId:", &current_transaction_tx_id.0, DataRepr::AsHex);
+    let current_tx_id: Hash256 = current_transaction::get_id();
+    let _ = trace_data("  EscrowFinish TxId:", &current_tx_id.0, DataRepr::AsHex);
 
     // Field: Account
     let account: AccountID = current_transaction::get_account();
@@ -43,13 +42,16 @@ pub extern "C" fn finish() -> i32 {
     }
 
     // Field: TransactionType
+    // TODO: Need to decide where to put the FieldName (maybe in decoding.rs)?
     let transaction_type: TransactionType = current_transaction::get_transaction_type();
     let tx_type_bytes: [u8; 2] = transaction_type.into();
     let _ = trace_data(
-        "  TransactionType (EscrowFinish):",
+        "  [TODO: FIXME] TransactionType (EscrowFinish):",
         &tx_type_bytes,
         DataRepr::AsHex,
     );
+
+    // TODO: ComputationAllowance
 
     // Field: Fee
     let fee: Amount = current_transaction::get_fee();
@@ -124,8 +126,9 @@ pub extern "C" fn finish() -> i32 {
     // TODO: CredentialIDs (Array of Strings)
 
     // Field: Fulfillment
+    // TODO: Allow trace_data to specify the # of bytes to trace.
     let fulfillment: Fulfillment = current_transaction::get_fulfillment();
-    let _ = trace_data("  Fulfillment:", &fulfillment.0, DataRepr::AsHex);
+    let _ = trace_data("  Fulfillment:", &fulfillment.data, DataRepr::AsHex);
 
     // Step #3: Get fields from the Escrow being finished....
     // TODO:

@@ -1,6 +1,4 @@
 #![no_std]
-// extern crate alloc;
-
 use crate::core::types::account_id::AccountID;
 use crate::core::types::contract_data::ContractData;
 

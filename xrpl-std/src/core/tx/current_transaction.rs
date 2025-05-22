@@ -2,7 +2,7 @@ use crate::core::amount::xrp_amount::XrpAmount;
 use crate::core::amount::Amount;
 use crate::core::amount::Amount::Xrp;
 use crate::core::field_codes::{
-    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT,
+    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT, SF_HASH,
     SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE, SF_OWNER, SF_SEQUENCE,
     SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
@@ -16,7 +16,8 @@ use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
 use crate::host::get_tx_field;
-
+use crate::sfield::Fulfillment;
+use core::hash::Hash;
 // TODO: FIXME (need new host function?)
 // #[inline(always)]
 // pub fn get_tx_id() -> Hash256 {
@@ -37,6 +38,17 @@ pub fn get_account() -> AccountID {
 }
 
 #[inline(always)]
+pub fn get_id() -> Hash256 {
+    let mut buffer = [0u8; 32]; // Allocate memory to read into (this is an i32)
+
+    unsafe {
+        get_tx_field(SF_HASH, buffer.as_mut_ptr(), buffer.len());
+    }
+
+    buffer.into()
+}
+
+#[inline(always)]
 pub fn get_transaction_type() -> TransactionType {
     let mut buffer = [0u8; 2]; // Allocate memory to read into (this is an i32)
 
@@ -44,7 +56,7 @@ pub fn get_transaction_type() -> TransactionType {
         get_tx_field(SF_TRANSACTION_TYPE, buffer.as_mut_ptr(), buffer.len());
     }
 
-    i16::from_be_bytes(buffer).into()
+    i16::from_le_bytes(buffer).into()
 }
 
 #[inline(always)]
@@ -55,7 +67,7 @@ pub fn get_fee() -> Amount {
         get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len());
     }
 
-    let amount = i64::from_be_bytes(buffer);
+    let amount = i64::from_le_bytes(buffer);
     Xrp(XrpAmount(amount as u64))
 }
 
@@ -127,14 +139,18 @@ pub fn get_condition() -> Condition {
 
 #[inline(always)]
 pub fn get_fulfillment() -> Fulfillment {
-    // Enough to hold the capped value of a fulfillment, which is 256 in rippled
-    let mut buffer = [0u8; 256];
+    let blob = get_blob_field(SF_FULFILLMENT);
 
-    unsafe {
-        get_tx_field(SF_FULFILLMENT, buffer.as_mut_ptr(), buffer.len());
+    let mut data = [0u8; 256];
+    let len_to_copy = blob.len;
+    if len_to_copy > 0 {
+        data[0..len_to_copy].copy_from_slice(&blob.data[0..len_to_copy]);
     }
 
-    buffer.into()
+    Fulfillment {
+        data,
+        len: blob.len,
+    }
 }
 
 // TODO: credential IDS

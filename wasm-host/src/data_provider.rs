@@ -1,6 +1,7 @@
 use crate::decoding::{decode, AccountId, Decodable};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
+use log::{debug, error, info};
 
 const LOCATOR_BUFFER_SIZE: usize = 64;
 const NUM_SLOTS: usize = 256;
@@ -163,10 +164,10 @@ impl DataProvider {
                             let num = n.as_i64().unwrap();
                             if buf_cap == 4 {
                                 // Safe cast to i32
-                                if num > i32::MAX as i64 || num < i32::MIN as i64 {
+                                if num > u32::MAX as i64 || num < u32::MIN as i64 {
                                     return (HostError::BufferTooSmall as i32, buf);
                                 }
-                                let bytes = (num as i32).to_le_bytes();
+                                let bytes = (num as u32).to_le_bytes();
                                 buf[..4].copy_from_slice(&bytes);
                                 (4, buf)
                             } else {
@@ -179,6 +180,7 @@ impl DataProvider {
                             }
                         } else if n.is_u64() {
                             let num = n.as_u64().unwrap();
+                            info!("is_u64::num: {}", num);
                             if buf_cap == 4 {
                                 // Safe cast to u32
                                 if num > u32::MAX as u64 {
@@ -189,6 +191,7 @@ impl DataProvider {
                                 (4, buf)
                             } else {
                                 let bytes = num.to_le_bytes();
+                                info!("bytes: {:?}", bytes);
                                 if bytes.len() > buf_cap {
                                     return (HostError::BufferTooSmall as i32, buf);
                                 }
@@ -210,6 +213,7 @@ impl DataProvider {
                     serde_json::Value::String(s) => match decode(s, decodable) {
                         None => (HostError::DecodingError as i32, buf),
                         Some(bytes) => {
+                            info!("bytes: {:?}", bytes);
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
                             }

@@ -1,7 +1,9 @@
 use crate::core::types::account_id::AccountID;
 
+/// The 20 bytes of Account Zero (rrrrrrrrrrrrrrrrrrrrrhoLvTp)
 pub const ACCOUNT_ZERO: AccountID = AccountID([0u8; 20]);
 
+/// The 20 bytes of Account One (rrrrrrrrrrrrrrrrrrrrBZbvji)
 pub const ACCOUNT_ONE: AccountID = {
     // Create a mutable array *only* during compile-time evaluation
     let mut arr = [0x00; 20];

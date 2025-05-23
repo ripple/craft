@@ -60,21 +60,26 @@ unsafe extern "C" {
     ///   ../core/error_codes.rs
     pub fn get_parent_ledger_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
-    /// Updates or assigns a slot for the ledger entry pointed by the given keylet.
+    /// Fetch a ledger entry pointed by the given keylet.
+    ///
+    /// This function uses the keylet to locate a ledger entry. If found, add it to the
+    /// cache. The cache can have up to 255 ledger entries. If `cache_num` is 0, the
+    /// new ledger entry will put in the next available cache space. If `cache_num` is not 0,
+    /// the new ledger entry will replace an existing ledger entry in the catch.
     ///
     /// # Parameters
     ///
     /// - `keylet_ptr`: A raw pointer to the keylet, which is a unique identifier used to
     ///                 locate or store data in the ledger.
     /// - `keylet_len`: The length of the keylet specified by `keylet_ptr`.
-    /// - `slot_num`: The slot number to which the keylet will be associated or updated.
-    ///               If 0, the host will assign a new slot.
+    /// - `cache_num`: The cache number to which the keylet will be placed in.
+    ///                If 0, the host will assign a new cache space.
     ///
     /// # Returns
     ///
-    /// - Returns a positive slot number
+    /// - Returns a positive cache number
     /// - Returns a negative error code on failure
-    pub fn ledger_slot_set(keylet_ptr: *const u8, keylet_len: usize, slot_num: i32) -> i32;
+    pub fn cache_ledger_obj(keylet_ptr: *const u8, keylet_len: usize, cache_num: i32) -> i32;
 
     /// Retrieves a specific transaction field and writes it into the provided output buffer.
     ///

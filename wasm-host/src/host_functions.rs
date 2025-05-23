@@ -98,7 +98,7 @@ pub fn get_parent_ledger_hash(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
-pub fn ledger_slot_set(
+pub fn cache_ledger_obj(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
     _caller: &mut CallingFrame,
@@ -106,9 +106,9 @@ pub fn ledger_slot_set(
 ) -> Result<Vec<WasmValue>, CoreError> {
     let in_buf_ptr: i32 = _inputs[0].to_i32();
     let in_buf_cap: i32 = _inputs[1].to_i32();
-    let slot_num: i32 = _inputs[2].to_i32();
+    let cache_num: i32 = _inputs[2].to_i32();
     let keylet = get_keylet(in_buf_ptr, in_buf_cap, _caller)?;
-    let dp_res = _data_provider.slot_set(keylet, slot_num as usize);
+    let dp_res = _data_provider.slot_set(keylet, cache_num as usize);
     Ok(vec![WasmValue::from_i32(dp_res)])
 }
 

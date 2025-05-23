@@ -91,7 +91,7 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
         Some(keylet) => keylet,
     };
     // println!("std-lib keylet {:?}", keylet);
-    let slot = unsafe { host::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
+    let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
     if slot <= 0 {
         return None;
     }

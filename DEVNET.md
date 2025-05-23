@@ -19,13 +19,10 @@ There are some basic DoS prevention limits on size and gas for transactions (100
 A few more host functions (some keylet generators and a function for getting NFTs).
 Switching from WasmEdge to WAMR. We'll put out a doc explaining this decision in more detail soon.
 
-Tooling:
-
-Writing Rust WASM extensions: https://github.com/ripple/craft
-
-Python: xrpl-py v4.2.0b2
-
-JS: xrpl@4.3.0-smartescrow.2, ripple-binary-codec@2.4.0-smartescrow.1 (you can also use the @smartescrow or @smart-escrow tags)
+**Tooling:**
+- Writing Rust WASM extensions: https://github.com/ripple/craft
+- Python: xrpl-py v4.2.0b2
+- JS: xrpl@4.3.0-smartescrow.2, ripple-binary-codec@2.4.0-smartescrow.1 (you can also use the @smartescrow or @smart-escrow tags)
 
 ## Historical WASM Devnets
 
@@ -41,14 +38,10 @@ Faucet: https://wasmfaucet.devnet.rippletest.net/accounts
 
 rippled code: https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 
-#### Tooling:
+**Tooling:**
+- A CLI to help you write Smart Escrows in Rust (plus some examples): https://github.com/ripple/craft
+- A sample script: https://gist.github.com/mvadari/728df55a187283e4116bead99b26b49e
+- xrpl-py: https://pypi.org/project/xrpl-py/4.2.0b0/
+- xrpl.js: https://www.npmjs.com/package/xrpl/v/4.3.0-smartescrow.0 (can be installed with npm install xrpl@smart-escrow)
+- ripple-binary-codec: https://www.npmjs.com/package/ripple-binary-codec/v/2.4.0-smartescrow.0 (can be installed with npm install ripple-binary-codec@smart-escrow)
 
-A CLI to help you write Smart Escrows in Rust (plus some examples): https://github.com/ripple/craft
-
-A sample script: https://gist.github.com/mvadari/728df55a187283e4116bead99b26b49e
-
-xrpl-py: https://pypi.org/project/xrpl-py/4.2.0b0/
-
-xrpl.js: https://www.npmjs.com/package/xrpl/v/4.3.0-smartescrow.0 (can be installed with npm install xrpl@smart-escrow)
-
-ripple-binary-codec: https://www.npmjs.com/package/ripple-binary-codec/v/2.4.0-smartescrow.0 (can be installed with npm install ripple-binary-codec@smart-escrow)

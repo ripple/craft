@@ -109,7 +109,10 @@ impl MockData {
             DataSource::KeyletLedgerObj(obj_hash) => self.ledger.get(&obj_hash)?,
         };
 
+        // TODO: Capture name here?
+        let mut name: String = String::new();
         for idx_field in idx_fields {
+            name = self.get_field_name(idx_field)?;
             if curr.is_array() {
                 curr = curr.as_array().unwrap().get(idx_field as usize)?;
             } else {

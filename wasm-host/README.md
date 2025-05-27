@@ -5,9 +5,10 @@ This tool provides a testing environment for FinishFunction WebAssembly modules 
 ## Purpose
 
 The wasm-host tool:
+
 1. Loads and executes WebAssembly modules
 2. Provides test transaction and ledger object data
-3. Calls the `finish` function as specified in XLS-100d
+3. Calls a specified function in the WASM module (defaults to `finish`)
 4. Reports execution results and any errors
 
 ## Test Fixtures
@@ -15,10 +16,12 @@ The wasm-host tool:
 The tool includes a set of test fixtures in the `fixtures/escrow` directory:
 
 ### Success Case (`fixtures/escrow/success/`)
+
 - `tx.json`: Transaction with the correct notary account
 - `ledger_object.json`: Corresponding escrow object
 
 ### Failure Case (`fixtures/escrow/failure/`)
+
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
@@ -27,24 +30,30 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory:
 ### Direct Usage
 
 From the `wasm-host` directory:
+
 ```bash
 # Run with success test case
 cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success
 
-# Run with failure test case
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
+# Run with a specific function
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success --function your_function_name
+
+# Run with failure test case, specify function name "finish"
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure --function finish
 ```
 
 From any workspace directory:
+
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success
+cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --function finish
 ```
 
 ### Command Line Options
 
 - `--wasm-file <PATH>`: Path to the WebAssembly module to test
 - `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
-- `--test-case <CASE>`: Test case to run (success/failure)
+- `--test-case <CASE>`: Test case to run (success/failure), defaults to `success`
+- `--function <NAME>`: The name of the function to execute in the WASM module, defaults to `finish`
 - `--verbose`: Enable detailed logging
 - `-h, --help`: Show help information
 
@@ -57,12 +66,14 @@ cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --
 ```
 
 The verbose output includes:
+
 - Memory allocation details
 - JSON data being processed
 - Function execution steps
 - Results of the execution
 
 Example verbose output:
+
 ```
 [INFO wasm_host] Starting WasmEdge host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
@@ -90,12 +101,14 @@ RUST_LOG=debug craft test
 ```
 
 The interactive interface will prompt you to select:
+
 1. Test case (success/failure)
 2. Other build and test options
 
 ## Test Data
 
 The tool provides test data that simulates:
+
 1. An EscrowFinish transaction
 2. An Escrow ledger object
 
@@ -104,6 +117,7 @@ This data is used to test the module's `finish` function implementation.
 ### Adding New Test Cases
 
 To add new test cases:
+
 1. Create a new directory under `fixtures/escrow/`
 2. Add `tx.json` and `ledger_object.json` files
 3. Update the test case selection in the craft tool
@@ -111,6 +125,7 @@ To add new test cases:
 ## Error Handling
 
 If the WebAssembly module execution fails, the tool will:
+
 1. Display an error message explaining the failure
 2. Show the function name that failed
 3. Show the test case being run
@@ -118,12 +133,13 @@ If the WebAssembly module execution fails, the tool will:
 5. Exit with a non-zero status code
 
 Example error output:
+
 ```
 -------------------------------------------------
 | WASM FUNCTION EXECUTION ERROR                 |
 -------------------------------------------------
-| Function: finish                              |
-| Test Case: failure                           |
-| Error:    WASM function execution error       |
+| Function:   finish                |
+| Test Case:  failure                           |
+| Error:      WASM function execution error       |
 -------------------------------------------------
-``` 
+```

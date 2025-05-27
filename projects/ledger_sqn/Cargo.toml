@@ -1,12 +1,11 @@
 [package]
 name = "ledger_sqn"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = ""
 license = "MIT"
 
-# This empty workspace definition keeps this project independent
-# from the parent workspace
+# This empty workspace definition keeps this project independent of the parent workspace
 [workspace]
 
 [lib]

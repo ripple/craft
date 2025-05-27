@@ -36,6 +36,10 @@ struct Args {
     /// Verbose logging
     #[arg(short, long)]
     verbose: bool,
+
+    /// Function to run in the WASM module
+    #[arg(long, default_value = "finish")]
+    function: String,
 }
 
 fn load_test_data(
@@ -96,7 +100,7 @@ fn main() {
 
     info!("Starting WasmEdge host application {:?}", args);
     info!("Loading WASM module from: {}", wasm_file);
-    info!("Target function: finish (XLS-100d)");
+    info!("Target function: {} (default is 'finish')", args.function);
     info!("Using test case: {}", args.test_case);
     info!("Loading test data from fixtures");
     let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_test_data(&args.test_case) {
@@ -111,23 +115,23 @@ fn main() {
     };
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
-    info!("Executing function: finish");
-    match run_func(wasm_file, "finish", data_source) {
+    info!("Executing function: {}", args.function);
+    match run_func(wasm_file, &args.function, data_source) {
         Ok(result) => {
-            println!("\n-------------------------------------------------");
+            println!("\\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
             println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", "finish");
+            println!("| Function:   {:<33} |", args.function);
             println!("| Test Case:  {:<33} |", args.test_case);
             println!("| Result:     {:<33} |", result);
             println!("-------------------------------------------------");
             info!("Function completed successfully with result: {}", result);
         }
         Err(e) => {
-            println!("\n-------------------------------------------------");
+            println!("\\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
             println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", "finish");
+            println!("| Function:   {:<33} |", args.function);
             println!("| Test Case:  {:<33} |", args.test_case);
             println!("| Error:      {:<33} |", e);
             println!("-------------------------------------------------");

@@ -18,7 +18,20 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Build a WASM module
-    Build,
+    Build {
+        /// Project name under projects directory (can be positional or via -p/--project)
+        #[arg(short, long, index = 1)]
+        project: Option<String>,
+        /// Build mode (debug or release)
+        #[arg(short='m', long, value_enum, default_value_t = config::BuildMode::Release)]
+        mode: config::BuildMode,
+        /// Optimization level (none, small, aggressive)
+        #[arg(short='O', long, value_enum, default_value_t = config::OptimizationLevel::Small)]
+        opt: config::OptimizationLevel,
+        /// Enable wee_alloc for smaller binary size
+        #[arg(long, default_value_t = false)]
+        wee_alloc: bool,
+    },
     /// Configure build settings
     Configure,
     /// Export WASM as hex
@@ -72,38 +85,33 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build => {
-                let config = commands::configure().await?;
+            Commands::Build {
+                project,
+                mode,
+                opt,
+                wee_alloc,
+            } => {
+                // Non-interactive build using CLI flags
+                let project_path = if let Some(proj) = project {
+                    std::env::current_dir()?.join("projects").join(proj)
+                } else {
+                    // Fallback to interactive selection
+                    let config = commands::configure().await?;
+                    commands::build(&config).await?;
+                    return Ok(());
+                };
+                // Prepare configuration
+                let mut config = config::Config::default();
+                config.project_path = project_path;
+                config.build_mode = mode;
+                config.optimization_level = opt;
+                config.use_wee_alloc = wee_alloc;
+                // Execute build
                 let wasm_path = commands::build(&config).await?;
-
-                if !matches!(config.optimization_level, config::OptimizationLevel::None) {
-                    commands::optimize(&wasm_path, &config.optimization_level).await?;
-                }
-
                 if config.use_wee_alloc {
                     commands::setup_wee_alloc(&config.project_path).await?;
                 }
-
-                // After build, ask what to do next
-                let choices = vec![
-                    "Deploy to WASM Devnet",
-                    "Copy WASM hex to clipboard",
-                    "Test WASM library function",
-                    "Exit",
-                ];
-
-                match Select::new("What would you like to do next?", choices).prompt()? {
-                    "Deploy to WASM Devnet" => {
-                        commands::deploy_to_wasm_devnet(&wasm_path).await?;
-                    }
-                    "Copy WASM hex to clipboard" => {
-                        commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-                    }
-                    "Test WASM library function" => {
-                        commands::test(&wasm_path, None).await?;
-                    }
-                    _ => (),
-                }
+                return Ok(());
             }
             Commands::Configure => {
                 commands::configure().await?;
@@ -148,10 +156,6 @@ async fn main() -> Result<()> {
                 "Build WASM module" => {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
-
-                    if !matches!(config.optimization_level, config::OptimizationLevel::None) {
-                        commands::optimize(&wasm_path, &config.optimization_level).await?;
-                    }
 
                     if config.use_wee_alloc {
                         commands::setup_wee_alloc(&config.project_path).await?;
@@ -211,4 +215,69 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod cli_tests {
+    use super::*;
+    use clap::Parser;
+    use crate::config::{BuildMode, OptimizationLevel};
+
+    #[test]
+    fn test_build_command_parsing() {
+        let cli = Cli::parse_from(&[
+            "craft",
+            "build",
+            "--project",
+            "myproj",
+            "--mode",
+            "debug",
+            "--opt",
+            "none",
+            "--wee-alloc",
+        ]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt, wee_alloc }) => {
+                assert_eq!(project.unwrap(), "myproj");
+                assert_eq!(mode, BuildMode::Debug);
+                assert_eq!(opt, OptimizationLevel::None);
+                assert!(wee_alloc);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_build_defaults() {
+        let cli = Cli::parse_from(&["craft", "build"]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt, wee_alloc }) => {
+                assert!(project.is_none());
+                assert_eq!(mode, BuildMode::Release);
+                assert_eq!(opt, OptimizationLevel::Small);
+                assert!(!wee_alloc);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_build_with_positional_project() {
+        let cli = Cli::parse_from(&[
+            "craft", 
+            "build",
+            "myproj",
+            "--mode",
+            "debug"
+        ]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt, wee_alloc }) => {
+                assert_eq!(project.unwrap(), "myproj");
+                assert_eq!(mode, BuildMode::Debug);
+                assert_eq!(opt, OptimizationLevel::Small);
+                assert!(!wee_alloc);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
 }

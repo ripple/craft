@@ -2814,6 +2814,7 @@ dependencies = [
  "clap",
  "env_logger",
  "hex",
+ "lazy_static",
  "log",
  "serde_json",
  "sha2 0.11.0-pre.5",

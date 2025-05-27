@@ -1,6 +1,6 @@
 {
   "Account": "rrrrrrrrrrrrrrrrrrrrBZbvji",
-  "_TODO_FIXME_TransactionType": "EscrowFinish",
+  "TransactionType": "EscrowFinish",
   "ComputationAllowance": "1000000",
   "Fee": 10,
   "Sequence": 4294967295,

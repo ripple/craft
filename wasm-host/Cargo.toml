@@ -12,3 +12,4 @@ env_logger = "0.11"
 sha2 = "0.11.0-pre.5"
 xrpl-rust = { version = "0.5.0", default-features = false, features = ["core"] }
 hex = "0.4.3"
+lazy_static = "1.5.0"

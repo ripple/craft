@@ -24,6 +24,7 @@ pub enum Decodable {
 
 impl Decodable {
     pub fn from_sfield(field: i32) -> Self {
+        assert!(field >= 0);
         if let Some(name) = SField_To_Name.get(&field) {
             if name == "TransactionType" {
                 return Decodable::Uint16TxType;
@@ -37,7 +38,7 @@ impl Decodable {
                 return Decodable::VlHex;
             }
         }
-        
+
         let field_type = field >> 16;
         match field_type {
             1 => Decodable::UINT16,

@@ -21,8 +21,6 @@ enum Commands {
     Build,
     /// Configure build settings
     Configure,
-    /// Setup wee_alloc for smaller binary size
-    SetupWeeAlloc,
     /// Test a WASM smart contract
     Test {
         /// Function to test
@@ -87,10 +85,6 @@ async fn main() -> Result<()> {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
 
-                if config.use_wee_alloc {
-                    commands::setup_wee_alloc(&config.project_path).await?;
-                }
-
                 // After build, ask what to do next
                 let choices = vec![
                     "Deploy to WASM Devnet",
@@ -111,9 +105,6 @@ async fn main() -> Result<()> {
             Commands::Configure => {
                 commands::configure().await?;
                 println!("{}", "Configuration saved!".green());
-            }
-            Commands::SetupWeeAlloc => {
-                commands::setup_wee_alloc(&std::env::current_dir()?).await?;
             }
             Commands::Test { function, project, test_case, host_function_test } => {
                 let config = if let Some(project_name) = project {
@@ -139,7 +130,6 @@ async fn main() -> Result<()> {
             let choices = vec![
                 "Build WASM module",
                 "Test WASM library function",
-                "Setup wee_alloc",
                 "Start rippled",
                 "List rippled processes",
                 "Start Explorer",
@@ -153,10 +143,6 @@ async fn main() -> Result<()> {
 
                     if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                         commands::optimize(&wasm_path, &config.optimization_level).await?;
-                    }
-
-                    if config.use_wee_alloc {
-                        commands::setup_wee_alloc(&config.project_path).await?;
                     }
 
                     // After build, ask what to do next
@@ -180,9 +166,6 @@ async fn main() -> Result<()> {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
                     commands::test(&wasm_path, None, None, None).await?;
-                }
-                "Setup wee_alloc" => {
-                    commands::setup_wee_alloc(&std::env::current_dir()?).await?;
                 }
                 "Start rippled" => {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")

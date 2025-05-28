@@ -1,4 +1,4 @@
-use crate::data_provider::{unpack_locator, DataProvider, HostError};
+use crate::data_provider::{unpack_locator, DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE};
 use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
@@ -98,7 +98,7 @@ pub fn get_parent_ledger_hash(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
-pub fn ledger_slot_set(
+pub fn cache_ledger_obj(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
     _caller: &mut CallingFrame,
@@ -106,9 +106,9 @@ pub fn ledger_slot_set(
 ) -> Result<Vec<WasmValue>, CoreError> {
     let in_buf_ptr: i32 = _inputs[0].to_i32();
     let in_buf_cap: i32 = _inputs[1].to_i32();
-    let slot_num: i32 = _inputs[2].to_i32();
+    let cache_num: i32 = _inputs[2].to_i32();
     let keylet = get_keylet(in_buf_ptr, in_buf_cap, _caller)?;
-    let dp_res = _data_provider.slot_set(keylet, slot_num as usize);
+    let dp_res = _data_provider.slot_set(keylet, cache_num as usize);
     Ok(vec![WasmValue::from_i32(dp_res)])
 }
 
@@ -463,6 +463,11 @@ pub fn update_data(
 ) -> Result<Vec<WasmValue>, CoreError> {
     let in_buf_ptr: i32 = _inputs[0].to_i32();
     let in_buf_len: i32 = _inputs[1].to_i32();
+    if in_buf_len as usize > XRPL_CONTRACT_DATA_SIZE {
+        return Ok(vec![WasmValue::from_i32(
+            HostError::DataFieldTooLarge as i32,
+        )]);
+    }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
     
     // Check if we have a recorder
@@ -471,7 +476,7 @@ pub fn update_data(
     }
     
     _data_provider.set_current_ledger_obj_data(data);
-    Ok(vec![])
+    Ok(vec![WasmValue::from_i32(0)])
 }
 
 pub fn compute_sha512_half(

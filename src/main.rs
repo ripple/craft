@@ -21,8 +21,6 @@ enum Commands {
     Build,
     /// Configure build settings
     Configure,
-    /// Export WASM as hex
-    ExportHex,
     /// Setup wee_alloc for smaller binary size
     SetupWeeAlloc,
     /// Test a WASM smart contract
@@ -96,7 +94,6 @@ async fn main() -> Result<()> {
                 // After build, ask what to do next
                 let choices = vec![
                     "Deploy to WASM Devnet",
-                    "Copy WASM hex to clipboard",
                     "Test WASM library function",
                     "Exit",
                 ];
@@ -104,9 +101,6 @@ async fn main() -> Result<()> {
                 match Select::new("What would you like to do next?", choices).prompt()? {
                     "Deploy to WASM Devnet" => {
                         commands::deploy_to_wasm_devnet(&wasm_path).await?;
-                    }
-                    "Copy WASM hex to clipboard" => {
-                        commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
                     }
                     "Test WASM library function" => {
                         commands::test(&wasm_path, None, None, None).await?;
@@ -117,11 +111,6 @@ async fn main() -> Result<()> {
             Commands::Configure => {
                 commands::configure().await?;
                 println!("{}", "Configuration saved!".green());
-            }
-            Commands::ExportHex => {
-                let config = commands::configure().await?;
-                let wasm_path = commands::build(&config).await?;
-                commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
             }
             Commands::SetupWeeAlloc => {
                 commands::setup_wee_alloc(&std::env::current_dir()?).await?;
@@ -173,7 +162,6 @@ async fn main() -> Result<()> {
                     // After build, ask what to do next
                     let choices = vec![
                         "Deploy to WASM Devnet",
-                        "Copy WASM hex to clipboard",
                         "Test WASM library function",
                         "Exit",
                     ];
@@ -181,9 +169,6 @@ async fn main() -> Result<()> {
                     match Select::new("What would you like to do next?", choices).prompt()? {
                         "Deploy to WASM Devnet" => {
                             commands::deploy_to_wasm_devnet(&wasm_path).await?;
-                        }
-                        "Copy WASM hex to clipboard" => {
-                            commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
                         }
                         "Test WASM library function" => {
                             commands::test(&wasm_path, None, None, None).await?;

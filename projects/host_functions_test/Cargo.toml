@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "ledger_access_test"
+name = "host_functions_test"
 version = "0.1.0"
 edition = "2024"
 

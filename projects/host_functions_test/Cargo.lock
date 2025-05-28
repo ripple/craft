@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "ledger_access_test"
+name = "host_functions_test"
 version = "0.1.0"
 dependencies = [
  "xrpl-std",

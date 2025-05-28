@@ -1,3 +1,4 @@
+mod call_recorder;
 mod data_provider;
 mod decoding;
 mod hashing;
@@ -7,6 +8,7 @@ mod mock_data;
 mod sfield;
 mod vm;
 
+use crate::call_recorder::{CallRecorder, HostCall};
 use crate::mock_data::MockData;
 use crate::vm::run_func;
 use clap::Parser;
@@ -32,6 +34,10 @@ struct Args {
     /// Test case to run (success/failure)
     #[arg(short, long, default_value = "success")]
     test_case: String,
+
+    /// Host function test mode (uses new fixture system)
+    #[arg(long)]
+    host_function_test: Option<String>,
 
     /// Verbose logging
     #[arg(short, long)]
@@ -59,6 +65,99 @@ fn load_test_data(
     let nft_json = fs::read_to_string(nfts_path)?;
 
     Ok((tx_json, lo_json, lh_json, l_json, nft_json))
+}
+
+fn load_host_function_test(
+    test_path: &str,
+) -> Result<(serde_json::Value, Vec<HostCall>), Box<dyn std::error::Error>> {
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures")
+        .join("host_functions")
+        .join(test_path);
+
+    let config_path = base_path.join("config.json");
+    let input_path = base_path.join("input.json");
+    let expected_path = base_path.join("expected.json");
+
+    let config_json = fs::read_to_string(config_path)?;
+    let input_json = fs::read_to_string(input_path)?;
+    let expected_json = fs::read_to_string(expected_path)?;
+
+    let _config: serde_json::Value = serde_json::from_str(&config_json)?;
+    let input: serde_json::Value = serde_json::from_str(&input_json)?;
+    let expected: serde_json::Value = serde_json::from_str(&expected_json)?;
+
+    let expected_calls: Vec<HostCall> = serde_json::from_value(
+        expected["expected_host_calls"].clone()
+    )?;
+
+    Ok((input, expected_calls))
+}
+
+fn verify_host_calls(
+    actual: &std::collections::VecDeque<HostCall>,
+    expected: &[HostCall],
+) -> Result<(), String> {
+    if actual.len() != expected.len() {
+        return Err(format!(
+            "Call count mismatch: expected {}, got {}",
+            expected.len(),
+            actual.len()
+        ));
+    }
+
+    for (i, (actual_call, expected_call)) in actual.iter().zip(expected.iter()).enumerate() {
+        if actual_call.function != expected_call.function {
+            return Err(format!(
+                "Call {} function mismatch: expected '{}', got '{}'",
+                i + 1, expected_call.function, actual_call.function
+            ));
+        }
+
+        if actual_call.call_order != expected_call.call_order {
+            return Err(format!(
+                "Call {} order mismatch: expected {}, got {}",
+                i + 1, expected_call.call_order, actual_call.call_order
+            ));
+        }
+
+        // Verify specific parameter types match
+        match (&actual_call.parameters, &expected_call.parameters) {
+            (
+                crate::call_recorder::HostCallParams::UpdateData { data: actual_data, .. },
+                crate::call_recorder::HostCallParams::UpdateData { data: expected_data, .. }
+            ) => {
+                if actual_data != expected_data {
+                    return Err(format!(
+                        "Call {} update_data mismatch: expected {:?}, got {:?}",
+                        i + 1, expected_data, actual_data
+                    ));
+                }
+            }
+            (
+                crate::call_recorder::HostCallParams::Trace { message: actual_msg, data: actual_data, .. },
+                crate::call_recorder::HostCallParams::Trace { message: expected_msg, data: expected_data, .. }
+            ) => {
+                if actual_msg != expected_msg {
+                    return Err(format!(
+                        "Call {} trace message mismatch: expected '{}', got '{}'",
+                        i + 1, expected_msg, actual_msg
+                    ));
+                }
+                if actual_data != expected_data {
+                    return Err(format!(
+                        "Call {} trace data mismatch: expected {:?}, got {:?}",
+                        i + 1, expected_data, actual_data
+                    ));
+                }
+            }
+            _ => {
+                // For now, skip detailed parameter verification for other types
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn main() {

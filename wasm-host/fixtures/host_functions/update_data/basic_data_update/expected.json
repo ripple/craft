@@ -1,0 +1,62 @@
+{
+  "expected_host_calls": [
+    {
+      "function": "trace",
+      "call_order": 1,
+      "parameters": {
+        "message": "WASM: xrpl_std_update_data_test finish() called.",
+        "data": null,
+        "as_hex": 0
+      }
+    },
+    {
+      "function": "trace", 
+      "call_order": 2,
+      "parameters": {
+        "message": "WASM: Test data created.",
+        "data": null,
+        "as_hex": 0
+      }
+    },
+    {
+      "function": "trace",
+      "call_order": 3, 
+      "parameters": {
+        "message": "WASM: Test data serialized. Data to send (hex):",
+        "data": [0, 0, 48, 57, 170, 187, 204, 221],
+        "as_hex": 1
+      }
+    },
+    {
+      "function": "update_data",
+      "call_order": 4,
+      "parameters": {
+        "data": [0, 0, 48, 57, 170, 187, 204, 221],
+        "data_len": 8
+      },
+      "expected_return": 0
+    },
+    {
+      "function": "trace",
+      "call_order": 5,
+      "parameters": {
+        "message": "WASM: host::update_data called and assumed success.",
+        "data": null,
+        "as_hex": 0
+      }
+    }
+  ],
+  "verification_points": [
+    {
+      "description": "update_data receives correct serialized test data",
+      "check": "host_call_data_matches",
+      "function": "update_data", 
+      "expected_data": [0, 0, 48, 57, 170, 187, 204, 221]
+    },
+    {
+      "description": "trace calls log execution flow correctly",
+      "check": "trace_message_sequence",
+      "expected_count": 4
+    }
+  ]
+}

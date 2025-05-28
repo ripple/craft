@@ -4,6 +4,7 @@
       "function": "trace",
       "call_order": 1,
       "parameters": {
+        "type": "Trace",
         "message": "WASM: xrpl_std_update_data_test finish() called.",
         "data": null,
         "as_hex": 0
@@ -13,6 +14,7 @@
       "function": "trace", 
       "call_order": 2,
       "parameters": {
+        "type": "Trace",
         "message": "WASM: Test data created.",
         "data": null,
         "as_hex": 0
@@ -22,6 +24,7 @@
       "function": "trace",
       "call_order": 3, 
       "parameters": {
+        "type": "Trace",
         "message": "WASM: Test data serialized. Data to send (hex):",
         "data": [0, 0, 48, 57, 170, 187, 204, 221],
         "as_hex": 1
@@ -31,15 +34,17 @@
       "function": "update_data",
       "call_order": 4,
       "parameters": {
+        "type": "UpdateData",
         "data": [0, 0, 48, 57, 170, 187, 204, 221],
         "data_len": 8
       },
-      "expected_return": 0
+      "return_value": 0
     },
     {
       "function": "trace",
       "call_order": 5,
       "parameters": {
+        "type": "Trace",
         "message": "WASM: host::update_data called and assumed success.",
         "data": null,
         "as_hex": 0

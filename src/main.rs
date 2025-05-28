@@ -30,6 +30,15 @@ enum Commands {
         /// Function to test
         #[arg(short, long)]
         function: Option<String>,
+        /// Project to test (non-interactive)
+        #[arg(short, long)]
+        project: Option<String>,
+        /// Test case to run (non-interactive)
+        #[arg(short, long)]
+        test_case: Option<String>,
+        /// Host function test to run (uses new verification system)
+        #[arg(long)]
+        host_function_test: Option<String>,
     },
     /// Check if rippled is running and start it if not
     StartRippled {
@@ -100,7 +109,7 @@ async fn main() -> Result<()> {
                         commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
                     }
                     "Test WASM library function" => {
-                        commands::test(&wasm_path, None).await?;
+                        commands::test(&wasm_path, None, None, None).await?;
                     }
                     _ => (),
                 }
@@ -117,10 +126,14 @@ async fn main() -> Result<()> {
             Commands::SetupWeeAlloc => {
                 commands::setup_wee_alloc(&std::env::current_dir()?).await?;
             }
-            Commands::Test { function } => {
-                let config = commands::configure().await?;
+            Commands::Test { function, project, test_case, host_function_test } => {
+                let config = if let Some(project_name) = project {
+                    commands::configure_non_interactive(&project_name).await?
+                } else {
+                    commands::configure().await?
+                };
                 let wasm_path = commands::build(&config).await?;
-                commands::test(&wasm_path, function).await?;
+                commands::test(&wasm_path, function, test_case, host_function_test).await?;
             }
             Commands::StartRippled { foreground } => {
                 commands::start_rippled_with_foreground(foreground).await?;
@@ -173,7 +186,7 @@ async fn main() -> Result<()> {
                             commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
                         }
                         "Test WASM library function" => {
-                            commands::test(&wasm_path, None).await?;
+                            commands::test(&wasm_path, None, None, None).await?;
                         }
                         _ => (),
                     }
@@ -181,7 +194,7 @@ async fn main() -> Result<()> {
                 "Test WASM library function" => {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
-                    commands::test(&wasm_path, None).await?;
+                    commands::test(&wasm_path, None, None, None).await?;
                 }
                 "Setup wee_alloc" => {
                     commands::setup_wee_alloc(&std::env::current_dir()?).await?;

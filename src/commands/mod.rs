@@ -376,6 +376,33 @@ pub async fn configure() -> Result<Config> {
     })
 }
 
+pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {
+    let current_dir = std::env::current_dir()?;
+    let projects = utils::find_wasm_projects(&current_dir);
+    
+    // Find the project by name
+    let project_path = projects
+        .iter()
+        .find(|p| {
+            utils::get_project_name(p)
+                .map(|name| name == project_name)
+                .unwrap_or(false)
+        })
+        .ok_or_else(|| anyhow::anyhow!("Project '{}' not found", project_name))?
+        .clone();
+
+    println!("Using project: {}", project_name);
+
+    // Use sensible defaults for non-interactive mode
+    Ok(Config {
+        wasm_target: WasmTarget::UnknownUnknown,
+        build_mode: BuildMode::Debug,
+        optimization_level: OptimizationLevel::None,
+        use_wee_alloc: false,
+        project_path,
+    })
+}
+
 pub async fn setup_wee_alloc(project_path: &Path) -> Result<()> {
     let cargo_toml = utils::find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
 
@@ -401,7 +428,12 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
     Ok(())
 }
 
-pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
+pub async fn test(
+    wasm_path: &Path, 
+    _function: Option<String>,
+    test_case: Option<String>,
+    host_function_test: Option<String>,
+) -> Result<()> {
     println!("{}", "Testing WASM contract...".cyan());
 
     // Build wasm-host first
@@ -421,21 +453,6 @@ pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
         .join("release")
         .join("wasm-host");
 
-    // Select test case
-    let test_cases = vec![
-        "success (notary account matches)",
-        "failure (wrong notary account)",
-    ];
-
-    let test_case = Select::new("Select test case:", test_cases).prompt()?;
-    let test_case = match test_case {
-        "success (notary account matches)" => "success",
-        "failure (wrong notary account)" => "failure",
-        _ => "success",
-    };
-
-    println!("Testing escrow finish condition...");
-
     // Check if we're running in verbose mode
     let verbose = std::env::var("RUST_LOG")
         .map(|v| v.to_lowercase().contains("debug"))
@@ -444,9 +461,38 @@ pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
     let mut args = vec![
         "--wasm-file",
         wasm_path.to_str().unwrap(),
-        "--test-case",
-        test_case,
     ];
+
+    let host_test_owned;
+    let test_case_value_owned;
+
+    if let Some(host_test) = host_function_test {
+        // Host function test mode
+        println!("Running host function test: {}", host_test);
+        host_test_owned = host_test.clone();
+        args.extend_from_slice(&["--host-function-test", &host_test_owned]);
+    } else {
+        // Original escrow test mode
+        test_case_value_owned = if let Some(tc) = test_case {
+            tc
+        } else {
+            // Interactive mode - select test case
+            let test_cases = vec![
+                "success (notary account matches)",
+                "failure (wrong notary account)",
+            ];
+
+            let selected = Select::new("Select test case:", test_cases).prompt()?;
+            match selected {
+                "success (notary account matches)" => "success".to_string(),
+                "failure (wrong notary account)" => "failure".to_string(),
+                _ => "success".to_string(),
+            }
+        };
+
+        println!("Testing escrow finish condition...");
+        args.extend_from_slice(&["--test-case", &test_case_value_owned]);
+    }
 
     if verbose {
         args.push("--verbose");

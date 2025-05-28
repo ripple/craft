@@ -45,6 +45,10 @@ struct Args {
     /// Verbose logging
     #[arg(short, long)]
     verbose: bool,
+
+    /// Function to run in the WASM module
+    #[arg(long, default_value = "finish")]
+    function: String,
 }
 
 fn load_test_data(
@@ -227,8 +231,8 @@ fn main() {
 
         let data_source = MockData::new(&minimal_tx, &minimal_lo, &minimal_lh, &minimal_l, &minimal_nft);
         
-        info!("Executing function with call recording: finish");
-        match run_func_with_recording(wasm_file, "finish", data_source, recorder.clone()) {
+        info!("Executing function with call recording: {}", args.function);
+        match run_func_with_recording(wasm_file, &args.function, data_source, recorder.clone()) {
             Ok(result) => {
                 info!("Function completed with result: {}", result);
                 
@@ -273,7 +277,7 @@ fn main() {
                 println!("\n-------------------------------------------------");
                 println!("| WASM FUNCTION EXECUTION ERROR                 |");
                 println!("-------------------------------------------------");
-                println!("| Function:   {:<33} |", "finish");
+                println!("| Function:   {:<33} |", args.function);
                 println!("| Test:       {:<33} |", host_function_test);
                 println!("| Error:      {:<33} |", e);
                 println!("-------------------------------------------------");
@@ -283,7 +287,7 @@ fn main() {
         }
     } else {
         // Original escrow test mode
-        info!("Target function: finish (XLS-100d)");
+        info!("Target function: {} (default is 'finish')", args.function);
         info!("Using test case: {}", args.test_case);
         info!("Loading test data from fixtures");
         let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_test_data(&args.test_case) {
@@ -298,13 +302,13 @@ fn main() {
         };
 
         let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
-        info!("Executing function: finish");
-        match run_func(wasm_file, "finish", data_source) {
+        info!("Executing function: {}", args.function);
+        match run_func(wasm_file, &args.function, data_source) {
             Ok(result) => {
                 println!("\n-------------------------------------------------");
                 println!("| WASM FUNCTION EXECUTION RESULT                |");
                 println!("-------------------------------------------------");
-                println!("| Function:   {:<33} |", "finish");
+                println!("| Function:   {:<33} |", args.function);
                 println!("| Test Case:  {:<33} |", args.test_case);
                 println!("| Result:     {:<33} |", result);
                 println!("-------------------------------------------------");
@@ -314,7 +318,7 @@ fn main() {
                 println!("\n-------------------------------------------------");
                 println!("| WASM FUNCTION EXECUTION ERROR                 |");
                 println!("-------------------------------------------------");
-                println!("| Function:   {:<33} |", "finish");
+                println!("| Function:   {:<33} |", args.function);
                 println!("| Test Case:  {:<33} |", args.test_case);
                 println!("| Error:      {:<33} |", e);
                 println!("-------------------------------------------------");

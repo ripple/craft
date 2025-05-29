@@ -1,0 +1,4 @@
+[submodule "reference/rippled"]
+	path = reference/rippled
+	url = https://github.com/XRPLF/rippled.git
+	branch = ripple/smart-escrow

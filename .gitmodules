@@ -1,7 +1,0 @@
-[submodule "reference/rippled"]
-	path = reference/rippled
-	url = https://github.com/intelliot/rippled.git
-	branch = pseudo-code
-[submodule "reference/explorer"]
-	path = reference/explorer
-	url = git@github.com:ripple/explorer.git

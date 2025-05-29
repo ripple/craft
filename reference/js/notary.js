@@ -60,7 +60,7 @@ async function test() {
     // const sequence = response2.result.tx_json.Sequence // need tx_json here
     
     // due to api_version, no tx_json here
-    const sequence = response2.result.Sequence
+    const sequence = response2.result.tx_json.Sequence
     
 
     await sleep(5000)

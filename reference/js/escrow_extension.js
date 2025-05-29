@@ -284,7 +284,7 @@ async function test() {
   }, masterWallet)
   // console.log(JSON.stringify(response2.result, null, 4))
   if (response2.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1);
-  const sequence = response2.result.Sequence
+  const sequence = response2.result.tx_json.Sequence
 
   await sleep(5000)
   await client.request({command: 'ledger_accept'})

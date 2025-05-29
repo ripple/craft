@@ -8,17 +8,76 @@ use xrpl::core::binarycodec::definitions::{get_ledger_entry_type_code, get_trans
 pub const ACCOUNT_ID_LEN: usize = 20;
 pub type AccountId = Vec<u8>;
 
+/* from rippled:
+
+    STYPE(STI_UNKNOWN, -2)                        \
+    STYPE(STI_NOTPRESENT, 0)                      \
+    STYPE(STI_UINT16, 1)                          \
+                                                  \
+    /* types (common) */                          \
+    STYPE(STI_UINT32, 2)                          \
+    STYPE(STI_UINT64, 3)                          \
+    STYPE(STI_UINT128, 4)                         \
+    STYPE(STI_UINT256, 5)                         \
+    STYPE(STI_AMOUNT, 6)                          \
+    STYPE(STI_VL, 7)                              \
+    STYPE(STI_ACCOUNT, 8)                         \
+    STYPE(STI_NUMBER, 9)                          \
+                                                  \
+    /* 10-13 are reserved */                      \
+    STYPE(STI_OBJECT, 14)                         \
+    STYPE(STI_ARRAY, 15)                          \
+                                                  \
+    /* types (uncommon) */                        \
+    STYPE(STI_UINT8, 16)                          \
+    STYPE(STI_UINT160, 17)                        \
+    STYPE(STI_PATHSET, 18)                        \
+    STYPE(STI_VECTOR256, 19)                      \
+    STYPE(STI_UINT96, 20)                         \
+    STYPE(STI_UINT192, 21)                        \
+    STYPE(STI_UINT384, 22)                        \
+    STYPE(STI_UINT512, 23)                        \
+    STYPE(STI_ISSUE, 24)                          \
+    STYPE(STI_XCHAIN_BRIDGE, 25)                  \
+    STYPE(STI_CURRENCY, 26)                       \
+                                                  \
+    /* high-level types */                        \
+    /* cannot be serialized inside other types */ \
+    STYPE(STI_TRANSACTION, 10001)                 \
+    STYPE(STI_LEDGERENTRY, 10002)                 \
+    STYPE(STI_VALIDATION, 10003)                  \
+    STYPE(STI_METADATA, 10004)
+
+*/
+
+#[allow(non_camel_case_types)]
 pub enum Decodable {
     UINT16,
-    Uint16TxType,
-    UINT16LedgerObjType,
+    Uint16_TX_TYPE,
+    UINT16_LEDGER_OBJECT_TYPE,
     UINT32,
     UINT64,
     UINT128,
     UINT256,
-    VlHex,
     AMOUNT,
+    VL_HEX,
+    VL_OTHER,
     ACCOUNT,
+    NUMBER,
+    OBJECT,
+    ARRAY,
+    UINT8,
+    UINT160,
+    PATHSET,
+    VECTOR256,
+    UINT96,
+    UINT192,
+    UINT384,
+    UINT512,
+    ISSUE,
+    XCHAIN_BRIDGE,
+    CURRENCY,
+    AS_IS,
     NOT,
 }
 
@@ -27,15 +86,15 @@ impl Decodable {
         assert!(field >= 0);
         if let Some(name) = SField_To_Name.get(&field) {
             if name == "TransactionType" {
-                return Decodable::Uint16TxType;
+                return Decodable::Uint16_TX_TYPE;
             } else if name == "LedgerEntryType" {
-                return Decodable::UINT16LedgerObjType;
+                return Decodable::UINT16_LEDGER_OBJECT_TYPE;
             } else if name == "PublicKey"
                 || name == "MessageKey"
                 || name == "SigningPubKey"
                 || name == "TxnSignature"
             {
-                return Decodable::VlHex;
+                return Decodable::VL_HEX;
             }
         }
 
@@ -47,9 +106,58 @@ impl Decodable {
             4 => Decodable::UINT128,
             5 => Decodable::UINT256,
             6 => Decodable::AMOUNT,
+            7 => Decodable::VL_OTHER,
             8 => Decodable::ACCOUNT,
+            9 => Decodable::NUMBER,
+            // 10-13 are reserved as stated in rippled
+            14 => Decodable::OBJECT,
+            15 => Decodable::ARRAY,
+            16 => Decodable::UINT8,
+            17 => Decodable::UINT160,
+            18 => Decodable::PATHSET,
+            19 => Decodable::VECTOR256,
+            20 => Decodable::UINT96,
+            21 => Decodable::UINT192,
+            22 => Decodable::UINT384,
+            23 => Decodable::UINT512,
+            24 => Decodable::ISSUE,
+            25 => Decodable::XCHAIN_BRIDGE,
+            26 => Decodable::CURRENCY,
+
             _ => Decodable::NOT,
         }
+    }
+}
+
+pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
+    match decodable {
+        Decodable::UINT16 => decode_u16(s),
+        Decodable::Uint16_TX_TYPE => decode_tx_type(s),
+        Decodable::UINT16_LEDGER_OBJECT_TYPE => decode_ledger_obj_type(s),
+        Decodable::UINT32 => decode_u32(s),
+        Decodable::UINT64 => decode_u64(s),
+        Decodable::UINT128 => decode_u128(s),
+        Decodable::UINT256 => decode_hash(s),
+        Decodable::AMOUNT => decode_i64(s),
+        Decodable::VL_HEX => decode_hex(s),
+        Decodable::VL_OTHER => decode_vl_other(s),
+        Decodable::ACCOUNT => decode_account_id(s),
+        Decodable::NUMBER => not_implemented(s),
+        Decodable::OBJECT => not_implemented(s),
+        Decodable::ARRAY => not_implemented(s),
+        Decodable::UINT8 => decode_u8(s),
+        Decodable::UINT160 => decode_hex(s),
+        Decodable::PATHSET => not_implemented(s),
+        Decodable::VECTOR256 => decode_hex(s),
+        Decodable::UINT96 => decode_hex(s),
+        Decodable::UINT192 => decode_hex(s),
+        Decodable::UINT384 => decode_hex(s),
+        Decodable::UINT512 => decode_hex(s),
+        Decodable::ISSUE => not_implemented(s),
+        Decodable::XCHAIN_BRIDGE => not_implemented(s),
+        Decodable::CURRENCY => not_implemented(s),
+        Decodable::AS_IS => raw_string_to_bytes(s),
+        Decodable::NOT => decode_not(s),
     }
 }
 
@@ -74,19 +182,6 @@ pub fn decode_account_id(base58_account_id: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
-    match hex::decode(hex_hash) {
-        Ok(bytes) => {
-            if bytes.len() == 16 {
-                Some(bytes)
-            } else {
-                None
-            }
-        }
-        Err(_) => None,
-    }
-}
-
 pub fn decode_hash(hex_hash: &String) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
         Ok(bytes) => {
@@ -102,6 +197,13 @@ pub fn decode_hash(hex_hash: &String) -> Option<Vec<u8>> {
 pub fn decode_hex(s: &String) -> Option<Vec<u8>> {
     match hex::decode(s) {
         Ok(bytes) => Some(bytes),
+        Err(_) => None,
+    }
+}
+
+pub fn decode_u8(s: &String) -> Option<Vec<u8>> {
+    match s.parse::<u8>() {
+        Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
@@ -134,20 +236,33 @@ pub fn decode_i64(s: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
-    match decodable {
-        Decodable::UINT16 => decode_u16(s),
-        Decodable::Uint16TxType => decode_tx_type(s),
-        Decodable::UINT16LedgerObjType => decode_ledger_obj_type(s),
-        Decodable::UINT32 => decode_u32(s),
-        Decodable::UINT64 => decode_u64(s),
-        Decodable::UINT128 => decode_u128(s),
-        Decodable::UINT256 => decode_hash(s),
-        Decodable::VlHex => decode_hex(s),
-        Decodable::ACCOUNT => decode_account_id(s),
-        Decodable::AMOUNT => decode_i64(s),
-        Decodable::NOT => Some(s.as_bytes().to_vec()),
+pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
+    match hex::decode(hex_hash) {
+        Ok(bytes) => {
+            if bytes.len() == 16 {
+                Some(bytes)
+            } else {
+                None
+            }
+        }
+        Err(_) => None,
     }
+}
+
+pub fn decode_vl_other(s: &String) -> Option<Vec<u8>> {
+    decode_hex(s)
+}
+
+pub fn not_implemented(_: &String) -> Option<Vec<u8>> {
+    None
+}
+
+pub fn decode_not(_: &String) -> Option<Vec<u8>> {
+    None
+}
+
+pub fn raw_string_to_bytes(s: &String) -> Option<Vec<u8>> {
+    Some(s.as_bytes().to_vec())
 }
 
 lazy_static! {

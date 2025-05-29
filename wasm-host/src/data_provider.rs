@@ -151,7 +151,7 @@ impl DataProvider {
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
         let field_result = self.data_source.get_nft_uri(nft_id, account_id);
-        Self::fill_buf(field_result, buf_cap, Decodable::NOT)
+        Self::fill_buf(field_result, buf_cap, Decodable::AS_IS)
     }
 
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
@@ -233,7 +233,10 @@ impl DataProvider {
                         buf[0] = if *b { 1 } else { 0 };
                         (1, buf)
                     }
-                    _ => (HostError::NotLeafField as i32, buf),
+                    // be explicit about the cases we don't support
+                    serde_json::Value::Null => (HostError::NotLeafField as i32, buf),
+                    serde_json::Value::Array(_) => (HostError::NotLeafField as i32, buf),
+                    serde_json::Value::Object(_) => (HostError::NotLeafField as i32, buf),
                 }
             }
             None => (HostError::FieldNotFound as i32, buf),

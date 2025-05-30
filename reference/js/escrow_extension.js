@@ -5,12 +5,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const client = new xrpl.Client("ws://127.0.0.1:6006");
 
-async function submit(tx, seed) {
-    const result = await client.request({
-        command: "submit",
-        tx_json: tx,
-        secret: seed,
-    })
+async function submit(tx, wallet) {
+    const result = await client.submit(tx, { wallet })
+
     console.log("SUBMITTED " + tx.TransactionType)
     console.log(result.result ?? result)
 
@@ -23,14 +20,15 @@ async function test() {
   await client.connect();
   const wallet = xrpl.Wallet.generate();
   console.log("connected");
-  seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+  const masterSeed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+  const masterWallet = xrpl.Wallet.fromSeed(masterSeed, { algorithm: xrpl.ECDSA.secp256k1});
 
   await submit({
     TransactionType: 'Payment',
     Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     Amount: xrpl.xrpToDrops(1000),
     Destination: wallet.address,
-  }, seed)
+  }, masterWallet)
 
   const close_time = (
     await client.request({
@@ -283,10 +281,10 @@ async function test() {
     CancelAfter: close_time + 20,
     FinishAfter: close_time + 2,
     FinishFunction: finish,
-  }, seed)
+  }, masterWallet)
   // console.log(JSON.stringify(response2.result, null, 4))
   if (response2.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1);
-  const sequence = response2.result.Sequence
+  const sequence = response2.result.tx_json.Sequence
 
   await sleep(5000)
   await client.request({command: 'ledger_accept'})
@@ -296,8 +294,8 @@ async function test() {
     Account: wallet.address,
     Owner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     OfferSequence: sequence,
-    ComputationAllowance: "1000000",
-  }, wallet.seed)
+    ComputationAllowance: 1000000,
+  }, wallet)
   // console.log(JSON.stringify(response3.result, null, 4))
 
   const response4 = await submit({
@@ -305,8 +303,8 @@ async function test() {
     Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     Owner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     OfferSequence: sequence,
-    ComputationAllowance: "1000000",
-  }, seed)
+    ComputationAllowance: 1000000,
+  }, masterWallet)
 
   await client.disconnect()
 }

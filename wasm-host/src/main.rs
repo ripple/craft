@@ -54,10 +54,17 @@ struct Args {
 fn load_test_data(
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
-    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("fixtures")
-        .join("escrow")
-        .join(test_case);
+    // Support both escrow and host_functions_test paths
+    let base_path = if test_case == "host_functions_test" {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures")
+            .join("host_functions_test")
+    } else {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures")
+            .join("escrow")
+            .join(test_case)
+    };
 
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");

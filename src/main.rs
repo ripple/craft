@@ -18,7 +18,17 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Build a WASM module
-    Build,
+    Build {
+        /// Project to build (non-interactive)
+        #[arg(short, long)]
+        project: Option<String>,
+        /// Build in release mode
+        #[arg(short, long)]
+        release: bool,
+        /// Optimization level (z, s, 0, 1, 2, 3)
+        #[arg(long)]
+        opt_level: Option<String>,
+    },
     /// Configure build settings
     Configure,
     /// Test a WASM smart contract
@@ -77,12 +87,22 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build => {
-                let config = commands::configure().await?;
+            Commands::Build { project, release, opt_level } => {
+                let config = if let Some(ref project_name) = project {
+                    commands::configure_non_interactive_build(project_name, release, opt_level).await?
+                } else {
+                    commands::configure().await?
+                };
                 let wasm_path = commands::build(&config).await?;
 
                 if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
+                }
+
+                // If project was specified (non-interactive), just exit after build
+                if project.is_some() {
+                    println!("{}", "Build completed!".green());
+                    return Ok(());
                 }
 
                 // After build, ask what to do next

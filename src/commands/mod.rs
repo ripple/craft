@@ -383,6 +383,44 @@ pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {
     })
 }
 
+pub async fn configure_non_interactive_build(project_name: &str, release: bool, opt_level: Option<String>) -> Result<Config> {
+    let current_dir = std::env::current_dir()?;
+    let projects = utils::find_wasm_projects(&current_dir);
+    
+    // Find the project by name
+    let project_path = projects
+        .iter()
+        .find(|p| {
+            utils::get_project_name(p)
+                .map(|name| name == project_name)
+                .unwrap_or(false)
+        })
+        .ok_or_else(|| anyhow::anyhow!("Project '{}' not found", project_name))?
+        .clone();
+
+    println!("Using project: {}", project_name);
+
+    let build_mode = if release {
+        BuildMode::Release
+    } else {
+        BuildMode::Debug
+    };
+
+    let optimization_level = match opt_level.as_deref() {
+        Some("z") => OptimizationLevel::Aggressive,
+        Some("s") => OptimizationLevel::Small,
+        Some("0") | Some("1") | Some("2") | Some("3") => OptimizationLevel::None, // Cargo opt levels, not wasm-opt
+        _ => OptimizationLevel::None,
+    };
+
+    Ok(Config {
+        wasm_target: WasmTarget::UnknownUnknown,
+        build_mode,
+        optimization_level,
+        project_path,
+    })
+}
+
 
 pub async fn test(
     wasm_path: &Path, 

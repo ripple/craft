@@ -5,6 +5,5 @@ pub mod credentials;
 pub mod crypto_condition;
 pub mod hash_256;
 pub mod keylets;
-pub mod locator;
 pub mod public_key;
 pub mod transaction_type;

@@ -1,12 +1,12 @@
 use crate::host_functions::{
-    account_keylet, compute_sha512_half, credential_keylet, escrow_keylet,
+    account_keylet, cache_ledger_obj, compute_sha512_half, credential_keylet, escrow_keylet,
     get_current_ledger_obj_array_len, get_current_ledger_obj_field,
     get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
     get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
     get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
     get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_field2, get_tx_field3,
     get_tx_field4, get_tx_field5, get_tx_field6, get_tx_nested_array_len, get_tx_nested_field,
-    ledger_slot_set, oracle_keylet, trace, trace_num, update_data,
+    oracle_keylet, trace, trace_num, update_data,
 };
 
 use crate::data_provider::DataProvider;
@@ -34,7 +34,7 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     import_builder.with_func::<(i32, i32), i32>("get_ledger_sqn", get_ledger_sqn)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_time", get_parent_ledger_time)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_hash", get_parent_ledger_hash)?;
-    import_builder.with_func::<(i32, i32, i32), i32>("ledger_slot_set", ledger_slot_set)?;
+    import_builder.with_func::<(i32, i32, i32), i32>("cache_ledger_obj", cache_ledger_obj)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_tx_field", get_tx_field)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("get_tx_field2", get_tx_field2)?;
     import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("get_tx_field3", get_tx_field3)?;
@@ -52,7 +52,7 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     import_builder.with_func::<(i32, i32), i32>("get_tx_nested_array_len", get_tx_nested_array_len)?;
     import_builder.with_func::<(i32, i32), i32>("get_current_ledger_obj_nested_array_len", get_current_ledger_obj_nested_array_len)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_ledger_obj_nested_array_len", get_ledger_obj_nested_array_len)?;
-    import_builder.with_func::<(i32, i32), ()>("update_data", update_data)?;
+    import_builder.with_func::<(i32, i32), i32>("update_data", update_data)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("compute_sha512_half", compute_sha512_half)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("account_keylet", account_keylet)?;
     import_builder.with_func::<(i32, i32, i32, i32, i32, i32, i32, i32), i32>("credential_keylet", credential_keylet)?;

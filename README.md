@@ -60,11 +60,10 @@ Or use specific commands:
 
 ```bash
 craft build           # Build a WASM module
-craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
 craft start-rippled   # Check if rippled is running and start it if needed
 craft list-rippled    # List and manage running rippled processes
-craft start-explorer  # Set up and run the XRPL Explorer
+craft open-explorer   # Open the XRPL Explorer
 ```
 
 ### Command-Line Options
@@ -112,6 +111,7 @@ This tool provides a testing environment for XLS-100d compliant WebAssembly modu
 ## Purpose
 
 The wasm-host tool:
+
 1. Loads and executes WebAssembly modules
 2. Provides test transaction and ledger object data
 3. Calls the `finish` function as specified in XLS-100d
@@ -122,46 +122,14 @@ The wasm-host tool:
 The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project. The intent is to generalize or reuse for future projects.
 
 ### Success Case (`fixtures/escrow/success/`)
+
 - `tx.json`: Transaction with the correct notary account
 - `ledger_object.json`: Corresponding escrow object
 
 ### Failure Case (`fixtures/escrow/failure/`)
+
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
-
-## Reference Submodules
-
-See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
-
-### 1. rippled
-
-Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
-
-### 2. XRPL Explorer
-
-Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
-
-### Cloning the Repository with Submodules
-
-To clone this repository including all submodules, use:
-
-```bash
-git clone --recurse-submodules https://github.com/your-username/craft.git
-```
-
-Or if you've already cloned the repository without submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-### Updating Submodules
-
-To update all submodules to their latest versions:
-
-```bash
-git submodule update --remote
-```
 
 ## Managing rippled
 
@@ -186,46 +154,19 @@ killall rippled
 
 ## Running the XRPL Explorer
 
-The `craft` tool includes commands to set up and run the XRPL Explorer:
+The `craft` tool includes commands to open the XRPL Explorer:
 
 ```bash
-# Set up and run the Explorer (foreground mode by default)
-craft start-explorer
-
-# Run Explorer in background mode without visible console output
-craft start-explorer --background
+# Open the Explorer
+craft open-explorer
 ```
-
-### Setting Up the Explorer
-
-When you run `start-explorer` for the first time, it will:
-
-1. Create the necessary `.env` file if it doesn't exist
-2. Install dependencies using `npm install`
-3. Start the Explorer
-
-### Explorer Features
-
-The XRPL Explorer provides a web interface for exploring XRPL transactions and data:
-
-- View account information, transactions, and objects
-- Explore the XRPL ledger
-- Monitor network activity
-- Test API calls
-
-The Explorer should be available at: http://localhost:3000
-
-### Managing the Explorer
-
-To stop the Explorer:
-- If running in foreground mode: Press `Ctrl+C` in the terminal
-- If running in background mode: Run `killall node`
 
 ## Usage
 
 ### Direct Usage
 
 From the `wasm-host` directory:
+
 ```bash
 # Run with success test case
 cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success
@@ -235,6 +176,7 @@ cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
 ```
 
 From any workspace directory:
+
 ```bash
 cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success
 ```
@@ -256,12 +198,14 @@ cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --
 ```
 
 The verbose output may include:
+
 - Memory allocation details
 - JSON data being processed
 - Function execution steps
 - Results of the execution
 
 Example verbose output:
+
 ```
 [INFO wasm_host] Starting WasmEdge host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
@@ -289,12 +233,14 @@ RUST_LOG=debug craft test
 ```
 
 The interactive interface will prompt you to select:
+
 1. Test case (success/failure)
 2. Other build and test options
 
 ## Test Data
 
 The tool provides test data that simulates:
+
 1. An EscrowFinish transaction
 2. An Escrow ledger object
 
@@ -303,6 +249,7 @@ This data is used to test the module's `finish` function implementation.
 ### Adding New Test Cases
 
 To add new test cases:
+
 1. Create a new directory under `fixtures/escrow/`
 2. Add `tx.json` and `ledger_object.json` files
 3. Update the test case selection in the craft tool
@@ -310,6 +257,7 @@ To add new test cases:
 ## Error Handling
 
 If the WebAssembly module execution fails, the tool will:
+
 1. Display an error message explaining the failure
 2. Show the function name that failed
 3. Show the test case being run
@@ -317,6 +265,7 @@ If the WebAssembly module execution fails, the tool will:
 5. Exit with a non-zero status code
 
 Example error output:
+
 ```
 -------------------------------------------------
 | WASM FUNCTION EXECUTION ERROR                 |

@@ -113,7 +113,7 @@ pub fn run_func_with_recording(
     import_builder.with_func::<(i32, i32), i32>("get_ledger_sqn", get_ledger_sqn)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_time", get_parent_ledger_time)?;
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_hash", get_parent_ledger_hash)?;
-    import_builder.with_func::<(i32, i32, i32), i32>("ledger_slot_set", ledger_slot_set)?;
+    import_builder.with_func::<(i32, i32, i32), i32>("cache_ledger_obj", cache_ledger_obj)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_tx_field", get_tx_field)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("get_tx_field2", get_tx_field2)?;
     import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("get_tx_field3", get_tx_field3)?;

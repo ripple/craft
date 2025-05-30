@@ -349,12 +349,26 @@ pub async fn configure() -> Result<Config> {
         _ => OptimizationLevel::Aggressive,
     };
 
-    Ok(Config {
+    // Show equivalent command line for discoverability (before moving values into config)
+    let project_name = utils::get_project_name(&project_path).unwrap_or("unknown".to_string());
+    let build_flag = if matches!(build_mode, BuildMode::Release) { " --release" } else { "" };
+    let opt_flag = match optimization_level {
+        OptimizationLevel::Aggressive => " --opt-level z",
+        OptimizationLevel::Small => " --opt-level s", 
+        OptimizationLevel::None => "",
+    };
+    
+    println!("\n{}", "💡 Equivalent command line:".blue());
+    println!("{}", format!("craft build --project {}{}{}", project_name, build_flag, opt_flag).green());
+
+    let config = Config {
         wasm_target: target,
         build_mode,
         optimization_level,
-        project_path,
-    })
+        project_path: project_path.clone(),
+    };
+
+    Ok(config)
 }
 
 pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {
@@ -427,7 +441,7 @@ pub async fn test(
     _function: Option<String>,
     test_case: Option<String>,
     host_function_test: Option<String>,
-) -> Result<()> {
+) -> Result<(Option<String>, Option<String>)> {
     println!("{}", "Testing WASM contract...".cyan());
 
     // Build wasm-host first
@@ -459,15 +473,19 @@ pub async fn test(
 
     let host_test_owned;
     let test_case_value_owned;
+    let final_test_case;
+    let final_host_function_test;
 
-    if let Some(host_test) = host_function_test {
+    if let Some(host_test) = host_function_test.clone() {
         // Host function test mode
         println!("Running host function test: {}", host_test);
         host_test_owned = host_test.clone();
         args.extend_from_slice(&["--host-function-test", &host_test_owned]);
+        final_test_case = None;
+        final_host_function_test = Some(host_test);
     } else {
         // Original escrow test mode
-        test_case_value_owned = if let Some(tc) = test_case {
+        test_case_value_owned = if let Some(tc) = test_case.clone() {
             tc
         } else {
             // Interactive mode - select test case
@@ -486,6 +504,8 @@ pub async fn test(
 
         println!("Testing escrow finish condition...");
         args.extend_from_slice(&["--test-case", &test_case_value_owned]);
+        final_test_case = Some(test_case_value_owned.clone());
+        final_host_function_test = None;
     }
 
     if verbose {
@@ -504,7 +524,9 @@ pub async fn test(
     }
 
     println!("{}", String::from_utf8_lossy(&output.stdout));
-    Ok(())
+    
+    // Return the selected values for discoverability
+    Ok((final_test_case, final_host_function_test))
 }
 
 pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {

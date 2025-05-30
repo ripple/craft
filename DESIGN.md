@@ -44,36 +44,27 @@ pub extern fn allocate(size: usize) -> *mut u8 {
 }
 ```
 
-##### `finish(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool`
+##### `finish() -> bool`
 
-This function evaluates whether an escrow can be finished based on the transaction and ledger object data provided.
-
-Parameters:
-- `tx_json_ptr`: Pointer to the JSON data of the EscrowFinish transaction
-- `tx_json_size`: Size in bytes of the transaction JSON data
-- `lo_json_ptr`: Pointer to the JSON data of the Escrow ledger object
-- `lo_json_size`: Size in bytes of the ledger object JSON data
+This function evaluates whether an escrow can be finished based on the current transaction and ledger state. The function uses host functions to access transaction data and ledger objects rather than receiving them as parameters.
 
 Returns a boolean indicating whether the escrow can be finished.
 
 #### Execution Flow
 
-1. The host environment calls `allocate` to request memory for transaction data.
-2. The host writes transaction JSON data to the allocated memory.
-3. The host calls `allocate` again to request memory for ledger object data.
-4. The host writes ledger object JSON data to the allocated memory.
-5. The host calls `finish` with the memory pointers and sizes.
-6. The `finish` function processes the data and returns a boolean result.
+1. The host environment loads the WASM module and calls the `finish` function.
+2. The `finish` function uses host functions to access transaction data and ledger objects.
+3. The function evaluates the escrow condition logic and returns a boolean result.
 
 ### 3.2. Memory Management
 
-The WebAssembly module manages memory explicitly through the `allocate` function, which allows the host to request memory regions where it can write data. This pattern provides:
+The WebAssembly module manages memory explicitly through the `allocate` function for internal operations. Data exchange with the host occurs through host functions rather than direct memory sharing:
 
-- **Safe data exchange**: Complex data structures like JSON can be safely passed between the host and WebAssembly module.
-- **Memory control**: The WebAssembly module maintains control over its own memory.
-- **Explicit ownership**: Memory allocation and access patterns are clearly defined for both the host and the module.
+- **Host function interface**: Transaction and ledger data is accessed via standardized host functions.
+- **Memory isolation**: The WebAssembly module maintains control over its own memory space.
+- **Deterministic access**: Host functions provide consistent, validated data access patterns.
 
-Since WebAssembly modules have their own linear memory, this explicit allocation mechanism creates a standard protocol for hosts to interact with the module's memory space.
+This approach ensures secure and predictable data exchange between the host environment and WebAssembly modules.
 
 ## 4. Restrictions and Limitations
 

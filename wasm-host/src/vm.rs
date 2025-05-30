@@ -17,7 +17,7 @@ use std::rc::Rc;
 use log::{debug, info};
 use std::collections::HashMap;
 use wasmedge_sdk::vm::SyncInst;
-use wasmedge_sdk::{params, AsInstance, ImportObjectBuilder, Module, Store, Vm, WasmEdgeResult, WasmVal};
+use wasmedge_sdk::{params, AsInstance, ImportObjectBuilder, Module, Store, Vm, WasmEdgeResult};
 
 /// Run a WASM function
 #[rustfmt::skip]
@@ -73,8 +73,8 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     info!("Registering WASM module to VM");
     vm.register_module(None, wasm_module.clone())?;
 
-    // Pass 0 as the reserved i32 argument to the function
-    let rets = vm.run_func(None, func_name, params!(0i32))?;
+    // Call function with no parameters (updated signature)
+    let rets = vm.run_func(None, func_name, params!())?;
     // println!("run_func: {:?}", rets[0].to_i32());
     Ok(rets[0].to_i32() == 1)
 }
@@ -98,7 +98,7 @@ pub fn run_func_with_recording(
     import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("trace", trace)?;
 
     info!("Linking `update_data` function with recording");  
-    import_builder.with_func::<(i32, i32), ()>("update_data", update_data)?;
+    import_builder.with_func::<(i32, i32), i32>("update_data", update_data)?;
 
     // Non-recording versions of other functions
     info!("Linking `trace_num` function");
@@ -139,7 +139,7 @@ pub fn run_func_with_recording(
     info!("Registering WASM module to VM");
     vm.register_module(None, wasm_module.clone())?;
 
-    // Pass 0 as the reserved i32 argument to the function
-    let rets = vm.run_func(None, func_name, params!(0i32))?;
+    // Call function with no parameters (updated signature)
+    let rets = vm.run_func(None, func_name, params!())?;
     Ok(rets[0].to_i32() == 1)
 }

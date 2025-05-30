@@ -5,33 +5,23 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const client = new xrpl.Client("ws://127.0.0.1:6006");
 
-async function submit(tx, seed) {
+async function submit(tx, wallet) {
+    const result = await client.submit(tx, { wallet })
 
-    // Add network_id: 63456 to the tx_json
-    tx.NetworkID = 63456
-
-
-    const result = await client.request({
-        command: "submit",
-        tx_json: tx,
-        secret: seed,
-    })
     console.log("SUBMITTED " + tx.TransactionType)
     console.log(result.result ?? result)
 
     await client.request({command: 'ledger_accept'})
 
-    // now there is tx_json. why?
-    // depends on api_version!
     return client.request({command: 'tx', transaction: result.result.tx_json.hash})
-    // return client.request({command: 'tx', transaction: result.result.hash}) // no tx_json here
 }
 
 async function test() {
   await client.connect();
   const wallet = xrpl.Wallet.generate();
   console.log("connected");
-  seed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+  const masterSeed = "snoPBrXtMeMyMHUVTgbuqAfg1SUTb"
+  const masterWallet = xrpl.Wallet.fromSeed(masterSeed, { algorithm: xrpl.ECDSA.secp256k1});
 
   // fund our new wallet with 1000 test XRP
   await submit({
@@ -39,7 +29,7 @@ async function test() {
     Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
     Amount: xrpl.xrpToDrops(1000),
     Destination: wallet.address,
-  }, seed)
+  }, masterWallet)
 
   const close_time = (
     await client.request({
@@ -64,13 +54,13 @@ async function test() {
       CancelAfter: close_time + 20,
       FinishAfter: close_time + 2,
       FinishFunction: finish,
-    }, seed)
+    }, masterWallet)
     console.log(JSON.stringify(response2.result, null, 4))
     if (response2.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1);
     // const sequence = response2.result.tx_json.Sequence // need tx_json here
     
     // due to api_version, no tx_json here
-    const sequence = response2.result.Sequence
+    const sequence = response2.result.tx_json.Sequence
     
 
     await sleep(5000)
@@ -82,8 +72,8 @@ async function test() {
       Account: wallet.address,
       Owner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
       OfferSequence: sequence,
-      ComputationAllowance: "1000000",
-    }, wallet.seed)
+      ComputationAllowance: 1000000,
+    }, wallet)
     // console.log(JSON.stringify(response3.result, null, 4))
 
     // {
@@ -113,8 +103,8 @@ async function test() {
       Account: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
       Owner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
       OfferSequence: sequence,
-      ComputationAllowance: "1000000",
-    }, seed)
+      ComputationAllowance: 1000000,
+    }, masterWallet)
 
     // {
     //   deprecated: "Signing support in the 'submit' command has been deprecated and will be removed in a future version of the server. Please migrate to a standalone signing tool.",

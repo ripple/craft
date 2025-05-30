@@ -104,43 +104,6 @@ pub fn wasm_to_hex(wasm_path: &Path) -> Result<String> {
     Ok(hex::encode(&wasm_bytes))
 }
 
-pub fn copy_to_clipboard(text: &str) -> Result<()> {
-    #[cfg(target_os = "macos")]
-    {
-        use std::io::Write;
-        let mut child = Command::new("pbcopy")
-            .stdin(std::process::Stdio::piped())
-            .spawn()
-            .context("Failed to spawn pbcopy")?;
-
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin.write_all(text.as_bytes())?;
-        }
-
-        child.wait().context("Failed to run pbcopy")?;
-    }
-    #[cfg(target_os = "linux")]
-    {
-        use std::io::Write;
-
-        let mut child = Command::new("xclip")
-            .arg("-selection")
-            .arg("clipboard")
-            .stdin(std::process::Stdio::piped())
-            .spawn()
-            .context("Failed to spawn xclip")?;
-
-        if let Some(mut stdin) = child.stdin.take() {
-            stdin
-                .write_all(text.as_bytes())
-                .context("Failed to write to xclip stdin")?;
-        }
-
-        child.wait().context("Failed to wait on xclip")?;
-    }
-
-    Ok(())
-}
 
 pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
     let project_folder_name = get_project_name(project_path).unwrap_or_default();

@@ -60,7 +60,6 @@ Or use specific commands:
 
 ```bash
 craft build           # Build a WASM module
-craft setup-wee-alloc # Setup wee_alloc for smaller binary size
 craft test            # Test a WASM module
 craft start-rippled   # Check if rippled is running and start it if needed
 craft list-rippled    # List and manage running rippled processes

@@ -18,18 +18,33 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Build a WASM module
-    Build,
+    Build {
+        /// Project to build (non-interactive)
+        #[arg(short, long)]
+        project: Option<String>,
+        /// Build in release mode
+        #[arg(short, long)]
+        release: bool,
+        /// Optimization level (z, s, 0, 1, 2, 3)
+        #[arg(long)]
+        opt_level: Option<String>,
+    },
     /// Configure build settings
     Configure,
-    /// Export WASM as hex
-    ExportHex,
-    /// Setup wee_alloc for smaller binary size
-    SetupWeeAlloc,
     /// Test a WASM smart contract
     Test {
         /// Function to test
         #[arg(short, long)]
         function: Option<String>,
+        /// Project to test (non-interactive)
+        #[arg(short, long)]
+        project: Option<String>,
+        /// Test case to run (non-interactive)
+        #[arg(short, long)]
+        test_case: Option<String>,
+        /// Host function test to run (uses new verification system)
+        #[arg(long)]
+        host_function_test: Option<String>,
     },
     /// Check if rippled is running and start it if not
     StartRippled {
@@ -72,22 +87,27 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build => {
-                let config = commands::configure().await?;
+            Commands::Build { project, release, opt_level } => {
+                let config = if let Some(ref project_name) = project {
+                    commands::configure_non_interactive_build(project_name, release, opt_level).await?
+                } else {
+                    commands::configure().await?
+                };
                 let wasm_path = commands::build(&config).await?;
 
                 if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
 
-                if config.use_wee_alloc {
-                    commands::setup_wee_alloc(&config.project_path).await?;
+                // If project was specified (non-interactive), just exit after build
+                if project.is_some() {
+                    println!("{}", "Build completed!".green());
+                    return Ok(());
                 }
 
                 // After build, ask what to do next
                 let choices = vec![
                     "Deploy to WASM Devnet",
-                    "Copy WASM hex to clipboard",
                     "Test WASM library function",
                     "Exit",
                 ];
@@ -96,11 +116,22 @@ async fn main() -> Result<()> {
                     "Deploy to WASM Devnet" => {
                         commands::deploy_to_wasm_devnet(&wasm_path).await?;
                     }
-                    "Copy WASM hex to clipboard" => {
-                        commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-                    }
                     "Test WASM library function" => {
-                        commands::test(&wasm_path, None).await?;
+                        let (final_test_case, final_host_function_test) = commands::test(&wasm_path, None, None, None).await?;
+                        
+                        // Show equivalent command line for test
+                        let project_name = utils::get_project_name(&config.project_path).unwrap_or("unknown".to_string());
+                        let mut cmd = format!("craft test --project {}", project_name);
+                        
+                        if let Some(tc) = final_test_case {
+                            cmd.push_str(&format!(" --test-case {}", tc));
+                        }
+                        if let Some(hft) = final_host_function_test {
+                            cmd.push_str(&format!(" --host-function-test {}", hft));
+                        }
+                        
+                        println!("\n{}", "💡 Equivalent command line:".blue());
+                        println!("{}", cmd.green());
                     }
                     _ => (),
                 }
@@ -109,18 +140,33 @@ async fn main() -> Result<()> {
                 commands::configure().await?;
                 println!("{}", "Configuration saved!".green());
             }
-            Commands::ExportHex => {
-                let config = commands::configure().await?;
+            Commands::Test { function, project, test_case, host_function_test } => {
+                let config = if let Some(ref project_name) = project {
+                    commands::configure_non_interactive(project_name).await?
+                } else {
+                    commands::configure().await?
+                };
                 let wasm_path = commands::build(&config).await?;
-                commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-            }
-            Commands::SetupWeeAlloc => {
-                commands::setup_wee_alloc(&std::env::current_dir()?).await?;
-            }
-            Commands::Test { function } => {
-                let config = commands::configure().await?;
-                let wasm_path = commands::build(&config).await?;
-                commands::test(&wasm_path, function).await?;
+                let (final_test_case, final_host_function_test) = commands::test(&wasm_path, function.clone(), test_case.clone(), host_function_test.clone()).await?;
+                
+                // Show equivalent command line if in interactive mode
+                if project.is_none() {
+                    let project_name = utils::get_project_name(&config.project_path).unwrap_or("unknown".to_string());
+                    let mut cmd = format!("craft test --project {}", project_name);
+                    
+                    if let Some(func) = function {
+                        cmd.push_str(&format!(" --function {}", func));
+                    }
+                    if let Some(tc) = final_test_case {
+                        cmd.push_str(&format!(" --test-case {}", tc));
+                    }
+                    if let Some(hft) = final_host_function_test {
+                        cmd.push_str(&format!(" --host-function-test {}", hft));
+                    }
+                    
+                    println!("\n{}", "💡 Equivalent command line:".blue());
+                    println!("{}", cmd.green());
+                }
             }
             Commands::StartRippled { foreground } => {
                 commands::start_rippled_with_foreground(foreground).await?;
@@ -137,7 +183,6 @@ async fn main() -> Result<()> {
             let choices = vec![
                 "Build WASM module",
                 "Test WASM library function",
-                "Setup wee_alloc",
                 "Start rippled",
                 "List rippled processes",
                 "Start Explorer",
@@ -153,14 +198,9 @@ async fn main() -> Result<()> {
                         commands::optimize(&wasm_path, &config.optimization_level).await?;
                     }
 
-                    if config.use_wee_alloc {
-                        commands::setup_wee_alloc(&config.project_path).await?;
-                    }
-
                     // After build, ask what to do next
                     let choices = vec![
                         "Deploy to WASM Devnet",
-                        "Copy WASM hex to clipboard",
                         "Test WASM library function",
                         "Exit",
                     ];
@@ -169,11 +209,8 @@ async fn main() -> Result<()> {
                         "Deploy to WASM Devnet" => {
                             commands::deploy_to_wasm_devnet(&wasm_path).await?;
                         }
-                        "Copy WASM hex to clipboard" => {
-                            commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-                        }
                         "Test WASM library function" => {
-                            commands::test(&wasm_path, None).await?;
+                            let _ = commands::test(&wasm_path, None, None, None).await?;
                         }
                         _ => (),
                     }
@@ -181,10 +218,21 @@ async fn main() -> Result<()> {
                 "Test WASM library function" => {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
-                    commands::test(&wasm_path, None).await?;
-                }
-                "Setup wee_alloc" => {
-                    commands::setup_wee_alloc(&std::env::current_dir()?).await?;
+                    let (final_test_case, final_host_function_test) = commands::test(&wasm_path, None, None, None).await?;
+                    
+                    // Show equivalent command line
+                    let project_name = utils::get_project_name(&config.project_path).unwrap_or("unknown".to_string());
+                    let mut cmd = format!("craft test --project {}", project_name);
+                    
+                    if let Some(tc) = final_test_case {
+                        cmd.push_str(&format!(" --test-case {}", tc));
+                    }
+                    if let Some(hft) = final_host_function_test {
+                        cmd.push_str(&format!(" --host-function-test {}", hft));
+                    }
+                    
+                    println!("\n{}", "💡 Equivalent command line:".blue());
+                    println!("{}", cmd.green());
                 }
                 "Start rippled" => {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
@@ -192,6 +240,15 @@ async fn main() -> Result<()> {
                         .prompt()?;
 
                     commands::start_rippled_with_foreground(foreground).await?;
+                    
+                    // Show equivalent command line
+                    let cmd = if foreground {
+                        "craft start-rippled --foreground".to_string()
+                    } else {
+                        "craft start-rippled".to_string()
+                    };
+                    println!("\n{}", "💡 Equivalent command line:".blue());
+                    println!("{}", cmd.green());
                 }
                 "List rippled processes" => {
                     commands::list_rippled().await?;
@@ -204,6 +261,15 @@ async fn main() -> Result<()> {
                     .prompt()?;
 
                     commands::start_explorer(background).await?;
+                    
+                    // Show equivalent command line
+                    let cmd = if background {
+                        "craft start-explorer --background".to_string()
+                    } else {
+                        "craft start-explorer".to_string()
+                    };
+                    println!("\n{}", "💡 Equivalent command line:".blue());
+                    println!("{}", cmd.green());
                 }
                 _ => (),
             }

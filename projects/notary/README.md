@@ -11,8 +11,9 @@ This module demonstrates implementation of a notary pattern where only a trusted
 The contract checks if the account attempting to finish the escrow matches a predefined notary account. Pseudo-code:
 
 ```
-function finish(escrow, finishTx) {
-    return finishTx.Account == "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
+function finish() {
+    let account = current_transaction::get_account();
+    return account == "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
 }
 ```
 
@@ -22,13 +23,9 @@ In a real implementation, this notary account could be a trusted entity responsi
 
 The contract exposes a single function as defined by the XLS-100d specification:
 
-### `finish(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool`
+### `finish() -> bool`
 
-Validates that the "Account" field in the transaction JSON matches the predefined notary account:
-- `tx_json_ptr`: Pointer to the transaction JSON data
-- `tx_json_size`: Size of the transaction JSON data
-- `lo_json_ptr`: Pointer to the ledger object JSON data (not used in this implementation)
-- `lo_json_size`: Size of the ledger object JSON data (not used in this implementation)
+Validates that the account in the current transaction matches the predefined notary account. Uses host functions to access transaction data rather than receiving it as parameters.
 
 Returns `true` if the account attempting to finish the escrow is the authorized notary, otherwise `false`.
 
@@ -69,7 +66,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../wasm-host
-cargo run -- --wasm-file ../projects/notary/target/wasm32-unknown-unknown/release/notary.wasm --function finish
+cargo run -- --wasm-file ../projects/notary/target/wasm32-unknown-unknown/release/notary.wasm --test-case success
 ```
 
 ## Modifying the Notary Account

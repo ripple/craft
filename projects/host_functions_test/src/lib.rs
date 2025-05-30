@@ -22,7 +22,7 @@ use xrpl_std::core::tx::current_transaction::get_account;
 use xrpl_std::core::field_codes::*;
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish(_reserved: u32) -> i32 {
+pub extern "C" fn finish() -> i32 {
     let _ = trace_data("=== HOST FUNCTIONS TEST ===", &[], DataRepr::AsHex);
     
     // Test 1: Core transaction field access

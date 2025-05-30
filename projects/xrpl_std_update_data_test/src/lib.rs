@@ -22,7 +22,7 @@ impl TestData {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish(_reserved: u32) -> i32 {
+pub extern "C" fn finish() -> i32 {
     let msg1 = "WASM: xrpl_std_update_data_test finish() called.";
     // host::trace(msg_ptr, msg_len, data_ptr, data_len, as_hex)
     // Logging only a message, so data_ptr and data_len are 0.

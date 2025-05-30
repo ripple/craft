@@ -54,12 +54,8 @@ enum Commands {
     },
     /// List running rippled processes and show how to terminate them
     ListRippled,
-    /// Set up and run the XRPL Explorer
-    StartExplorer {
-        /// Run in background mode without visible console output
-        #[arg(short, long)]
-        background: bool,
-    },
+    /// Open the XRPL Explorer for a local rippled instance
+    OpenExplorer,
 }
 
 #[tokio::main]
@@ -174,8 +170,8 @@ async fn main() -> Result<()> {
             Commands::ListRippled => {
                 commands::list_rippled().await?;
             }
-            Commands::StartExplorer { background } => {
-                commands::start_explorer(background).await?;
+            Commands::OpenExplorer => {
+                commands::open_explorer().await?;
             }
         },
         None => {
@@ -185,7 +181,7 @@ async fn main() -> Result<()> {
                 "Test WASM library function",
                 "Start rippled",
                 "List rippled processes",
-                "Start Explorer",
+                "Open Explorer",
                 "Exit",
             ];
 
@@ -253,23 +249,8 @@ async fn main() -> Result<()> {
                 "List rippled processes" => {
                     commands::list_rippled().await?;
                 }
-                "Start Explorer" => {
-                    let background = Confirm::new(
-                        "Run Explorer in background mode without visible console output",
-                    )
-                    .with_default(false)
-                    .prompt()?;
-
-                    commands::start_explorer(background).await?;
-                    
-                    // Show equivalent command line
-                    let cmd = if background {
-                        "craft start-explorer --background".to_string()
-                    } else {
-                        "craft start-explorer".to_string()
-                    };
-                    println!("\n{}", "💡 Equivalent command line:".blue());
-                    println!("{}", cmd.green());
+                "Open Explorer" => {
+                    commands::open_explorer().await?;
                 }
                 _ => (),
             }

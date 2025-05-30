@@ -128,9 +128,14 @@ impl DataProvider {
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
         assert!(idx_fields.len() > 0);
-        let last_field = idx_fields[idx_fields.len() - 1];
-        let field_result = self.data_source.get_field_value(source, idx_fields);
-        Self::fill_buf(field_result, buf_cap, Decodable::from_sfield(last_field))
+        match self.data_source.get_field_value(source, idx_fields) {
+            None => Self::fill_buf(None, buf_cap, Decodable::NOT),
+            Some((last_field, field_result)) => Self::fill_buf(
+                Some(field_result),
+                buf_cap,
+                Decodable::from_sfield(last_field),
+            ),
+        }
     }
 
     pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> i32 {
@@ -162,7 +167,7 @@ impl DataProvider {
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
         let field_result = self.data_source.get_nft_uri(nft_id, account_id);
-        Self::fill_buf(field_result, buf_cap, Decodable::NOT)
+        Self::fill_buf(field_result, buf_cap, Decodable::AS_IS)
     }
 
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
@@ -247,7 +252,10 @@ impl DataProvider {
                         buf[0] = if *b { 1 } else { 0 };
                         (1, buf)
                     }
-                    _ => (HostError::NotLeafField as i32, buf),
+                    // be explicit about the cases we don't support
+                    serde_json::Value::Null => (HostError::NotLeafField as i32, buf),
+                    serde_json::Value::Array(_) => (HostError::NotLeafField as i32, buf),
+                    serde_json::Value::Object(_) => (HostError::NotLeafField as i32, buf),
                 }
             }
             None => (HostError::FieldNotFound as i32, buf),

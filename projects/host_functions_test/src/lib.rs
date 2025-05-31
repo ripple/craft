@@ -3,14 +3,14 @@
 
 //
 // Comprehensive Host Functions Test
-// Tests 31 host functions (across 7 categories)
+// Tests 26 host functions (across 7 categories)
 //
 // With craft you can run this test with:
 //   craft test --project host_functions_test --test-case host_functions_test
 //
 // Error Code Ranges:
 // -100 to -199: Ledger Header Functions (3 functions)
-// -200 to -299: Transaction Data Functions (10 functions) 
+// -200 to -299: Transaction Data Functions (5 functions)
 // -300 to -399: Current Ledger Object Functions (4 functions)
 // -400 to -499: Any Ledger Object Functions (5 functions)
 // -500 to -599: Keylet Generation Functions (4 functions)
@@ -27,7 +27,7 @@ use xrpl_std::core::field_codes::*;
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     let _ = trace_data("=== COMPREHENSIVE HOST FUNCTIONS TEST ===", &[], DataRepr::AsHex);
-    let _ = trace_data("Testing 31 host functions (across 7 categories)", &[], DataRepr::AsHex);
+    let _ = trace_data("Testing 26 host functions (across 7 categories)", &[], DataRepr::AsHex);
     
     // Category 1: Ledger Header Data Functions (3 functions)
     // Error range: -100 to -199
@@ -36,7 +36,7 @@ pub extern "C" fn finish() -> i32 {
         err => return err,
     }
     
-    // Category 2: Transaction Data Functions (10 functions)
+    // Category 2: Transaction Data Functions (5 functions)
     // Error range: -200 to -299  
     match test_transaction_data_functions() {
         0 => (),
@@ -131,7 +131,7 @@ fn test_ledger_header_functions() -> i32 {
     0
 }
 
-/// Test Category 2: Transaction Data Functions (10 functions)
+/// Test Category 2: Transaction Data Functions (5 functions)
 /// Tests all functions for accessing current transaction data
 fn test_transaction_data_functions() -> i32 {
     let _ = trace_data("--- Category 2: Transaction Data Functions ---", &[], DataRepr::AsHex);
@@ -174,61 +174,10 @@ fn test_transaction_data_functions() -> i32 {
     }
     let _ = trace_data("Transaction Sequence:", &seq_buffer, DataRepr::AsHex);
     
-    // Test 2.2: get_tx_field2() - Two-level field access
-    // Test accessing Memo->MemoData (if present)
-    let mut memo_buffer = [0u8; 64];
-    let memo_result = unsafe {
-        get_tx_field2(
-            sfield::Memos,           // Array field
-            sfield::MemoData,        // Field within memo object
-            memo_buffer.as_mut_ptr(),
-            memo_buffer.len()
-        )
-    };
+    // NOTE: get_tx_field2() through get_tx_field6() have been deprecated.
+    // Use get_tx_field() with appropriate parameters for all transaction field access.
     
-    if memo_result < 0 {
-        let _ = trace_num("INFO: get_tx_field2(Memos->MemoData) not found (expected):", memo_result as i64);
-        // This is expected - not all transactions have memos
-    } else {
-        let _ = trace_num("Memo data length:", memo_result as i64);
-        let _ = trace_data("Memo data:", &memo_buffer[..memo_result as usize], DataRepr::AsHex);
-    }
-    
-    // Test 2.3: get_tx_field3() - Three-level field access
-    let mut three_level_buffer = [0u8; 32];
-    let three_level_result = unsafe {
-        get_tx_field3(
-            sfield::Signers,         // Array 
-            sfield::Signer,          // Object within array
-            sfield::Account,         // Field within signer object
-            three_level_buffer.as_mut_ptr(),
-            three_level_buffer.len()
-        )
-    };
-    
-    if three_level_result < 0 {
-        let _ = trace_num("INFO: get_tx_field3(Signers) not found (expected):", three_level_result as i64);
-        // This is expected - test transaction may not have signers array
-    } else {
-        let _ = trace_num("Three-level field length:", three_level_result as i64);
-        let _ = trace_data("Three-level field:", &three_level_buffer[..three_level_result as usize], DataRepr::AsHex);
-    }
-    
-    // Test 2.4-2.6: get_tx_field4(), get_tx_field5(), get_tx_field6()
-    // These are for deeper nesting - expect them to fail with test data but test the interface
-    let mut deep_buffer = [0u8; 32];
-    let deep_result = unsafe {
-        get_tx_field4(
-            sfield::Memos, sfield::Memo, sfield::MemoData, sfield::Generic,
-            deep_buffer.as_mut_ptr(), deep_buffer.len()
-        )
-    };
-    
-    if deep_result < 0 {
-        let _ = trace_num("INFO: get_tx_field4() not applicable (expected):", deep_result as i64);
-    }
-    
-    // Test 2.7: get_tx_nested_field() - Nested field access with locator
+    // Test 2.2: get_tx_nested_field() - Nested field access with locator
     let locator = [0x01, 0x00]; // Simple locator for first element
     let mut nested_buffer = [0u8; 32];
     let nested_result = unsafe {
@@ -248,14 +197,14 @@ fn test_transaction_data_functions() -> i32 {
         let _ = trace_data("Nested field:", &nested_buffer[..nested_result as usize], DataRepr::AsHex);
     }
     
-    // Test 2.8: get_tx_array_len() - Get array length
+    // Test 2.3: get_tx_array_len() - Get array length
     let signers_len = unsafe { get_tx_array_len(sfield::Signers) };
     let _ = trace_num("Signers array length:", signers_len as i64);
     
     let memos_len = unsafe { get_tx_array_len(sfield::Memos) };
     let _ = trace_num("Memos array length:", memos_len as i64);
     
-    // Test 2.9: get_tx_nested_array_len() - Get nested array length with locator
+    // Test 2.4: get_tx_nested_array_len() - Get nested array length with locator
     let nested_array_len = unsafe {
         get_tx_nested_array_len(locator.as_ptr(), locator.len())
     };

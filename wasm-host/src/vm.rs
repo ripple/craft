@@ -4,7 +4,8 @@ use crate::host_functions::{
     get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
     get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
     get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
-    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len, get_tx_nested_field,
+    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_field2, get_tx_field3, 
+    get_tx_field4, get_tx_field5, get_tx_field6, get_tx_nested_array_len, get_tx_nested_field,
     oracle_keylet, trace, trace_num, update_data,
 };
 
@@ -39,6 +40,11 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_hash", get_parent_ledger_hash)?;
     import_builder.with_func::<(i32, i32, i32), i32>("cache_ledger_obj", cache_ledger_obj)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_tx_field", get_tx_field)?;
+    import_builder.with_func::<(i32, i32, i32, i32), i32>("get_tx_field2", get_tx_field2)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("get_tx_field3", get_tx_field3)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32, i32), i32>("get_tx_field4", get_tx_field4)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32, i32, i32), i32>("get_tx_field5", get_tx_field5)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32, i32, i32, i32), i32>("get_tx_field6", get_tx_field6)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_current_ledger_obj_field", get_current_ledger_obj_field)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("get_ledger_obj_field", get_ledger_obj_field)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("get_tx_nested_field", get_tx_nested_field)?;
@@ -109,6 +115,11 @@ pub fn run_func_with_recording(
     import_builder.with_func::<(i32, i32), i32>("get_parent_ledger_hash", get_parent_ledger_hash)?;
     import_builder.with_func::<(i32, i32, i32), i32>("cache_ledger_obj", cache_ledger_obj)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_tx_field", get_tx_field)?;
+    import_builder.with_func::<(i32, i32, i32, i32), i32>("get_tx_field2", get_tx_field2)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32), i32>("get_tx_field3", get_tx_field3)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32, i32), i32>("get_tx_field4", get_tx_field4)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32, i32, i32), i32>("get_tx_field5", get_tx_field5)?;
+    import_builder.with_func::<(i32, i32, i32, i32, i32, i32, i32, i32), i32>("get_tx_field6", get_tx_field6)?;
     import_builder.with_func::<(i32, i32, i32), i32>("get_current_ledger_obj_field", get_current_ledger_obj_field)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("get_ledger_obj_field", get_ledger_obj_field)?;
     import_builder.with_func::<(i32, i32, i32, i32), i32>("get_tx_nested_field", get_tx_nested_field)?;

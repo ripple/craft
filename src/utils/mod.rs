@@ -104,7 +104,6 @@ pub fn wasm_to_hex(wasm_path: &Path) -> Result<String> {
     Ok(hex::encode(&wasm_bytes))
 }
 
-
 pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
     let project_folder_name = get_project_name(project_path).unwrap_or_default();
     let cargo_toml_path = project_path.join("Cargo.toml");

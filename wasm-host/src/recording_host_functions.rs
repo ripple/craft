@@ -7,6 +7,7 @@ use std::rc::Rc;
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 
+#[allow(dead_code)]
 fn get_data(
     in_buf_ptr: i32,
     in_buf_len: i32,
@@ -25,6 +26,7 @@ fn get_data(
     Ok(buffer)
 }
 
+#[allow(dead_code)]
 pub fn update_data_with_recording(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -35,16 +37,17 @@ pub fn update_data_with_recording(
     let in_buf_ptr: i32 = _inputs[0].to_i32();
     let in_buf_len: i32 = _inputs[1].to_i32();
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
-    
+
     // Record the call
     let _return_value = recorder.borrow_mut().record_update_data(data.clone());
-    
+
     // Original functionality
     _data_provider.set_current_ledger_obj_data(data);
-    
+
     Ok(vec![])
 }
 
+#[allow(dead_code)]
 pub fn trace_with_recording(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -71,7 +74,11 @@ pub fn trace_with_recording(
 
     let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
     let data = if data_read_len > 0 {
-        Some(get_data(data_read_ptr as i32, data_read_len as i32, _caller)?)
+        Some(get_data(
+            data_read_ptr as i32,
+            data_read_len as i32,
+            _caller,
+        )?)
     } else {
         None
     };

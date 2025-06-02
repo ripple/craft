@@ -2,6 +2,7 @@
 const LOCATOR_BUFFER_SIZE: usize = 64;
 
 /// A Locator may only pack this many levels deep in an object hierarchy (inclusive of first field)
+#[allow(dead_code)]
 const MAX_DEPTH: u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
 
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by

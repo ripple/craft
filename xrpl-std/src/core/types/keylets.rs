@@ -1,1 +1,1 @@
-pub struct AccountKeylet([u8; 34]);
+pub struct AccountKeylet(#[allow(dead_code)] [u8; 34]);

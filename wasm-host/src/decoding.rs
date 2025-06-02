@@ -1,5 +1,4 @@
 use crate::hashing::HASH256_LEN;
-use hex;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use xrpl::core::addresscodec::utils::decode_base58;
@@ -60,9 +59,12 @@ pub enum Decodable {
     UINT128,
     UINT256,
     VlHex,
+    #[allow(clippy::upper_case_acronyms)]
     AMOUNT,
+    #[allow(clippy::upper_case_acronyms)]
     ACCOUNT,
     AS_IS,
+    #[allow(clippy::upper_case_acronyms)]
     NOT,
 }
 
@@ -96,15 +98,15 @@ impl Decodable {
     }
 }
 
-pub fn decode_tx_type(tx_type: &String) -> Option<Vec<u8>> {
+pub fn decode_tx_type(tx_type: &str) -> Option<Vec<u8>> {
     get_transaction_type_code(tx_type).map(|num| num.to_le_bytes().to_vec())
 }
 
-pub fn decode_ledger_obj_type(lo_type: &String) -> Option<Vec<u8>> {
+pub fn decode_ledger_obj_type(lo_type: &str) -> Option<Vec<u8>> {
     get_ledger_entry_type_code(lo_type).map(|num| num.to_le_bytes().to_vec())
 }
 
-pub fn decode_account_id(base58_account_id: &String) -> Option<Vec<u8>> {
+pub fn decode_account_id(base58_account_id: &str) -> Option<Vec<u8>> {
     match decode_base58(base58_account_id, &[0x0]) {
         Ok(aid) => {
             if aid.len() == ACCOUNT_ID_LEN {
@@ -117,7 +119,7 @@ pub fn decode_account_id(base58_account_id: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
+pub fn decode_u128(hex_hash: &str) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
         Ok(bytes) => {
             if bytes.len() == 16 {
@@ -130,7 +132,7 @@ pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_hash(hex_hash: &String) -> Option<Vec<u8>> {
+pub fn decode_hash(hex_hash: &str) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
         Ok(bytes) => {
             if bytes.len() == HASH256_LEN {
@@ -142,42 +144,42 @@ pub fn decode_hash(hex_hash: &String) -> Option<Vec<u8>> {
         Err(_) => None,
     }
 }
-pub fn decode_hex(s: &String) -> Option<Vec<u8>> {
+pub fn decode_hex(s: &str) -> Option<Vec<u8>> {
     match hex::decode(s) {
         Ok(bytes) => Some(bytes),
         Err(_) => None,
     }
 }
 
-pub fn decode_u16(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u16(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u16>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode_u32(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u32(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u32>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode_u64(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u64(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u64>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode_i64(s: &String) -> Option<Vec<u8>> {
+pub fn decode_i64(s: &str) -> Option<Vec<u8>> {
     match s.parse::<i64>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
+pub fn decode(s: &str, decodable: Decodable) -> Option<Vec<u8>> {
     match decodable {
         Decodable::UINT16 => decode_u16(s),
         Decodable::Uint16TxType => decode_tx_type(s),

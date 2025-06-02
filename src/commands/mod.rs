@@ -229,7 +229,6 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     Ok(())
 }
 
-
 pub async fn optimize(wasm_path: &Path, opt_level: &OptimizationLevel) -> Result<()> {
     if !utils::check_wasm_opt_installed() {
         println!(
@@ -351,15 +350,26 @@ pub async fn configure() -> Result<Config> {
 
     // Show equivalent command line for discoverability (before moving values into config)
     let project_name = utils::get_project_name(&project_path).unwrap_or("unknown".to_string());
-    let build_flag = if matches!(build_mode, BuildMode::Release) { " --release" } else { "" };
+    let build_flag = if matches!(build_mode, BuildMode::Release) {
+        " --release"
+    } else {
+        ""
+    };
     let opt_flag = match optimization_level {
         OptimizationLevel::Aggressive => " --opt-level z",
-        OptimizationLevel::Small => " --opt-level s", 
+        OptimizationLevel::Small => " --opt-level s",
         OptimizationLevel::None => "",
     };
-    
+
     println!("\n{}", "💡 Equivalent command line:".blue());
-    println!("{}", format!("craft build --project {}{}{}", project_name, build_flag, opt_flag).green());
+    println!(
+        "{}",
+        format!(
+            "craft build --project {}{}{}",
+            project_name, build_flag, opt_flag
+        )
+        .green()
+    );
 
     let config = Config {
         wasm_target: target,
@@ -374,7 +384,7 @@ pub async fn configure() -> Result<Config> {
 pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {
     let current_dir = std::env::current_dir()?;
     let projects = utils::find_wasm_projects(&current_dir);
-    
+
     // Find the project by name
     let project_path = projects
         .iter()
@@ -397,10 +407,14 @@ pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {
     })
 }
 
-pub async fn configure_non_interactive_build(project_name: &str, release: bool, opt_level: Option<String>) -> Result<Config> {
+pub async fn configure_non_interactive_build(
+    project_name: &str,
+    release: bool,
+    opt_level: Option<String>,
+) -> Result<Config> {
     let current_dir = std::env::current_dir()?;
     let projects = utils::find_wasm_projects(&current_dir);
-    
+
     // Find the project by name
     let project_path = projects
         .iter()
@@ -435,9 +449,8 @@ pub async fn configure_non_interactive_build(project_name: &str, release: bool, 
     })
 }
 
-
 pub async fn test(
-    wasm_path: &Path, 
+    wasm_path: &Path,
     _function: Option<String>,
     test_case: Option<String>,
     host_function_test: Option<String>,
@@ -466,10 +479,7 @@ pub async fn test(
         .map(|v| v.to_lowercase().contains("debug"))
         .unwrap_or(false);
 
-    let mut args = vec![
-        "--wasm-file",
-        wasm_path.to_str().unwrap(),
-    ];
+    let mut args = vec!["--wasm-file", wasm_path.to_str().unwrap()];
 
     let host_test_owned;
     let test_case_value_owned;
@@ -524,7 +534,7 @@ pub async fn test(
     }
 
     println!("{}", String::from_utf8_lossy(&output.stdout));
-    
+
     // Return the selected values for discoverability
     Ok((final_test_case, final_host_function_test))
 }

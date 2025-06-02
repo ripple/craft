@@ -126,6 +126,7 @@ pub fn get_tx_field(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+#[allow(dead_code)]
 pub fn get_tx_field2(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -142,6 +143,7 @@ pub fn get_tx_field2(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+#[allow(dead_code)]
 pub fn get_tx_field3(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -162,6 +164,7 @@ pub fn get_tx_field3(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+#[allow(dead_code)]
 pub fn get_tx_field4(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -183,6 +186,7 @@ pub fn get_tx_field4(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+#[allow(dead_code)]
 pub fn get_tx_field5(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -205,6 +209,7 @@ pub fn get_tx_field5(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+#[allow(dead_code)]
 pub fn get_tx_field6(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -469,12 +474,12 @@ pub fn update_data(
         )]);
     }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
-    
+
     // Check if we have a recorder
     if let Some(recorder) = &_data_provider.call_recorder {
         recorder.borrow_mut().record_update_data(data.clone());
     }
-    
+
     _data_provider.set_current_ledger_obj_data(data);
     Ok(vec![WasmValue::from_i32(0)])
 }
@@ -645,16 +650,20 @@ pub fn trace(
 
     let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
     let data = if data_read_len > 0 {
-        Some(get_data(data_read_ptr as i32, data_read_len as i32, _caller)?)
+        Some(get_data(
+            data_read_ptr as i32,
+            data_read_len as i32,
+            _caller,
+        )?)
     } else {
         None
     };
-    
+
     // Check if we have a recorder
     if let Some(recorder) = &_data_provider.call_recorder {
         recorder.borrow_mut().record_trace(
             message.clone(),
-            data.clone(), 
+            data.clone(),
             if data_as_hex { 1 } else { 0 },
         );
     } else {

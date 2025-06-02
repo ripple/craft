@@ -83,9 +83,14 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build { project, release, opt_level } => {
+            Commands::Build {
+                project,
+                release,
+                opt_level,
+            } => {
                 let config = if let Some(ref project_name) = project {
-                    commands::configure_non_interactive_build(project_name, release, opt_level).await?
+                    commands::configure_non_interactive_build(project_name, release, opt_level)
+                        .await?
                 } else {
                     commands::configure().await?
                 };
@@ -113,19 +118,21 @@ async fn main() -> Result<()> {
                         commands::deploy_to_wasm_devnet(&wasm_path).await?;
                     }
                     "Test WASM library function" => {
-                        let (final_test_case, final_host_function_test) = commands::test(&wasm_path, None, None, None).await?;
-                        
+                        let (final_test_case, final_host_function_test) =
+                            commands::test(&wasm_path, None, None, None).await?;
+
                         // Show equivalent command line for test
-                        let project_name = utils::get_project_name(&config.project_path).unwrap_or("unknown".to_string());
+                        let project_name = utils::get_project_name(&config.project_path)
+                            .unwrap_or("unknown".to_string());
                         let mut cmd = format!("craft test --project {}", project_name);
-                        
+
                         if let Some(tc) = final_test_case {
                             cmd.push_str(&format!(" --test-case {}", tc));
                         }
                         if let Some(hft) = final_host_function_test {
                             cmd.push_str(&format!(" --host-function-test {}", hft));
                         }
-                        
+
                         println!("\n{}", "💡 Equivalent command line:".blue());
                         println!("{}", cmd.green());
                     }
@@ -136,20 +143,32 @@ async fn main() -> Result<()> {
                 commands::configure().await?;
                 println!("{}", "Configuration saved!".green());
             }
-            Commands::Test { function, project, test_case, host_function_test } => {
+            Commands::Test {
+                function,
+                project,
+                test_case,
+                host_function_test,
+            } => {
                 let config = if let Some(ref project_name) = project {
                     commands::configure_non_interactive(project_name).await?
                 } else {
                     commands::configure().await?
                 };
                 let wasm_path = commands::build(&config).await?;
-                let (final_test_case, final_host_function_test) = commands::test(&wasm_path, function.clone(), test_case.clone(), host_function_test.clone()).await?;
-                
+                let (final_test_case, final_host_function_test) = commands::test(
+                    &wasm_path,
+                    function.clone(),
+                    test_case.clone(),
+                    host_function_test.clone(),
+                )
+                .await?;
+
                 // Show equivalent command line if in interactive mode
                 if project.is_none() {
-                    let project_name = utils::get_project_name(&config.project_path).unwrap_or("unknown".to_string());
+                    let project_name = utils::get_project_name(&config.project_path)
+                        .unwrap_or("unknown".to_string());
                     let mut cmd = format!("craft test --project {}", project_name);
-                    
+
                     if let Some(func) = function {
                         cmd.push_str(&format!(" --function {}", func));
                     }
@@ -159,7 +178,7 @@ async fn main() -> Result<()> {
                     if let Some(hft) = final_host_function_test {
                         cmd.push_str(&format!(" --host-function-test {}", hft));
                     }
-                    
+
                     println!("\n{}", "💡 Equivalent command line:".blue());
                     println!("{}", cmd.green());
                 }
@@ -214,19 +233,21 @@ async fn main() -> Result<()> {
                 "Test WASM library function" => {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;
-                    let (final_test_case, final_host_function_test) = commands::test(&wasm_path, None, None, None).await?;
-                    
+                    let (final_test_case, final_host_function_test) =
+                        commands::test(&wasm_path, None, None, None).await?;
+
                     // Show equivalent command line
-                    let project_name = utils::get_project_name(&config.project_path).unwrap_or("unknown".to_string());
+                    let project_name = utils::get_project_name(&config.project_path)
+                        .unwrap_or("unknown".to_string());
                     let mut cmd = format!("craft test --project {}", project_name);
-                    
+
                     if let Some(tc) = final_test_case {
                         cmd.push_str(&format!(" --test-case {}", tc));
                     }
                     if let Some(hft) = final_host_function_test {
                         cmd.push_str(&format!(" --host-function-test {}", hft));
                     }
-                    
+
                     println!("\n{}", "💡 Equivalent command line:".blue());
                     println!("{}", cmd.green());
                 }
@@ -236,7 +257,7 @@ async fn main() -> Result<()> {
                         .prompt()?;
 
                     commands::start_rippled_with_foreground(foreground).await?;
-                    
+
                     // Show equivalent command line
                     let cmd = if foreground {
                         "craft start-rippled --foreground".to_string()

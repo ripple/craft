@@ -12,15 +12,15 @@ mod vm;
 use crate::call_recorder::{CallRecorder, HostCall};
 use crate::mock_data::MockData;
 use crate::vm::{run_func, run_func_with_recording};
-use std::cell::RefCell;
-use std::rc::Rc;
 use clap::Parser;
 use env_logger::Builder;
 use log::LevelFilter;
 use log::{debug, error, info};
+use std::cell::RefCell;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 /// WasmEdge WASM testing utility
 #[derive(Parser, Debug)]
@@ -51,9 +51,9 @@ struct Args {
     function: String,
 }
 
-fn load_test_data(
-    test_case: &str,
-) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
+type TestDataResult = Result<(String, String, String, String, String), Box<dyn std::error::Error>>;
+
+fn load_test_data(test_case: &str) -> TestDataResult {
     // Support both escrow and host_functions_test paths
     let base_path = if test_case == "host_functions_test" {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -101,17 +101,13 @@ fn load_host_function_test(
     let input: serde_json::Value = serde_json::from_str(&input_json)?;
     let expected: serde_json::Value = serde_json::from_str(&expected_json)?;
 
-    let expected_calls: Vec<HostCall> = serde_json::from_value(
-        expected["expected_host_calls"].clone()
-    )?;
+    let expected_calls: Vec<HostCall> =
+        serde_json::from_value(expected["expected_host_calls"].clone())?;
 
     Ok((input, expected_calls))
 }
 
-fn verify_host_calls(
-    actual: &[HostCall],
-    expected: &[HostCall],
-) -> Result<(), String> {
+fn verify_host_calls(actual: &[HostCall], expected: &[HostCall]) -> Result<(), String> {
     if actual.len() != expected.len() {
         return Err(format!(
             "Call count mismatch: expected {}, got {}",
@@ -124,44 +120,67 @@ fn verify_host_calls(
         if actual_call.function != expected_call.function {
             return Err(format!(
                 "Call {} function mismatch: expected '{}', got '{}'",
-                i + 1, expected_call.function, actual_call.function
+                i + 1,
+                expected_call.function,
+                actual_call.function
             ));
         }
 
         if actual_call.call_order != expected_call.call_order {
             return Err(format!(
                 "Call {} order mismatch: expected {}, got {}",
-                i + 1, expected_call.call_order, actual_call.call_order
+                i + 1,
+                expected_call.call_order,
+                actual_call.call_order
             ));
         }
 
         // Verify specific parameter types match
         match (&actual_call.parameters, &expected_call.parameters) {
             (
-                crate::call_recorder::HostCallParams::UpdateData { data: actual_data, .. },
-                crate::call_recorder::HostCallParams::UpdateData { data: expected_data, .. }
+                crate::call_recorder::HostCallParams::UpdateData {
+                    data: actual_data, ..
+                },
+                crate::call_recorder::HostCallParams::UpdateData {
+                    data: expected_data,
+                    ..
+                },
             ) => {
                 if actual_data != expected_data {
                     return Err(format!(
                         "Call {} update_data mismatch: expected {:?}, got {:?}",
-                        i + 1, expected_data, actual_data
+                        i + 1,
+                        expected_data,
+                        actual_data
                     ));
                 }
             }
             (
-                crate::call_recorder::HostCallParams::Trace { message: actual_msg, data: actual_data, .. },
-                crate::call_recorder::HostCallParams::Trace { message: expected_msg, data: expected_data, .. }
+                crate::call_recorder::HostCallParams::Trace {
+                    message: actual_msg,
+                    data: actual_data,
+                    ..
+                },
+                crate::call_recorder::HostCallParams::Trace {
+                    message: expected_msg,
+                    data: expected_data,
+                    ..
+                },
             ) => {
                 if actual_msg != expected_msg {
                     return Err(format!(
                         "Call {} trace message mismatch: expected '{}', got '{}'",
-                        i + 1, expected_msg, actual_msg
+                        i + 1,
+                        expected_msg,
+                        actual_msg
                     ));
                 }
                 if actual_data != expected_data {
                     return Err(format!(
                         "Call {} trace data mismatch: expected {:?}, got {:?}",
-                        i + 1, expected_data, actual_data
+                        i + 1,
+                        expected_data,
+                        actual_data
                     ));
                 }
             }
@@ -213,7 +232,7 @@ fn main() {
     // Check if we're in host function test mode
     if let Some(host_function_test) = &args.host_function_test {
         info!("Running host function test: {}", host_function_test);
-        
+
         // Load host function test data
         let (_input_data, expected_calls) = match load_host_function_test(host_function_test) {
             Ok((input, expected)) => {
@@ -231,20 +250,29 @@ fn main() {
 
         // Use minimal mock data for host function tests (we're not testing escrow functionality)
         let minimal_tx = r#"{"TransactionType": "EscrowFinish", "Account": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH"}"#.to_string();
-        let minimal_lo = r#"{"LedgerEntryType": "Escrow", "Account": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH"}"#.to_string();
+        let minimal_lo =
+            r#"{"LedgerEntryType": "Escrow", "Account": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH"}"#
+                .to_string();
         let minimal_lh = r#"{"ledger_index": 123}"#.to_string();
         let minimal_l = r#"[]"#.to_string();
         let minimal_nft = r#"[]"#.to_string();
 
-        let data_source = MockData::new(&minimal_tx, &minimal_lo, &minimal_lh, &minimal_l, &minimal_nft);
-        
+        let data_source = MockData::new(
+            &minimal_tx,
+            &minimal_lo,
+            &minimal_lh,
+            &minimal_l,
+            &minimal_nft,
+        );
+
         info!("Executing function with call recording: {}", args.function);
         match run_func_with_recording(wasm_file, &args.function, data_source, recorder.clone()) {
             Ok(result) => {
                 info!("Function completed with result: {}", result);
-                
+
                 // Verify the calls
-                let actual_calls: Vec<HostCall> = recorder.borrow().get_calls().iter().cloned().collect();
+                let actual_calls: Vec<HostCall> =
+                    recorder.borrow().get_calls().iter().cloned().collect();
                 match verify_host_calls(&actual_calls, &expected_calls) {
                     Ok(()) => {
                         println!("\n-------------------------------------------------");
@@ -263,18 +291,18 @@ fn main() {
                         println!("| Test:       {:<33} |", host_function_test);
                         println!("| Error:      {:<33} |", e);
                         println!("-------------------------------------------------");
-                        
+
                         // Print detailed call comparison
                         println!("\nACTUAL CALLS:");
                         for (i, call) in actual_calls.iter().enumerate() {
                             println!("{}. {}: {:?}", i + 1, call.function, call.parameters);
                         }
-                        
+
                         println!("\nEXPECTED CALLS:");
                         for (i, call) in expected_calls.iter().enumerate() {
                             println!("{}. {}: {:?}", i + 1, call.function, call.parameters);
                         }
-                        
+
                         error!("Host function test FAILED: {}", e);
                         std::process::exit(1);
                     }

@@ -63,18 +63,28 @@ impl CallRecorder {
             return_value: Some(0), // trace always returns success
         };
         self.calls.push_back(call);
-        
+
         // Original trace behavior
         if let Some(data) = &data {
             if as_hex == 1 {
-                println!("WASM TRACE: {} ({} | {} data bytes)", message, hex::encode(data), data.len());
+                println!(
+                    "WASM TRACE: {} ({} | {} data bytes)",
+                    message,
+                    hex::encode(data),
+                    data.len()
+                );
             } else {
-                println!("WASM TRACE: {} ({:?} | {} data bytes)", message, data, data.len());
+                println!(
+                    "WASM TRACE: {} ({:?} | {} data bytes)",
+                    message,
+                    data,
+                    data.len()
+                );
             }
         } else {
             println!("WASM TRACE: {}", message);
         }
-        
+
         0
     }
 
@@ -90,20 +100,22 @@ impl CallRecorder {
             return_value: Some(0),
         };
         self.calls.push_back(call);
-        
-        println!("WASM HOST: update_data called with {} bytes: {}", data.len(), hex::encode(&data));
+
+        println!(
+            "WASM HOST: update_data called with {} bytes: {}",
+            data.len(),
+            hex::encode(&data)
+        );
         0
     }
 
+    #[allow(dead_code)]
     pub fn record_get_tx_field(&mut self, field: i32, out_buf_cap: usize) -> i32 {
         self.call_counter += 1;
         let call = HostCall {
             function: "get_tx_field".to_string(),
             call_order: self.call_counter,
-            parameters: HostCallParams::GetTxField {
-                field,
-                out_buf_cap,
-            },
+            parameters: HostCallParams::GetTxField { field, out_buf_cap },
             return_value: Some(0),
         };
         self.calls.push_back(call);
@@ -114,6 +126,7 @@ impl CallRecorder {
         &self.calls
     }
 
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.calls.clear();
         self.call_counter = 0;

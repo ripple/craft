@@ -20,8 +20,7 @@ pub type ContractData = [u8; XRPL_CONTRACT_DATA_SIZE];
 
 pub fn get_tx_account_id() -> Option<AccountID> {
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    if unsafe { host::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) }
-        > 0
+    if unsafe { host::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) } > 0
     {
         Some(account_id)
     } else {
@@ -63,9 +62,8 @@ pub fn get_current_escrow_destination() -> Option<AccountID> {
 
 pub fn get_current_escrow_data() -> Option<ContractData> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    if unsafe {
-        host::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len())
-    } > 0
+    if unsafe { host::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len()) }
+        > 0
     {
         Some(data)
     } else {
@@ -76,7 +74,11 @@ pub fn get_current_escrow_data() -> Option<ContractData> {
 pub fn get_current_escrow_finish_after() -> Option<i32> {
     let mut after = 0i32;
     if unsafe {
-        host::get_current_ledger_obj_field(sfield::FinishAfter, (&mut after) as *mut i32 as *mut u8, 4)
+        host::get_current_ledger_obj_field(
+            sfield::FinishAfter,
+            (&mut after) as *mut i32 as *mut u8,
+            4,
+        )
     } > 0
     {
         Some(after)
@@ -114,8 +116,32 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
 
 pub fn account_keylet(aid: &AccountID) -> Option<Keylet> {
     let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
+    if unsafe { host::account_keylet(aid.as_ptr(), aid.len(), key_let.as_mut_ptr(), key_let.len()) }
+        > 0
+    {
+        Some(key_let)
+    } else {
+        None
+    }
+}
+
+pub fn credential_keylet(
+    subject: &AccountID,
+    issuer: &AccountID,
+    credential_type: &AccountID,
+) -> Option<Keylet> {
+    let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
     if unsafe {
-        host::account_keylet(aid.as_ptr(), aid.len(), key_let.as_mut_ptr(), key_let.len())
+        host::credential_keylet(
+            subject.as_ptr(),
+            subject.len(),
+            issuer.as_ptr(),
+            issuer.len(),
+            credential_type.as_ptr(),
+            credential_type.len(),
+            key_let.as_mut_ptr(),
+            key_let.len(),
+        )
     } > 0
     {
         Some(key_let)

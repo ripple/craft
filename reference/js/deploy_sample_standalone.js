@@ -16,7 +16,7 @@ if (process.argv.length < 3) {
   process.exit(1)
 }
 
-const client = new xrpl.Client("ws://localhost:6006")
+const client = new xrpl.Client("ws://127.0.0.1:6006")
 
 function getFinishFunctionFromFile(filePath) {
   if (!filePath) {
@@ -26,8 +26,8 @@ function getFinishFunctionFromFile(filePath) {
 
   const absolutePath = path.resolve(filePath)
   try {
-    const data = fs.readFileSync(absolutePath, 'utf8').trim()
-    return data.replace("\n","").replace(" ", "")
+    const data = fs.readFileSync(absolutePath)
+    return data.toString('hex')
   } catch (err) {
     console.error(`Error reading file at ${absolutePath}:`, err.message)
     process.exit(1)
@@ -101,6 +101,7 @@ async function deploy() {
   ).result.ledger.close_time
 
   const finish = getFinishFunctionFromFile(process.argv[2])
+  console.log(finish)
 
   const response1 = await submit({
     TransactionType: 'EscrowCreate',

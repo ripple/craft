@@ -6,6 +6,8 @@ use std::thread;
 use std::time::Duration;
 use walkdir::WalkDir;
 
+pub mod wasmedge;
+
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
 

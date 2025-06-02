@@ -6,6 +6,7 @@ use std::process::{Command, Output, Stdio};
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
+use crate::utils::wasmedge;
 
 fn handle_build_output(output: &Output, config: &Config, project_dir: &Path) -> Result<()> {
     let _stdout = String::from_utf8_lossy(&output.stdout);
@@ -457,6 +458,9 @@ pub async fn test(
 ) -> Result<(Option<String>, Option<String>)> {
     println!("{}", "Testing WASM contract...".cyan());
 
+    // Ensure WasmEdge is ready before testing
+    wasmedge::ensure_wasmedge_ready().await.context("Failed to setup WasmEdge")?;
+
     // Build wasm-host first
     println!("Building wasm-host...");
     let status = Command::new("cargo")
@@ -522,8 +526,27 @@ pub async fn test(
         args.push("--verbose");
     }
 
-    let output = Command::new(&wasm_host_path)
-        .args(&args)
+    // Create command with proper environment setup for macOS
+    let mut cmd = Command::new(&wasm_host_path);
+    cmd.args(&args);
+    
+    // On macOS, ensure DYLD_LIBRARY_PATH includes WasmEdge library path
+    if cfg!(target_os = "macos") {
+        if let Ok(lib_path) = wasmedge::get_wasmedge_lib_path() {
+            let current_dyld_path = std::env::var("DYLD_LIBRARY_PATH").unwrap_or_default();
+            let lib_path_str = lib_path.to_string_lossy();
+            
+            let new_dyld_path = if current_dyld_path.is_empty() {
+                lib_path_str.to_string()
+            } else {
+                format!("{}:{}", current_dyld_path, lib_path_str)
+            };
+            
+            cmd.env("DYLD_LIBRARY_PATH", new_dyld_path);
+        }
+    }
+
+    let output = cmd
         .output()
         .context("Failed to run wasm-host")?;
 

@@ -62,6 +62,7 @@ pub enum Decodable {
     VlHex,
     AMOUNT,
     ACCOUNT,
+    AS_IS,
     NOT,
 }
 
@@ -188,6 +189,7 @@ pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::VlHex => decode_hex(s),
         Decodable::ACCOUNT => decode_account_id(s),
         Decodable::AMOUNT => decode_i64(s),
+        Decodable::AS_IS => Some(s.as_bytes().to_vec()),
         Decodable::NOT => Some(s.as_bytes().to_vec()),
     }
 }

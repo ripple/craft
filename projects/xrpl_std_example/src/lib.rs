@@ -8,10 +8,12 @@ use xrpl_std::core::types::account_id::AccountID;
 use xrpl_std::core::types::blob::Blob;
 use xrpl_std::core::types::crypto_condition::{Condition, Fulfillment};
 use xrpl_std::core::types::hash_256::Hash256;
-use xrpl_std::core::types::locator::Locator;
+use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
+use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
+use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
@@ -55,6 +57,11 @@ pub extern "C" fn finish() -> i32 {
 
     // TODO PENG
     // TODO: ComputationAllowance
+    let mut computation_allowance: u32 = 0;
+    let _ = unsafe {
+        let _ = host::get_tx_field(sfield::ComputationAllowance, (&mut computation_allowance) as *mut u32 as *mut u8, 4);
+    };    
+    let _ = trace_num("  ComputationAllowance:", computation_allowance as i64);
 
     // Field: Fee
     let fee: Amount = current_transaction::get_fee();
@@ -97,8 +104,84 @@ pub extern "C" fn finish() -> i32 {
 
     // TODO PENG
     // TODO: Memos (Array)
+    let array_len = unsafe {
+        host::get_tx_array_len(sfield::Memos)
+    };
+    let _ = trace_num("  Memos array len:", array_len as i64);
+
+    let mut buf = [0u8; 64];//TODO decide a size, probably should be larger than 64
+    let mut locator = Locator::new();
+    locator.pack(sfield::Memos);
+    locator.pack(0);
+    locator.pack(sfield::Memo);
+    locator.pack(sfield::MemoType);
+    let output_len = unsafe {
+        host::get_tx_nested_field(locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+    };    
+    let _ = trace_num("  Memos first item's MemoType len:", output_len as i64);   
+    let _ = trace_data("  Memos first item's MemoType data:", &buf[.. output_len as usize], DataRepr::AsHex);
+    
+    locator.repack_last(sfield::MemoData);
+    let output_len = unsafe {
+        host::get_tx_nested_field(locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+    };    
+    let _ = trace_num("  Memos first item's MemoData len:", output_len as i64);   
+    let _ = trace_data("  Memos first item's MemoData data:", &buf[.. output_len as usize], DataRepr::AsHex);
+    
+    locator.repack_last(sfield::MemoFormat);
+    let output_len = unsafe {
+        host::get_tx_nested_field(locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+    };    
+    let _ = trace_num("  Memos first item's MemoFormat len:", output_len as i64);   
+    let _ = trace_data("  Memos first item's MemoFormat data:", &buf[.. output_len as usize], DataRepr::AsHex);
+    
+    
     // TODO PENG
     // TODO: Signers (Array) --> Consider Trace-by-Locator
+    let array_len = unsafe {
+        host::get_tx_array_len(sfield::Signers)
+    };
+    let _ = trace_num("  Signers array len:", array_len as i64);
+    
+    for i in 0..array_len {
+        let mut buf = [0x00; 64];
+        let mut locator = Locator::new();
+        locator.pack(sfield::Signers);
+        locator.pack(i);
+        locator.pack(sfield::Account);
+        let output_len = unsafe {
+            host::get_tx_nested_field(locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+        };
+        if output_len < 0 {//TODO rebase on to devnet3, there is an error code commit
+            let _ = trace_num("  cannot get Account, error:", output_len as i64);
+            break;
+        }
+        let _ = trace_num("  Signer #:", i as i64);
+        let _ = trace_num("  account len:", output_len as i64);
+        let _ = trace_data("  account:", &buf[.. output_len as usize], DataRepr::AsHex);
+
+        locator.repack_last(sfield::TxnSignature);
+        let output_len = unsafe {
+            host::get_tx_nested_field(locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+        };
+        if output_len < 0 {
+            let _ = trace_num("  cannot get TxnSignature, error:", output_len as i64);
+            break;
+        }
+        let _ = trace_num("  TxnSignature len:", output_len as i64);
+        let _ = trace_data("  TxnSignature:", &buf[.. output_len as usize], DataRepr::AsHex);
+        
+        locator.repack_last(sfield::SigningPubKey);
+        let output_len = unsafe {
+            host::get_tx_nested_field(locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+        };
+        if output_len < 0 {
+            let _ = trace_num("  cannot get SigningPubKey, error:", output_len as i64);
+            break;
+        }
+        let _ = trace_num("  SigningPubKey len:", output_len as i64);
+        let _ = trace_data("  SigningPubKey:", &buf[.. output_len as usize], DataRepr::AsHex);
+    }    
     
     // let third_signer_account_locator:Locator = ...
     // let third_signer_account = get_cur_tx_field(third_signer_account_locator);

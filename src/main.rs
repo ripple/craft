@@ -23,8 +23,6 @@ enum Commands {
     Configure,
     /// Export WASM as hex
     ExportHex,
-    /// Setup wee_alloc for smaller binary size
-    SetupWeeAlloc,
     /// Test a WASM smart contract
     Test {
         /// Function to test
@@ -39,12 +37,8 @@ enum Commands {
     },
     /// List running rippled processes and show how to terminate them
     ListRippled,
-    /// Set up and run the XRPL Explorer
-    StartExplorer {
-        /// Run in background mode without visible console output
-        #[arg(short, long)]
-        background: bool,
-    },
+    /// Open the XRPL Explorer for a local rippled instance
+    OpenExplorer,
 }
 
 #[tokio::main]
@@ -80,10 +74,6 @@ async fn main() -> Result<()> {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
 
-                if config.use_wee_alloc {
-                    commands::setup_wee_alloc(&config.project_path).await?;
-                }
-
                 // After build, ask what to do next
                 let choices = vec![
                     "Deploy to WASM Devnet",
@@ -114,9 +104,6 @@ async fn main() -> Result<()> {
                 let wasm_path = commands::build(&config).await?;
                 commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
             }
-            Commands::SetupWeeAlloc => {
-                commands::setup_wee_alloc(&std::env::current_dir()?).await?;
-            }
             Commands::Test { function } => {
                 let config = commands::configure().await?;
                 let wasm_path = commands::build(&config).await?;
@@ -128,8 +115,8 @@ async fn main() -> Result<()> {
             Commands::ListRippled => {
                 commands::list_rippled().await?;
             }
-            Commands::StartExplorer { background } => {
-                commands::start_explorer(background).await?;
+            Commands::OpenExplorer => {
+                commands::open_explorer().await?;
             }
         },
         None => {
@@ -137,10 +124,9 @@ async fn main() -> Result<()> {
             let choices = vec![
                 "Build WASM module",
                 "Test WASM library function",
-                "Setup wee_alloc",
                 "Start rippled",
                 "List rippled processes",
-                "Start Explorer",
+                "Open Explorer",
                 "Exit",
             ];
 
@@ -151,10 +137,6 @@ async fn main() -> Result<()> {
 
                     if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                         commands::optimize(&wasm_path, &config.optimization_level).await?;
-                    }
-
-                    if config.use_wee_alloc {
-                        commands::setup_wee_alloc(&config.project_path).await?;
                     }
 
                     // After build, ask what to do next
@@ -183,9 +165,6 @@ async fn main() -> Result<()> {
                     let wasm_path = commands::build(&config).await?;
                     commands::test(&wasm_path, None).await?;
                 }
-                "Setup wee_alloc" => {
-                    commands::setup_wee_alloc(&std::env::current_dir()?).await?;
-                }
                 "Start rippled" => {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
                         .with_default(true)
@@ -196,14 +175,8 @@ async fn main() -> Result<()> {
                 "List rippled processes" => {
                     commands::list_rippled().await?;
                 }
-                "Start Explorer" => {
-                    let background = Confirm::new(
-                        "Run Explorer in background mode without visible console output",
-                    )
-                    .with_default(false)
-                    .prompt()?;
-
-                    commands::start_explorer(background).await?;
+                "Open Explorer" => {
+                    commands::open_explorer().await?;
                 }
                 _ => (),
             }

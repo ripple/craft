@@ -282,7 +282,7 @@ pub extern "C" fn finish() -> i32 {
         // ];
         // println!("wasm finish keylet {:?}", keylet);
         //
-        // let slot = unsafe { host_lib::ledger_slot_set(keylet.as_ptr(), keylet.len(), 0) };
+        // let slot = unsafe { host_lib::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
         //
         // println!("wasm finish slot {:?}", slot);
         //

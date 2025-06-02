@@ -98,28 +98,27 @@ impl MockData {
         &self,
         source: DataSource,
         idx_fields: Vec<i32>,
-    ) -> Option<&serde_json::Value> {
+    ) -> Option<(i32, &serde_json::Value)> {
         let mut curr = match source {
             DataSource::Tx => &self.tx,
             DataSource::CurrentLedgerObj => &self.hosting_ledger_obj,
             DataSource::KeyletLedgerObj(obj_hash) => self.ledger.get(&obj_hash)?,
         };
 
-        // TODO: Capture name here?
-        let mut name: String = String::new();
+        let mut last_sfield = -1;
         for idx_field in idx_fields {
-            name = self.get_field_name(idx_field)?;
             if curr.is_array() {
                 curr = curr.as_array().unwrap().get(idx_field as usize)?;
             } else {
                 curr = curr.get(self.get_field_name(idx_field)?)?;
+                last_sfield = idx_field;
             }
         }
-        Some(curr)
+        Some((last_sfield, curr))
     }
 
     pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> Option<usize> {
-        let value = self.get_field_value(source, idx_fields)?;
+        let (_, value) = self.get_field_value(source, idx_fields)?;
         if value.is_array() {
             Some(value.as_array()?.len())
         } else {

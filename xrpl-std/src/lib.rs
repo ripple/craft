@@ -131,7 +131,7 @@ pub fn get_nft(owner: &AccountID, nft: &NFT) -> Option<ContractData> {
         if retcode > 0 {
             Some(data)
         } else {
-            trace_num("get_nft error", i64::from(retcode));
+            let _ = trace_num("get_nft error", i64::from(retcode));
             None
         }
     }

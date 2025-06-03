@@ -10,9 +10,11 @@ pub extern "C" fn finish() -> bool {
             Some(v) => v,
             None => return false,
         };
+
+        trace_data("Memo (NFT)", &memo, DataRepr::AsHex);
         let nft: [u8; XRPL_NFTID_SIZE] = memo[0..32].try_into().unwrap();
 
-        trace_data("Memo (NFT)", &nft, DataRepr::AsHex);
+        trace_data("Memo (NFT2)", &nft, DataRepr::AsHex);
 
         let destination = match get_current_escrow_destination() {
             Some(v) => v,

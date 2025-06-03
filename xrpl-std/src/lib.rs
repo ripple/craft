@@ -171,7 +171,7 @@ pub fn account_keylet(aid: &AccountID) -> Option<Keylet> {
 pub fn credential_keylet(
     subject: &AccountID,
     issuer: &AccountID,
-    credential_type: &AccountID,
+    credential_type: &[u8],
 ) -> Option<Keylet> {
     let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
     if unsafe {

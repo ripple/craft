@@ -16,8 +16,6 @@ use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
 use crate::host::get_tx_field;
-use crate::sfield::Fulfillment;
-use core::hash::Hash;
 
 #[inline(always)]
 pub fn get_account() -> AccountID {

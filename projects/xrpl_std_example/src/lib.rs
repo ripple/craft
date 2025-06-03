@@ -22,7 +22,7 @@ use xrpl_std::{
     get_current_escrow_finish_after, get_tx_account_id,
 };
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 

@@ -10,7 +10,8 @@ pub extern "C" fn finish() -> bool {
             Some(v) => v,
             None => return false,
         };
-        let credential_keylet = match credential_keylet(&account, &account, &account) {
+        let cred_type: &[u8] = b"termsandconditions";
+        let credential_keylet = match credential_keylet(&account, &account, &cred_type) {
             Some(v) => v,
             None => return false,
         };

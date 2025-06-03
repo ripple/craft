@@ -12,12 +12,8 @@ pub extern "C" fn finish() -> bool {
         };
         let cred_type: &[u8] = b"termsandconditions";
         let credential_keylet = match credential_keylet(&account, &account, &cred_type) {
-            Some(v) => v,
+            Some(v) => return true,
             None => return false,
         };
-
-        trace_data("Credential Keylet", &credential_keylet, DataRepr::AsHex);
-
-        true
     }
 }

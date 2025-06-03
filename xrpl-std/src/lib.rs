@@ -1,6 +1,6 @@
 #![no_std]
 
-use crate::host::trace::{DataRepr, trace, trace_data};
+use crate::host::trace::trace;
 
 pub mod core;
 pub mod host;

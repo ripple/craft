@@ -3,7 +3,6 @@ use crate::hashing::{index_hash, sha512_half, Hash256, LedgerNameSpace, HASH256_
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
-use std::hash::Hash;
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 

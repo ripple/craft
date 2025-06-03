@@ -289,6 +289,7 @@ pub extern "C" fn finish() -> i32 {
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
     let _ = trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
 
+    // TODO: Remove these examples once the above TODOs are completed.
     // Keep the commented out validation code from main branch
     {
         // let account_id_clo = match get_current_escrow_account_id() {

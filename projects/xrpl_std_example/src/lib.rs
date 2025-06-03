@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(unused_imports)]
 
 use xrpl_std::core::amount::Amount;
 use xrpl_std::core::amount::xrp_amount::XrpAmount;
@@ -14,15 +15,35 @@ use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::sfield;
+use xrpl_std::locator::LocatorPacker;
+use xrpl_std::sfield::{SignerEntries, SignerEntry, SignerWeight};
+use xrpl_std::{
+    get_account_balance, get_current_escrow_account_id, get_current_escrow_destination,
+    get_current_escrow_finish_after, get_tx_account_id,
+};
 
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub extern "C" fn finish() -> i32 {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
-    // TODO: It would be nice to get a handle to the EscrowFinish as a Transaction. How does the
-    // std-lib facilitate that?
-    // let current_transaction:EscrowFinish = apply_ctx.cur_tx;
-    // let account:AccountID = current_transaction.account_id();
+    // First check account and balance
+    {
+        let account_id_tx = match get_tx_account_id() {
+            Some(v) => v,
+            None => return -1,
+        };
+        let _ = trace_data("  Account:", &account_id_tx, DataRepr::AsHex);
+
+        let balance = match get_account_balance(&account_id_tx) {
+            Some(v) => v,
+            None => return -5,
+        };
+        let _ = trace_num("  Balance:", balance as i64);
+
+        if balance <= 0 {
+            return -9;
+        }
+    }
 
     // ########################################
     // Step #1: Access & Emit Common Transaction fields from an EscrowFinish
@@ -240,7 +261,7 @@ pub extern "C" fn finish() -> i32 {
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time
     let _ = trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
 
-    // TODO: Uncomment and Ensure each of these work!
+    // Keep the commented out validation code from main branch
     {
         // let account_id_clo = match get_current_escrow_account_id() {
         //     Some(v) => v,
@@ -259,7 +280,7 @@ pub extern "C" fn finish() -> i32 {
         // }
     }
     {
-        // let finish_after = match get_current_current_transaction_after() {
+        // let finish_after = match get_current_escrow_finish_after() {
         //     Some(v) => v,
         //     None => return -4,
         // };

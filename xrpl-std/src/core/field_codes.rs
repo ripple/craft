@@ -1,4 +1,3 @@
-// TODO: Decided if we prefer this style or sfield.rs
 pub const SF_ACCOUNT: i32 = 524289; // 0x80001
 pub const SF_TRANSACTION_TYPE: i32 = 65538; // 0x10002
 pub const SF_FEE: i32 = 393224; // 0x60008

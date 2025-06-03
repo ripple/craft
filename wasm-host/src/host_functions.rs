@@ -610,6 +610,7 @@ pub fn get_nft(
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
+
 pub fn trace(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,

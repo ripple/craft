@@ -1,4 +1,4 @@
-#[unsafe(no_mangle)]
+#[no_mangle]
 pub fn finish() -> bool {
     unsafe { host_lib::getLedgerSqn() >= 5 }
 }

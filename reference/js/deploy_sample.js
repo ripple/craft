@@ -10,7 +10,7 @@ if (process.argv.length != 3) {
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' path/to/file.wasm',
+      ' (path/to/file.wasm OR project_name)',
   )
   process.exit(1)
 }
@@ -23,7 +23,12 @@ function getFinishFunctionFromFile(filePath) {
     process.exit(1)
   }
 
-  const absolutePath = path.resolve(filePath)
+  let absolutePath = ""
+  if (filePath.endsWith('.wasm')) {
+    absolutePath = path.resolve(filePath)
+  } else {
+    absolutePath = path.resolve(__dirname, `../../projects/${filePath}/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
+  }
   try {
       const data = fs.readFileSync(absolutePath)
       return data.toString('hex')

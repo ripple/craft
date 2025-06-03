@@ -4,6 +4,7 @@ pub mod core;
 pub mod host;
 pub mod locator;
 pub mod sfield;
+use host::trace::trace_num;
 
 pub const XRPL_ACCOUNT_ID_SIZE: usize = 20;
 // use keylet hash only (i.e. without 2-byte LedgerEntryType) for now.
@@ -118,42 +119,21 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
 
 pub fn get_nft(owner: &AccountID, nft: &NFT) -> Option<ContractData> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    if unsafe {
-        host::get_NFT(
+    unsafe {
+        let retcode = host::get_NFT(
             owner.as_ptr(),
             owner.len(),
             nft.as_ptr(),
             nft.len(),
             data.as_mut_ptr(),
             data.len(),
-        )
-    } > 0
-    {
-        Some(data)
-    } else {
-        None
-    }
-}
-
-pub fn get_first_memo() -> Option<ContractData> {
-    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    let mut locator = locator::LocatorPacker::new();
-    locator.pack(sfield::Memos);
-    locator.pack(0);
-    locator.pack(sfield::Memo);
-    locator.pack(sfield::MemoData);
-    if unsafe {
-        host::get_tx_nested_field(
-            locator.get_addr(),
-            locator.num_packed_bytes(),
-            data.as_mut_ptr(),
-            data.len(),
-        )
-    } > 0
-    {
-        Some(data)
-    } else {
-        None
+        );
+        if retcode > 0 {
+            Some(data)
+        } else {
+            trace_num("get_nft error", i64::from(retcode));
+            None
+        }
     }
 }
 

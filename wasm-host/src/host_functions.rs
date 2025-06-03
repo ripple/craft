@@ -1,8 +1,9 @@
 use crate::data_provider::{unpack_locator, DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE};
-use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
+use crate::hashing::{index_hash, sha512_half, Hash256, LedgerNameSpace, HASH256_LEN};
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
+use std::hash::Hash;
 use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use wasmedge_sdk::{CallingFrame, Instance, WasmValue};
 
@@ -508,7 +509,10 @@ pub fn account_keylet(
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
     }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
-    let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
+    let keylet_hash: Hash256 = index_hash(LedgerNameSpace::Account, &data);
+
+    let hex_str = hex::encode(&keylet_hash);
+    println!("Data (keylet_hash): {:?}", hex_str);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
     Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
 }

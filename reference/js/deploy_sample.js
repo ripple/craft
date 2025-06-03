@@ -25,8 +25,8 @@ function getFinishFunctionFromFile(filePath) {
 
   const absolutePath = path.resolve(filePath)
   try {
-    const data = fs.readFileSync(absolutePath, 'utf8').trim()
-    return data.replace("\n","").replace(" ", "")
+      const data = fs.readFileSync(absolutePath)
+      return data.toString('hex')
   } catch (err) {
     console.error(`Error reading file at ${absolutePath}:`, err.message)
     process.exit(1)

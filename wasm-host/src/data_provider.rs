@@ -172,10 +172,10 @@ impl DataProvider {
                             let num = n.as_i64().unwrap();
                             if buf_cap == 4 {
                                 // Safe cast to i32
-                                if num > i32::MAX as i64 || num < i32::MIN as i64 {
+                                if num > u32::MAX as i64 || num < u32::MIN as i64 {
                                     return (HostError::BufferTooSmall as i32, buf);
                                 }
-                                let bytes = (num as i32).to_le_bytes();
+                                let bytes = (num as u32).to_le_bytes();
                                 buf[..4].copy_from_slice(&bytes);
                                 (4, buf)
                             } else {

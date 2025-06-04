@@ -5,7 +5,7 @@ pub fn finish() -> bool {
 
 pub mod host_lib {
     #[link(wasm_import_module = "host_lib")]
-    extern "C" {
+    unsafe extern "C" {
         pub fn getLedgerSqn() -> i32;
     }
 }

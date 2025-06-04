@@ -1,7 +1,7 @@
 use crate::core::types::account_id::AccountID;
 use crate::core::types::contract_data::{ContractData, XRPL_CONTRACT_DATA_SIZE};
-use crate::{host, sfield};
 use crate::host::trace::trace;
+use crate::{host, sfield};
 
 pub fn get_current_escrow_destination() -> AccountID {
     get_account_id_field(sfield::Destination)

@@ -1,20 +1,15 @@
-use std::str;
+#![no_std]
 use xrpl_std::get_tx_account_id;
 
 // Notary account that is authorized to finish the escrow
-const NOTARY_ACCOUNT: &str = "rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 2 (example)
+const NOTARY_ACCOUNT: &[u8] = b"rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 2 (example)
 
 #[unsafe(no_mangle)]
 pub fn finish() -> bool {
-    unsafe {
-        let tx_account = get_tx_account_id();
+    let tx_account = match get_tx_account_id() {
+        Some(v) => v,
+        None => return false,
+    };
 
-        // Convert account bytes to string for comparison
-        let tx_account_str = match str::from_utf8(&tx_account.unwrap()) {
-            Ok(s) => s,
-            Err(_) => return false,
-        };
-
-        tx_account_str == NOTARY_ACCOUNT
-    }
+    tx_account == NOTARY_ACCOUNT
 }

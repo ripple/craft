@@ -1,6 +1,6 @@
+use crate::core::amount::xrp_amount::XrpAmount;
 use crate::core::amount::Amount;
 use crate::core::amount::Amount::Xrp;
-use crate::core::amount::xrp_amount::XrpAmount;
 use crate::core::field_codes::{
     SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT, SF_HASH,
     SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE, SF_OWNER, SF_SEQUENCE,

@@ -11,7 +11,7 @@ if (process.argv.length != 6) {
   process.exit(1)
 }
 
-const url = "ws://localhost:6006"
+const url = "ws://127.0.0.1:6006"
 const client = new xrpl.Client(url)
 
 const [, , account, accountSecret, owner, offerSequence] = process.argv

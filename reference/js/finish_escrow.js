@@ -44,6 +44,15 @@ async function finishEscrow() {
     console.log(`Owner (Created Escrow): ${owner}`)
     console.log(`Offer Sequence: ${offerSequence}\n`)
 
+    try {
+      await client.request({
+        command: 'account_info',
+        account,
+      })
+    } catch (error) {
+      await client.fundWallet(wallet)
+    }
+
     const tx = {
       TransactionType: 'EscrowFinish',
       Account: account,

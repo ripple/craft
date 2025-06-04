@@ -413,12 +413,12 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn credential_keylet(
-        subject_ptr: i32,
-        subject_len: i32,
-        issuer_ptr: i32,
-        issuer_len: i32,
-        cred_type_ptr: i32,
-        cred_type_len: i32,
+        subject_ptr: *const u8,
+        subject_len: usize,
+        issuer_ptr: *const u8,
+        issuer_len: usize,
+        cred_type_ptr: *const u8,
+        cred_type_len: usize,
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
     ) -> i32;

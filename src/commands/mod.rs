@@ -95,6 +95,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     println!("{}", "Running cargo build...".cyan());
+    println!("args: {:?}", args);
     let output = Command::new("cargo")
         .current_dir(project_dir)
         .args(&args)

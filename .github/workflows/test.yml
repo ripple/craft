@@ -66,10 +66,10 @@ jobs:
 
       - name: Build all examples
         run: |
-          for dir in **/projects; do
+          for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Building in $dir"
-              (cd "$dir" && cargo build && cargo build --target wasm32-unknown-unknown) || exit 1
+              (cd "$dir" && cargo rustc --target wasm32-unknown-unknown -- -D warnings && cargo build --target wasm32-unknown-unknown) || exit 1
             fi
           done
 

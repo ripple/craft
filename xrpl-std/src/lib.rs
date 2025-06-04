@@ -4,19 +4,15 @@ use crate::host::trace::trace;
 
 pub mod core;
 pub mod host;
+pub mod keylet;
 pub mod locator;
 pub mod sfield;
+pub mod types;
+use host::trace::trace_num;
 
-pub const XRPL_ACCOUNT_ID_SIZE: usize = 20;
-// use keylet hash only (i.e. without 2-byte LedgerEntryType) for now.
-// TODO Check rippled
-pub const XRPL_KEYLET_SIZE: usize = 32;
-pub const XRPL_HASH256_SIZE: usize = 32;
-pub const XRPL_CONTRACT_DATA_SIZE: usize = 4096; //TODO size??
-pub type AccountID = [u8; XRPL_ACCOUNT_ID_SIZE];
-pub type Keylet = [u8; XRPL_KEYLET_SIZE];
-pub type Hash256 = [u8; XRPL_HASH256_SIZE];
-pub type ContractData = [u8; XRPL_CONTRACT_DATA_SIZE];
+use crate::keylet::account_keylet;
+use crate::locator::LocatorPacker;
+use crate::types::{AccountID, ContractData, NFT, XRPL_ACCOUNT_ID_SIZE, XRPL_CONTRACT_DATA_SIZE};
 
 //TODO replace some of the helper functions with Objects, e.g. AccountRoot, Escrow, Tx
 
@@ -123,14 +119,42 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
     }
 }
 
-pub fn account_keylet(aid: &AccountID) -> Option<Keylet> {
-    let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
-    if unsafe { host::account_keylet(aid.as_ptr(), aid.len(), key_let.as_mut_ptr(), key_let.len()) }
-        > 0
-    {
-        Some(key_let)
-    } else {
-        None
+pub fn get_nft(owner: &AccountID, nft: &NFT) -> Option<ContractData> {
+    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
+    unsafe {
+        let retcode = host::get_NFT(
+            owner.as_ptr(),
+            owner.len(),
+            nft.as_ptr(),
+            nft.len(),
+            data.as_mut_ptr(),
+            data.len(),
+        );
+        if retcode > 0 {
+            Some(data)
+        } else {
+            let _ = trace_num("get_nft error", i64::from(retcode));
+            None
+        }
+    }
+}
+
+pub fn get_ledger_obj_nested_field(slot: i32, locator: &LocatorPacker) -> Option<ContractData> {
+    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
+    unsafe {
+        let retcode = host::get_ledger_obj_nested_field(
+            slot,
+            locator.get_addr(),
+            locator.num_packed_bytes(),
+            data.as_mut_ptr(),
+            data.len(),
+        );
+        if retcode > 0 {
+            Some(data)
+        } else {
+            let _ = trace_num("get_ledger_obj_nested_field error", i64::from(retcode));
+            None
+        }
     }
 }
 

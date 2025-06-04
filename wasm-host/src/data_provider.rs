@@ -1,4 +1,4 @@
-use crate::decoding::{decode, AccountId, Decodable};
+use crate::decoding::{AccountId, Decodable, decode};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
 

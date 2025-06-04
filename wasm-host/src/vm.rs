@@ -14,7 +14,7 @@ use crate::mock_data::MockData;
 use log::{debug, info};
 use std::collections::HashMap;
 use wasmedge_sdk::vm::SyncInst;
-use wasmedge_sdk::{params, AsInstance, ImportObjectBuilder, Module, Store, Vm, WasmEdgeResult};
+use wasmedge_sdk::{AsInstance, ImportObjectBuilder, Module, Store, Vm, WasmEdgeResult, params};
 
 /// Run a WASM function
 #[rustfmt::skip]

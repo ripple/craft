@@ -1,6 +1,6 @@
 use log::error;
-use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 use wasmedge_sdk::CallingFrame;
+use wasmedge_sdk::error::{CoreError, CoreExecutionError};
 
 /// Read a message the WASM guest and treat is as a UTF-8 string.  
 pub(crate) fn read_utf8_from_wasm(

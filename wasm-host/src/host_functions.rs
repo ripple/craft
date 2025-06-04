@@ -1,5 +1,5 @@
-use crate::data_provider::{unpack_locator, DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE};
-use crate::hashing::{index_hash, sha512_half, Hash256, LedgerNameSpace, HASH256_LEN};
+use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
+use crate::hashing::{HASH256_LEN, Hash256, LedgerNameSpace, index_hash, sha512_half};
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;

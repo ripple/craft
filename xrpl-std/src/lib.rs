@@ -1,5 +1,7 @@
 #![no_std]
 
+use crate::host::trace::trace;
+
 pub mod core;
 pub mod host;
 pub mod keylet;
@@ -88,25 +90,32 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
         None => return None,
         Some(keylet) => keylet,
     };
-    // println!("std-lib keylet {:?}", keylet);
+    // let _ = trace_data("std-lib keylet ", &keylet, DataRepr::AsHex);
     let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
     if slot <= 0 {
         return None;
     }
-    // println!("std-lib slot {:?}", slot);
+    // let _ = trace("std-lib slot ");
     let mut balance = 0u64;
-    if unsafe {
-        host::get_ledger_obj_field(
+    let result_code;
+    unsafe {
+        result_code = host::get_ledger_obj_field(
             slot,
             sfield::Balance,
             (&mut balance) as *mut u64 as *mut u8,
             8,
-        )
-    } == 8
-    {
+        );
+    }
+
+    if result_code == 8 {
         Some(balance)
     } else {
-        None
+        let _ = trace("Host function get_current_escrow_finish_field failed!");
+        panic!(
+            "Failed to get Account Balance for field_code={} from host. Error code: {}",
+            sfield::Balance,
+            result_code
+        );
     }
 }
 

@@ -75,7 +75,7 @@ async function deploy() {
     Amount: "100000",
     Destination: wallet2.address,
     CancelAfter: close_time + 2000, // about 32 minutes. After this time, the escrow cannot be finished (would get result tecNO_PERMISSION).
-    FinishAfter: close_time + 5, // about 5 seconds. After this time, the escrow can be finished.
+    FinishAfter: close_time + 10, // about 10 seconds. After this time, the escrow can be finished.
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),
   }, wallet)

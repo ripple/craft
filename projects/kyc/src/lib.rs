@@ -1,9 +1,10 @@
 #![no_std]
 
+use xrpl_std::get_current_escrow_account_id;
 use xrpl_std::host::trace::{DataRepr, trace_data};
-use xrpl_std::{credential_keylet, get_current_escrow_account_id};
+use xrpl_std::keylet::credential_keylet;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
     let account = match get_current_escrow_account_id() {
         Some(v) => v,

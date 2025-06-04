@@ -1,13 +1,12 @@
 #![no_std]
 
 use xrpl_std::host::get_tx_nested_field;
-use xrpl_std::host::trace::{trace_data, trace_num, DataRepr};
-use xrpl_std::{
-    get_current_escrow_destination, get_nft, ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE,
-};
+use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+use xrpl_std::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
+use xrpl_std::{get_current_escrow_destination, get_nft};
 use xrpl_std::{locator, sfield};
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_first_memo() -> Option<ContractData> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
     let mut locator = locator::LocatorPacker::new();
@@ -30,7 +29,7 @@ pub fn get_first_memo() -> Option<ContractData> {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
     let memo = match get_first_memo() {
         Some(v) => v,

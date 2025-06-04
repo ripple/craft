@@ -1,24 +1,19 @@
 use crate::host;
-use crate::host::Result;
 use crate::types::{AccountID, Keylet, XRPL_KEYLET_SIZE};
 
-pub fn account_keylet(aid: &AccountID) -> Result<Keylet> {
+pub fn account_keylet(aid: &AccountID) -> Option<Keylet> {
     let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
     let retcode = unsafe {
         host::account_keylet(aid.as_ptr(), aid.len(), key_let.as_mut_ptr(), key_let.len())
     };
-    if retcode > 0 {
-        Some(key_let)
-    } else {
-        Err(retcode)
-    }
+    if retcode > 0 { Some(key_let) } else { None }
 }
 
 pub fn credential_keylet(
     subject: &AccountID,
     issuer: &AccountID,
     credential_type: &[u8],
-) -> Result<Keylet> {
+) -> Option<Keylet> {
     let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
     let retcode = unsafe {
         host::credential_keylet(
@@ -32,14 +27,10 @@ pub fn credential_keylet(
             key_let.len(),
         )
     };
-    if retcode > 0 {
-        Some(key_let)
-    } else {
-        Err(retcode)
-    }
+    if retcode > 0 { Some(key_let) } else { None }
 }
 
-pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<Keylet> {
+pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Option<Keylet> {
     let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
     let retcode = unsafe {
         host::oracle_keylet(
@@ -50,9 +41,5 @@ pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<Keylet> {
             key_let.len(),
         )
     };
-    if retcode > 0 {
-        Some(key_let)
-    } else {
-        Err(retcode)
-    }
+    if retcode > 0 { Some(key_let) } else { None }
 }

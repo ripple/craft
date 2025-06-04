@@ -1,7 +1,6 @@
 #![no_std]
 
 use xrpl_std::get_ledger_obj_nested_field;
-use xrpl_std::host::trace::{trace_data, trace_num, DataRepr};
 use xrpl_std::keylet::oracle_keylet;
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
@@ -10,7 +9,7 @@ use xrpl_std::types::AccountID;
 const ORACLE_OWNER: &AccountID = b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3";
 const ORACLE_DOCUMENT_ID: i32 = 1;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_u64_from_buffer(bytes: &[u8]) -> u64 {
     let mut result: u64 = 0;
 
@@ -24,7 +23,7 @@ pub extern "C" fn get_u64_from_buffer(bytes: &[u8]) -> u64 {
     result
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_price_from_oracle(slot: i32) -> Option<u64> {
     let mut locator = LocatorPacker::new();
     locator.pack(sfield::PriceDataSeries);
@@ -38,7 +37,7 @@ pub fn get_price_from_oracle(slot: i32) -> Option<u64> {
     return Some(get_u64_from_buffer(&asset_price[0..8]));
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
     let oracle_keylet = match oracle_keylet(ORACLE_OWNER, ORACLE_DOCUMENT_ID) {
         Some(v) => v,

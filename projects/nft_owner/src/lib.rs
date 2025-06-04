@@ -1,7 +1,7 @@
 #![no_std]
 
 use xrpl_std::host::get_tx_nested_field;
-use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+use xrpl_std::host::trace::trace_num;
 use xrpl_std::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
 use xrpl_std::{get_current_escrow_destination, get_nft};
 use xrpl_std::{locator, sfield};
@@ -23,7 +23,7 @@ pub fn get_first_memo() -> Option<ContractData> {
         if retcode > 0 {
             Some(data)
         } else {
-            trace_num("Memo (first)", i64::from(retcode));
+            let _ = trace_num("Memo (first)", i64::from(retcode));
             None
         }
     }

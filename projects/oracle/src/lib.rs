@@ -10,7 +10,7 @@ const ORACLE_OWNER: &AccountID = b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xa
 const ORACLE_DOCUMENT_ID: i32 = 1;
 
 #[unsafe(no_mangle)]
-pub extern "C" fn get_u64_from_buffer(bytes: &[u8]) -> u64 {
+pub fn get_u64_from_buffer(bytes: &[u8]) -> u64 {
     let mut result: u64 = 0;
 
     // rippled uses big-endian: most significant byte is first

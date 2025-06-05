@@ -1,6 +1,34 @@
 # WASM Devnet Details
 
-## Devnet2 - 2025-05-01 Release
+## Devnet3 - 2025-06-04 Release
+
+The Programmability Devnet has been updated to its third monthly release.
+
+Devnet details:
+
+URL: wasm.devnet.rippletest.net (port 51234 for HTTP, 51233 for WS)
+
+Explorer: https://custom.xrpl.org/wasm.devnet.rippletest.net
+
+Faucet: https://wasmfaucet.devnet.rippletest.net/accounts
+
+Changelog:
+
+- The way memory management works with regard to host functions has been changed significantly. The set of host functions has changed a lot as a result. This has been reflected in changes to XLS-102d: https://github.com/XRPLF/XRPL-Standards/discussions/279
+- Some of the latest features that were recently merged to develop have been added in and enabled (Batch, Permission Delegation).
+- The name of the function in the FinishFunction has switched from `ready` to `finish` (this made more sense to us).
+- A `GasUsed` parameter has been added to the metadata in a transaction. When coupled with `simulate` RPC, this means that you can estimate gas costs before the transaction is submitted.
+- Some rippled logging changes.
+
+**Tooling:**
+- Writing Rust WASM extensions: https://github.com/ripple/craft
+- Python: xrpl-py v4.2.0b3
+- JS: xrpl@4.3.0-smartescrow.3, ripple-binary-codec@2.4.0-smartescrow.2 (you can also use the @smartescrow or @smart-escrow tags)
+
+
+## Historical WASM Devnets
+
+### Devnet2 - 2025-05-01 Release
 
 Devnet details:
 
@@ -24,8 +52,6 @@ Switching from WasmEdge to WAMR. We'll put out a doc explaining this decision in
 - Python: xrpl-py v4.2.0b2
 - JS: xrpl@4.3.0-smartescrow.2, ripple-binary-codec@2.4.0-smartescrow.1 (you can also use the @smartescrow or @smart-escrow tags)
 
-## Historical WASM Devnets
-
 ### Devnet1 - 2025-04-01 Release
 
 We have the first Programmability Devnet ready for use! Here are all the details:
@@ -44,4 +70,3 @@ rippled code: https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 - xrpl-py: https://pypi.org/project/xrpl-py/4.2.0b0/
 - xrpl.js: https://www.npmjs.com/package/xrpl/v/4.3.0-smartescrow.0 (can be installed with npm install xrpl@smart-escrow)
 - ripple-binary-codec: https://www.npmjs.com/package/ripple-binary-codec/v/2.4.0-smartescrow.0 (can be installed with npm install ripple-binary-codec@smart-escrow)
-

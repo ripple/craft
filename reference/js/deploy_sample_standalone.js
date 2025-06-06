@@ -89,14 +89,16 @@ async function deploy() {
     wallet2 = xrpl.Wallet.generate()
   }
 
+  const finish = getFinishFunctionFromFile(process.argv[2])
+
   await fundWallet(wallet)
   await fundWallet(wallet2)
 
   console.log(`\nFunded accounts:`)
-  console.log(`Account 1 - Address: ${wallet.address}`)
-  console.log(`Account 1 - Secret: ${wallet.seed}`)
-  console.log(`Account 2 - Address: ${wallet2.address}`)
-  console.log(`Account 2 - Secret: ${wallet2.seed}\n`)
+  console.log(`Account 1 (Origin) - Address: ${wallet.address}`)
+  console.log(`Account 1 (Origin) - Secret: ${wallet.seed}`)
+  console.log(`Account 2 (Destination) - Address: ${wallet2.address}`)
+  console.log(`Account 2 (Destination) - Secret: ${wallet2.seed}\n`)
 
   const close_time = (
     await client.request({
@@ -104,9 +106,6 @@ async function deploy() {
       ledger_index: 'validated',
     })
   ).result.ledger.close_time
-
-  const finish = getFinishFunctionFromFile(process.argv[2])
-  console.log(finish)
 
   const response1 = await submit({
     TransactionType: 'EscrowCreate',

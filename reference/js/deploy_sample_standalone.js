@@ -113,7 +113,7 @@ async function deploy() {
     Account: wallet.address,
     Amount: "100000",
     Destination: wallet2.address,
-    CancelAfter: close_time + 200,
+    CancelAfter: close_time + 2000,
     FinishAfter: close_time + 5,
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),

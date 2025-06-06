@@ -10,13 +10,13 @@ if (process.argv.length < 3) {
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' path/to/file.wasm' + 
+      ' (path/to/file.wasm OR project_name)' + 
       '[Account1 Account1Seed [Account2 Account2Seed]]',
   )
   process.exit(1)
 }
 
-const client = new xrpl.Client("ws://localhost:6006")
+const client = new xrpl.Client("ws://127.0.0.1:6006")
 
 function getFinishFunctionFromFile(filePath) {
   if (!filePath) {
@@ -24,10 +24,15 @@ function getFinishFunctionFromFile(filePath) {
     process.exit(1)
   }
 
-  const absolutePath = path.resolve(filePath)
+  let absolutePath = ""
+  if (filePath.endsWith('.wasm')) {
+    absolutePath = path.resolve(filePath)
+  } else {
+    absolutePath = path.resolve(__dirname, `../../projects/${filePath}/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
+  }
   try {
-    const data = fs.readFileSync(absolutePath, 'utf8').trim()
-    return data.replace("\n","").replace(" ", "")
+    const data = fs.readFileSync(absolutePath)
+    return data.toString('hex')
   } catch (err) {
     console.error(`Error reading file at ${absolutePath}:`, err.message)
     process.exit(1)
@@ -101,6 +106,7 @@ async function deploy() {
   ).result.ledger.close_time
 
   const finish = getFinishFunctionFromFile(process.argv[2])
+  console.log(finish)
 
   const response1 = await submit({
     TransactionType: 'EscrowCreate',

@@ -34,37 +34,36 @@ struct Args {
     #[arg(long)]
     wasm_path: Option<String>,
 
-    /// Test case to run (success/failure)
-    #[arg(short, long, default_value = "success")]
-    test_case: String,
+    /// Function to execute
+    #[arg(short, long, default_value = "finish")]
+    function: String,
 
-    /// Host function test mode (uses new fixture system)
+    /// Test case to run (for traditional escrow tests: success, failure)
+    #[arg(short, long)]
+    test_case: Option<String>,
+
+    /// Host function test to run (uses new verification system)
     #[arg(long)]
     host_function_test: Option<String>,
 
-    /// Verbose logging
+    /// Enable verbose output
     #[arg(short, long)]
     verbose: bool,
-
-    /// Function to run in the WASM module
-    #[arg(long, default_value = "finish")]
-    function: String,
 }
 
-type TestDataResult = Result<(String, String, String, String, String), Box<dyn std::error::Error>>;
+/// Load fixture data for a given test case
+fn load_fixture_data(
+    test_case: &str,
+) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures")
+        .join("escrow")
+        .join(test_case);
 
-fn load_test_data(test_case: &str) -> TestDataResult {
-    // Support both escrow and host_functions_test paths
-    let base_path = if test_case == "host_functions_test" {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("fixtures")
-            .join("host_functions_test")
-    } else {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("fixtures")
-            .join("escrow")
-            .join(test_case)
-    };
+    if !base_path.exists() {
+        error!("Fixture path does not exist: {:?}", base_path);
+        return Err(format!("Test case '{}' not found", test_case).into());
+    }
 
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");
@@ -266,101 +265,102 @@ fn main() {
         );
 
         info!("Executing function with call recording: {}", args.function);
-        match run_func_with_recording(wasm_file, &args.function, data_source, recorder.clone()) {
-            Ok(result) => {
-                info!("Function completed with result: {}", result);
+        let result = match run_func_with_recording(
+            &wasm_file,
+            args.function.as_str(),
+            data_source,
+            recorder.clone(),
+        ) {
+            Ok(res) => res,
+            Err(e) => {
+                error!("Failed to execute function: {}", e);
+                return;
+            }
+        };
 
-                // Verify the calls
-                let actual_calls: Vec<HostCall> =
-                    recorder.borrow().get_calls().iter().cloned().collect();
-                match verify_host_calls(&actual_calls, &expected_calls) {
-                    Ok(()) => {
-                        println!("\n-------------------------------------------------");
-                        println!("| HOST FUNCTION TEST PASSED                    |");
-                        println!("-------------------------------------------------");
-                        println!("| Test:       {:<33} |", host_function_test);
-                        println!("| Calls:      {:<33} |", actual_calls.len());
-                        println!("| Result:     {:<33} |", result);
-                        println!("-------------------------------------------------");
-                        info!("Host function test PASSED");
-                    }
-                    Err(e) => {
-                        println!("\n-------------------------------------------------");
-                        println!("| HOST FUNCTION TEST FAILED                    |");
-                        println!("-------------------------------------------------");
-                        println!("| Test:       {:<33} |", host_function_test);
-                        println!("| Error:      {:<33} |", e);
-                        println!("-------------------------------------------------");
+        info!("Function returned: {}", result);
 
-                        // Print detailed call comparison
-                        println!("\nACTUAL CALLS:");
-                        for (i, call) in actual_calls.iter().enumerate() {
-                            println!("{}. {}: {:?}", i + 1, call.function, call.parameters);
-                        }
+        // Get recorded calls
+        let actual_calls = recorder.borrow().get_calls().clone();
 
-                        println!("\nEXPECTED CALLS:");
-                        for (i, call) in expected_calls.iter().enumerate() {
-                            println!("{}. {}: {:?}", i + 1, call.function, call.parameters);
-                        }
-
-                        error!("Host function test FAILED: {}", e);
-                        std::process::exit(1);
-                    }
+        // Pretty print actual calls for debugging
+        debug!("Actual host function calls:");
+        for (i, call) in actual_calls.iter().enumerate() {
+            debug!("  Call {}: {}", i + 1, call.function);
+            match &call.parameters {
+                crate::call_recorder::HostCallParams::UpdateData { data, .. } => {
+                    debug!("    update_data: {:?}", data);
+                }
+                crate::call_recorder::HostCallParams::Trace { message, data, .. } => {
+                    debug!("    trace: '{}', data: {:?}", message, data);
+                }
+                _ => {
+                    debug!("    {:?}", call.parameters);
                 }
             }
+        }
+
+        // Verify calls match expected
+        match verify_host_calls(&actual_calls, &expected_calls) {
+            Ok(()) => {
+                info!("✅ Host function test passed!");
+            }
             Err(e) => {
-                println!("\n-------------------------------------------------");
-                println!("| WASM FUNCTION EXECUTION ERROR                 |");
-                println!("-------------------------------------------------");
-                println!("| Function:   {:<33} |", args.function);
-                println!("| Test:       {:<33} |", host_function_test);
-                println!("| Error:      {:<33} |", e);
-                println!("-------------------------------------------------");
-                error!("Function execution failed: {}", e);
+                error!("❌ Host function test failed: {}", e);
                 std::process::exit(1);
             }
         }
     } else {
-        // Original escrow test mode
-        info!("Target function: {} (default is 'finish')", args.function);
-        info!("Using test case: {}", args.test_case);
-        info!("Loading test data from fixtures");
-        let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_test_data(&args.test_case) {
-            Ok((tx, lo, lh, l, nft)) => {
-                debug!("Test data loaded successfully");
-                (tx, lo, lh, l, nft)
+        // Traditional escrow test mode
+        let test_case = args.test_case.as_deref().unwrap_or("success");
+        info!("Loading fixture data for test case: {}", test_case);
+
+        let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_fixture_data(test_case) {
+            Ok(data) => {
+                debug!("Fixture data loaded successfully");
+                data
             }
             Err(e) => {
-                error!("Failed to load test data: {}", e);
+                error!("Failed to load fixture data: {}", e);
                 return;
             }
         };
 
         let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
+
         info!("Executing function: {}", args.function);
-        match run_func(wasm_file, &args.function, data_source) {
-            Ok(result) => {
-                println!("\n-------------------------------------------------");
-                println!("| WASM FUNCTION EXECUTION RESULT                |");
-                println!("-------------------------------------------------");
-                println!("| Function:   {:<33} |", args.function);
-                println!("| Test Case:  {:<33} |", args.test_case);
-                println!("| Result:     {:<33} |", result);
-                println!("-------------------------------------------------");
-                info!("Function completed successfully with result: {}", result);
-            }
+        let result = match run_func(&wasm_file, args.function.as_str(), data_source) {
+            Ok(res) => res,
             Err(e) => {
-                println!("\n-------------------------------------------------");
-                println!("| WASM FUNCTION EXECUTION ERROR                 |");
-                println!("-------------------------------------------------");
-                println!("| Function:   {:<33} |", args.function);
-                println!("| Test Case:  {:<33} |", args.test_case);
-                println!("| Error:      {:<33} |", e);
-                println!("-------------------------------------------------");
-                error!("Function execution failed: {}", e);
+                error!("Failed to execute function: {}", e);
+                return;
             }
+        };
+
+        info!("Function returned: {}", result);
+
+        // Determine expected result based on test case
+        let expected_result = match test_case {
+            "success" => true,
+            "failure" => false,
+            _ => {
+                error!("Unknown test case: {}", test_case);
+                return;
+            }
+        };
+
+        // Check if result matches expectation
+        if result == expected_result {
+            info!(
+                "✅ Test passed! Function returned {} as expected for '{}' case",
+                result, test_case
+            );
+        } else {
+            error!(
+                "❌ Test failed! Function returned {} but expected {} for '{}' case",
+                result, expected_result, test_case
+            );
+            std::process::exit(1);
         }
     }
-
-    info!("WasmEdge host application execution completed");
 }

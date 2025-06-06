@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 use crate::data_provider::{unpack_locator, DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE};
 use crate::hashing::{index_hash, sha512_half, LedgerNameSpace, HASH256_LEN};
+=======
+use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
+use crate::hashing::{HASH256_LEN, Hash256, LedgerNameSpace, index_hash, sha512_half};
+>>>>>>> origin/main
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
@@ -126,7 +131,10 @@ pub fn get_tx_field(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+<<<<<<< HEAD
 #[allow(dead_code)]
+=======
+>>>>>>> origin/main
 pub fn get_tx_field2(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -143,7 +151,10 @@ pub fn get_tx_field2(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+<<<<<<< HEAD
 #[allow(dead_code)]
+=======
+>>>>>>> origin/main
 pub fn get_tx_field3(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -164,7 +175,10 @@ pub fn get_tx_field3(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+<<<<<<< HEAD
 #[allow(dead_code)]
+=======
+>>>>>>> origin/main
 pub fn get_tx_field4(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -186,7 +200,10 @@ pub fn get_tx_field4(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+<<<<<<< HEAD
 #[allow(dead_code)]
+=======
+>>>>>>> origin/main
 pub fn get_tx_field5(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -209,7 +226,10 @@ pub fn get_tx_field5(
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
 
+<<<<<<< HEAD
 #[allow(dead_code)]
+=======
+>>>>>>> origin/main
 pub fn get_tx_field6(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -474,12 +494,15 @@ pub fn update_data(
         )]);
     }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+<<<<<<< HEAD
 
     // Check if we have a recorder
     if let Some(recorder) = &_data_provider.call_recorder {
         recorder.borrow_mut().record_update_data(data.clone());
     }
 
+=======
+>>>>>>> origin/main
     _data_provider.set_current_ledger_obj_data(data);
     Ok(vec![WasmValue::from_i32(0)])
 }
@@ -519,7 +542,14 @@ pub fn account_keylet(
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
     }
     let data = get_data(in_buf_ptr, in_buf_len, _caller)?;
+<<<<<<< HEAD
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
+=======
+    let keylet_hash: Hash256 = index_hash(LedgerNameSpace::Account, &data);
+
+    let hex_str = hex::encode(&keylet_hash);
+    println!("Data (keylet_hash): {:?}", hex_str);
+>>>>>>> origin/main
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash, _caller)?;
     Ok(vec![WasmValue::from_i32(HASH256_LEN as i32)])
 }
@@ -621,6 +651,10 @@ pub fn get_nft(
     set_data(dp_res.0, out_buf_ptr, dp_res.1, _caller)?;
     Ok(vec![WasmValue::from_i32(dp_res.0)])
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 pub fn trace(
     _data_provider: &mut DataProvider,
     _inst: &mut Instance,
@@ -649,6 +683,7 @@ pub fn trace(
     );
 
     let message = read_utf8_from_wasm(_caller, msg_read_ptr as i32, msg_read_len as i32)?;
+<<<<<<< HEAD
     let data = if data_read_len > 0 {
         Some(get_data(
             data_read_ptr as i32,
@@ -682,6 +717,21 @@ pub fn trace(
         } else {
             println!("WASM TRACE: {message}");
         }
+=======
+    let data_string = read_hex_from_wasm(
+        _caller,
+        data_read_ptr as i32,
+        data_read_len as i32,
+        data_as_hex,
+    )?;
+    if data_read_len > 0 {
+        println!(
+            "WASM TRACE: {message} ({data_string} | {} data bytes)",
+            data_read_len
+        );
+    } else {
+        println!("WASM TRACE: {message}");
+>>>>>>> origin/main
     }
 
     Ok(vec![WasmValue::from_i32(

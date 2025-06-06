@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 use crate::call_recorder::CallRecorder;
 use crate::decoding::{decode, AccountId, Decodable};
 use crate::hashing::Hash256;
@@ -5,6 +6,11 @@ use crate::mock_data::{DataSource, Keylet, MockData};
 use log::info;
 use std::cell::RefCell;
 use std::rc::Rc;
+=======
+use crate::decoding::{AccountId, Decodable, decode};
+use crate::hashing::Hash256;
+use crate::mock_data::{DataSource, Keylet, MockData};
+>>>>>>> origin/main
 
 const LOCATOR_BUFFER_SIZE: usize = 64;
 const NUM_SLOTS: usize = 256;
@@ -70,7 +76,10 @@ pub struct DataProvider {
     data_source: MockData,
     next_slot: usize,
     slots: [Keylet; NUM_SLOTS],
+<<<<<<< HEAD
     pub call_recorder: Option<Rc<RefCell<CallRecorder>>>,
+=======
+>>>>>>> origin/main
 }
 
 impl DataProvider {
@@ -80,6 +89,7 @@ impl DataProvider {
             data_source,
             next_slot: 1,
             slots,
+<<<<<<< HEAD
             call_recorder: None,
         }
     }
@@ -91,6 +101,8 @@ impl DataProvider {
             next_slot: 1,
             slots,
             call_recorder: Some(recorder),
+=======
+>>>>>>> origin/main
         }
     }
 
@@ -127,7 +139,11 @@ impl DataProvider {
         idx_fields: Vec<i32>,
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
+<<<<<<< HEAD
         assert!(!idx_fields.is_empty());
+=======
+        assert!(idx_fields.len() > 0);
+>>>>>>> origin/main
         match self.data_source.get_field_value(source, idx_fields) {
             None => Self::fill_buf(None, buf_cap, Decodable::NOT),
             Some((last_field, field_result)) => Self::fill_buf(
@@ -204,7 +220,10 @@ impl DataProvider {
                             }
                         } else if n.is_u64() {
                             let num = n.as_u64().unwrap();
+<<<<<<< HEAD
                             info!("is_u64::num: {}", num);
+=======
+>>>>>>> origin/main
                             if buf_cap == 4 {
                                 // Safe cast to u32
                                 if num > u32::MAX as u64 {
@@ -215,7 +234,10 @@ impl DataProvider {
                                 (4, buf)
                             } else {
                                 let bytes = num.to_le_bytes();
+<<<<<<< HEAD
                                 info!("bytes: {:?}", bytes);
+=======
+>>>>>>> origin/main
                                 if bytes.len() > buf_cap {
                                     return (HostError::BufferTooSmall as i32, buf);
                                 }
@@ -237,11 +259,18 @@ impl DataProvider {
                     serde_json::Value::String(s) => match decode(s, decodable) {
                         None => (HostError::DecodingError as i32, buf),
                         Some(bytes) => {
+<<<<<<< HEAD
                             // info!("bytes: {:?}", bytes);
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
                             }
                             buf[..bytes.len()].copy_from_slice(&bytes);
+=======
+                            if bytes.len() > buf_cap {
+                                return (HostError::BufferTooSmall as i32, buf);
+                            }
+                            buf[..bytes.len()].copy_from_slice(&*bytes);
+>>>>>>> origin/main
                             (bytes.len() as i32, buf)
                         }
                     },

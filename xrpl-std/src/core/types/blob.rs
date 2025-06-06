@@ -10,4 +10,8 @@ pub struct Blob {
 pub const EMPTY_BLOB: Blob = Blob {
     data: [0u8; 1024], // TODO: Consider an optional?
     len: 0usize,
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> origin/main

@@ -13,4 +13,7 @@ pub const LEDGER_OBJ_NOT_FOUND: i32 = -10;
 pub const DECODING_ERROR: i32 = -11;
 pub const DATA_FIELD_TOO_LARGE: i32 = -12;
 pub const OUT_OF_BOUNDS: i32 = -13;
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main

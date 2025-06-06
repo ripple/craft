@@ -48,7 +48,11 @@ pub enum LedgerNameSpace {
 
 pub fn sha512_half(data: &[u8]) -> Hash256 {
     let mut hasher = Sha512::new();
+<<<<<<< HEAD
     hasher.update(data);
+=======
+    hasher.update(&data);
+>>>>>>> origin/main
     let result = hasher.finalize();
     result[..32].to_vec()
 }

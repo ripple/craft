@@ -95,6 +95,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     println!("{}", "Running cargo build...".cyan());
+    println!("args: {:?}", args);
     let output = Command::new("cargo")
         .current_dir(project_dir)
         .args(&args)
@@ -371,14 +372,12 @@ pub async fn configure() -> Result<Config> {
         .green()
     );
 
-    let config = Config {
+    Ok(Config {
         wasm_target: target,
         build_mode,
         optimization_level,
-        project_path: project_path.clone(),
-    };
-
-    Ok(config)
+        project_path,
+    })
 }
 
 pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {

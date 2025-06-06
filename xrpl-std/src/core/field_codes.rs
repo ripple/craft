@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // TODO: Decided if we prefer this style or sfield.rs
+=======
+>>>>>>> origin/main
 pub const SF_ACCOUNT: i32 = 524289; // 0x80001
 pub const SF_TRANSACTION_TYPE: i32 = 65538; // 0x10002
 pub const SF_FEE: i32 = 393224; // 0x60008
@@ -59,4 +62,8 @@ pub const SF_FULFILLMENT: i32 = 458768;
 //     Condition = SF_CONDITION as i32,
 //     CredentialIDs = SF_CREDENTIAL_IDS as i32,
 //     Fulfillment = SF_FULFILLMENT as i32,
+<<<<<<< HEAD
 // }
+=======
+// }
+>>>>>>> origin/main

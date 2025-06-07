@@ -1,10 +1,6 @@
 #![allow(dead_code)]
 
-<<<<<<< HEAD
 use crate::decoding::{decode, AccountId, Decodable, SField_To_Name};
-=======
-use crate::decoding::{AccountId, Decodable, SField_To_Name, decode};
->>>>>>> origin/main
 use crate::hashing::Hash256;
 use std::collections::HashMap;
 
@@ -29,19 +25,11 @@ pub struct MockData {
 
 impl MockData {
     pub fn new(
-<<<<<<< HEAD
         tx_str: &str,
         hosting_ledger_obj_str: &str,
         header_str: &str,
         ledger_str: &str,
         nfts_str: &str,
-=======
-        tx_str: &String,
-        hosting_ledger_obj_str: &String,
-        header_str: &String,
-        ledger_str: &String,
-        nfts_str: &String,
->>>>>>> origin/main
     ) -> Self {
         let tx = serde_json::from_str(tx_str).expect("Tx JSON bad formatted");
         let hosting_ledger_obj = serde_json::from_str(hosting_ledger_obj_str)
@@ -74,15 +62,9 @@ impl MockData {
 
                 if let (Some(id), Some(owner), Some(uri)) = (nft_id, owner, uri) {
                     nft_map.insert(
-<<<<<<< HEAD
                         decode(id, Decodable::UINT256).expect("NFT file, bad nft_id"),
                         (
                             decode(owner, Decodable::ACCOUNT)
-=======
-                        decode(&id.to_string(), Decodable::UINT256).expect("NFT file, bad nft_id"),
-                        (
-                            decode(&owner.to_string(), Decodable::ACCOUNT)
->>>>>>> origin/main
                                 .expect("NFT file, bad owner"),
                             uri.clone(),
                         ),
@@ -104,11 +86,7 @@ impl MockData {
     }
 
     pub fn obj_exist(&self, keylet: &Keylet) -> bool {
-<<<<<<< HEAD
         self.ledger.contains_key(keylet)
-=======
-        self.ledger.get(keylet).is_some()
->>>>>>> origin/main
     }
 
     #[inline]

@@ -1,6 +1,7 @@
-[
-  {
-    "function": "get_ledger_sqn",
+{
+  "expected_host_calls": [
+    {
+      "function": "get_ledger_sqn",
     "parameters": ["buffer_size: 8"]
   },
   {
@@ -115,4 +116,5 @@
     "function": "update_data",
     "parameters": ["data: Updated ledger entry data from WASM test"]
   }
-]
+  ]
+}

@@ -2,12 +2,7 @@
 const LOCATOR_BUFFER_SIZE: usize = 64;
 
 /// A Locator may only pack this many levels deep in an object hierarchy (inclusive of first field)
-<<<<<<< HEAD
-#[allow(dead_code)]
-const MAX_DEPTH: u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
-=======
 // const MAX_DEPTH: u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
->>>>>>> origin/main
 
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by
 /// specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4
@@ -25,16 +20,6 @@ pub struct Locator {
 
 impl Locator {
     /// Create a new Locator using an unsigned 8-bit slot number. Valid slots are 0 to 255.
-<<<<<<< HEAD
-    // pub fn new(slot_num: u8) -> Locator {
-    //     let mut buffer: [u8; 64] = [0; 64];
-    //     buffer[0] = slot_num;
-    //     Self {
-    //         buffer,
-    //         cur_buffer_index: 1,
-    //     }
-    // }
-=======
     pub fn new_with_slot(slot_num: u8) -> Locator {
         let mut buffer: [u8; 64] = [0; 64];
         buffer[0] = slot_num;
@@ -43,7 +28,6 @@ impl Locator {
             cur_buffer_index: 1,
         }
     }
->>>>>>> origin/main
 
     /// Create a new Locator. Valid slots are 0 to 255.
     pub fn new() -> Locator {

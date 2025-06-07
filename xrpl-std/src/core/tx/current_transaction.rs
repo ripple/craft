@@ -16,10 +16,7 @@ use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
 use crate::host::get_tx_field;
-<<<<<<< HEAD
-=======
 use crate::sfield;
->>>>>>> origin/main
 
 #[inline(always)]
 pub fn get_account() -> AccountID {
@@ -49,14 +46,11 @@ pub fn get_transaction_type() -> TransactionType {
 }
 
 #[inline(always)]
-<<<<<<< HEAD
-=======
 pub fn get_computation_allowance() -> u32 {
     get_u32_field(sfield::ComputationAllowance)
 }
 
 #[inline(always)]
->>>>>>> origin/main
 pub fn get_fee() -> Amount {
     let mut buffer = [0u8; 8]; // Enough to hold a u64
 

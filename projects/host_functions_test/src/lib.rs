@@ -459,17 +459,15 @@ fn test_keylet_generation_functions() -> i32 {
     let _ = trace_data("Account keylet:", &account_keylet_buffer, DataRepr::AsHex);
     
     // Test 5.2: credential_keylet() - Generate keylet for credential
-    // Note: credential_keylet has unusual parameter types (i32 instead of *const u8)
-    // This might be a bug in the interface, but we test it as defined
     let mut credential_keylet_buffer = [0u8; 32];
     let credential_keylet_result = unsafe {
         credential_keylet(
-            account_id.0.as_ptr() as i32,  // Subject - casting pointer to i32 (unusual)
-            account_id.0.len() as i32,
-            account_id.0.as_ptr() as i32,  // Issuer - same account for test
-            account_id.0.len() as i32,
-            b"TestType".as_ptr() as i32,   // Credential type
-            9i32,                          // Length of "TestType"
+            account_id.0.as_ptr(),         // Subject
+            account_id.0.len(),
+            account_id.0.as_ptr(),         // Issuer - same account for test
+            account_id.0.len(),
+            b"TestType".as_ptr(),          // Credential type
+            9usize,                        // Length of "TestType"
             credential_keylet_buffer.as_mut_ptr(),
             credential_keylet_buffer.len()
         )

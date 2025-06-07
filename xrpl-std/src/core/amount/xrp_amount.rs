@@ -41,8 +41,4 @@ impl From<XrpAmount> for [u8; 8] {
         //    .to_vec() allocates a new Vec and copies the bytes.
         bytes_array
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/main

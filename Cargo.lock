@@ -2776,6 +2776,7 @@ dependencies = [
  "hex",
  "lazy_static",
  "log",
+ "serde",
  "serde_json",
  "sha2 0.11.0-rc.0",
  "wasmedge-sdk",

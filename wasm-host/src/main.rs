@@ -301,7 +301,8 @@ fn main() {
         }
 
         // Verify calls match expected
-        match verify_host_calls(&actual_calls, &expected_calls) {
+        let actual_calls_vec: Vec<HostCall> = actual_calls.into();
+        match verify_host_calls(&actual_calls_vec, &expected_calls) {
             Ok(()) => {
                 info!("✅ Host function test passed!");
             }

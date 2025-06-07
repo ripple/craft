@@ -1,0 +1,12 @@
+{
+  "wasm_module": "xrpl_std_update_data_test",
+  "test_data": {
+    "id": 12345,
+    "value": [170, 187, 204, 221]
+  },
+  "expected_serialized_bytes": [0, 0, 48, 57, 170, 187, 204, 221],
+  "notes": [
+    "id 12345 in big-endian bytes: [0, 0, 48, 57]",
+    "value bytes: [170, 187, 204, 221] (0xAA, 0xBB, 0xCC, 0xDD)"
+  ]
+}

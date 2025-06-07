@@ -1,0 +1,7 @@
+{
+  "test_name": "basic_data_update",
+  "description": "Test basic update_data functionality with simple serialized data",
+  "target_function": "finish",
+  "expected_return_value": 0,
+  "host_function_under_test": "update_data"
+}

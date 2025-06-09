@@ -19,12 +19,10 @@ pub extern "C" fn finish() -> bool {
     };
     let _ = trace_data("cred_keylet", &cred_keylet, DataRepr::AsHex);
 
-    unsafe {
-        let slot = xrpl_std::host::cache_ledger_obj(cred_keylet.as_ptr(), cred_keylet.len(), 0);
-        if slot < 0 {
-            let _ = trace_num("CACHE ERROR", i64::from(slot));
-            return false;
-        };
-        return true;
-    }
+    let slot = xrpl_std::host::cache_ledger_obj(cred_keylet.as_ptr(), cred_keylet.len(), 0);
+    if slot < 0 {
+        let _ = trace_num("CACHE ERROR", i64::from(slot));
+        return false;
+    };
+    return true;
 }

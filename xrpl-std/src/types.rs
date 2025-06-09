@@ -16,4 +16,4 @@ pub const XRPL_KEYLET_SIZE: usize = 32;
 pub type Keylet = [u8; XRPL_KEYLET_SIZE];
 
 pub const XRPL_NFT_URI_SIZE: usize = 256;
-pub type NFT_URI = [u8; XRPL_NFT_URI_SIZE];
+pub type NftUri = [u8; XRPL_NFT_URI_SIZE];

@@ -85,7 +85,7 @@ async function finishEscrow() {
     const credResponse = await submit(credTx, wallet)
     
     if (credResponse.result.meta.TransactionResult === "tesSUCCESS") {
-      console.log("\Credential created successfully!")
+      console.log("Credential created successfully!")
     } else {
       console.error("\nFailed to create credential:", credResponse.result.meta.TransactionResult)
     }

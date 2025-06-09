@@ -46,7 +46,7 @@ In a separate Terminal window:
 ```sh
 # open Docker Desktop
 docker pull rippleci/rippled:smart_escrow
-docker run --rm -p 5005:5005 -p 6006:6006 --volume "/$(pwd)/reference/rippled_cfg/":"/opt/etc/ripple/" --platform linux/amd64 rippleci/rippled "-a"
+docker run --rm -p 5005:5005 -p 6006:6006 --volume "/$(pwd)/reference/rippled_cfg/":"/opt/etc/ripple/" --platform linux/amd64 rippleci/rippled:smart_escrow "-a"
 ```
 
 In your main Terminal window:

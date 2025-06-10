@@ -1,4 +1,5 @@
 use crate::core::error_codes;
+
 pub mod trace;
 
 // host functions defined by the host.
@@ -14,7 +15,87 @@ pub enum Result<T> {
     Err(Error),
 }
 
-impl Result<u64> {}
+impl<T> Result<T> {
+    /// Returns `true` if the result is [`Ok`].
+    #[inline]
+    pub fn is_ok(&self) -> bool {
+        matches!(*self, Result::Ok(_))
+    }
+
+    /// Returns `true` if the result is [`Err`].
+    #[inline]
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+
+    /// Converts from `Result<T>` to `Option<T>`.
+    ///
+    /// Converts `self` into an `Option<T>`, consuming `self`,
+    /// and discarding the error, if any.
+    #[inline]
+    pub fn ok(self) -> Option<T> {
+        match self {
+            Result::Ok(x) => Some(x),
+            Result::Err(_) => None,
+        }
+    }
+
+    /// Converts from `Result<T>` to `Option<Error>`.
+    ///
+    /// Converts `self` into an `Option<Error>`, consuming `self`,
+    /// and discarding the success value, if any.
+    #[inline]
+    pub fn err(self) -> Option<Error> {
+        match self {
+            Result::Ok(_) => None,
+            Result::Err(x) => Some(x),
+        }
+    }
+
+    /// Returns the contained [`Ok`] value, consuming the `self` value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is an [`Err`], with a panic message provided by the
+    /// [`Err`]'s value.
+    #[inline]
+    pub fn unwrap(self) -> T {
+        match self {
+            Result::Ok(t) => t,
+            Result::Err(e) => panic!(
+                "called `Result::unwrap()` on an `Err` value: {:?}",
+                e.code()
+            ),
+        }
+    }
+
+    /// Returns the contained [`Ok`] value or a provided default.
+    #[inline]
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Result::Ok(t) => t,
+            Result::Err(_) => default,
+        }
+    }
+
+    /// Returns the contained [`Ok`] value or computes it from a closure.
+    #[inline]
+    pub fn unwrap_or_else<F: FnOnce(Error) -> T>(self, op: F) -> T {
+        match self {
+            Result::Ok(t) => t,
+            Result::Err(e) => op(e),
+        }
+    }
+
+    #[inline]
+    pub fn unwrap_or_panic_traced(self, context: &str) -> T {
+        self.unwrap_or_else(|error| {
+            let _ = trace::trace_data("Error in ", &context.as_bytes(), trace::DataRepr::AsUTF8);
+            let _ = trace::trace_num("error_code=", error.code() as i64);
+            core::panic!("Failed in {}: error_code={}", context, error.code());
+        })
+    }
+}
 
 impl From<i64> for Result<u64> {
     #[inline(always)] // <-- Inline because this function is very small
@@ -113,7 +194,7 @@ pub enum Error {
 impl Error {
     // TODO: Use Trait instead?
     #[inline(always)] // <-- Inline because this function is very small
-    fn from_code(code: i32) -> Self {
+    pub fn from_code(code: i32) -> Self {
         unsafe { core::mem::transmute(code) }
     }
 
@@ -121,5 +202,11 @@ impl Error {
     #[inline(always)] // <-- Inline because this function is very small
     pub fn code(self) -> i32 {
         self as _
+    }
+}
+
+impl Into<i64> for Error {
+    fn into(self) -> i64 {
+        self as i64
     }
 }

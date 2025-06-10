@@ -1,9 +1,12 @@
 #![no_std]
+// TODO: Remove this once this example is complete.
 #![allow(unused_imports)]
 
+use crate::host::{Result, Result::Err, Result::Ok};
 use xrpl_std::core::amount::Amount;
 use xrpl_std::core::amount::xrp_amount::XrpAmount;
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
+use xrpl_std::core::field_codes::SF_TRANSACTION_TYPE;
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::tx::current_transaction;
 use xrpl_std::core::types::account_id::AccountID;
@@ -17,31 +20,22 @@ use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 use xrpl_std::sfield::{SignerEntries, SignerEntry, SignerWeight};
-use xrpl_std::{
-    get_account_balance, get_current_escrow_account_id, get_current_escrow_destination,
-    get_current_escrow_finish_after, get_tx_account_id,
-};
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> i32 {
+pub extern "C" fn finish() -> bool {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
     // First check account and balance
     {
-        let account_id_tx = match get_tx_account_id() {
-            Some(v) => v,
-            None => return -1,
-        };
-        let _ = trace_data("  Account:", &account_id_tx, DataRepr::AsHex);
-
         // TODO: Peng to fix.
+        // let account: AccountID = current_transaction::get_account();
         // let balance = match get_account_balance(&account_id_tx) {
         //     Some(v) => v,
         //     None => return -5,
         // };
-        // let _ = trace_num("  Balance:", balance as i64);
-
+        // let _ = trace_num("  Balance of Account Finishing the Escrow:", balance as i64);
         // if balance <= 0 {
+        //     // TODO: Use real error codes!
         //     return -9;
         // }
     }
@@ -53,11 +47,18 @@ pub extern "C" fn finish() -> i32 {
     let _ = trace("  -- EscrowFinish Common Fields");
 
     // Field: TransactionID
-    let current_tx_id: Hash256 = current_transaction::get_id();
+    let current_tx_id: Hash256 = current_transaction::get_id_safe();
     let _ = trace_data("  EscrowFinish TxId:", &current_tx_id.0, DataRepr::AsHex);
 
     // Field: Account
-    let account: AccountID = current_transaction::get_account();
+    let account = match current_transaction::get_account() {
+        Ok(v) => v,
+        Err(e) => {
+            let _ = trace_num("Error getting current transaction account.", e.into());
+            return false;
+        }
+    };
+
     let _ = trace_data("  Account:", &account.0, DataRepr::AsHex);
     if account.0.eq(&ACCOUNT_ONE.0) {
         let _ = trace("    AccountID == ACCOUNT_ONE => TRUE");
@@ -67,7 +68,7 @@ pub extern "C" fn finish() -> i32 {
     }
 
     // Field: TransactionType
-    let transaction_type: TransactionType = current_transaction::get_transaction_type();
+    let transaction_type: TransactionType = current_transaction::get_transaction_type_safe();
     let tx_type_bytes: [u8; 2] = transaction_type.into();
     let _ = trace_data(
         "  TransactionType (EscrowFinish):",
@@ -76,46 +77,46 @@ pub extern "C" fn finish() -> i32 {
     );
 
     // Field: ComputationAllowance
-    let computation_allowance: u32 = current_transaction::get_computation_allowance();
+    let computation_allowance: u32 = current_transaction::get_computation_allowance_safe();
     let _ = trace_num("  ComputationAllowance:", computation_allowance as i64);
 
     // Field: Fee
-    let fee: Amount = current_transaction::get_fee();
+    let fee: Amount = current_transaction::get_fee_safe();
     let fee_as_xrp_amount: XrpAmount = match fee {
         Amount::Xrp(xrp_amount) => xrp_amount,
     };
     let _ = trace_num("  Fee:", fee_as_xrp_amount.0 as i64);
 
     // Field: Sequence
-    let sequence: u32 = current_transaction::get_sequence();
+    let sequence: u32 = current_transaction::get_sequence_safe();
     let _ = trace_num("  Sequence:", sequence as i64);
 
     // Field: AccountTxnID
-    let account_txn_id: Hash256 = current_transaction::get_account_txn_id();
+    let account_txn_id: Hash256 = current_transaction::get_account_txn_id_safe();
     let _ = trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
 
     // Field: Flags
-    let flags: u32 = current_transaction::get_flags();
+    let flags: u32 = current_transaction::get_flags_safe();
     let _ = trace_num("  Flags:", flags as i64);
 
     // Field: LastLedgerSequence
-    let last_ledger_sequence: u32 = current_transaction::get_last_ledger_sequence();
+    let last_ledger_sequence: u32 = current_transaction::get_last_ledger_sequence_safe();
     let _ = trace_num("  LastLedgerSequence:", last_ledger_sequence as i64);
 
     // Field: NetworkID
-    let network_id: u32 = current_transaction::get_network_id();
+    let network_id: u32 = current_transaction::get_network_id_safe();
     let _ = trace_num("  NetworkID:", network_id as i64);
 
     // Field: SourceTag
-    let source_tag: u32 = current_transaction::get_source_tag();
+    let source_tag: u32 = current_transaction::get_source_tag_safe();
     let _ = trace_num("  SourceTag:", source_tag as i64);
 
     // Field: SigningPubKey
-    let signing_pub_key: PublicKey = current_transaction::get_signing_pub_key();
+    let signing_pub_key: PublicKey = current_transaction::get_signing_pub_key_safe();
     let _ = trace_data("  SigningPubKey:", &signing_pub_key.0, DataRepr::AsHex);
 
     // Field: TicketSequence
-    let ticket_sequence: u32 = current_transaction::get_ticket_sequence();
+    let ticket_sequence: u32 = current_transaction::get_ticket_sequence_safe();
     let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
 
     let array_len = unsafe { host::get_tx_array_len(sfield::Memos) };
@@ -195,7 +196,11 @@ pub extern "C" fn finish() -> i32 {
             break;
         }
         let _ = trace_num("    Signer #:", i as i64);
-        let _ = trace_data("     Account:", &buf[..output_len as usize], DataRepr::AsHex);
+        let _ = trace_data(
+            "     Account:",
+            &buf[..output_len as usize],
+            DataRepr::AsHex,
+        );
 
         locator.repack_last(sfield::TxnSignature);
         let output_len = unsafe {
@@ -236,7 +241,7 @@ pub extern "C" fn finish() -> i32 {
         );
     }
 
-    let txn_signature: Blob = current_transaction::get_txn_signature();
+    let txn_signature: Blob = current_transaction::get_txn_signature_safe();
     let sliced_data_len: usize = txn_signature.len;
     let sliced_data: &[u8] = &txn_signature.data[..sliced_data_len];
     let _ = trace_data("  TxnSignature:", &sliced_data, DataRepr::AsHex);
@@ -247,7 +252,7 @@ pub extern "C" fn finish() -> i32 {
     let _ = trace("  -- EscrowFinish Fields");
 
     // Field: Account
-    let owner: AccountID = current_transaction::get_owner();
+    let owner: AccountID = current_transaction::get_owner_safe();
     let _ = trace_data("  Owner:", &owner.0, DataRepr::AsHex);
     if owner.0[0].eq(&ACCOUNT_ZERO.0[0]) {
         let _ = trace("    AccountID == ACCOUNT_ZERO => TRUE");
@@ -257,11 +262,11 @@ pub extern "C" fn finish() -> i32 {
     }
 
     // Field: OfferSequence
-    let offer_sequence: u32 = current_transaction::get_offer_sequence();
+    let offer_sequence: u32 = current_transaction::get_offer_sequence_safe();
     let _ = trace_num("  OfferSequence:", offer_sequence as i64);
 
     // Field: Condition
-    let condition: Condition = current_transaction::get_condition();
+    let condition: Condition = current_transaction::get_condition_safe();
     let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
 
     // TODO PENG
@@ -269,7 +274,7 @@ pub extern "C" fn finish() -> i32 {
 
     // Field: Fulfillment
     // TODO: Allow trace_data to specify the # of bytes to trace.
-    let fulfillment: Fulfillment = current_transaction::get_fulfillment();
+    let fulfillment: Fulfillment = current_transaction::get_fulfillment_safe();
     let _ = trace_data("  Fulfillment:", &fulfillment.data, DataRepr::AsHex);
 
     // Step #3: Get fields from the Escrow being finished....
@@ -383,5 +388,5 @@ pub extern "C" fn finish() -> i32 {
         // }
     }
 
-    1
+    false // <-- If we get here, don't finish the escrow.
 }

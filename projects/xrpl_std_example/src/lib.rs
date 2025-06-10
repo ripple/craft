@@ -275,7 +275,6 @@ pub extern "C" fn finish() -> bool {
     // TODO: CredentialIDs (Array of Strings)
 
     // Field: Fulfillment
-    // TODO: Allow trace_data to specify the # of bytes to trace.
     let fulfillment: Fulfillment = current_transaction::get_fulfillment_safe();
     let _ = trace_data(
         "  Fulfillment:",

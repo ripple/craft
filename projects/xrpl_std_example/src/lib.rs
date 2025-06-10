@@ -242,9 +242,11 @@ pub extern "C" fn finish() -> bool {
     }
 
     let txn_signature: Blob = current_transaction::get_txn_signature_safe();
-    let sliced_data_len: usize = txn_signature.len;
-    let sliced_data: &[u8] = &txn_signature.data[..sliced_data_len];
-    let _ = trace_data("  TxnSignature:", &sliced_data, DataRepr::AsHex);
+    let _ = trace_data(
+        "  TxnSignature:",
+        &txn_signature.data[..txn_signature.len],
+        DataRepr::AsHex,
+    );
 
     // ########################################
     // Step #2: Access & Emit Specific fields from the connected Escrow Object
@@ -275,7 +277,11 @@ pub extern "C" fn finish() -> bool {
     // Field: Fulfillment
     // TODO: Allow trace_data to specify the # of bytes to trace.
     let fulfillment: Fulfillment = current_transaction::get_fulfillment_safe();
-    let _ = trace_data("  Fulfillment:", &fulfillment.data, DataRepr::AsHex);
+    let _ = trace_data(
+        "  Fulfillment:",
+        &fulfillment.data[..fulfillment.len],
+        DataRepr::AsHex,
+    );
 
     // Step #3: Get fields from the Escrow being finished....
     // TODO:

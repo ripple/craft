@@ -1,50 +1,69 @@
 #![no_std]
 
+use xrpl_std::core::ledger_objects::current_ledger_object;
+use xrpl_std::core::ledger_objects::ledger_object::get_nft;
+use xrpl_std::host::Error::InternalError;
 use xrpl_std::host::get_tx_nested_field;
 use xrpl_std::host::trace::trace_num;
+use xrpl_std::host::{Error, Result, Result::Err, Result::Ok};
 use xrpl_std::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
-use xrpl_std::{get_current_escrow_destination, get_nft};
 use xrpl_std::{locator, sfield};
 
 #[unsafe(no_mangle)]
-pub fn get_first_memo() -> Option<ContractData> {
+pub fn get_first_memo() -> Result<Option<ContractData>> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
     let mut locator = locator::LocatorPacker::new();
     locator.pack(sfield::Memos);
     locator.pack(0);
     locator.pack(sfield::MemoData);
-    unsafe {
-        let retcode = get_tx_nested_field(
+    let result_code = unsafe {
+        get_tx_nested_field(
             locator.get_addr(),
             locator.num_packed_bytes(),
             data.as_mut_ptr(),
             data.len(),
-        );
-        if retcode > 0 {
-            Some(data)
-        } else {
-            let _ = trace_num("Memo (first)", i64::from(retcode));
-            None
+        )
+    };
+
+    match result_code {
+        result_code if result_code > 0 => {
+            Ok(Some(data)) // <-- Move the buffer into an AccountID
         }
+        result_code if result_code == 0 => Err(InternalError),
+        result_code => Err(Error::from_code(result_code)),
     }
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
-    let memo = match get_first_memo() {
-        Some(v) => v,
-        None => return false,
+    let memo: ContractData = match get_first_memo() {
+        Ok(v) => {
+            match v {
+                Some(v) => v,
+                None => return false, // <-- Do not execute the escrow.
+            }
+        }
+        Err(e) => {
+            let _ = trace_num("Error getting first memo:", e.code() as i64);
+            return false; // <-- Do not execute the escrow.
+        }
     };
 
     let nft: [u8; XRPL_NFTID_SIZE] = memo[0..32].try_into().unwrap();
 
-    let destination = match get_current_escrow_destination() {
-        Some(v) => v,
-        None => return false,
+    let destination = match current_ledger_object::get_destination() {
+        Ok(destination) => destination,
+        Err(e) => {
+            let _ = trace_num("Error getting current ledger destination:", e.code() as i64);
+            return false; // <-- Do not execute the escrow.
+        }
     };
 
     match get_nft(&destination, &nft) {
-        Some(_v) => return true,
-        None => return false,
-    };
+        Ok(_) => true,
+        Err(e) => {
+            let _ = trace_num("Error getting first memo:", e.code() as i64);
+            false // <-- Do not execute the escrow.
+        }
+    }
 }

@@ -1,6 +1,6 @@
 #![no_std]
 
-use crate::host::trace::trace;
+use crate::host::trace::{trace, trace_data, trace_num, DataRepr};
 
 pub mod core;
 pub mod host;
@@ -94,12 +94,12 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
         None => return None,
         Some(keylet) => keylet,
     };
-    // let _ = trace_data("std-lib keylet ", &keylet, DataRepr::AsHex);
+    let _ = trace_data("std-lib keylet ", &keylet, DataRepr::AsHex);
     let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
     if slot <= 0 {
+        let _ = trace_num("std-lib slot ", slot as i64);
         return None;
     }
-    // let _ = trace("std-lib slot ");
     let mut balance = 0u64;
     let result_code;
     unsafe {

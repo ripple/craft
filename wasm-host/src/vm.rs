@@ -76,6 +76,6 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Wa
     vm.register_module(None, wasm_module.clone())?;
 
     let rets = vm.run_func(None, func_name, params!())?;
-    // println!("run_func: {:?}", rets[0].to_i32());
+    info!("run_func: {:?}", rets[0].to_i32());
     Ok(rets[0].to_i32() == 1)
 }

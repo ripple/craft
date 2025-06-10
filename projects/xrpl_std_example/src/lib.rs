@@ -4,7 +4,6 @@
 use xrpl_std::core::amount::Amount;
 use xrpl_std::core::amount::xrp_amount::XrpAmount;
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
-use xrpl_std::core::locator::Locator;
 use xrpl_std::core::tx::current_transaction;
 use xrpl_std::core::types::account_id::AccountID;
 use xrpl_std::core::types::blob::Blob;
@@ -34,16 +33,15 @@ pub extern "C" fn finish() -> i32 {
         };
         let _ = trace_data("  Account:", &account_id_tx, DataRepr::AsHex);
 
-        // TODO: Peng to fix.
-        // let balance = match get_account_balance(&account_id_tx) {
-        //     Some(v) => v,
-        //     None => return -5,
-        // };
-        // let _ = trace_num("  Balance:", balance as i64);
+        let balance = match get_account_balance(&account_id_tx) {
+            Some(v) => v,
+            None => return -5,
+        };
+        let _ = trace_num("  Balance:", balance as i64);
 
-        // if balance <= 0 {
-        //     return -9;
-        // }
+        if balance <= 0 {
+            return -9;
+        }
     }
 
     // ########################################
@@ -122,7 +120,7 @@ pub extern "C" fn finish() -> i32 {
     let _ = trace_num("  Memos array len:", array_len as i64);
 
     let mut memo_buf = [0u8; 1024];
-    let mut locator = Locator::new();
+    let mut locator = LocatorPacker::new();
     locator.pack(sfield::Memos);
     locator.pack(0);
     locator.pack(sfield::Memo);
@@ -177,7 +175,7 @@ pub extern "C" fn finish() -> i32 {
 
     for i in 0..array_len {
         let mut buf = [0x00; 64];
-        let mut locator = Locator::new();
+        let mut locator = LocatorPacker::new();
         locator.pack(sfield::Signers);
         locator.pack(i);
         locator.pack(sfield::Account);

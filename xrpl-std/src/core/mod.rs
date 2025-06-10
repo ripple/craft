@@ -5,4 +5,3 @@ pub mod field_codes;
 pub mod ledger_objects;
 pub mod tx;
 pub mod types;
-pub mod locator;

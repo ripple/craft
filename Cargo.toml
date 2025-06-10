@@ -1,10 +1,20 @@
 [workspace]
 members = [".", "wasm-host"]
+#exclude = [
+#    "wamr-rust-sdk/examples/wasi-hello",
+#    "wamr-rust-sdk/resources/test/gcd",
+#    "wamr-rust-sdk/resources/test/add-extra",
+#    "wamr-rust-sdk/.devcontainer",
+#    "wamr-rust-sdk/.github",
+#]
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
 
 [package]
 name = "craft"
-version = "0.5.0-devnet2"
 edition = "2024"
+version = "0.5.0-devnet2"
 description = "An interactive CLI tool for building and testing WASM smart contracts"
 
 [dependencies]
@@ -22,3 +32,4 @@ sha2 = "0.10"
 tokio = { version = "1.36", features = ["full"] }
 walkdir = "2.4"
 which = "7.0.3"
+wamr-rust-sdk = {path = "./wamr-rust-sdk/"}

@@ -1,4 +1,5 @@
 use crate::core::error_codes;
+
 pub mod trace;
 
 // host functions defined by the host.
@@ -11,10 +12,96 @@ pub enum Result<T> {
     /// Contains the success value
     Ok(T),
     /// Contains the error value
-    Err(Error),
+    Err(Error), // TODO: Test if the WASM size is expanded if we use an enum here instead of i32
 }
 
-impl Result<u64> {}
+impl<T> Result<T> {
+    /// Returns `true` if the result is [`Ok`].
+    #[inline]
+    pub fn is_ok(&self) -> bool {
+        matches!(*self, Result::Ok(_))
+    }
+
+    /// Returns `true` if the result is [`Err`].
+    #[inline]
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
+
+    /// Converts from `Result<T>` to `Option<T>`.
+    ///
+    /// Converts `self` into an `Option<T>`, consuming `self`,
+    /// and discarding the error, if any.
+    #[inline]
+    pub fn ok(self) -> Option<T> {
+        match self {
+            Result::Ok(x) => Some(x),
+            Result::Err(_) => None,
+        }
+    }
+
+    /// Converts from `Result<T>` to `Option<Error>`.
+    ///
+    /// Converts `self` into an `Option<Error>`, consuming `self`,
+    /// and discarding the success value, if any.
+    #[inline]
+    pub fn err(self) -> Option<Error> {
+        match self {
+            Result::Ok(_) => None,
+            Result::Err(x) => Some(x),
+        }
+    }
+
+    /// Returns the contained [`Ok`] value, consuming the `self` value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is an [`Err`], with a panic message provided by the
+    /// [`Err`]'s value.
+    #[inline]
+    pub fn unwrap(self) -> T {
+        match self {
+            Result::Ok(t) => t,
+            Result::Err(error) => {
+                let _ = trace::trace_num("error_code=", error.code() as i64);
+                panic!(
+                    "called `Result::unwrap()` on an `Err` with code: {}",
+                    error.code()
+                )
+            }
+        }
+    }
+
+    /// Returns the contained [`Ok`] value or a provided default.
+    #[inline]
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Result::Ok(t) => t,
+            Result::Err(_) => default,
+        }
+    }
+
+    /// Returns the contained [`Ok`] value or computes it from a closure.
+    #[inline]
+    pub fn unwrap_or_else<F: FnOnce(Error) -> T>(self, op: F) -> T {
+        match self {
+            Result::Ok(t) => t,
+            Result::Err(e) => op(e),
+        }
+    }
+
+    #[inline]
+    pub fn unwrap_or_panic(self) -> T {
+        self.unwrap_or_else(|error| {
+            let _ = trace::trace_num("error_code=", error.code() as i64);
+            core::panic!(
+                "Failed in {}: error_code={}",
+                core::panic::Location::caller(),
+                error.code()
+            );
+        })
+    }
+}
 
 impl From<i64> for Result<u64> {
     #[inline(always)] // <-- Inline because this function is very small
@@ -37,6 +124,9 @@ pub enum Error {
     /// Reserved for internal invariant trips, generally unrelated to inputs.
     /// These should be reported with an issue.
     InternalError = error_codes::INTERNAL_ERROR,
+    // TODO: Remove Option and check for this error for any optional fields.
+    FieldNotFound = error_codes::FIELD_NOT_FOUND,
+    NoFreeSlots = error_codes::NO_FREE_SLOTS,
     // /// Attempted to set a parameter or value larger than the allowed space .
     // TooBig = _c::TOO_BIG,
     // /// The API was unable to produce output to the write_ptr because the specified write_len was too small
@@ -113,7 +203,7 @@ pub enum Error {
 impl Error {
     // TODO: Use Trait instead?
     #[inline(always)] // <-- Inline because this function is very small
-    fn from_code(code: i32) -> Self {
+    pub fn from_code(code: i32) -> Self {
         unsafe { core::mem::transmute(code) }
     }
 
@@ -121,5 +211,40 @@ impl Error {
     #[inline(always)] // <-- Inline because this function is very small
     pub fn code(self) -> i32 {
         self as _
+    }
+}
+
+impl Into<i64> for Error {
+    fn into(self) -> i64 {
+        self as i64
+    }
+}
+
+/// Converts a `Result<Option<T>>` to a `Result<T>` by treating `None` as an error.
+///
+/// This utility function is commonly used in the XRPL Programmability API context
+/// where operations may return optional values that should be treated as errors
+/// when absent.
+///
+/// # Arguments
+///
+/// * `result` - A `Result` containing an `Option<T>` that needs to be unwrapped
+///
+/// # Returns
+///
+/// * `Result::Ok(value)` - If the input was `Result::Ok(Some(value))`
+/// * `Result::Err(Error::FieldNotFound)` - If the input was `Result::Ok(None)`
+/// * `Result::Err(err)` - If the input was `Result::Err(err)`, the error is propagated
+///
+/// # Error Handling
+///
+/// When the optional value is `None`, this function returns `Error::FieldNotFound`,
+/// which is appropriate for cases where a required field or value is missing from
+/// XRPL ledger objects or API responses.
+pub(crate) fn to_non_optional<T>(result: Result<Option<T>>) -> Result<T> {
+    match result {
+        Result::Ok(Some(value)) => Result::Ok(value),
+        Result::Ok(None) => Result::Err(Error::FieldNotFound),
+        Result::Err(err) => Result::Err(err),
     }
 }

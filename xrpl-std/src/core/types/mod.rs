@@ -7,3 +7,5 @@ pub mod hash_256;
 pub mod keylets;
 pub mod public_key;
 pub mod transaction_type;
+
+//TODO replace some of the functions with Objects, e.g. AccountRoot, Escrow, CurrentTransaction

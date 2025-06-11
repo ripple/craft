@@ -118,7 +118,7 @@ fn main() {
     info!("Executing function: {}", args.function);
     match run_func(wasm_file, &args.function, data_source) {
         Ok(result) => {
-            println!("\\n-------------------------------------------------");
+            println!("-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
             println!("-------------------------------------------------");
             println!("| Function:   {:<33} |", args.function);
@@ -128,7 +128,7 @@ fn main() {
             info!("Function completed successfully with result: {}", result);
         }
         Err(e) => {
-            println!("\\n-------------------------------------------------");
+            println!("-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
             println!("-------------------------------------------------");
             println!("| Function:   {:<33} |", args.function);

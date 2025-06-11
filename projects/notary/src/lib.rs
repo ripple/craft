@@ -1,6 +1,7 @@
 #![no_std]
 
-use xrpl_std::core::tx::current_transaction;
+use xrpl_std::core::current_tx::escrow_finish;
+use xrpl_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_std::host::trace::trace_num;
 use xrpl_std::host::{Result::Err, Result::Ok};
 
@@ -9,7 +10,8 @@ const NOTARY_ACCOUNT: &[u8] = b"rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
-    let tx_account = match current_transaction::get_account() {
+    let escrow_finish = escrow_finish::get_current_escrow_finish();
+    let tx_account = match escrow_finish.get_account() {
         Ok(v) => v,
         Err(e) => {
             let _ = trace_num("Error in Notary contract", e.code() as i64);

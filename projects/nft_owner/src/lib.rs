@@ -1,7 +1,8 @@
 #![no_std]
 
-use xrpl_std::core::ledger_objects::current_ledger_object;
-use xrpl_std::core::ledger_objects::ledger_object::get_nft;
+use xrpl_std::core::ledger_objects::current_escrow;
+use xrpl_std::core::ledger_objects::nft::get_nft;
+use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_std::host::Error::InternalError;
 use xrpl_std::host::get_tx_nested_field;
 use xrpl_std::host::trace::trace_num;
@@ -51,7 +52,8 @@ pub extern "C" fn finish() -> bool {
 
     let nft: [u8; XRPL_NFTID_SIZE] = memo[0..32].try_into().unwrap();
 
-    let destination = match current_ledger_object::get_destination() {
+    let current_escrow = current_escrow::get_current_escrow();
+    let destination = match current_escrow.get_destination() {
         Ok(destination) => destination,
         Err(e) => {
             let _ = trace_num("Error getting current ledger destination:", e.code() as i64);

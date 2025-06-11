@@ -12,7 +12,7 @@ pub enum Result<T> {
     /// Contains the success value
     Ok(T),
     /// Contains the error value
-    Err(Error),
+    Err(Error), // TODO: Test if the WASM size is expanded if we use an enum here instead of i32
 }
 
 impl<T> Result<T> {
@@ -62,10 +62,13 @@ impl<T> Result<T> {
     pub fn unwrap(self) -> T {
         match self {
             Result::Ok(t) => t,
-            Result::Err(e) => panic!(
-                "called `Result::unwrap()` on an `Err` value: {:?}",
-                e.code()
-            ),
+            Result::Err(error) => {
+                let _ = trace::trace_num("error_code=", error.code() as i64);
+                panic!(
+                    "called `Result::unwrap()` on an `Err` with code: {}",
+                    error.code()
+                )
+            }
         }
     }
 
@@ -88,11 +91,14 @@ impl<T> Result<T> {
     }
 
     #[inline]
-    pub fn unwrap_or_panic_traced(self, context: &str) -> T {
+    pub fn unwrap_or_panic(self) -> T {
         self.unwrap_or_else(|error| {
-            let _ = trace::trace_data("Error in ", &context.as_bytes(), trace::DataRepr::AsUTF8);
             let _ = trace::trace_num("error_code=", error.code() as i64);
-            core::panic!("Failed in {}: error_code={}", context, error.code());
+            core::panic!(
+                "Failed in {}: error_code={}",
+                core::panic::Location::caller(),
+                error.code()
+            );
         })
     }
 }
@@ -118,6 +124,9 @@ pub enum Error {
     /// Reserved for internal invariant trips, generally unrelated to inputs.
     /// These should be reported with an issue.
     InternalError = error_codes::INTERNAL_ERROR,
+    // TODO: Remove Option and check for this error for any optional fields.
+    FieldNotFound = error_codes::FIELD_NOT_FOUND,
+    NoFreeSlots = error_codes::NO_FREE_SLOTS,
     // /// Attempted to set a parameter or value larger than the allowed space .
     // TooBig = _c::TOO_BIG,
     // /// The API was unable to produce output to the write_ptr because the specified write_len was too small
@@ -208,5 +217,34 @@ impl Error {
 impl Into<i64> for Error {
     fn into(self) -> i64 {
         self as i64
+    }
+}
+
+/// Converts a `Result<Option<T>>` to a `Result<T>` by treating `None` as an error.
+///
+/// This utility function is commonly used in the XRPL Programmability API context
+/// where operations may return optional values that should be treated as errors
+/// when absent.
+///
+/// # Arguments
+///
+/// * `result` - A `Result` containing an `Option<T>` that needs to be unwrapped
+///
+/// # Returns
+///
+/// * `Result::Ok(value)` - If the input was `Result::Ok(Some(value))`
+/// * `Result::Err(Error::FieldNotFound)` - If the input was `Result::Ok(None)`
+/// * `Result::Err(err)` - If the input was `Result::Err(err)`, the error is propagated
+///
+/// # Error Handling
+///
+/// When the optional value is `None`, this function returns `Error::FieldNotFound`,
+/// which is appropriate for cases where a required field or value is missing from
+/// XRPL ledger objects or API responses.
+pub(crate) fn to_non_optional<T>(result: Result<Option<T>>) -> Result<T> {
+    match result {
+        Result::Ok(Some(value)) => Result::Ok(value),
+        Result::Ok(None) => Result::Err(Error::FieldNotFound),
+        Result::Err(err) => Result::Err(err),
     }
 }

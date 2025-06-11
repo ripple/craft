@@ -2,11 +2,24 @@ use crate::host;
 use crate::types::{AccountID, Keylet, XRPL_KEYLET_SIZE};
 
 pub fn account_keylet(aid: &AccountID) -> Option<Keylet> {
-    let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
+    let mut keylet: Keylet = [0; XRPL_KEYLET_SIZE];
+    let retcode =
+        unsafe { host::account_keylet(aid.as_ptr(), aid.len(), keylet.as_mut_ptr(), keylet.len()) };
+    if retcode > 0 { Some(keylet) } else { None }
+}
+
+pub fn escrow_keylet(owner: &AccountID, sequence: i32) -> Option<Keylet> {
+    let mut keylet: Keylet = [0; XRPL_KEYLET_SIZE];
     let retcode = unsafe {
-        host::account_keylet(aid.as_ptr(), aid.len(), key_let.as_mut_ptr(), key_let.len())
+        host::escrow_keylet(
+            owner.as_ptr(),
+            owner.len(),
+            sequence,
+            keylet.as_mut_ptr(),
+            keylet.len(),
+        )
     };
-    if retcode > 0 { Some(key_let) } else { None }
+    if retcode > 0 { Some(keylet) } else { None }
 }
 
 pub fn credential_keylet(
@@ -14,7 +27,7 @@ pub fn credential_keylet(
     issuer: &AccountID,
     credential_type: &[u8],
 ) -> Option<Keylet> {
-    let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
+    let mut keylet: Keylet = [0; XRPL_KEYLET_SIZE];
     let retcode = unsafe {
         host::credential_keylet(
             subject.as_ptr(),
@@ -23,23 +36,23 @@ pub fn credential_keylet(
             issuer.len(),
             credential_type.as_ptr(),
             credential_type.len(),
-            key_let.as_mut_ptr(),
-            key_let.len(),
+            keylet.as_mut_ptr(),
+            keylet.len(),
         )
     };
-    if retcode > 0 { Some(key_let) } else { None }
+    if retcode > 0 { Some(keylet) } else { None }
 }
 
 pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Option<Keylet> {
-    let mut key_let: Keylet = [0; XRPL_KEYLET_SIZE];
+    let mut keylet: Keylet = [0; XRPL_KEYLET_SIZE];
     let retcode = unsafe {
         host::oracle_keylet(
             owner.as_ptr(),
             owner.len(),
             document_id,
-            key_let.as_mut_ptr(),
-            key_let.len(),
+            keylet.as_mut_ptr(),
+            keylet.len(),
         )
     };
-    if retcode > 0 { Some(key_let) } else { None }
+    if retcode > 0 { Some(keylet) } else { None }
 }

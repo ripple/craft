@@ -18,69 +18,75 @@ use crate::types::{AccountID, ContractData, NFT, XRPL_ACCOUNT_ID_SIZE, XRPL_CONT
 
 pub fn get_tx_account_id() -> Option<AccountID> {
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    if unsafe { host::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) } > 0
-    {
+    let retcode =
+        unsafe { host::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) };
+    if retcode > 0 {
         Some(account_id)
     } else {
+        let _ = trace_num("get_tx_account_id error", i64::from(retcode));
         None
     }
 }
 
 pub fn get_current_escrow_account_id() -> Option<AccountID> {
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    if unsafe {
+    let retcode = unsafe {
         host::get_current_ledger_obj_field(
             sfield::Account,
             account_id.as_mut_ptr(),
             account_id.len(),
         )
-    } > 0
-    {
+    };
+    if retcode > 0 {
         Some(account_id)
     } else {
+        let _ = trace_num("get_current_escrow_account_id error", i64::from(retcode));
         None
     }
 }
 
 pub fn get_current_escrow_destination() -> Option<AccountID> {
     let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    if unsafe {
+    let retcode = unsafe {
         host::get_current_ledger_obj_field(
             sfield::Destination,
             account_id.as_mut_ptr(),
             account_id.len(),
         )
-    } > 0
-    {
+    };
+    if retcode > 0 {
         Some(account_id)
     } else {
+        let _ = trace_num("get_current_escrow_destination error", i64::from(retcode));
         None
     }
 }
 
 pub fn get_current_escrow_data() -> Option<ContractData> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    if unsafe { host::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len()) }
-        > 0
-    {
+    let retcode =
+        unsafe { host::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len()) };
+    if retcode > 0 {
         Some(data)
     } else {
+        let _ = trace_num("get_current_escrow_data error", i64::from(retcode));
         None
     }
 }
 
 pub fn get_current_escrow_finish_after() -> Option<i32> {
     let mut after = 0i32;
-    if unsafe {
+    let retcode = unsafe {
         host::get_current_ledger_obj_field(
             sfield::FinishAfter,
             (&mut after) as *mut i32 as *mut u8,
             4,
         )
-    } > 0
-    {
+    };
+    if retcode > 0 {
         Some(after)
     } else {
+        let _ = trace_num("get_current_escrow_finish_after error", i64::from(retcode));
         None
     }
 }
@@ -93,6 +99,10 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
     // let _ = trace_data("std-lib keylet ", &keylet, DataRepr::AsHex);
     let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
     if slot <= 0 {
+        let _ = trace_num(
+            "get_account_balance cache_ledger_obj failed",
+            i64::from(slot),
+        );
         return None;
     }
     // let _ = trace("std-lib slot ");
@@ -121,40 +131,42 @@ pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
 
 pub fn get_nft(owner: &AccountID, nft: &NFT) -> Option<ContractData> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    unsafe {
-        let retcode = host::get_NFT(
+
+    let retcode = unsafe {
+        host::get_NFT(
             owner.as_ptr(),
             owner.len(),
             nft.as_ptr(),
             nft.len(),
             data.as_mut_ptr(),
             data.len(),
-        );
-        if retcode > 0 {
-            Some(data)
-        } else {
-            let _ = trace_num("get_nft error", i64::from(retcode));
-            None
-        }
+        )
+    };
+    if retcode > 0 {
+        Some(data)
+    } else {
+        let _ = trace_num("get_nft error", i64::from(retcode));
+        None
     }
 }
 
 pub fn get_ledger_obj_nested_field(slot: i32, locator: &LocatorPacker) -> Option<ContractData> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    unsafe {
-        let retcode = host::get_ledger_obj_nested_field(
+
+    let retcode = unsafe {
+        host::get_ledger_obj_nested_field(
             slot,
             locator.get_addr(),
             locator.num_packed_bytes(),
             data.as_mut_ptr(),
             data.len(),
-        );
-        if retcode > 0 {
-            Some(data)
-        } else {
-            let _ = trace_num("get_ledger_obj_nested_field error", i64::from(retcode));
-            None
-        }
+        )
+    };
+    if retcode > 0 {
+        Some(data)
+    } else {
+        let _ = trace_num("get_ledger_obj_nested_field error", i64::from(retcode));
+        None
     }
 }
 

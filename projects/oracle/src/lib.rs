@@ -1,17 +1,18 @@
 #![no_std]
 
-use xrpl_std::core::ledger_objects::ledger_object;
+use xrpl_std::core::error_codes::match_result_code;
 use xrpl_std::core::types::account_id::AccountID;
 use xrpl_std::core::types::keylets::oracle_keylet_safe;
 use xrpl_std::host::trace::trace_num;
 use xrpl_std::host::{Result::Err, Result::Ok};
 use xrpl_std::locator::LocatorPacker;
-use xrpl_std::sfield;
+use xrpl_std::{host, sfield};
 
 const ORACLE_OWNER: AccountID =
     AccountID(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 const ORACLE_DOCUMENT_ID: i32 = 1;
 
+// TODO: Update this function to handle errors and return a Result<u64> instead.
 pub fn get_u64_from_buffer(bytes: &[u8]) -> u64 {
     let mut result: u64 = 0;
 
@@ -30,13 +31,19 @@ pub fn get_price_from_oracle(slot: i32) -> Option<u64> {
     locator.pack(sfield::PriceDataSeries);
     locator.pack(0);
     locator.pack(sfield::AssetPrice);
-    let asset_price = match ledger_object::get_nested_field(slot, &locator) {
-        Ok(contract_data) => match contract_data {
-            Some(data) => get_u64_from_buffer(&data[0..8]),
-            None => {
-                return None; // Must return to short circuit.
-            }
-        },
+
+    let mut data: [u8; 8] = [0; 8];
+    let result_code = unsafe {
+        host::get_ledger_obj_nested_field(
+            slot,
+            locator.get_addr(),
+            locator.num_packed_bytes(),
+            data.as_mut_ptr(),
+            data.len(),
+        )
+    };
+    let asset_price = match match_result_code(result_code, || data) {
+        Ok(asset_bytes) => get_u64_from_buffer(&asset_bytes[0..8]),
         Err(error) => {
             let _ = trace_num("Error getting asset_price", error.code() as i64);
             return None; // Must return to short circuit.

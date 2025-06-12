@@ -180,14 +180,6 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
     println!("WASM Fingerprint: {}", fingerprint);
 
-    // Ask if user wants to export as hex
-    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
-        .with_default(false)
-        .prompt()?
-    {
-        copy_wasm_hex_to_clipboard(&wasm_file).await?;
-    }
-
     Ok(wasm_file)
 }
 
@@ -235,13 +227,6 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
         println!("{}", "Deployment completed successfully!".green());
     }
 
-    Ok(())
-}
-
-pub async fn copy_wasm_hex_to_clipboard(wasm_file: &Path) -> Result<()> {
-    let hex = utils::wasm_to_hex(wasm_file)?;
-    utils::copy_to_clipboard(&hex)?;
-    println!("{}", "WASM hex copied to clipboard!".green());
     Ok(())
 }
 
@@ -364,6 +349,29 @@ pub async fn configure() -> Result<Config> {
         _ => OptimizationLevel::Aggressive,
     };
 
+    // Show equivalent command line for discoverability (before moving values into config)
+    let project_name = utils::get_project_name(&project_path).unwrap_or("unknown".to_string());
+    let build_flag = if matches!(build_mode, BuildMode::Release) {
+        " --release"
+    } else {
+        ""
+    };
+    let opt_flag = match optimization_level {
+        OptimizationLevel::Aggressive => " --opt-level z",
+        OptimizationLevel::Small => " --opt-level s",
+        OptimizationLevel::None => "",
+    };
+
+    println!("\n{}", "💡 Equivalent command line:".blue());
+    println!(
+        "{}",
+        format!(
+            "craft build --project {}{}{}",
+            project_name, build_flag, opt_flag
+        )
+        .green()
+    );
+
     Ok(Config {
         wasm_target: target,
         build_mode,
@@ -372,7 +380,80 @@ pub async fn configure() -> Result<Config> {
     })
 }
 
-pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
+pub async fn configure_non_interactive(project_name: &str) -> Result<Config> {
+    let current_dir = std::env::current_dir()?;
+    let projects = utils::find_wasm_projects(&current_dir);
+
+    // Find the project by name
+    let project_path = projects
+        .iter()
+        .find(|p| {
+            utils::get_project_name(p)
+                .map(|name| name == project_name)
+                .unwrap_or(false)
+        })
+        .ok_or_else(|| anyhow::anyhow!("Project '{}' not found", project_name))?
+        .clone();
+
+    println!("Using project: {}", project_name);
+
+    // Use sensible defaults for non-interactive mode
+    Ok(Config {
+        wasm_target: WasmTarget::UnknownUnknown,
+        build_mode: BuildMode::Debug,
+        optimization_level: OptimizationLevel::None,
+        project_path,
+    })
+}
+
+pub async fn configure_non_interactive_build(
+    project_name: &str,
+    release: bool,
+    opt_level: Option<String>,
+) -> Result<Config> {
+    let current_dir = std::env::current_dir()?;
+    let projects = utils::find_wasm_projects(&current_dir);
+
+    // Find the project by name
+    let project_path = projects
+        .iter()
+        .find(|p| {
+            utils::get_project_name(p)
+                .map(|name| name == project_name)
+                .unwrap_or(false)
+        })
+        .ok_or_else(|| anyhow::anyhow!("Project '{}' not found", project_name))?
+        .clone();
+
+    println!("Using project: {}", project_name);
+
+    let build_mode = if release {
+        BuildMode::Release
+    } else {
+        BuildMode::Debug
+    };
+
+    let optimization_level = match opt_level.as_deref() {
+        Some("z") => OptimizationLevel::Aggressive,
+        Some("s") => OptimizationLevel::Small,
+        Some("0") | Some("1") | Some("2") | Some("3") => OptimizationLevel::None, // Cargo opt levels, not wasm-opt
+        _ => OptimizationLevel::None,
+    };
+
+    Ok(Config {
+        wasm_target: WasmTarget::UnknownUnknown,
+        build_mode,
+        optimization_level,
+        project_path,
+    })
+}
+
+pub async fn test(
+    wasm_path: &Path,
+    _function: Option<String>,
+    test_case: Option<String>,
+    host_function_test: Option<String>,
+) -> Result<(Option<String>, Option<String>)> {
     println!("{}", "Testing WASM contract...".cyan());
 
     // Build wasm-host first
@@ -392,32 +473,49 @@ pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
         .join("release")
         .join("wasm-host");
 
-    // Select test case
-    let test_cases = vec![
-        "success (notary account matches)",
-        "failure (wrong notary account)",
-    ];
-
-    let test_case = Select::new("Select test case:", test_cases).prompt()?;
-    let test_case = match test_case {
-        "success (notary account matches)" => "success",
-        "failure (wrong notary account)" => "failure",
-        _ => "success",
-    };
-
-    println!("Testing escrow finish condition...");
-
     // Check if we're running in verbose mode
     let verbose = std::env::var("RUST_LOG")
         .map(|v| v.to_lowercase().contains("debug"))
         .unwrap_or(false);
 
-    let mut args = vec![
-        "--wasm-file",
-        wasm_path.to_str().unwrap(),
-        "--test-case",
-        test_case,
-    ];
+    let mut args = vec!["--wasm-file", wasm_path.to_str().unwrap()];
+
+    let host_test_owned;
+    let test_case_value_owned;
+    let final_test_case;
+    let final_host_function_test;
+
+    if let Some(host_test) = host_function_test.clone() {
+        // Host function test mode
+        println!("Running host function test: {}", host_test);
+        host_test_owned = host_test.clone();
+        args.extend_from_slice(&["--host-function-test", &host_test_owned]);
+        final_test_case = None;
+        final_host_function_test = Some(host_test);
+    } else {
+        // Original escrow test mode
+        test_case_value_owned = if let Some(tc) = test_case.clone() {
+            tc
+        } else {
+            // Interactive mode - select test case
+            let test_cases = vec![
+                "success (notary account matches)",
+                "failure (wrong notary account)",
+            ];
+
+            let selected = Select::new("Select test case:", test_cases).prompt()?;
+            match selected {
+                "success (notary account matches)" => "success".to_string(),
+                "failure (wrong notary account)" => "failure".to_string(),
+                _ => "success".to_string(),
+            }
+        };
+
+        println!("Testing escrow finish condition...");
+        args.extend_from_slice(&["--test-case", &test_case_value_owned]);
+        final_test_case = Some(test_case_value_owned.clone());
+        final_host_function_test = None;
+    }
 
     if verbose {
         args.push("--verbose");
@@ -435,7 +533,9 @@ pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
     }
 
     println!("{}", String::from_utf8_lossy(&output.stdout));
-    Ok(())
+
+    // Return the selected values for discoverability
+    Ok((final_test_case, final_host_function_test))
 }
 
 pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {

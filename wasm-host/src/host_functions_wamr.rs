@@ -23,7 +23,6 @@ fn get_keylet(in_buf_ptr: *mut u8, in_buf_len: usize) -> Keylet {
 
 fn set_data(dp_res: i32, out_buf_ptr: *mut u8, data_to_write: Vec<u8>) {
     if dp_res > 0 {
-        assert_eq!(dp_res as usize, data_to_write.len());
         unsafe {
             std::ptr::copy_nonoverlapping(data_to_write.as_ptr(), out_buf_ptr, data_to_write.len());
         }

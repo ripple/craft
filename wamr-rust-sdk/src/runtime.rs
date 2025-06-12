@@ -71,7 +71,7 @@ impl Default for RuntimeBuilder {
         let args = RuntimeInitArgs::default();
         RuntimeBuilder {
             args,
-            host_functions: HostFunctionList::new("host"),
+            host_functions: HostFunctionList::new("host_lib"),
         }
     }
 }

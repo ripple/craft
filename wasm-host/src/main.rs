@@ -6,9 +6,10 @@ mod host_functions;
 mod mock_data;
 mod sfield;
 mod vm;
+mod vm_wamr;
+mod host_functions_wamr;
 
 use crate::mock_data::MockData;
-use crate::vm::run_func;
 use clap::Parser;
 use env_logger::Builder;
 use log::LevelFilter;
@@ -116,7 +117,8 @@ fn main() {
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
-    match run_func(wasm_file, &args.function, data_source) {
+    // match vm_wamr::run_func(wasm_file, &args.function, data_source) {
+    match vm::run_func(wasm_file, &args.function, data_source) {
         Ok(result) => {
             println!("\\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");

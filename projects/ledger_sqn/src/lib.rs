@@ -1,11 +1,18 @@
+#![no_std]
+use xrpl_std::host;
+
 #[unsafe(no_mangle)]
-pub fn finish() -> bool {
-    unsafe { host_lib::getLedgerSqn() >= 5 }
+pub fn finish() -> i32 {
+    let mut sqn = 0i32;
+    let res = unsafe { host::get_ledger_sqn((&mut sqn) as *mut i32 as *mut u8,4,)};
+    if res > 0 {
+        sqn
+    } else {
+        res
+    } 
 }
 
-pub mod host_lib {
-    #[link(wasm_import_module = "host_lib")]
-    unsafe extern "C" {
-        pub fn getLedgerSqn() -> i32;
-    }
-}
+// pub fn finish() -> i32 {
+//     let mut h = [0; 32];    
+//     unsafe { host::get_parent_ledger_hash(h.as_mut_ptr(),32,)}  
+// }

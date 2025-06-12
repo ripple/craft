@@ -3220,6 +3220,7 @@ dependencies = [
  "log",
  "serde_json",
  "sha2 0.11.0-rc.0",
+ "wamr-rust-sdk",
  "wasmedge-sdk",
  "xrpl-rust",
 ]

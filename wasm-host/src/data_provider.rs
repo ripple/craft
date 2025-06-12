@@ -1,3 +1,4 @@
+use std::ffi::c_void;
 use crate::decoding::{AccountId, Decodable, decode};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
@@ -241,5 +242,9 @@ impl DataProvider {
             }
             None => (HostError::FieldNotFound as i32, buf),
         }
+    }
+    #[allow(unused)]
+    pub fn as_ptr(&mut self) -> *mut c_void {
+        self as *mut _ as *mut c_void
     }
 }

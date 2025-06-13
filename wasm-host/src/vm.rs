@@ -18,6 +18,7 @@ use wasmedge_sdk::{AsInstance, ImportObjectBuilder, Module, Store, Vm, WasmEdgeR
 
 /// Run a WASM function
 #[rustfmt::skip]
+#[allow(unused)]
 pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> WasmEdgeResult<bool> {
     info!("Executing WASM function: {}", func_name);
     let data_provider = DataProvider::new(data_source);

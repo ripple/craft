@@ -12,7 +12,7 @@ use xrpl_std::core::types::crypto_condition::{Condition, Fulfillment};
 use xrpl_std::core::types::hash_256::Hash256;
 use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
-use xrpl_std::host;
+use xrpl_std::{decode_hex_32, host};
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
@@ -335,10 +335,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_num("wasm finish get_ledger_obj_nested_field:", weight as i64);        
     }
     {
-        let nft_id = [
-            0, 8, 39, 16, 104, 7, 191, 132, 143, 172, 217, 114, 242, 246, 23, 226, 112, 3, 215, 91,
-            44, 170, 201, 129, 108, 238, 20, 132, 5, 33, 209, 233,
-        ];
+        let nft_id = decode_hex_32(b"000827106807BF848FACD972F2F617E27003D75B2CAAC9816CEE14840521D1E9").unwrap();
         let owner = get_tx_account_id().unwrap();
         if owner.len() != 20 {
             return -21;
@@ -356,7 +353,7 @@ pub extern "C" fn finish() -> i32 {
         };
         
         if res != 106 {
-            return -22;
+            return res;
         }
     }
 

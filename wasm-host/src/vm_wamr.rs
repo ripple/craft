@@ -48,7 +48,7 @@ pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Re
         .register_host_function("credential_keylet", credential_keylet as *mut c_void, "(*~*~*~*~)i", data_provider.as_ptr())
         .register_host_function("escrow_keylet", escrow_keylet as *mut c_void, "(*~i*~)i", data_provider.as_ptr())
         .register_host_function("oracle_keylet", oracle_keylet as *mut c_void, "(*~i*~)i", data_provider.as_ptr())
-        .register_host_function("get_nft", get_nft as *mut c_void, "(*~*~*~)i", data_provider.as_ptr())
+        .register_host_function("get_NFT", get_nft as *mut c_void, "(*~*~*~)i", data_provider.as_ptr())
         .register_host_function("trace", trace as *mut c_void, "(*~*~i)i", data_provider.as_ptr())
         .register_host_function("trace_num", trace_num as *mut c_void, "(*~I)i", data_provider.as_ptr())
         .build()?;

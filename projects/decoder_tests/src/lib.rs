@@ -3,40 +3,25 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
-use xrpl_std::locator::LocatorPacker;
-use xrpl_std::sfield::{Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey, OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TicketCount, TransferRate};
-use xrpl_std::{
-    get_account_balance, get_current_escrow_account_id, get_current_escrow_destination,
-    get_current_escrow_finish_after, get_tx_account_id,
+use xrpl_std::host::{
+    cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
+use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
-use xrpl_std::host::{cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field};
+use xrpl_std::sfield::{
+    Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
+    OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TicketCount, TransferRate,
+};
 use xrpl_std::types::Keylet;
-
-fn hex_char_to_nibble(c: u8) -> Option<u8> {
-    match c {
-        b'0'..=b'9' => Some(c - b'0'),
-        b'a'..=b'f' => Some(c - b'a' + 10),
-        b'A'..=b'F' => Some(c - b'A' + 10),
-        _ => None,
-    }
-}
-
-pub fn decode_hex_32(hex: &[u8; 64]) -> Option<[u8; 32]> {
-    let mut out = [0u8; 32];
-    let mut i = 0;
-    while i < 32 {
-        let high = hex_char_to_nibble(hex[i * 2])?;
-        let low = hex_char_to_nibble(hex[i * 2 + 1])?;
-        out[i] = (high << 4) | low;
-        i += 1;
-    }
-    Some(out)
-}
+use xrpl_std::{
+    decode_hex_32, get_account_balance, get_current_escrow_account_id,
+    get_current_escrow_destination, get_current_escrow_finish_after, get_tx_account_id,
+};
 
 fn test_account_root() {
     let _ = trace("\n$$$ test_account_root $$$");
-    let keylet: Keylet = decode_hex_32(b"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8").unwrap();
+    let keylet: Keylet =
+        decode_hex_32(b"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8").unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -52,16 +37,15 @@ fn test_account_root() {
     };
     let _ = trace_data("  AccountTxnID:", &out_buf[0..out_len], DataRepr::AsHex);
 
-    let mut out_buf  = 0u64;
+    let mut out_buf = 0u64;
     let out_len = unsafe {
         get_ledger_obj_field(slot, Balance, (&mut out_buf) as *mut u64 as *mut u8, 8) as usize
     };
     let _ = trace_num("  Balance:", out_buf as i64);
 
     let mut out_buf = [0u8; 20];
-    let out_len = unsafe {
-        get_ledger_obj_field(slot, Domain, out_buf.as_mut_ptr(), out_buf.len()) as usize
-    };
+    let out_len =
+        unsafe { get_ledger_obj_field(slot, Domain, out_buf.as_mut_ptr(), out_buf.len()) as usize };
     let _ = trace_data("  Domain:", &out_buf[0..out_len], DataRepr::AsHex);
 
     let mut out_buf = [0u8; 16];
@@ -78,7 +62,12 @@ fn test_account_root() {
 
     let mut out_buf = 0i16;
     let out_len = unsafe {
-        get_ledger_obj_field(slot, LedgerEntryType, (&mut out_buf) as *mut i16 as *mut u8, 2) as usize
+        get_ledger_obj_field(
+            slot,
+            LedgerEntryType,
+            (&mut out_buf) as *mut i16 as *mut u8,
+            2,
+        ) as usize
     };
     let _ = trace_num("  LedgerEntryType:", out_buf as i64);
 
@@ -102,7 +91,12 @@ fn test_account_root() {
 
     let mut out_buf = 0i32;
     let out_len = unsafe {
-        get_ledger_obj_field(slot, PreviousTxnLgrSeq, (&mut out_buf) as *mut i32 as *mut u8, 4) as usize
+        get_ledger_obj_field(
+            slot,
+            PreviousTxnLgrSeq,
+            (&mut out_buf) as *mut i32 as *mut u8,
+            4,
+        ) as usize
     };
     let _ = trace_num("  PreviousTxnLgrSeq:", out_buf as i64);
 
@@ -135,13 +129,12 @@ fn test_account_root() {
 
 fn test_amendments() {
     let _ = trace("\n$$$ test_amendments $$$");
-    let keylet: Keylet = decode_hex_32(b"7DB0788C020F02780A673DC74757F23823FA3014C1866E72CC4CD8B226CD6EF4").unwrap();
-    
+    let keylet: Keylet =
+        decode_hex_32(b"7DB0788C020F02780A673DC74757F23823FA3014C1866E72CC4CD8B226CD6EF4").unwrap();
+
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
-    let array_len = unsafe {
-        get_ledger_obj_array_len(slot, sfield::Amendments)
-    };
+    let array_len = unsafe { get_ledger_obj_array_len(slot, sfield::Amendments) };
     let _ = trace_num("  Amendments array len:", array_len as i64);
     for i in 0..array_len {
         let mut buf = [0x00; 32];
@@ -149,14 +142,25 @@ fn test_amendments() {
         locator.pack(sfield::Amendments);
         locator.pack(i);
         let output_len = unsafe {
-            get_ledger_obj_nested_field(slot, locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+            get_ledger_obj_nested_field(
+                slot,
+                locator.get_addr(),
+                locator.num_packed_bytes(),
+                buf.as_mut_ptr(),
+                buf.len(),
+            )
         };
-        let _ = trace_data("  Amendment:", &buf[.. output_len as usize], DataRepr::AsHex);
+        let _ = trace_data("  Amendment:", &buf[..output_len as usize], DataRepr::AsHex);
     }
 
     let mut out_buf = 0i16;
     let out_len = unsafe {
-        get_ledger_obj_field(slot, LedgerEntryType, (&mut out_buf) as *mut i16 as *mut u8, 2) as usize
+        get_ledger_obj_field(
+            slot,
+            LedgerEntryType,
+            (&mut out_buf) as *mut i16 as *mut u8,
+            2,
+        ) as usize
     };
     let _ = trace_num("  LedgerEntryType:", out_buf as i64);
 
@@ -167,14 +171,30 @@ fn test_amendments() {
     locator.pack(sfield::Majority);
     locator.pack(sfield::Amendment);
     let output_len = unsafe {
-        get_ledger_obj_nested_field(slot, locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
+        get_ledger_obj_nested_field(
+            slot,
+            locator.get_addr(),
+            locator.num_packed_bytes(),
+            buf.as_mut_ptr(),
+            buf.len(),
+        )
     };
-    let _ = trace_data("  Majority Amendment:", &buf[.. output_len as usize], DataRepr::AsHex);
+    let _ = trace_data(
+        "  Majority Amendment:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
 
     locator.repack_last(sfield::CloseTime);
     let mut out_buf = 0i64;
     let out_len = unsafe {
-        get_ledger_obj_nested_field(slot, locator.get_addr(), locator.num_packed_bytes(), (&mut out_buf) as *mut i64 as *mut u8, 4) as usize
+        get_ledger_obj_nested_field(
+            slot,
+            locator.get_addr(),
+            locator.num_packed_bytes(),
+            (&mut out_buf) as *mut i64 as *mut u8,
+            4,
+        ) as usize
     };
     let _ = trace_num("  Majority CloseTime:", out_buf);
 }
@@ -183,9 +203,9 @@ fn test_amendments() {
 //     let keylet: Keylet = <[u8; 32]>::try_from(
 //         hex::decode("97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap(),
 //     ).unwrap();
-// 
+//
 //     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-// 
+//
 //     let mut buf = [0x00; 32];
 //     let mut locator = LocatorPacker::new();
 //     locator.pack(sfield::Asset);
@@ -196,7 +216,7 @@ fn test_amendments() {
 //         get_ledger_obj_nested_field(slot, locator.get_addr(), locator.num_packed_bytes(), buf.as_mut_ptr(), buf.len())
 //     };
 //     let _ = trace_data("  Majority Amendment:", &buf[.. output_len as usize], DataRepr::AsHex);
-// 
+//
 //     locator.repack_last(sfield::CloseTime);
 //     let mut out_buf = 0i64;
 //     let out_len = unsafe {

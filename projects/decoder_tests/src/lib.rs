@@ -1,7 +1,8 @@
+#![no_std]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
-use xrpl_std::host::trace::{trace_data, trace_num, DataRepr};
+use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield::{Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey, OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TicketCount, TransferRate};
 use xrpl_std::{
@@ -12,11 +13,30 @@ use xrpl_std::sfield;
 use xrpl_std::host::{cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field};
 use xrpl_std::types::Keylet;
 
+fn hex_char_to_nibble(c: u8) -> Option<u8> {
+    match c {
+        b'0'..=b'9' => Some(c - b'0'),
+        b'a'..=b'f' => Some(c - b'a' + 10),
+        b'A'..=b'F' => Some(c - b'A' + 10),
+        _ => None,
+    }
+}
+
+pub fn decode_hex_32(hex: &[u8; 64]) -> Option<[u8; 32]> {
+    let mut out = [0u8; 32];
+    let mut i = 0;
+    while i < 32 {
+        let high = hex_char_to_nibble(hex[i * 2])?;
+        let low = hex_char_to_nibble(hex[i * 2 + 1])?;
+        out[i] = (high << 4) | low;
+        i += 1;
+    }
+    Some(out)
+}
+
 fn test_account_root() {
-    let keylet: Keylet = <[u8; 32]>::try_from(
-        hex::decode("13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8").unwrap(),
-    )
-    .unwrap();
+    let _ = trace("\n$$$ test_account_root $$$");
+    let keylet: Keylet = decode_hex_32(b"13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8").unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -114,10 +134,9 @@ fn test_account_root() {
 }
 
 fn test_amendments() {
-    let keylet: Keylet = <[u8; 32]>::try_from(
-        hex::decode("7DB0788C020F02780A673DC74757F23823FA3014C1866E72CC4CD8B226CD6EF4").unwrap(),
-    ).unwrap();
-
+    let _ = trace("\n$$$ test_amendments $$$");
+    let keylet: Keylet = decode_hex_32(b"7DB0788C020F02780A673DC74757F23823FA3014C1866E72CC4CD8B226CD6EF4").unwrap();
+    
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
     let array_len = unsafe {

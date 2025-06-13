@@ -11,16 +11,3 @@
 
 // This matches bindgen::Builder output
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-
-
-// tc.variables["WAMR_BUILD_INTERP"] = 1
-// tc.variables["WAMR_BUILD_FAST_INTERP"] = 1
-// tc.variables["WAMR_BUILD_INSTRUCTION_METERING"] = 1
-// tc.variables["WAMR_BUILD_AOT"] = 0
-// tc.variables["WAMR_BUILD_JIT"] = 0
-// tc.variables["WAMR_BUILD_FAST_JIT"] = 0
-// tc.variables["WAMR_DISABLE_HW_BOUND_CHECK"] = 1
-// tc.variables["WAMR_DISABLE_STACK_HW_BOUND_CHECK"] = 1
-// 
-// 
-// tc.variables["WAMR_BH_LOG"] = "wamr_log_to_rippled"

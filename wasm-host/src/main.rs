@@ -117,8 +117,8 @@ fn main() {
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
-    // match vm_wamr::run_func(wasm_file, &args.function, data_source) {
-    match vm::run_func(wasm_file, &args.function, data_source) {
+    match vm_wamr::run_func(wasm_file, &args.function, data_source) {
+    // match vm::run_func(wasm_file, &args.function, data_source) {
         Ok(result) => {
             println!("\\n-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");

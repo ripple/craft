@@ -22,7 +22,7 @@ use wamr_rust_sdk::value::WasmValue;
 #[rustfmt::skip]
 #[allow(unused)]
 pub fn run_func(wasm_file: String, func_name: &str, data_source: MockData) -> Result<bool, RuntimeError>{
-    debug!("Setting up runtime and registering host functions");
+    debug!("Setting up wamr runtime and registering host functions");
     let mut data_provider = DataProvider::new(data_source);
     let runtime = Runtime::builder()
         .use_system_allocator()

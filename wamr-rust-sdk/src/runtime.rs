@@ -10,12 +10,12 @@
 use std::ffi::c_void;
 
 use wamr_sys::{
+    NativeSymbol, RunningMode_Mode_Interp, RunningMode_Mode_LLVM_JIT, RuntimeInitArgs,
     mem_alloc_type_t_Alloc_With_Pool, mem_alloc_type_t_Alloc_With_System_Allocator,
-    wasm_runtime_destroy, wasm_runtime_full_init, wasm_runtime_init, NativeSymbol,
-    RunningMode_Mode_Interp, RunningMode_Mode_LLVM_JIT, RuntimeInitArgs,
+    wasm_runtime_destroy, wasm_runtime_full_init, wasm_runtime_init,
 };
 
-use crate::{host_function::HostFunctionList, RuntimeError};
+use crate::{RuntimeError, host_function::HostFunctionList};
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -111,11 +111,16 @@ impl RuntimeBuilder {
     pub fn register_host_function(
         mut self,
         function_name: &str,
-        function_ptr: *mut c_void, func_sig: &str, 
-        user_data: *mut c_void
+        function_ptr: *mut c_void,
+        func_sig: &str,
+        user_data: *mut c_void,
     ) -> RuntimeBuilder {
-        self.host_functions
-            .register_host_function(function_name, function_ptr, func_sig, user_data);
+        self.host_functions.register_host_function(
+            function_name,
+            function_ptr,
+            func_sig,
+            user_data,
+        );
         self
     }
 

@@ -5,7 +5,7 @@
 
 //! prepare wasi context
 
-use std::{ffi::c_char, ffi::CString, vec::Vec};
+use std::{ffi::CString, ffi::c_char, vec::Vec};
 
 #[derive(Debug, Default)]
 struct PreOpen {

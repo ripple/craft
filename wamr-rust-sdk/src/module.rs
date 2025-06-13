@@ -7,12 +7,12 @@
 //! get one via `Module::from_file()` or `Module::from_buf()`
 
 use crate::{
-    helper::error_buf_to_string, helper::DEFAULT_ERROR_BUF_SIZE, runtime::Runtime,
-    wasi_context::WasiCtx, RuntimeError,
+    RuntimeError, helper::DEFAULT_ERROR_BUF_SIZE, helper::error_buf_to_string, runtime::Runtime,
+    wasi_context::WasiCtx,
 };
 use core::marker::PhantomData;
 use std::{
-    ffi::{c_char, CString},
+    ffi::{CString, c_char},
     fs::File,
     io::Read,
     path::Path,
@@ -80,12 +80,12 @@ impl<'runtime> Module<'runtime> {
                 0 => {
                     return Err(RuntimeError::CompilationError(String::from(
                         "load module failed",
-                    )))
+                    )));
                 }
                 _ => {
                     return Err(RuntimeError::CompilationError(error_buf_to_string(
                         &error_buf,
-                    )))
+                    )));
                 }
             }
         }

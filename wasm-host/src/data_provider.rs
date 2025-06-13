@@ -1,7 +1,7 @@
-use std::ffi::c_void;
 use crate::decoding::{AccountId, Decodable, decode};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
+use std::ffi::c_void;
 
 const LOCATOR_BUFFER_SIZE: usize = 64;
 const NUM_SLOTS: usize = 256;

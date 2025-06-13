@@ -41,7 +41,9 @@ fn check_is_espidf() -> bool {
         && (env::var("WAMR_BUILD_PLATFORM").is_ok()
             || env::var("WAMR_SHARED_PLATFORM_CONFIG").is_ok())
     {
-        panic!("ESP-IDF build cannot use custom platform build (WAMR_BUILD_PLATFORM) or shared platform config (WAMR_SHARED_PLATFORM_CONFIG)");
+        panic!(
+            "ESP-IDF build cannot use custom platform build (WAMR_BUILD_PLATFORM) or shared platform config (WAMR_SHARED_PLATFORM_CONFIG)"
+        );
     }
 
     is_espidf
@@ -86,29 +88,29 @@ fn get_feature_flags() -> (String, String, String, String, String, String) {
     )
 }
 
-fn _link_llvm_libraries(_llvm_cfg_path: &String, enable_llvm_jit: &String) {
-    if enable_llvm_jit == "0" {
-        return;
-    }
-
-    // let llvm_cfg_path = PathBuf::from(llvm_cfg_path);
-    // assert!(llvm_cfg_path.exists());
-    // 
-    // let llvm_lib_path = llvm_cfg_path.join("../../../lib").canonicalize().unwrap();
-    // assert!(llvm_lib_path.exists());
-    // 
-    // println!("cargo:rustc-link-lib=dylib=dl");
-    // println!("cargo:rustc-link-lib=dylib=m");
-    // println!("cargo:rustc-link-lib=dylib=rt");
-    // println!("cargo:rustc-link-lib=dylib=stdc++");
-    // println!("cargo:rustc-link-lib=dylib=z");
-    // println!("cargo:libdir={}", llvm_lib_path.display());
-    // println!("cargo:rustc-link-search=native={}", llvm_lib_path.display());
-    // 
-    // for &llvm_lib in LLVM_LIBRARIES {
-    //     println!("cargo:rustc-link-lib=static={}", llvm_lib);
-    // }
-}
+// fn _link_llvm_libraries(_llvm_cfg_path: &String, enable_llvm_jit: &String) {
+//     if enable_llvm_jit == "0" {
+//         return;
+//     }
+//
+//     let llvm_cfg_path = PathBuf::from(llvm_cfg_path);
+//     assert!(llvm_cfg_path.exists());
+//
+//     let llvm_lib_path = llvm_cfg_path.join("../../../lib").canonicalize().unwrap();
+//     assert!(llvm_lib_path.exists());
+//
+//     println!("cargo:rustc-link-lib=dylib=dl");
+//     println!("cargo:rustc-link-lib=dylib=m");
+//     println!("cargo:rustc-link-lib=dylib=rt");
+//     println!("cargo:rustc-link-lib=dylib=stdc++");
+//     println!("cargo:rustc-link-lib=dylib=z");
+//     println!("cargo:libdir={}", llvm_lib_path.display());
+//     println!("cargo:rustc-link-search=native={}", llvm_lib_path.display());
+//
+//     for &llvm_lib in LLVM_LIBRARIES {
+//         println!("cargo:rustc-link-lib=static={}", llvm_lib);
+//     }
+// }
 
 fn setup_config(
     wamr_root: &PathBuf,
@@ -132,7 +134,7 @@ fn setup_config(
         .define("WAMR_BUILD_FAST_JIT", "0")
         .define("WAMR_DISABLE_HW_BOUND_CHECK", "1")
         .define("WAMR_DISABLE_STACK_HW_BOUND_CHECK", "1");
-    
+
     // always assume non-empty strings for these environment variables
 
     if let Ok(platform_name) = env::var("WAMR_BUILD_PLATFORM") {
@@ -176,10 +178,10 @@ fn build_wamr_libraries(wamr_root: &PathBuf) {
 // fn build_wamrc(wamr_root: &Path) {
 //     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 //     let wamrc_build_path = out_dir.join("wamrcbuild");
-// 
+//
 //     let wamr_compiler_path = wamr_root.join("wamr-compiler");
 //     assert!(wamr_compiler_path.exists());
-// 
+//
 //     Config::new(&wamr_compiler_path)
 //         .out_dir(wamrc_build_path)
 //         // .define("WAMR_BUILD_WITH_CUSTOM_LLVM", "1")

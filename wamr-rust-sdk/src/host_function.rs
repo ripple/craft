@@ -4,8 +4,7 @@
  */
 
 /// This is a wrapper of a host defined(Rust) function.
-use std::ffi::{c_void, CString};
-
+use std::ffi::{CString, c_void};
 
 use wamr_sys::NativeSymbol;
 
@@ -34,8 +33,13 @@ impl HostFunctionList {
         }
     }
 
-    pub fn register_host_function(&mut self, function_name: &str, function_ptr: *mut c_void, func_sig: &str, 
-                                  user_data: *mut c_void) {
+    pub fn register_host_function(
+        &mut self,
+        function_name: &str,
+        function_ptr: *mut c_void,
+        func_sig: &str,
+        user_data: *mut c_void,
+    ) {
         self.host_functions.push(HostFunction {
             function_name: CString::new(function_name).unwrap(),
             function_ptr,
@@ -43,8 +47,12 @@ impl HostFunctionList {
         });
 
         let last = self.host_functions.last().unwrap();
-        self.native_symbols
-            .push(pack_host_function(&(last.function_name), function_ptr, &(last.function_sig), user_data));
+        self.native_symbols.push(pack_host_function(
+            &(last.function_name),
+            function_ptr,
+            &(last.function_sig),
+            user_data,
+        ));
     }
 
     pub fn get_native_symbols(&mut self) -> &mut Vec<NativeSymbol> {
@@ -56,7 +64,12 @@ impl HostFunctionList {
     }
 }
 
-pub fn pack_host_function(function_name: &CString, function_ptr: *mut c_void, function_sig: &CString, user_data: *mut c_void) -> NativeSymbol {
+pub fn pack_host_function(
+    function_name: &CString,
+    function_ptr: *mut c_void,
+    function_sig: &CString,
+    user_data: *mut c_void,
+) -> NativeSymbol {
     NativeSymbol {
         symbol: function_name.as_ptr(),
         func_ptr: function_ptr,
@@ -76,7 +89,7 @@ mod tests {
     use std::ptr::null_mut;
     use wamr_sys::wasm_exec_env_t;
 
-    extern "C" fn extra(_exec_env: *mut wasm_exec_env_t,) -> i32 {
+    extern "C" fn extra(_exec_env: *mut wasm_exec_env_t) -> i32 {
         10
     }
 

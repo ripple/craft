@@ -51,7 +51,7 @@ impl DockerManager {
         println!("{}", "\nDiagnosing Docker issue...".yellow());
 
         // Check Docker context
-        if let Ok(output) = Command::new("docker").args(&["context", "ls"]).output() {
+        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output() {
             if let Ok(contexts) = String::from_utf8(output.stdout) {
                 for line in contexts.lines() {
                     if line.contains("*") {
@@ -187,7 +187,7 @@ impl DockerManager {
                             tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
                             // Try to connect to Docker
-                            if let Ok(_) = self.docker.ping().await {
+                            if self.docker.ping().await.is_ok() {
                                 println!("{}", "Docker is ready!".green());
                                 return Ok(());
                             }
@@ -231,7 +231,7 @@ impl DockerManager {
                             tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
                             // Try to connect to Docker
-                            if let Ok(_) = self.docker.ping().await {
+                            if self.docker.ping().await.is_ok() {
                                 println!("{}", "Docker is ready!".green());
                                 return Ok(());
                             }
@@ -271,7 +271,7 @@ impl DockerManager {
 
                 // Install Colima and Docker CLI
                 let install_status = Command::new("brew")
-                    .args(&["install", "colima", "docker"])
+                    .args(["install", "colima", "docker"])
                     .status()?;
 
                 if !install_status.success() {
@@ -298,7 +298,7 @@ impl DockerManager {
                         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
                         // Try to connect to Docker
-                        if let Ok(_) = self.docker.ping().await {
+                        if self.docker.ping().await.is_ok() {
                             println!("{}", "Docker is ready!".green());
                             return Ok(());
                         }

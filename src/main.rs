@@ -93,7 +93,7 @@ async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
 
             // Install Colima and Docker CLI
             let status = Command::new("brew")
-                .args(&["install", "colima", "docker"])
+                .args(["install", "colima", "docker"])
                 .status()?;
 
             if status.success() {
@@ -159,7 +159,7 @@ async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
 
             // Check if Docker daemon is running
             let docker_running = Command::new("docker")
-                .args(&["info"])
+                .args(["info"])
                 .output()
                 .map(|o| o.status.success())
                 .unwrap_or(false);

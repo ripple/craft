@@ -338,7 +338,7 @@ impl DockerManager {
         } else {
             (RIPPLED_IMAGE, "latest")
         };
-        
+
         let images = self.docker.images();
         let image_exists = match images.get(RIPPLED_IMAGE).inspect().await {
             Ok(_) => true,
@@ -365,11 +365,8 @@ impl DockerManager {
                 "{}",
                 format!("Pulling Docker image: {}", RIPPLED_IMAGE).yellow()
             );
-            
-            let pull_opts = PullOpts::builder()
-                .image(image_name)
-                .tag(tag)
-                .build();
+
+            let pull_opts = PullOpts::builder().image(image_name).tag(tag).build();
 
             let mut stream = images.pull(&pull_opts);
             while let Some(result) = stream.next().await {

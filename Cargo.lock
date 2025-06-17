@@ -469,7 +469,7 @@ dependencies = [
 
 [[package]]
 name = "craft"
-version = "0.5.0-devnet2"
+version = "0.5.0-devnet4"
 dependencies = [
  "anyhow",
  "bs58",

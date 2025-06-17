@@ -23,8 +23,7 @@ pub fn get_nft(owner: &AccountID, nft: &NFT) -> Result<[u8; XRPL_CONTRACT_DATA_S
     match result_code {
         code if code > 0 => Ok(data),
         code => {
-            // let _ = trace_num("get_nft error", i64::from(code));
-            host::Result::Err(Error::from_code(code))
+            Result::Err(Error::from_code(code))
         }
     }
 }

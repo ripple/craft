@@ -69,30 +69,33 @@ enum DockerAction {
 
 async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
     use std::process::Command;
-    
+
     match action {
         Some(DockerAction::Install) => {
-            println!("{}", "Installing Colima (lightweight Docker runtime)...".cyan());
-            
+            println!(
+                "{}",
+                "Installing Colima (lightweight Docker runtime)...".cyan()
+            );
+
             // Check if Homebrew is installed
             let brew_check = Command::new("which")
                 .arg("brew")
                 .output()
                 .map(|o| o.status.success())
                 .unwrap_or(false);
-                
+
             if !brew_check {
                 anyhow::bail!(
                     "Homebrew is not installed. Please install it first:\n\
                     /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
                 );
             }
-            
+
             // Install Colima and Docker CLI
             let status = Command::new("brew")
                 .args(&["install", "colima", "docker"])
                 .status()?;
-                
+
             if status.success() {
                 println!("{}", "Colima installed successfully!".green());
                 println!("{}", "Run 'craft docker start' to start Colima.".blue());
@@ -102,10 +105,8 @@ async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
         }
         Some(DockerAction::Start) => {
             println!("{}", "Starting Colima...".cyan());
-            let status = Command::new("colima")
-                .arg("start")
-                .status()?;
-                
+            let status = Command::new("colima").arg("start").status()?;
+
             if status.success() {
                 println!("{}", "Colima started successfully!".green());
             } else {
@@ -114,10 +115,8 @@ async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
         }
         Some(DockerAction::Stop) => {
             println!("{}", "Stopping Colima...".cyan());
-            let status = Command::new("colima")
-                .arg("stop")
-                .status()?;
-                
+            let status = Command::new("colima").arg("stop").status()?;
+
             if status.success() {
                 println!("{}", "Colima stopped successfully!".green());
             } else {
@@ -127,58 +126,56 @@ async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
         Some(DockerAction::Status) | None => {
             // Check Docker status
             println!("{}", "Checking Docker status...".cyan());
-            
+
             // Check if Docker CLI is installed
             let docker_installed = Command::new("which")
                 .arg("docker")
                 .output()
                 .map(|o| o.status.success())
                 .unwrap_or(false);
-                
+
             if !docker_installed {
                 println!("{}", "❌ Docker CLI: Not installed".red());
                 println!("{}", "  Run: craft docker install".blue());
                 return Ok(());
             }
-            
+
             println!("{}", "✅ Docker CLI: Installed".green());
-            
+
             // Check if Colima is installed
             let colima_installed = Command::new("which")
                 .arg("colima")
                 .output()
                 .map(|o| o.status.success())
                 .unwrap_or(false);
-                
+
             if !colima_installed {
                 println!("{}", "❌ Colima: Not installed".red());
                 println!("{}", "  Run: craft docker install".blue());
                 return Ok(());
             }
-            
+
             println!("{}", "✅ Colima: Installed".green());
-            
+
             // Check if Docker daemon is running
             let docker_running = Command::new("docker")
                 .args(&["info"])
                 .output()
                 .map(|o| o.status.success())
                 .unwrap_or(false);
-                
+
             if docker_running {
                 println!("{}", "✅ Docker daemon: Running".green());
-                
+
                 // Show Colima status
-                let _ = Command::new("colima")
-                    .arg("status")
-                    .status();
+                let _ = Command::new("colima").arg("status").status();
             } else {
                 println!("{}", "❌ Docker daemon: Not running".red());
                 println!("{}", "  Run: craft docker start".blue());
             }
         }
     }
-    
+
     Ok(())
 }
 

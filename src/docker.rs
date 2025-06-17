@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use colored::*;
 use docker_api::{
-    opts::{ContainerCreateOpts, ContainerStopOpts, LogsOpts, PullOpts},
     Docker,
+    opts::{ContainerCreateOpts, ContainerStopOpts, LogsOpts, PullOpts},
 };
 use futures::StreamExt;
 
@@ -18,67 +18,64 @@ impl DockerManager {
         // Try to connect to Docker - check multiple possible socket locations
         let docker = if cfg!(target_os = "macos") {
             // On macOS, try multiple possible socket locations
-            let mut possible_sockets = vec![
-                "/var/run/docker.sock".to_string(),
-            ];
-            
+            let mut possible_sockets = vec!["/var/run/docker.sock".to_string()];
+
             // Also check HOME-based paths
             if let Ok(home) = std::env::var("HOME") {
                 possible_sockets.push(format!("{}/.colima/default/docker.sock", home));
                 possible_sockets.push(format!("{}/.colima/docker.sock", home));
                 possible_sockets.push(format!("{}/.docker/run/docker.sock", home));
             }
-            
-            
+
             // Find first existing socket
             for socket in &possible_sockets {
                 if std::path::Path::new(socket).exists() {
-                    return Ok(Self { docker: Docker::unix(socket) });
+                    return Ok(Self {
+                        docker: Docker::unix(socket),
+                    });
                 }
             }
-            
+
             // Default fallback
             Docker::unix("/var/run/docker.sock")
         } else {
             Docker::unix("/var/run/docker.sock")
         };
-        
+
         Ok(Self { docker })
     }
-    
+
     fn diagnose_docker_issue(&self) {
         use std::process::Command;
-        
+
         println!("{}", "\nDiagnosing Docker issue...".yellow());
-        
+
         // Check Docker context
-        if let Ok(output) = Command::new("docker")
-            .args(&["context", "ls"])
-            .output()
-        {
+        if let Ok(output) = Command::new("docker").args(&["context", "ls"]).output() {
             if let Ok(contexts) = String::from_utf8(output.stdout) {
                 for line in contexts.lines() {
                     if line.contains("*") {
                         println!("{}", format!("Active Docker context: {}", line).cyan());
                         if line.contains("colima") && line.contains("/Users") {
-                            println!("{}", "Colima context is active but connection failed.".yellow());
+                            println!(
+                                "{}",
+                                "Colima context is active but connection failed.".yellow()
+                            );
                         }
                     }
                 }
             }
         }
-        
+
         // Check which sockets exist
-        let mut sockets_to_check = vec![
-            "/var/run/docker.sock".to_string(),
-        ];
-        
+        let mut sockets_to_check = vec!["/var/run/docker.sock".to_string()];
+
         if let Ok(home) = std::env::var("HOME") {
             sockets_to_check.push(format!("{}/.colima/default/docker.sock", home));
             sockets_to_check.push(format!("{}/.colima/docker.sock", home));
             sockets_to_check.push(format!("{}/.docker/run/docker.sock", home));
         }
-        
+
         println!("{}", "Checking Docker socket locations:".cyan());
         for socket in &sockets_to_check {
             if std::path::Path::new(socket).exists() {
@@ -88,13 +85,15 @@ impl DockerManager {
             }
         }
     }
-    
+
     async fn check_docker_connection(&self) -> Result<()> {
         // Try to ping Docker to ensure it's running
         match self.docker.ping().await {
             Ok(_) => Ok(()),
             Err(e) => {
-                if e.to_string().contains("No such file or directory") || e.to_string().contains("Connection refused") {
+                if e.to_string().contains("No such file or directory")
+                    || e.to_string().contains("Connection refused")
+                {
                     // Check if this is macOS and offer to install Colima
                     if cfg!(target_os = "macos") {
                         // First, let's diagnose the issue
@@ -115,21 +114,21 @@ impl DockerManager {
             }
         }
     }
-    
+
     async fn handle_macos_docker_missing(&self) -> Result<()> {
         use colored::*;
         use inquire::Confirm;
         use std::process::Command;
-        
+
         println!("{}", "Docker is not installed or not running.".yellow());
-        
+
         // Check if Homebrew is installed
         let brew_check = Command::new("which")
             .arg("brew")
             .output()
             .map(|o| o.status.success())
             .unwrap_or(false);
-            
+
         if !brew_check {
             return Err(anyhow::anyhow!(
                 "Docker is not installed. Please install Docker manually:\n\n\
@@ -140,14 +139,14 @@ impl DockerManager {
                 - Then run: brew install colima docker && colima start"
             ));
         }
-        
+
         // Check if Colima is already installed
         let colima_installed = Command::new("which")
             .arg("colima")
             .output()
             .map(|o| o.status.success())
             .unwrap_or(false);
-            
+
         if colima_installed {
             // Check if Colima is actually running
             let colima_status = Command::new("colima")
@@ -156,53 +155,54 @@ impl DockerManager {
                 .ok()
                 .and_then(|o| String::from_utf8(o.stdout).ok())
                 .unwrap_or_default();
-                
+
             let is_running = colima_status.contains("Running");
-            
+
             if is_running {
-                println!("{}", "Colima appears to be running but Docker is not accessible.".yellow());
+                println!(
+                    "{}",
+                    "Colima appears to be running but Docker is not accessible.".yellow()
+                );
                 println!("{}", "This might be a socket permission issue.".yellow());
-                
+
                 // Try to restart Colima
                 if Confirm::new("Would you like to restart Colima to fix this?")
                     .with_default(true)
                     .prompt()?
                 {
                     println!("{}", "Stopping Colima...".cyan());
-                    let _ = Command::new("colima")
-                        .arg("stop")
-                        .status();
-                    
+                    let _ = Command::new("colima").arg("stop").status();
+
                     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                    
+
                     println!("{}", "Starting Colima...".cyan());
-                    let status = Command::new("colima")
-                        .arg("start")
-                        .status()?;
-                        
+                    let status = Command::new("colima").arg("start").status()?;
+
                     if status.success() {
                         println!("{}", "Colima restarted successfully!".green());
-                        
+
                         // Wait for Docker to be ready with retries
                         println!("{}", "Waiting for Docker to be ready...".cyan());
                         for i in 0..10 {
                             tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                            
+
                             // Try to connect to Docker
                             if let Ok(_) = self.docker.ping().await {
                                 println!("{}", "Docker is ready!".green());
                                 return Ok(());
                             }
-                            
+
                             if i < 9 {
                                 print!(".");
                                 use std::io::{self, Write};
                                 io::stdout().flush().unwrap();
                             }
                         }
-                        
+
                         println!();
-                        return Err(anyhow::anyhow!("Docker failed to start properly after restart. Please check Colima logs with 'colima status -v'"));
+                        return Err(anyhow::anyhow!(
+                            "Docker failed to start properly after restart. Please check Colima logs with 'colima status -v'"
+                        ));
                     } else {
                         return Err(anyhow::anyhow!("Failed to restart Colima"));
                     }
@@ -214,103 +214,112 @@ impl DockerManager {
                 }
             } else {
                 println!("{}", "Colima is installed but not running.".cyan());
-                
+
                 if Confirm::new("Would you like to start Colima now?")
                     .with_default(true)
                     .prompt()?
                 {
                     println!("{}", "Starting Colima...".cyan());
-                    let status = Command::new("colima")
-                        .arg("start")
-                        .status()?;
-                    
-                if status.success() {
-                    println!("{}", "Colima started successfully!".green());
-                    
-                    // Wait for Docker to be ready with retries
-                    println!("{}", "Waiting for Docker to be ready...".cyan());
-                    for i in 0..10 {
-                        tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                        
-                        // Try to connect to Docker
-                        if let Ok(_) = self.docker.ping().await {
-                            println!("{}", "Docker is ready!".green());
-                            return Ok(());
+                    let status = Command::new("colima").arg("start").status()?;
+
+                    if status.success() {
+                        println!("{}", "Colima started successfully!".green());
+
+                        // Wait for Docker to be ready with retries
+                        println!("{}", "Waiting for Docker to be ready...".cyan());
+                        for i in 0..10 {
+                            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+                            // Try to connect to Docker
+                            if let Ok(_) = self.docker.ping().await {
+                                println!("{}", "Docker is ready!".green());
+                                return Ok(());
+                            }
+
+                            if i < 9 {
+                                print!(".");
+                                use std::io::{self, Write};
+                                io::stdout().flush().unwrap();
+                            }
                         }
-                        
-                        if i < 9 {
-                            print!(".");
-                            use std::io::{self, Write};
-                            io::stdout().flush().unwrap();
-                        }
+
+                        println!();
+                        return Err(anyhow::anyhow!(
+                            "Docker failed to start properly. Please try running 'colima start' manually."
+                        ));
+                    } else {
+                        return Err(anyhow::anyhow!("Failed to start Colima"));
                     }
-                    
-                    println!();
-                    return Err(anyhow::anyhow!("Docker failed to start properly. Please try running 'colima start' manually."));
-                } else {
-                    return Err(anyhow::anyhow!("Failed to start Colima"));
-                }
                 }
             }
         } else {
             // Offer to install Colima
-            println!("{}", "\nColima is a lightweight Docker runtime for macOS.".cyan());
-            println!("{}", "It is free and uses less resources than Docker Desktop.".cyan());
-            
+            println!(
+                "{}",
+                "\nColima is a lightweight Docker runtime for macOS.".cyan()
+            );
+            println!(
+                "{}",
+                "It is free and uses less resources than Docker Desktop.".cyan()
+            );
+
             if Confirm::new("Would you like to install Colima (lightweight Docker)?")
                 .with_default(true)
                 .prompt()?
             {
                 println!("{}", "Installing Colima and Docker CLI...".cyan());
-                
+
                 // Install Colima and Docker CLI
                 let install_status = Command::new("brew")
                     .args(&["install", "colima", "docker"])
                     .status()?;
-                    
+
                 if !install_status.success() {
                     return Err(anyhow::anyhow!("Failed to install Colima"));
                 }
-                
+
                 println!("{}", "Colima installed successfully!".green());
                 println!("{}", "Starting Colima for the first time...".cyan());
-                
+
                 // Start Colima
-                let start_status = Command::new("colima")
-                    .arg("start")
-                    .status()?;
-                    
+                let start_status = Command::new("colima").arg("start").status()?;
+
                 if start_status.success() {
                     println!("{}", "Colima started successfully!".green());
-                    println!("{}", "\nNote: Colima needs to be started after each reboot.".yellow());
+                    println!(
+                        "{}",
+                        "\nNote: Colima needs to be started after each reboot.".yellow()
+                    );
                     println!("{}", "You can start it with: colima start".blue());
-                    
+
                     // Wait for Docker to be ready with retries
                     println!("{}", "\nWaiting for Docker to be ready...".cyan());
                     for i in 0..10 {
                         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                        
+
                         // Try to connect to Docker
                         if let Ok(_) = self.docker.ping().await {
                             println!("{}", "Docker is ready!".green());
                             return Ok(());
                         }
-                        
+
                         if i < 9 {
                             print!(".");
                             use std::io::{self, Write};
                             io::stdout().flush().unwrap();
                         }
                     }
-                    
+
                     println!();
-                    return Err(anyhow::anyhow!("Docker failed to start properly. Please try running 'colima start' manually."));
+                    return Err(anyhow::anyhow!(
+                        "Docker failed to start properly. Please try running 'colima start' manually."
+                    ));
                 } else {
                     return Err(anyhow::anyhow!("Failed to start Colima"));
                 }
             }
         }
-        
+
         Err(anyhow::anyhow!(
             "Docker is required to run rippled. Please install one of:\n\
             - Colima: brew install colima docker && colima start\n\
@@ -327,16 +336,16 @@ impl DockerManager {
             Ok(_) => true,
             Err(e) => {
                 // If error contains "404" or "not found", image doesn't exist
-                if e.to_string().contains("404") || e.to_string().to_lowercase().contains("not found") {
+                if e.to_string().contains("404")
+                    || e.to_string().to_lowercase().contains("not found")
+                {
                     false
                 } else {
                     // For other errors, try the list approach as fallback
                     match images.list(&Default::default()).await {
-                        Ok(image_list) => {
-                            image_list.iter().any(|img| {
-                                img.repo_tags.iter().any(|tag| tag == RIPPLED_IMAGE)
-                            })
-                        }
+                        Ok(image_list) => image_list
+                            .iter()
+                            .any(|img| img.repo_tags.iter().any(|tag| tag == RIPPLED_IMAGE)),
                         Err(_) => false,
                     }
                 }
@@ -372,7 +381,7 @@ impl DockerManager {
     pub async fn start_rippled(&self, foreground: bool) -> Result<()> {
         // Check Docker connection first
         self.check_docker_connection().await?;
-        
+
         self.ensure_image_exists().await?;
 
         // Check if container already exists
@@ -419,11 +428,10 @@ impl DockerManager {
         println!("{}", "Creating new rippled container...".cyan());
 
         // Get the absolute paths for config files
-        let current_dir = std::env::current_dir()
-            .context("Failed to get current directory")?;
+        let current_dir = std::env::current_dir().context("Failed to get current directory")?;
         let config_path = current_dir.join("reference/rippled-cfg/smart-escrow-rippled.cfg");
         let validators_path = current_dir.join("reference/rippled-cfg/validators.txt");
-        
+
         // Check if config files exist
         if !config_path.exists() {
             return Err(anyhow::anyhow!(
@@ -437,7 +445,7 @@ impl DockerManager {
                 validators_path.display()
             ));
         }
-        
+
         // Create container with port mappings and volume mounts
         // Port mapping based on config:
         // - 80 (container) -> 6006 (host) for public WebSocket
@@ -448,19 +456,25 @@ impl DockerManager {
         let create_opts = ContainerCreateOpts::builder()
             .name(CONTAINER_NAME)
             .image(RIPPLED_IMAGE)
-            .expose(docker_api::opts::PublishPort::tcp(80), 6006)     // Public WS on host:6006
-            .expose(docker_api::opts::PublishPort::tcp(6006), 6007)   // Admin WS on host:6007
-            .expose(docker_api::opts::PublishPort::tcp(5005), 5005)   // Admin RPC
+            .expose(docker_api::opts::PublishPort::tcp(80), 6006) // Public WS on host:6006
+            .expose(docker_api::opts::PublishPort::tcp(6006), 6007) // Admin WS on host:6007
+            .expose(docker_api::opts::PublishPort::tcp(5005), 5005) // Admin RPC
             .volumes(vec![
-                format!("{}:/etc/opt/ripple/rippled.cfg:ro", config_path.to_string_lossy()),
-                format!("{}:/etc/opt/ripple/validators.txt:ro", validators_path.to_string_lossy()),
+                format!(
+                    "{}:/etc/opt/ripple/rippled.cfg:ro",
+                    config_path.to_string_lossy()
+                ),
+                format!(
+                    "{}:/etc/opt/ripple/validators.txt:ro",
+                    validators_path.to_string_lossy()
+                ),
             ])
             // Override entrypoint to ensure rippled runs with correct arguments
             .entrypoint(vec!["/opt/ripple/bin/rippled"])
             .command(vec![
                 "-a",      // Stand-alone mode flag
                 "--start", // Start from a fresh ledger
-                "--conf=/etc/opt/ripple/rippled.cfg"
+                "--conf=/etc/opt/ripple/rippled.cfg",
             ])
             .build();
 
@@ -469,11 +483,17 @@ impl DockerManager {
         println!("{}", "Starting container...".cyan());
         container.start().await?;
 
-        println!("{}", "rippled container started successfully in stand-alone mode!".green());
+        println!(
+            "{}",
+            "rippled container started successfully in stand-alone mode!".green()
+        );
         println!("{}", "Public WebSocket: ws://localhost:6006".blue());
         println!("{}", "Admin WebSocket: ws://localhost:6007".blue());
         println!("{}", "Admin RPC API: http://localhost:5005".blue());
-        println!("{}", "\nNote: Running in stand-alone mode (no peers, local ledger only)".yellow());
+        println!(
+            "{}",
+            "\nNote: Running in stand-alone mode (no peers, local ledger only)".yellow()
+        );
 
         if foreground {
             println!(
@@ -504,7 +524,7 @@ impl DockerManager {
     pub async fn stop_rippled(&self) -> Result<()> {
         // Check Docker connection first
         self.check_docker_connection().await?;
-        
+
         println!("{}", "Stopping rippled container...".cyan());
 
         let containers = self.docker.containers();
@@ -530,7 +550,7 @@ impl DockerManager {
     pub async fn list_containers(&self) -> Result<()> {
         // Check Docker connection first
         self.check_docker_connection().await?;
-        
+
         println!("{}", "Checking for rippled containers...".blue());
 
         let containers = self.docker.containers();
@@ -629,34 +649,41 @@ impl DockerManager {
             _ => Ok(false),
         }
     }
-    
+
     pub async fn advance_ledger(&self, count: u32) -> Result<()> {
-        println!("{}", format!("Advancing ledger {} time(s)...", count).cyan());
-        
+        println!(
+            "{}",
+            format!("Advancing ledger {} time(s)...", count).cyan()
+        );
+
         // First check if the container is running
         let containers = self.docker.containers();
         let container = containers.get(CONTAINER_NAME);
-        
+
         match container.inspect().await {
             Ok(info) => {
                 if !info.state.as_ref().and_then(|s| s.running).unwrap_or(false) {
-                    return Err(anyhow::anyhow!("rippled container is not running. Start it with: craft start-rippled"));
+                    return Err(anyhow::anyhow!(
+                        "rippled container is not running. Start it with: craft start-rippled"
+                    ));
                 }
             }
             Err(_) => {
-                return Err(anyhow::anyhow!("rippled container not found. Start it with: craft start-rippled"));
+                return Err(anyhow::anyhow!(
+                    "rippled container not found. Start it with: craft start-rippled"
+                ));
             }
         }
-        
+
         // Use the admin RPC endpoint to send ledger_accept commands
         let client = reqwest::Client::new();
-        
+
         for i in 1..=count {
             let request_body = serde_json::json!({
                 "method": "ledger_accept",
                 "params": [{}]
             });
-            
+
             match client
                 .post("http://localhost:5005")
                 .json(&request_body)
@@ -669,21 +696,32 @@ impl DockerManager {
                             if let Some(error) = json.get("result").and_then(|r| r.get("error")) {
                                 return Err(anyhow::anyhow!(
                                     "Failed to advance ledger: {}",
-                                    error.get("message").and_then(|m| m.as_str()).unwrap_or("Unknown error")
+                                    error
+                                        .get("message")
+                                        .and_then(|m| m.as_str())
+                                        .unwrap_or("Unknown error")
                                 ));
                             }
-                            
+
                             // Extract ledger info if available
-                            if let Some(ledger_hash) = json.get("result").and_then(|r| r.get("ledger_hash")) {
+                            if let Some(ledger_hash) =
+                                json.get("result").and_then(|r| r.get("ledger_hash"))
+                            {
                                 println!(
-                                    "{}", 
-                                    format!("  [{}/{}] Advanced to ledger with hash: {}", 
-                                        i, count, 
+                                    "{}",
+                                    format!(
+                                        "  [{}/{}] Advanced to ledger with hash: {}",
+                                        i,
+                                        count,
                                         ledger_hash.as_str().unwrap_or("unknown")
-                                    ).green()
+                                    )
+                                    .green()
                                 );
                             } else {
-                                println!("{}", format!("  [{}/{}] Ledger advanced", i, count).green());
+                                println!(
+                                    "{}",
+                                    format!("  [{}/{}] Ledger advanced", i, count).green()
+                                );
                             }
                         }
                     } else {
@@ -700,16 +738,19 @@ impl DockerManager {
                     ));
                 }
             }
-            
+
             // Small delay between advances if advancing multiple ledgers
             if i < count {
                 tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
             }
         }
-        
+
         println!("{}", "\nLedger(s) advanced successfully!".green());
-        println!("{}", "Note: In stand-alone mode, ledgers only advance when explicitly commanded.".yellow());
-        
+        println!(
+            "{}",
+            "Note: In stand-alone mode, ledgers only advance when explicitly commanded.".yellow()
+        );
+
         Ok(())
     }
 }

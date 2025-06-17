@@ -330,7 +330,15 @@ impl DockerManager {
     pub async fn ensure_image_exists(&self) -> Result<()> {
         println!("{}", "Checking for rippled Docker image...".cyan());
 
-        // Try a simpler approach - attempt to inspect the image
+        // Parse image name and tag
+        let (image_name, tag) = if let Some(colon_pos) = RIPPLED_IMAGE.rfind(':') {
+            let name = &RIPPLED_IMAGE[..colon_pos];
+            let tag = &RIPPLED_IMAGE[colon_pos + 1..];
+            (name, tag)
+        } else {
+            (RIPPLED_IMAGE, "latest")
+        };
+
         let images = self.docker.images();
         let image_exists = match images.get(RIPPLED_IMAGE).inspect().await {
             Ok(_) => true,
@@ -357,7 +365,8 @@ impl DockerManager {
                 "{}",
                 format!("Pulling Docker image: {}", RIPPLED_IMAGE).yellow()
             );
-            let pull_opts = PullOpts::builder().image(RIPPLED_IMAGE).build();
+
+            let pull_opts = PullOpts::builder().image(image_name).tag(tag).build();
 
             let mut stream = images.pull(&pull_opts);
             while let Some(result) = stream.next().await {

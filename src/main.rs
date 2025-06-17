@@ -1,5 +1,6 @@
 mod commands;
 mod config;
+mod docker;
 mod utils;
 
 use anyhow::Result;
@@ -47,8 +48,145 @@ enum Commands {
     },
     /// List running rippled processes and show how to terminate them
     ListRippled,
+    /// Stop the rippled Docker container
+    StopRippled,
+    /// Advance the ledger in stand-alone mode
+    AdvanceLedger {
+        /// Number of ledgers to advance (default: 1)
+        #[arg(short, long, default_value = "1")]
+        count: u32,
+    },
+    /// Manage Docker runtime (Colima)
+    Docker {
+        #[command(subcommand)]
+        action: Option<DockerAction>,
+    },
     /// Open the XRPL Explorer for a local rippled instance
     OpenExplorer,
+}
+
+#[derive(Subcommand)]
+enum DockerAction {
+    /// Install Colima (lightweight Docker runtime)
+    Install,
+    /// Start Colima
+    Start,
+    /// Stop Colima
+    Stop,
+    /// Check Docker status
+    Status,
+}
+
+async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
+    use std::process::Command;
+
+    match action {
+        Some(DockerAction::Install) => {
+            println!(
+                "{}",
+                "Installing Colima (lightweight Docker runtime)...".cyan()
+            );
+
+            // Check if Homebrew is installed
+            let brew_check = Command::new("which")
+                .arg("brew")
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+
+            if !brew_check {
+                anyhow::bail!(
+                    "Homebrew is not installed. Please install it first:\n\
+                    /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+                );
+            }
+
+            // Install Colima and Docker CLI
+            let status = Command::new("brew")
+                .args(["install", "colima", "docker"])
+                .status()?;
+
+            if status.success() {
+                println!("{}", "Colima installed successfully!".green());
+                println!("{}", "Run 'craft docker start' to start Colima.".blue());
+            } else {
+                anyhow::bail!("Failed to install Colima");
+            }
+        }
+        Some(DockerAction::Start) => {
+            println!("{}", "Starting Colima...".cyan());
+            let status = Command::new("colima").arg("start").status()?;
+
+            if status.success() {
+                println!("{}", "Colima started successfully!".green());
+            } else {
+                anyhow::bail!("Failed to start Colima");
+            }
+        }
+        Some(DockerAction::Stop) => {
+            println!("{}", "Stopping Colima...".cyan());
+            let status = Command::new("colima").arg("stop").status()?;
+
+            if status.success() {
+                println!("{}", "Colima stopped successfully!".green());
+            } else {
+                anyhow::bail!("Failed to stop Colima");
+            }
+        }
+        Some(DockerAction::Status) | None => {
+            // Check Docker status
+            println!("{}", "Checking Docker status...".cyan());
+
+            // Check if Docker CLI is installed
+            let docker_installed = Command::new("which")
+                .arg("docker")
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+
+            if !docker_installed {
+                println!("{}", "❌ Docker CLI: Not installed".red());
+                println!("{}", "  Run: craft docker install".blue());
+                return Ok(());
+            }
+
+            println!("{}", "✅ Docker CLI: Installed".green());
+
+            // Check if Colima is installed
+            let colima_installed = Command::new("which")
+                .arg("colima")
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+
+            if !colima_installed {
+                println!("{}", "❌ Colima: Not installed".red());
+                println!("{}", "  Run: craft docker install".blue());
+                return Ok(());
+            }
+
+            println!("{}", "✅ Colima: Installed".green());
+
+            // Check if Docker daemon is running
+            let docker_running = Command::new("docker")
+                .args(["info"])
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+
+            if docker_running {
+                println!("{}", "✅ Docker daemon: Running".green());
+
+                // Show Colima status
+                let _ = Command::new("colima").arg("status").status();
+            } else {
+                println!("{}", "❌ Docker daemon: Not running".red());
+                println!("{}", "  Run: craft docker start".blue());
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[tokio::main]
@@ -136,10 +274,23 @@ async fn main() -> Result<()> {
                 commands::test(&wasm_path, function).await?;
             }
             Commands::StartRippled { foreground } => {
-                commands::start_rippled_with_foreground(foreground).await?;
+                let docker_manager = docker::DockerManager::new()?;
+                docker_manager.start_rippled(foreground).await?;
             }
             Commands::ListRippled => {
-                commands::list_rippled().await?;
+                let docker_manager = docker::DockerManager::new()?;
+                docker_manager.list_containers().await?;
+            }
+            Commands::StopRippled => {
+                let docker_manager = docker::DockerManager::new()?;
+                docker_manager.stop_rippled().await?;
+            }
+            Commands::AdvanceLedger { count } => {
+                let docker_manager = docker::DockerManager::new()?;
+                docker_manager.advance_ledger(count).await?;
+            }
+            Commands::Docker { action } => {
+                handle_docker_command(action).await?;
             }
             Commands::OpenExplorer => {
                 commands::open_explorer().await?;
@@ -196,10 +347,12 @@ async fn main() -> Result<()> {
                         .with_default(true)
                         .prompt()?;
 
-                    commands::start_rippled_with_foreground(foreground).await?;
+                    let docker_manager = docker::DockerManager::new()?;
+                    docker_manager.start_rippled(foreground).await?;
                 }
                 "List rippled processes" => {
-                    commands::list_rippled().await?;
+                    let docker_manager = docker::DockerManager::new()?;
+                    docker_manager.list_containers().await?;
                 }
                 "Open Explorer" => {
                     commands::open_explorer().await?;

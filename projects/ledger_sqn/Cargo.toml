@@ -18,4 +18,4 @@ codegen-units = 1
 panic = "abort"  # Minimize size by avoiding panic handling code
 
 [dependencies]
-# Add dependencies as needed 
+xrpl-std = { path = "../../xrpl-std" }

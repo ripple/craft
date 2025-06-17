@@ -1,15 +1,23 @@
 #![no_std]
-use xrpl_std::get_tx_account_id;
+
+use xrpl_std::core::current_tx::escrow_finish;
+use xrpl_std::core::current_tx::traits::TransactionCommonFields;
+use xrpl_std::host::trace::trace_num;
+use xrpl_std::host::{Result::Err, Result::Ok};
 
 // Notary account that is authorized to finish the escrow
 const NOTARY_ACCOUNT: &[u8] = b"rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 2 (example)
 
 #[unsafe(no_mangle)]
-pub fn finish() -> bool {
-    let tx_account = match get_tx_account_id() {
-        Some(v) => v,
-        None => return false,
+pub extern "C" fn finish() -> bool {
+    let escrow_finish = escrow_finish::get_current_escrow_finish();
+    let tx_account = match escrow_finish.get_account() {
+        Ok(v) => v,
+        Err(e) => {
+            let _ = trace_num("Error in Notary contract", e.code() as i64);
+            return false; // Must return to short circuit.
+        }
     };
 
-    tx_account == NOTARY_ACCOUNT
+    tx_account.0 == NOTARY_ACCOUNT
 }

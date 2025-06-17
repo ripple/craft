@@ -159,7 +159,7 @@ unsafe extern "C" {
     ///
     /// # Parameters
     ///
-    /// - `slot`: An integer representing the slot index of the ledger object.
+    /// - `cache_num`: An integer representing the cache index of the ledger object.
     /// - `field`: An integer representing the specific field to retrieve from the ledger object.
     /// - `out_buff_ptr`: A mutable pointer to a buffer where the retrieved field data will be written.
     /// - `out_buff_len`: The size of the output buffer in bytes.
@@ -170,7 +170,7 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_ledger_obj_field(
-        slot: i32,
+        cache_num: i32,
         field: i32,
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
@@ -221,10 +221,10 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
-    /// Retrieves a nested field from a ledger object in a specific slot and writes the result into an output buffer.
+    /// Retrieves a nested field from a ledger object in a specific cache_num and writes the result into an output buffer.
     ///
     /// # Parameters
-    /// - `slot`: The slot index of the ledger object to access.
+    /// - `cache_num`: The cache index of the ledger object to access.
     /// - `locator_ptr`: A pointer to the memory location containing the locator string data
     ///                  (used to identify the nested field in the ledger object).
     /// - `locator_len`: The length of the locator string.
@@ -237,7 +237,7 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_ledger_obj_nested_field(
-        slot: i32,
+        cache_num: i32,
         locator_ptr: *const u8,
         locator_len: usize,
         out_buff_ptr: *mut u8,
@@ -268,10 +268,10 @@ unsafe extern "C" {
     ///   ../core/error_codes.rs
     pub fn get_current_ledger_obj_array_len(field: i32) -> i32;
 
-    /// Retrieves the length of an array based on the provided slot number and field value.
+    /// Retrieves the length of an array based on the provided cache number and field value.
     ///
     /// # Parameters
-    /// - `slot`: The slot index of the ledger object to access.
+    /// - `cache_num`: The cache index of the ledger object to access.
     /// - `field` (i32): The integer identifier for the desired field.
     ///
     /// # Returns
@@ -279,7 +279,7 @@ unsafe extern "C" {
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
-    pub fn get_ledger_obj_array_len(slot: i32, field: i32) -> i32;
+    pub fn get_ledger_obj_array_len(cache_num: i32, field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
     ///
@@ -313,7 +313,7 @@ unsafe extern "C" {
     /// Retrieves the length of an array based on the provided locator.
     ///
     /// # Parameters
-    /// - `slot`: The slot index of the ledger object to access.
+    /// - `cache_num`: The cache index of the ledger object to access.
     /// - `locator_ptr`: A pointer to a byte array containing the locator for the nested field.
     /// - `locator_len`: The length of the locator data in bytes.
     ///
@@ -323,7 +323,7 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_ledger_obj_nested_array_len(
-        slot: i32,
+        cache_num: i32,
         locator_ptr: *const u8,
         locator_len: usize,
     ) -> i32;

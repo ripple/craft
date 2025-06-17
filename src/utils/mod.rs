@@ -5,6 +5,7 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 use walkdir::WalkDir;
+use which::which;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -59,7 +60,7 @@ pub fn install_wasm_target(target: &str) -> Result<()> {
 }
 
 pub fn check_wasm_opt_installed() -> bool {
-    which::which("wasm-opt").is_ok()
+    which("wasm-opt").is_ok()
 }
 
 pub fn install_wasm_opt() -> Result<()> {

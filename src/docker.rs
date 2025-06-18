@@ -438,8 +438,8 @@ impl DockerManager {
 
         // Get the absolute paths for config files
         let current_dir = std::env::current_dir().context("Failed to get current directory")?;
-        let config_path = current_dir.join("reference/rippled-cfg/smart-escrow-rippled.cfg");
-        let validators_path = current_dir.join("reference/rippled-cfg/validators.txt");
+        let config_path = current_dir.join("reference/rippled_cfg/smart-escrow-rippled.cfg");
+        let validators_path = current_dir.join("reference/rippled_cfg/validators.txt");
 
         // Check if config files exist
         if !config_path.exists() {
@@ -761,5 +761,21 @@ impl DockerManager {
         );
 
         Ok(())
+    }
+
+    pub async fn is_rippled_running(&self) -> Result<bool> {
+        // Check if Docker is accessible
+        if let Err(_) = self.docker.ping().await {
+            return Ok(false);
+        }
+
+        // Check if container exists
+        let containers = self.docker.containers();
+        match containers.get(CONTAINER_NAME).inspect().await {
+            Ok(info) => {
+                Ok(info.state.as_ref().and_then(|s| s.running).unwrap_or(false))
+            }
+            Err(_) => Ok(false),
+        }
     }
 }

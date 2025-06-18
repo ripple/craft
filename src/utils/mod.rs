@@ -297,6 +297,7 @@ pub fn needs_cli_update() -> Result<bool> {
         workspace_dir.join("src/commands/mod.rs"),
         workspace_dir.join("src/utils/mod.rs"),
         workspace_dir.join("src/config/mod.rs"),
+        workspace_dir.join("src/docker.rs"),
         workspace_dir.join("Cargo.toml"),
     ];
 

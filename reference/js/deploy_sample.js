@@ -10,7 +10,7 @@ if (process.argv.length != 3) {
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' path/to/file.wasm',
+      ' (path/to/file.wasm OR project_name)',
   )
   process.exit(1)
 }
@@ -23,10 +23,15 @@ function getFinishFunctionFromFile(filePath) {
     process.exit(1)
   }
 
-  const absolutePath = path.resolve(filePath)
+  let absolutePath = ""
+  if (filePath.endsWith('.wasm')) {
+    absolutePath = path.resolve(filePath)
+  } else {
+    absolutePath = path.resolve(__dirname, `../../projects/${filePath}/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
+  }
   try {
-    const data = fs.readFileSync(absolutePath, 'utf8').trim()
-    return data.replace("\n","").replace(" ", "")
+      const data = fs.readFileSync(absolutePath)
+      return data.toString('hex')
   } catch (err) {
     console.error(`Error reading file at ${absolutePath}:`, err.message)
     process.exit(1)
@@ -34,7 +39,6 @@ function getFinishFunctionFromFile(filePath) {
 }
 
 async function submit(tx, wallet, debug = true) {
-  tx.Fee = "10000"
   const result = await client.submitAndWait(tx, {autofill: true, wallet})
   console.log("SUBMITTED " + tx.TransactionType)
   if (debug)
@@ -71,7 +75,7 @@ async function deploy() {
     Amount: "100000",
     Destination: wallet2.address,
     CancelAfter: close_time + 2000, // about 32 minutes. After this time, the escrow cannot be finished (would get result tecNO_PERMISSION).
-    FinishAfter: close_time + 5, // about 5 seconds. After this time, the escrow can be finished.
+    FinishAfter: close_time + 10, // about 10 seconds. After this time, the escrow can be finished.
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),
   }, wallet)

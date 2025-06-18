@@ -10,13 +10,13 @@ if (process.argv.length < 3) {
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' path/to/file.wasm' + 
+      ' (path/to/file.wasm OR project_name)' + 
       '[Account1 Account1Seed [Account2 Account2Seed]]',
   )
   process.exit(1)
 }
 
-const client = new xrpl.Client("ws://localhost:6006")
+const client = new xrpl.Client("ws://127.0.0.1:6006")
 
 function getFinishFunctionFromFile(filePath) {
   if (!filePath) {
@@ -24,10 +24,15 @@ function getFinishFunctionFromFile(filePath) {
     process.exit(1)
   }
 
-  const absolutePath = path.resolve(filePath)
+  let absolutePath = ""
+  if (filePath.endsWith('.wasm')) {
+    absolutePath = path.resolve(filePath)
+  } else {
+    absolutePath = path.resolve(__dirname, `../../projects/${filePath}/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
+  }
   try {
-    const data = fs.readFileSync(absolutePath, 'utf8').trim()
-    return data.replace("\n","").replace(" ", "")
+    const data = fs.readFileSync(absolutePath)
+    return data.toString('hex')
   } catch (err) {
     console.error(`Error reading file at ${absolutePath}:`, err.message)
     process.exit(1)
@@ -35,7 +40,6 @@ function getFinishFunctionFromFile(filePath) {
 }
 
 async function submit(tx, wallet, debug = true) {
-  tx.Fee = "10000"
   const txResult = await client.submitAndWait(tx, {autofill: true, wallet})
   console.log("SUBMITTED " + tx.TransactionType)
 
@@ -85,14 +89,16 @@ async function deploy() {
     wallet2 = xrpl.Wallet.generate()
   }
 
+  const finish = getFinishFunctionFromFile(process.argv[2])
+
   await fundWallet(wallet)
   await fundWallet(wallet2)
 
   console.log(`\nFunded accounts:`)
-  console.log(`Account 1 - Address: ${wallet.address}`)
-  console.log(`Account 1 - Secret: ${wallet.seed}`)
-  console.log(`Account 2 - Address: ${wallet2.address}`)
-  console.log(`Account 2 - Secret: ${wallet2.seed}\n`)
+  console.log(`Account 1 (Origin) - Address: ${wallet.address}`)
+  console.log(`Account 1 (Origin) - Secret: ${wallet.seed}`)
+  console.log(`Account 2 (Destination) - Address: ${wallet2.address}`)
+  console.log(`Account 2 (Destination) - Secret: ${wallet2.seed}\n`)
 
   const close_time = (
     await client.request({
@@ -101,14 +107,12 @@ async function deploy() {
     })
   ).result.ledger.close_time
 
-  const finish = getFinishFunctionFromFile(process.argv[2])
-
   const response1 = await submit({
     TransactionType: 'EscrowCreate',
     Account: wallet.address,
     Amount: "100000",
     Destination: wallet2.address,
-    CancelAfter: close_time + 200,
+    CancelAfter: close_time + 2000,
     FinishAfter: close_time + 5,
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),

@@ -1,243 +1,187 @@
-use std::mem;
+#![no_std]
 
-#[no_mangle]
-pub extern "C" fn allocate(size: usize) -> *mut u8 {
-    let mut buffer = Vec::with_capacity(size);
-    let pointer = buffer.as_mut_ptr();
-    mem::forget(buffer);
-    println!("allocate {:?}", pointer);
-    pointer
+use crate::host::trace::trace;
+
+pub mod core;
+pub mod host;
+pub mod keylet;
+pub mod locator;
+pub mod sfield;
+pub mod types;
+use host::trace::trace_num;
+
+use crate::keylet::account_keylet;
+use crate::locator::LocatorPacker;
+use crate::types::{AccountID, ContractData, NFT, XRPL_ACCOUNT_ID_SIZE, XRPL_CONTRACT_DATA_SIZE};
+
+//TODO replace some of the helper functions with Objects, e.g. AccountRoot, Escrow, Tx
+
+pub fn get_tx_account_id() -> Option<AccountID> {
+    let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
+    let retcode =
+        unsafe { host::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) };
+    if retcode > 0 {
+        Some(account_id)
+    } else {
+        let _ = trace_num("get_tx_account_id error", i64::from(retcode));
+        None
+    }
 }
 
-#[no_mangle]
-pub extern "C" fn deallocate(pointer: *mut u8, capacity: usize) {
+pub fn get_current_escrow_account_id() -> Option<AccountID> {
+    let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
+    let retcode = unsafe {
+        host::get_current_ledger_obj_field(
+            sfield::Account,
+            account_id.as_mut_ptr(),
+            account_id.len(),
+        )
+    };
+    if retcode > 0 {
+        Some(account_id)
+    } else {
+        let _ = trace_num("get_current_escrow_account_id error", i64::from(retcode));
+        None
+    }
+}
+
+pub fn get_current_escrow_destination() -> Option<AccountID> {
+    let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
+    let retcode = unsafe {
+        host::get_current_ledger_obj_field(
+            sfield::Destination,
+            account_id.as_mut_ptr(),
+            account_id.len(),
+        )
+    };
+    if retcode > 0 {
+        Some(account_id)
+    } else {
+        let _ = trace_num("get_current_escrow_destination error", i64::from(retcode));
+        None
+    }
+}
+
+pub fn get_current_escrow_data() -> Option<ContractData> {
+    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
+    let retcode =
+        unsafe { host::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len()) };
+    if retcode > 0 {
+        Some(data)
+    } else {
+        let _ = trace_num("get_current_escrow_data error", i64::from(retcode));
+        None
+    }
+}
+
+pub fn get_current_escrow_finish_after() -> Option<i32> {
+    let mut after = 0i32;
+    let retcode = unsafe {
+        host::get_current_ledger_obj_field(
+            sfield::FinishAfter,
+            (&mut after) as *mut i32 as *mut u8,
+            4,
+        )
+    };
+    if retcode > 0 {
+        Some(after)
+    } else {
+        let _ = trace_num("get_current_escrow_finish_after error", i64::from(retcode));
+        None
+    }
+}
+
+pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
+    let keylet = match account_keylet(aid) {
+        None => return None,
+        Some(keylet) => keylet,
+    };
+    // let _ = trace_data("std-lib keylet ", &keylet, DataRepr::AsHex);
+    let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+    if slot <= 0 {
+        let _ = trace_num(
+            "get_account_balance cache_ledger_obj failed",
+            i64::from(slot),
+        );
+        return None;
+    }
+    // let _ = trace("std-lib slot ");
+    let mut balance = 0u64;
+    let result_code;
     unsafe {
-        println!("deallocate {:?}", pointer);
-        let _ = Vec::from_raw_parts(pointer, 0, capacity);
+        result_code = host::get_ledger_obj_field(
+            slot,
+            sfield::Balance,
+            (&mut balance) as *mut u64 as *mut u8,
+            8,
+        );
+    }
+
+    if result_code == 8 {
+        Some(balance)
+    } else {
+        let _ = trace("Host function get_current_escrow_finish_field failed!");
+        panic!(
+            "Failed to get Account Balance for field_code={} from host. Error code: {}",
+            sfield::Balance,
+            result_code
+        );
     }
 }
 
-pub type AccountID = Vec<u8>;
-pub type Keylet = Vec<u8>;
+pub fn get_nft(owner: &AccountID, nft: &NFT) -> Option<ContractData> {
+    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
 
-pub mod host_lib {
-    #[link(wasm_import_module = "host_lib")]
-    extern "C" {
-        // fetch ledger data
-        pub fn getLedgerSqn() -> i32;
-        pub fn getParentLedgerTime() -> i32;
-        pub fn getTxField(fname_ptr: i32, fname_len: i32) -> i32;
-        pub fn getLedgerEntryField(
-            le_type: i32,
-            key_ptr: i32,
-            key_len: i32,
-            fname_ptr: i32,
-            fname_len: i32,
-        ) -> i32;
-        pub fn getCurrentLedgerEntryField(fname_ptr: i32, fname_len: i32) -> i32;
-        pub fn getNFT(account_ptr: i32, account_len: i32, nft_id_ptr: i32, nft_id_len: i32) -> i32;
-
-        // update ledger data
-        pub fn updateData(data_ptr: i32, data_len: i32);
-
-        // utils
-        pub fn computeSha512HalfHash(data_ptr: i32, data_len: i32) -> i32;
-        pub fn accountKeylet(account_ptr: i32, account_len: i32) -> i32;
-        pub fn credentialKeylet(
-            subject_ptr: i32,
-            subject_len: i32,
-            issuer_ptr: i32,
-            issuer_len: i32,
-            cred_type_ptr: i32,
-            cred_type_len: i32,
-        ) -> i32;
-        pub fn escrowKeylet(account_ptr: i32, account_len: i32, sequence: i32) -> i32;
-        pub fn oracleKeylet(account_ptr: i32, account_len: i32, document_id: i32) -> i32;
-        pub fn print(str_ptr: i32, str_len: i32);
+    let retcode = unsafe {
+        host::get_NFT(
+            owner.as_ptr(),
+            owner.len(),
+            nft.as_ptr(),
+            nft.len(),
+            data.as_mut_ptr(),
+            data.len(),
+        )
+    };
+    if retcode > 0 {
+        Some(data)
+    } else {
+        let _ = trace_num("get_nft error", i64::from(retcode));
+        None
     }
 }
 
-unsafe fn read_data(ptr: i32) -> Vec<u8> {
-    let int_buf = Vec::from_raw_parts(ptr as *mut u8, 8, 8);
-    let mut ptr_array: [u8; 4] = [0; 4];
-    let mut len_array: [u8; 4] = [0; 4];
-    ptr_array.clone_from_slice(&int_buf[0..4]);
-    len_array.clone_from_slice(&int_buf[4..8]);
-    let new_ptr = i32::from_le_bytes(ptr_array);
-    let len = i32::from_le_bytes(len_array);
-    Vec::from_raw_parts(new_ptr as *mut u8, len as usize, len as usize)
-}
+pub fn get_ledger_obj_nested_field(slot: i32, locator: &LocatorPacker) -> Option<ContractData> {
+    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
 
-unsafe fn read_string(ptr: i32) -> String {
-    let mut ptr_array: [u8; 4] = [0; 4];
-    let mut len_array: [u8; 4] = [0; 4];
-    let int_buf = Vec::from_raw_parts(ptr as *mut u8, 8, 8);
-    ptr_array.clone_from_slice(&int_buf[0..4]);
-    len_array.clone_from_slice(&int_buf[4..8]);
-    let ptr = i32::from_le_bytes(ptr_array);
-    let len = i32::from_le_bytes(len_array);
-    String::from_raw_parts(ptr as *mut u8, len as usize, len as usize)
-}
-
-pub unsafe fn get_tx_account_id() -> AccountID {
-    let mut fname = String::from("Account");
-    let pointer = fname.as_mut_ptr();
-    let len = fname.len();
-    let r_ptr = host_lib::getTxField(pointer as i32, len as i32);
-    // assert_eq!(r_len, 20);
-    let r = read_data(r_ptr);
-    AccountID::from(r)
-}
-
-pub unsafe fn get_current_escrow_account_id() -> AccountID {
-    let mut fname = String::from("Account");
-    let pointer = fname.as_mut_ptr();
-    let len = fname.len();
-    let r_ptr = host_lib::getCurrentLedgerEntryField(pointer as i32, len as i32);
-    // assert_eq!(r_len, 20);
-    let r = read_data(r_ptr);
-    AccountID::from(r)
-}
-
-pub unsafe fn get_current_escrow_destination() -> AccountID {
-    let mut fname = String::from("Destination");
-    let pointer = fname.as_mut_ptr();
-    let len = fname.len();
-    let r_ptr = host_lib::getCurrentLedgerEntryField(pointer as i32, len as i32);
-    // assert_eq!(r_len, 20);
-    let r = read_data(r_ptr);
-    AccountID::from(r)
-}
-
-pub unsafe fn get_current_escrow_data() -> Vec<u8> {
-    let mut fname = String::from("Data");
-    let pointer = fname.as_mut_ptr();
-    let len = fname.len();
-    let r_ptr = host_lib::getCurrentLedgerEntryField(pointer as i32, len as i32);
-    // assert_eq!(r_len, 20);
-    read_data(r_ptr)
-}
-
-pub unsafe fn get_current_escrow_finish_after() -> i32 {
-    let mut fname = String::from("FinishAfter");
-    let pointer = fname.as_mut_ptr();
-    let len = fname.len();
-    let r_ptr = host_lib::getCurrentLedgerEntryField(pointer as i32, len as i32);
-    // assert_eq!(r_len, 20);
-    let r = read_string(r_ptr);
-    r.parse::<i32>().unwrap()
-}
-
-pub unsafe fn get_current_escrow_cancel_after() -> i32 {
-    let mut fname = String::from("CancelAfter");
-    let pointer = fname.as_mut_ptr();
-    let len = fname.len();
-    let r_ptr = host_lib::getCurrentLedgerEntryField(pointer as i32, len as i32);
-    // assert_eq!(r_len, 20);
-    let r = read_string(r_ptr);
-    r.parse::<i32>().unwrap()
-}
-
-pub unsafe fn get_account_balance(aid: &AccountID) -> u64 {
-    let key_ptr = aid.as_ptr();
-    let key_len = aid.len();
-    let mut fname = String::from("Balance");
-    let fname_ptr = fname.as_mut_ptr();
-    let fname_len = fname.len();
-    let r_ptr = host_lib::getLedgerEntryField(
-        0x0061,
-        key_ptr as i32,
-        key_len as i32,
-        fname_ptr as i32,
-        fname_len as i32,
-    );
-    let r = read_string(r_ptr);
-    r.parse::<u64>().unwrap()
-}
-
-pub unsafe fn account_keylet(aid: &AccountID) -> Keylet {
-    let key_ptr = aid.as_ptr();
-    let key_len = aid.len();
-    let r_ptr = host_lib::accountKeylet(key_ptr as i32, key_len as i32);
-    let r = read_data(r_ptr);
-    Keylet::from(r)
-}
-
-pub unsafe fn credential_keylet(subject: &String, issuer: &String, cred_type: &String) -> Keylet {
-    let subject_ptr = subject.as_ptr();
-    let subject_len = subject.len();
-    let issuer_ptr = issuer.as_ptr();
-    let issuer_len = issuer.len();
-    let cred_type_ptr = cred_type.as_ptr();
-    let cred_type_len = cred_type.len();
-    let r_ptr = host_lib::credentialKeylet(
-        subject_ptr as i32,
-        subject_len as i32,
-        issuer_ptr as i32,
-        issuer_len as i32,
-        cred_type_ptr as i32,
-        cred_type_len as i32,
-    );
-    let r = read_data(r_ptr);
-    Keylet::from(r)
-}
-
-pub unsafe fn escrow_keylet(aid: &AccountID, sequence: i32) -> Keylet {
-    let key_ptr = aid.as_ptr();
-    let key_len = aid.len();
-    let r_ptr = host_lib::escrowKeylet(key_ptr as i32, key_len as i32, sequence);
-    let r = read_data(r_ptr);
-    Keylet::from(r)
-}
-
-pub unsafe fn oracle_keylet(aid: &AccountID, document_id: i32) -> Keylet {
-    let key_ptr = aid.as_ptr();
-    let key_len = aid.len();
-    let r_ptr = host_lib::oracleKeylet(key_ptr as i32, key_len as i32, document_id);
-    let r = read_data(r_ptr);
-    Keylet::from(r)
-}
-
-pub unsafe fn update_current_escrow_data(data: Vec<u8>) {
-    let pointer = data.as_ptr();
-    let len = data.len();
-    host_lib::updateData(pointer as i32, len as i32);
-}
-
-pub unsafe fn print_vector(vector: &Vec<u8>) {
-    let mut output = Vec::new();
-    for (i, b) in vector.iter().enumerate() {
-        append_u8_decimal(*b, &mut output);
-        if i != vector.len() - 1 {
-            output.push(b' '); // space between numbers
-        }
+    let retcode = unsafe {
+        host::get_ledger_obj_nested_field(
+            slot,
+            locator.get_addr(),
+            locator.num_packed_bytes(),
+            data.as_mut_ptr(),
+            data.len(),
+        )
+    };
+    if retcode > 0 {
+        Some(data)
+    } else {
+        let _ = trace_num("get_ledger_obj_nested_field error", i64::from(retcode));
+        None
     }
-    print_data(&output);
 }
 
-fn append_u8_decimal(mut n: u8, buf: &mut Vec<u8>) {
-    let mut tmp = [0u8; 3];
-    let mut i = 3;
-    loop {
-        i -= 1;
-        tmp[i] = b'0' + (n % 10);
-        n /= 10;
-        if n == 0 {
-            break;
-        }
+pub fn update_current_escrow_data(data: ContractData) {
+    unsafe {
+        host::update_data(data.as_ptr(), data.len());
     }
-    buf.extend_from_slice(&tmp[i..]);
 }
 
-pub unsafe fn print_data(s: &Vec<u8>) {
-    let s_ptr = s.as_ptr();
-    let s_len = s.len();
-    host_lib::print(s_ptr as i32, s_len as i32);
-}
-
-pub unsafe fn print_number<T: ToString>(number: &T) {
-    let s = number.to_string();
-    let s_ptr = s.as_ptr();
-    let s_len = s.len();
-    host_lib::print(s_ptr as i32, s_len as i32);
+/// This function is called on panic, but only in the WASM architecture. In non-WASM (e.g., in the
+/// Host Simulator) the standard lib is available, which includes a panic handler.
+#[cfg(target_arch = "wasm32")]
+#[panic_handler]
+fn panic(_info: &::core::panic::PanicInfo) -> ! {
+    // This instruction will halt execution of the WASM module.
+    // It's the WASM equivalent of a trap or an unrecoverable error.
+    ::core::arch::wasm32::unreachable();
 }

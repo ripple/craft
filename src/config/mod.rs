@@ -6,7 +6,6 @@ pub struct Config {
     pub wasm_target: WasmTarget,
     pub build_mode: BuildMode,
     pub optimization_level: OptimizationLevel,
-    pub use_wee_alloc: bool,
     pub project_path: PathBuf,
 }
 
@@ -63,7 +62,6 @@ impl Default for Config {
             wasm_target: WasmTarget::UnknownUnknown,
             build_mode: BuildMode::Release,
             optimization_level: OptimizationLevel::Small,
-            use_wee_alloc: false,
             project_path: std::env::current_dir().unwrap_or_default(),
         }
     }

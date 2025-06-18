@@ -95,6 +95,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     println!("{}", "Running cargo build...".cyan());
+    println!("args: {:?}", args);
     let output = Command::new("cargo")
         .current_dir(project_dir)
         .args(&args)
@@ -147,7 +148,9 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
                 "{}",
                 "\nFound WASM file with directory name instead of crate name.".yellow()
             );
-            println!("This can happen when directory name contains hyphens but crate name uses underscores.");
+            println!(
+                "This can happen when directory name contains hyphens but crate name uses underscores."
+            );
             return Ok(alt_wasm_file);
         }
 
@@ -361,42 +364,12 @@ pub async fn configure() -> Result<Config> {
         _ => OptimizationLevel::Aggressive,
     };
 
-    let use_wee_alloc = Confirm::new("Use wee_alloc for smaller binary size?")
-        .with_default(false)
-        .prompt()?;
-
     Ok(Config {
         wasm_target: target,
         build_mode,
         optimization_level,
-        use_wee_alloc,
         project_path,
     })
-}
-
-pub async fn setup_wee_alloc(project_path: &Path) -> Result<()> {
-    let cargo_toml = utils::find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
-
-    // Read current content
-    let mut content = std::fs::read_to_string(&cargo_toml)?;
-
-    if !content.contains("wee_alloc") {
-        content.push_str("\nwee_alloc = \"0.4.5\"\n");
-        std::fs::write(&cargo_toml, content)?;
-
-        println!("{}", "Added wee_alloc dependency".green());
-        println!("Add this to your lib.rs/main.rs:");
-        println!(
-            "{}",
-            r#"
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-"#
-            .yellow()
-        );
-    }
-
-    Ok(())
 }
 
 pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
@@ -542,7 +515,9 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
 
     // Verify at least one rippled exists
     if rippled_paths.is_empty() {
-        anyhow::bail!("rippled executable not found in current directory, reference/build-rippled-* or reference/rippled/Debug/");
+        anyhow::bail!(
+            "rippled executable not found in current directory, reference/build-rippled-* or reference/rippled/Debug/"
+        );
     }
 
     // Choose rippled executable
@@ -588,7 +563,9 @@ pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
 
     // Verify at least one config exists
     if config_paths.is_empty() {
-        anyhow::bail!("rippled config not found in current directory or at reference/rippled-cfg/smart-escrow-rippled.cfg");
+        anyhow::bail!(
+            "rippled config not found in current directory or at reference/rippled-cfg/smart-escrow-rippled.cfg"
+        );
     }
 
     // Choose config file
@@ -922,140 +899,13 @@ pub async fn list_rippled() -> Result<()> {
     Ok(())
 }
 
-pub async fn start_explorer(background: bool) -> Result<()> {
-    use colored::*;
-    use std::fs;
-    use std::path::Path;
-    use std::process::{Command, Stdio};
-
-    println!("{}", "Setting up and running XRPL Explorer...".blue());
-
-    // Define path to the explorer directory
-    let explorer_dir = Path::new("reference/explorer");
-
-    // Check if the explorer directory exists
-    if !explorer_dir.exists() {
-        anyhow::bail!(
-            "XRPL Explorer not found at {}. Make sure you have initialized the git submodule.",
-            explorer_dir.display()
-        );
-    }
-
-    // Check if .env file exists, create it if not
-    let env_file_path = explorer_dir.join(".env");
-    if !env_file_path.exists() {
-        println!("{}", "Creating .env file for XRPL Explorer...".yellow());
-
-        // Get the template content
-        let template_path = Path::new("src/utils/explorer_env_template.txt");
-        if !template_path.exists() {
-            anyhow::bail!(
-                "Explorer .env template not found at {}",
-                template_path.display()
-            );
-        }
-
-        let template_content =
-            fs::read_to_string(template_path).context("Failed to read explorer .env template")?;
-
-        // Write the template content to the .env file
-        fs::write(&env_file_path, template_content)
-            .context("Failed to create explorer .env file")?;
-
-        println!(
-            "{}",
-            "✅ Created .env file at reference/explorer/.env".green()
-        );
-    } else {
-        println!("{}", "✅ .env file already exists".green());
-    }
-
-    // Change to the explorer directory
-    std::env::set_current_dir(explorer_dir).context("Failed to change to explorer directory")?;
-
-    // Install dependencies if node_modules doesn't exist or force reinstall is requested
-    let node_modules_path = Path::new("node_modules");
-    if !node_modules_path.exists() {
-        println!(
-            "{}",
-            "Installing dependencies (this may take a while)...".blue()
-        );
-
-        let npm_install_status = Command::new("npm")
-            .arg("install")
-            .stdout(if background {
-                Stdio::null()
-            } else {
-                Stdio::inherit()
-            })
-            .stderr(Stdio::inherit())
-            .status()
-            .context("Failed to execute 'npm install'")?;
-
-        if !npm_install_status.success() {
-            anyhow::bail!("npm install failed with status: {}", npm_install_status);
-        }
-
-        println!("{}", "✅ Dependencies installed successfully".green());
-    } else {
-        println!("{}", "✅ Dependencies already installed".green());
-    }
-
-    // Start the explorer
-    println!("{}", "Starting XRPL Explorer...".blue());
-
-    if background {
-        // Run in background mode
-        let npm_start = Command::new("npm")
-            .arg("start")
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-            .context("Failed to start XRPL Explorer")?;
-
-        println!(
-            "{}",
-            format!(
-                "✅ XRPL Explorer started in background with PID: {}",
-                npm_start.id()
-            )
-            .green()
-        );
-        println!(
-            "{}",
-            "The Explorer should be available at: http://localhost:3000/localhost:6006".blue()
-        );
-        println!("{}", "To stop the Explorer, use: killall node".yellow());
-    } else {
-        // Run in foreground mode with visible console output
-        println!(
-            "{}",
-            "Starting XRPL Explorer in foreground mode. Press Ctrl+C to terminate.".yellow()
-        );
-        println!(
-            "{}",
-            "The Explorer should be available at: http://localhost:3000/localhost:6006".blue()
-        );
-
-        let status = Command::new("npm")
-            .arg("start")
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status()
-            .context("Failed to run XRPL Explorer")?;
-
-        if status.success() {
-            println!("{}", "\nXRPL Explorer exited successfully.".green());
-        } else {
-            println!(
-                "{}",
-                format!("\nXRPL Explorer exited with status: {}", status).red()
-            );
-        }
-    }
-
-    // Return to original directory
-    std::env::set_current_dir("../../").context("Failed to change back to original directory")?;
+pub async fn open_explorer() -> Result<()> {
+    use open;
+    open::that("https://custom.xrpl.org/localhost:6006")?;
+    println!(
+        "{}",
+        "The Explorer should be available at: https://custom.xrpl.org/localhost:6006".blue()
+    );
 
     Ok(())
 }

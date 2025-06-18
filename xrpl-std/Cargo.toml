@@ -1,5 +1,5 @@
 [package]
-edition = "2021"
+edition = "2024"
 name = "xrpl-std"
 version = "0.0.1"
 
@@ -8,6 +8,6 @@ version = "0.0.1"
 
 [lib]
 crate-type = ["lib"]
-#crate-type = ["cdylib"]
 
 [dependencies]
+log = "0.4.27"

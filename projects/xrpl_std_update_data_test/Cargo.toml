@@ -1,6 +1,6 @@
 [package]
 edition = "2024"
-name = "xrpl_std_example"
+name = "xrpl_std_update_data_test"
 version = "0.0.1"
 
 # This empty workspace definition keeps this project independent of the parent workspace
@@ -11,9 +11,10 @@ crate-type = ["cdylib"]
 
 [profile.release]
 lto = true
-opt-level = 's'
+opt-level = 's' # Optimize for size
 panic = "abort"
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
-#hex = "0.4.3"
+# We might need a serialization library later, e.g., serde + serde_json_core or similar
+# For now, we'll manually construct a byte array.

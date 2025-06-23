@@ -283,7 +283,7 @@ pub extern "C" fn finish() -> i32 {
     // let ed_str = String::from_utf8(escrow_data.clone()).unwrap();
     // let threshold_balance = ed_str.parse::<u64>().unwrap();
     // let pl_time = host::getParentLedgerTime();
-    // let e_time = get_current_current_transaction_after();
+    // let e_time = get_current_escrow_finish_after();
 
     let _ = trace("}");
     // sender == owner && dest_balance <= threshold_balance && pl_time >= e_time

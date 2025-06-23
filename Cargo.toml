@@ -32,4 +32,4 @@ sha2 = "0.10"
 tokio = { version = "1.36", features = ["full"] }
 walkdir = "2.4"
 which = "7.0.3"
-wamr-rust-sdk = { git = "https://github.com/pwang200/wamr-rust-sdk.git", rev = "31c8f0d56509ef1e2691ea550c632d17f0835092"}
+wamr-rust-sdk = { git = "https://github.com/pwang200/wamr-rust-sdk.git"}

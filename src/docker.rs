@@ -457,7 +457,7 @@ impl DockerManager {
 
         // Create container with port mappings and volume mounts
         // Port mapping based on config:
-        // - 80 (container) -> 6006 (host) for public WebSocket
+        // - 6005 (container) -> 6005 (host) for public WebSocket
         // - 6006 (container) -> 6006 (host) for admin WebSocket
         // - 5005 (container) -> 5005 (host) for admin RPC
         // -v /path/to/config:/etc/opt/ripple/rippled.cfg:ro
@@ -465,8 +465,8 @@ impl DockerManager {
         let create_opts = ContainerCreateOpts::builder()
             .name(CONTAINER_NAME)
             .image(RIPPLED_IMAGE)
-            .expose(docker_api::opts::PublishPort::tcp(80), 6006) // Public WS on host:6006
-            .expose(docker_api::opts::PublishPort::tcp(6006), 6007) // Admin WS on host:6007
+            .expose(docker_api::opts::PublishPort::tcp(6005), 6005) // Public WS
+            .expose(docker_api::opts::PublishPort::tcp(6006), 6006) // Admin WS
             .expose(docker_api::opts::PublishPort::tcp(5005), 5005) // Admin RPC
             .volumes(vec![
                 format!(
@@ -496,8 +496,8 @@ impl DockerManager {
             "{}",
             "rippled container started successfully in stand-alone mode!".green()
         );
-        println!("{}", "Public WebSocket: ws://localhost:6006".blue());
-        println!("{}", "Admin WebSocket: ws://localhost:6007".blue());
+        println!("{}", "Public WebSocket: ws://localhost:6005".blue());
+        println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
         println!("{}", "Admin RPC API: http://localhost:5005".blue());
         println!(
             "{}",
@@ -633,7 +633,7 @@ impl DockerManager {
         match timeout(
             Duration::from_secs(5),
             client
-                .post("http://localhost:6006")
+                .post("http://localhost:5005")
                 .json(&request_body)
                 .send(),
         )
@@ -772,9 +772,7 @@ impl DockerManager {
         // Check if container exists
         let containers = self.docker.containers();
         match containers.get(CONTAINER_NAME).inspect().await {
-            Ok(info) => {
-                Ok(info.state.as_ref().and_then(|s| s.running).unwrap_or(false))
-            }
+            Ok(info) => Ok(info.state.as_ref().and_then(|s| s.running).unwrap_or(false)),
             Err(_) => Ok(false),
         }
     }

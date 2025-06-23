@@ -1,1 +1,0 @@
-(module (memory 0 65536))

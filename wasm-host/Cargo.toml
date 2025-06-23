@@ -13,4 +13,4 @@ sha2 = "0.11.0-pre.5"
 xrpl-rust = { version = "0.5.0", default-features = false, features = ["core"] }
 hex = "0.4.3"
 lazy_static = "1.5.0"
-wamr-rust-sdk = { path = "../wamr-rust-sdk" }
+wamr-rust-sdk = { git = "https://github.com/pwang200/wamr-rust-sdk.git", rev = "31c8f0d56509ef1e2691ea550c632d17f0835092"}

@@ -198,7 +198,10 @@ async fn main() -> Result<()> {
                 println!("{}", "✅ rippled is running in Docker container".green());
             }
             Ok(false) => {
-                println!("{}", "ℹ️  rippled is not currently running. To start it, run:".yellow());
+                println!(
+                    "{}",
+                    "ℹ️  rippled is not currently running. To start it, run:".yellow()
+                );
                 println!("{}", "     craft start-rippled".blue());
             }
             Err(_) => {

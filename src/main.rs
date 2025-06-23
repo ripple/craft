@@ -220,7 +220,7 @@ mod cli_tests {
 
     #[test]
     fn test_build_command_parsing() {
-        let cli = Cli::parse_from(&[
+        let cli = Cli::parse_from([
             "craft", "build", "myproj", "--mode", "debug", "--opt", "none",
         ]);
         match cli.command {
@@ -235,7 +235,7 @@ mod cli_tests {
 
     #[test]
     fn test_build_defaults() {
-        let cli = Cli::parse_from(&["craft", "build"]);
+        let cli = Cli::parse_from(["craft", "build"]);
         match cli.command {
             Some(Commands::Build { project, mode, opt }) => {
                 assert!(project.is_none());
@@ -248,7 +248,7 @@ mod cli_tests {
 
     #[test]
     fn test_build_with_positional_project() {
-        let cli = Cli::parse_from(&["craft", "build", "myproj", "--mode", "debug"]);
+        let cli = Cli::parse_from(["craft", "build", "myproj", "--mode", "debug"]);
         match cli.command {
             Some(Commands::Build { project, mode, opt }) => {
                 assert_eq!(project.unwrap(), "myproj");

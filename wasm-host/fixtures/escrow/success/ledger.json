@@ -1,7 +1,6 @@
 [
   {
     "342F9E0D242EDB43A0FBFC672B302CC8BB904993172E57FBFF4C5D4A1EB85AB9": {
-      "NoteNote": "FAKE FAKE FAKE",
       "Flags": 0,
       "TransactionType": "SignerListSet",
       "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
@@ -31,7 +30,6 @@
   },
   {
     "2B6AC232AA4C4BE41BF49D2459FA4A0347E1B543A4C92FCEE0821C0201E2E9A8": {
-      "NoteNote": "FAKE FAKE FAKE",
       "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
       "Balance": "55426479402",
       "Flags": 1703936,

@@ -1,9 +1,16 @@
 use crate::hashing::HASH256_LEN;
+use crate::sfield::{IOUValue, IssueCurrency, IssueIssuer, XRPValue};
+use bigdecimal::{BigDecimal, Signed, ToPrimitive, Zero};
 use hex;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::str::FromStr;
 use xrpl::core::addresscodec::utils::decode_base58;
 use xrpl::core::binarycodec::definitions::{get_ledger_entry_type_code, get_transaction_type_code};
+use xrpl::core::binarycodec::exceptions::XRPLBinaryCodecException;
+use xrpl::core::exceptions::{XRPLCoreException, XRPLCoreResult};
+use xrpl::utils::exceptions::XRPRangeException;
+use xrpl::utils::{MAX_IOU_EXPONENT, MIN_IOU_EXPONENT, verify_valid_ic_value};
 
 pub const ACCOUNT_ID_LEN: usize = 20;
 pub type AccountId = Vec<u8>;
@@ -84,6 +91,20 @@ pub enum Decodable {
 impl Decodable {
     pub fn from_sfield(field: i32) -> Self {
         assert!(field >= 0);
+
+        if field == XRPValue {
+            return Decodable::UINT64;
+        }
+        if field == IOUValue {
+            return Decodable::NUMBER;
+        }
+        if field == IssueIssuer {
+            return Decodable::ACCOUNT;
+        }
+        if field == IssueCurrency {
+            return Decodable::CURRENCY;
+        }
+
         if let Some(name) = SField_To_Name.get(&field) {
             if name == "TransactionType" {
                 return Decodable::Uint16_TX_TYPE;
@@ -142,20 +163,20 @@ pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::VL_HEX => decode_hex(s),
         Decodable::VL_OTHER => decode_vl_other(s),
         Decodable::ACCOUNT => decode_account_id(s),
-        Decodable::NUMBER => not_implemented(s),
-        Decodable::OBJECT => not_implemented(s),
-        Decodable::ARRAY => not_implemented(s),
+        Decodable::NUMBER => decode_number(s),
+        Decodable::OBJECT => not_leaf(s),
+        Decodable::ARRAY => not_leaf(s),
         Decodable::UINT8 => decode_u8(s),
         Decodable::UINT160 => decode_hex(s),
-        Decodable::PATHSET => not_implemented(s),
+        Decodable::PATHSET => not_leaf(s),
         Decodable::VECTOR256 => decode_hex(s),
         Decodable::UINT96 => decode_hex(s),
         Decodable::UINT192 => decode_hex(s),
         Decodable::UINT384 => decode_hex(s),
         Decodable::UINT512 => decode_hex(s),
-        Decodable::ISSUE => not_implemented(s),
-        Decodable::XCHAIN_BRIDGE => not_implemented(s),
-        Decodable::CURRENCY => not_implemented(s),
+        Decodable::ISSUE => not_leaf(s),
+        Decodable::XCHAIN_BRIDGE => not_leaf(s),
+        Decodable::CURRENCY => decode_currency(s),
         Decodable::AS_IS => raw_string_to_bytes(s),
         Decodable::NOT => decode_not(s),
     }
@@ -253,7 +274,103 @@ pub fn decode_vl_other(s: &String) -> Option<Vec<u8>> {
     decode_hex(s)
 }
 
-pub fn not_implemented(_: &String) -> Option<Vec<u8>> {
+// the following consts and _serialize_issued_currency_value function are copied
+// from https://github.com/sephynox/xrpl-rust
+const _MIN_MANTISSA: u128 = u128::pow(10, 15);
+const _MAX_MANTISSA: u128 = u128::pow(10, 16) - 1;
+const _POS_SIGN_BIT_MASK: i64 = 0x4000000000000000;
+const _ZERO_CURRENCY_AMOUNT_HEX: u64 = 0x8000000000000000;
+/// Serializes the value field of an issued currency amount
+/// to its bytes representation.
+fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 8]> {
+    verify_valid_ic_value(&decimal.to_scientific_notation())
+        .map_err(|e| XRPLCoreException::XRPLUtilsError(e.to_string()))?;
+
+    if decimal.is_zero() {
+        return Ok((_ZERO_CURRENCY_AMOUNT_HEX).to_be_bytes());
+    };
+
+    let is_positive: bool = decimal.is_positive();
+    let (mantissa_str, scale) = decimal.normalized().as_bigint_and_exponent();
+    let mut exp: i32 = -(scale as i32);
+    let mut mantissa: u128 = mantissa_str.abs().to_u128().unwrap();
+
+    while mantissa < _MIN_MANTISSA && exp > MIN_IOU_EXPONENT {
+        mantissa *= 10;
+        exp -= 1;
+    }
+
+    while mantissa > _MAX_MANTISSA {
+        if exp >= MAX_IOU_EXPONENT {
+            return Err(XRPLBinaryCodecException::from(
+                XRPRangeException::UnexpectedICAmountOverflow {
+                    max: MAX_IOU_EXPONENT as usize,
+                    found: exp as usize,
+                },
+            )
+            .into());
+        } else {
+            mantissa /= 10;
+            exp += 1;
+        }
+    }
+
+    if exp < MIN_IOU_EXPONENT || mantissa < _MIN_MANTISSA {
+        // Round to zero
+        Ok((_ZERO_CURRENCY_AMOUNT_HEX).to_be_bytes())
+    } else if exp > MAX_IOU_EXPONENT || mantissa > _MAX_MANTISSA {
+        Err(
+            XRPLBinaryCodecException::from(XRPRangeException::UnexpectedICAmountOverflow {
+                max: MAX_IOU_EXPONENT as usize,
+                found: exp as usize,
+            })
+            .into(),
+        )
+    } else {
+        // "Not XRP" bit set
+        let mut serial: i128 = _ZERO_CURRENCY_AMOUNT_HEX as i128;
+
+        // "Is positive" bit set
+        if is_positive {
+            serial |= _POS_SIGN_BIT_MASK as i128;
+        };
+
+        // next 8 bits are exponents
+        serial |= ((exp as i64 + 97) << 54) as i128;
+        // last 54 bits are mantissa
+        serial |= mantissa as i128;
+
+        Ok((serial as u64).to_be_bytes())
+    }
+}
+
+pub fn decode_number(s: &String) -> Option<Vec<u8>> {
+    let value = BigDecimal::from_str(s).ok()?;
+    _serialize_issued_currency_value(value)
+        .ok()
+        .map(|bytes| bytes.to_vec())
+}
+
+pub fn decode_currency(s: &String) -> Option<Vec<u8>> {
+    if s.len() == 3 {
+        let mut bytes = [0u8; 3];
+        bytes.copy_from_slice(s.as_bytes());
+        Some(bytes.to_vec())
+    } else {
+        match hex::decode(s) {
+            Ok(bytes) => {
+                if bytes.len() == 20 {
+                    Some(bytes)
+                } else {
+                    None
+                }
+            }
+            Err(_) => None,
+        }
+    }
+}
+
+pub fn not_leaf(_: &String) -> Option<Vec<u8>> {
     None
 }
 
@@ -565,5 +682,10 @@ fn polulate_field_names() -> HashMap<i32, String> {
     sfield_names.insert(655491329, "LedgerEntry".to_string());
     sfield_names.insert(655556865, "Validation".to_string());
     sfield_names.insert(655622401, "Metadata".to_string());
+    sfield_names.insert(100, "value".to_string());
+    sfield_names.insert(101, "value".to_string());
+    sfield_names.insert(102, "issuer".to_string());
+    sfield_names.insert(103, "currency".to_string());
+
     sfield_names
 }

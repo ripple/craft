@@ -288,3 +288,9 @@ pub const Transaction: i32 = 655425793;
 pub const LedgerEntry: i32 = 655491329;
 pub const Validation: i32 = 655556865;
 pub const Metadata: i32 = 655622401;
+
+// different from the sfield names above, the following are types of fields
+pub const XRPValue: i32 = 100;
+pub const IOUValue: i32 = 101;
+pub const IssueIssuer: i32 = 102;
+pub const IssueCurrency: i32 = 103;

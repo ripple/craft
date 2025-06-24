@@ -14,3 +14,4 @@ xrpl-rust = { version = "0.5.0", default-features = false, features = ["core"] }
 hex = "0.4.3"
 lazy_static = "1.5.0"
 wamr-rust-sdk = { git = "https://github.com/pwang200/wamr-rust-sdk.git"}
+bigdecimal = {version = "0.4.8", features = ["serde-json"]}

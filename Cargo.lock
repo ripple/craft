@@ -3165,6 +3165,7 @@ dependencies = [
 name = "wasm-host"
 version = "0.1.0"
 dependencies = [
+ "bigdecimal",
  "clap",
  "env_logger",
  "hex",

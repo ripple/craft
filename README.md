@@ -1,6 +1,18 @@
 # `craft`
 
-An interactive CLI tool for building and testing WASM modules.
+An interactive CLI tool for building and testing WASM modules for the XRP Ledger.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Command-Line Options](#command-line-options)
+- [Project Structure](#project-structure)
+- [WASM Host Testing Tool](#wasm-host-testing-tool)
+- [Reference Submodules](#reference-submodules)
+- [Managing rippled](#managing-rippled)
+- [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
 ## Installation
 
@@ -50,25 +62,43 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
 
 ## Usage
 
-Run the tool without any arguments for an interactive experience:
+Use specific commands:
+
+```bash
+craft build --project <name> [--mode <debug|release>] [--opt <none|small|aggressive>] # Build a WASM module
+craft test            # Test a WASM module
+craft start-rippled   # Check if rippled is running and start it if needed
+craft list-rippled    # List and manage running rippled processes
+craft start-explorer  # Set up and run the XRPL Explorer
+```
+
+Or, run the tool without any arguments for an interactive experience:
 
 ```bash
 craft
 ```
 
-Or use specific commands:
-
-```bash
-craft build           # Build a WASM module
-craft test            # Test a WASM module
-craft start-rippled   # Check if rippled is running and start it if needed
-craft list-rippled    # List and manage running rippled processes
-craft open-explorer   # Open the XRPL Explorer
-```
-
 ### Command-Line Options
 
 Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+
+- **Build**: Non-interactive build with options:
+
+  ```bash
+  craft build [project-name] [--mode <debug|release>] [--opt <none|small|aggressive>]
+  ```
+
+  Options:
+
+  - `project-name` Name of the project subfolder under `projects/` (positional argument).
+  - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
+  - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
+
+  Example:
+
+  ```bash
+  craft build notary --mode debug --opt aggressive
+  ```
 
 The `test` command supports direct command-line options:
 
@@ -131,6 +161,40 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory. Cur
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
+## Reference Submodules
+
+See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
+
+### 1. rippled
+
+Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
+
+### 2. XRPL Explorer
+
+Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
+
+### Cloning the Repository with Submodules
+
+To clone this repository including all submodules, use:
+
+```bash
+git clone --recurse-submodules git@github.com:ripple/craft.git
+```
+
+Or if you've already cloned the repository without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Updating Submodules
+
+To update all submodules to their latest versions:
+
+```bash
+git submodule update --remote
+```
+
 ## Managing rippled
 
 The `craft` tool includes commands to manage a local `rippled` instance:
@@ -161,7 +225,7 @@ The `craft` tool includes commands to open the XRPL Explorer:
 craft open-explorer
 ```
 
-## Usage
+## WASM Host Testing
 
 ### Direct Usage
 

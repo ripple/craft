@@ -765,7 +765,7 @@ impl DockerManager {
 
     pub async fn is_rippled_running(&self) -> Result<bool> {
         // Check if Docker is accessible
-        if let Err(_) = self.docker.ping().await {
+        if (self.docker.ping().await).is_err() {
             return Ok(false);
         }
 

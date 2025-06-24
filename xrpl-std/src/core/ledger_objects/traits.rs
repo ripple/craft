@@ -1,6 +1,6 @@
-use crate::core::amount::Amount;
-use crate::core::amount::Amount::Xrp;
-use crate::core::amount::xrp_amount::XrpAmount;
+use crate::core::types::amount::Amount;
+use crate::core::types::amount::Amount::Xrp;
+use crate::core::types::amount::xrp_amount::XrpAmount;
 use crate::core::error_codes::{
     match_result_code_with_expected_bytes, match_result_code_with_expected_bytes_optional,
 };

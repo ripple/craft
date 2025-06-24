@@ -1,8 +1,6 @@
 #![no_std]
 
 use crate::host::{Result::Err, Result::Ok};
-use xrpl_std::core::amount::Amount;
-use xrpl_std::core::amount::xrp_amount::XrpAmount;
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::{EscrowFinishFields, TransactionCommonFields};
@@ -10,8 +8,10 @@ use xrpl_std::core::ledger_objects::current_escrow::{CurrentEscrow, get_current_
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::account_id::AccountID;
+use xrpl_std::core::types::amount::xrp_amount::XrpAmount;
 use xrpl_std::core::types::blob::Blob;
 use xrpl_std::core::types::hash_256::Hash256;
+use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
@@ -49,6 +49,7 @@ pub extern "C" fn finish() -> bool {
     // Trace Field: TransactionID
     let current_tx_id: Hash256 = escrow_finish.get_id().unwrap_or_panic();
     let _ = trace_data("  EscrowFinish TxId:", &current_tx_id.0, DataRepr::AsHex);
+    assert_eq!(current_tx_id, EXPECTED_TX_ID.into());
 
     // Trace Field: Account
     let account = escrow_finish.get_account().unwrap_or_panic();
@@ -62,6 +63,7 @@ pub extern "C" fn finish() -> bool {
 
     // Trace Field: TransactionType
     let transaction_type: TransactionType = escrow_finish.get_transaction_type().unwrap_or_panic();
+    assert_eq!(transaction_type, TransactionType::EscrowFinish);
     let tx_type_bytes: [u8; 2] = transaction_type.into();
     let _ = trace_data(
         "  TransactionType (EscrowFinish):",
@@ -71,23 +73,24 @@ pub extern "C" fn finish() -> bool {
 
     // Trace Field: ComputationAllowance
     let computation_allowance: u32 = escrow_finish.get_computation_allowance().unwrap_or_panic();
+    assert_eq!(computation_allowance, 1000001);
     let _ = trace_num("  ComputationAllowance:", computation_allowance as i64);
 
     // Trace Field: Fee
-    let fee: Amount = escrow_finish.get_fee().unwrap_or_panic();
-    let fee_as_xrp_amount: XrpAmount = match fee {
-        Amount::Xrp(xrp_amount) => xrp_amount,
-    };
-    let _ = trace_num("  Fee:", fee_as_xrp_amount.0 as i64);
+    let fee: XrpAmount = escrow_finish.get_fee().unwrap_or_panic();
+    assert_eq!(fee.0, 10);
+    let _ = trace_num("  Fee:", fee.0 as i64);
 
     // Trace Field: Sequence
     let sequence: u32 = escrow_finish.get_sequence().unwrap_or_panic();
+    assert_eq!(sequence, 4294967295);
     let _ = trace_num("  Sequence:", sequence as i64);
 
     // Trace Field: AccountTxnID
     match escrow_finish.get_account_txn_id() {
         Ok(opt_txn_id) => {
             if let Some(txn_id) = opt_txn_id {
+                assert_eq!(txn_id.0, EXPECTED_ACCOUNT_TXN_ID);
                 let _ = trace_data("  AccountTxnID:", &txn_id.0, DataRepr::AsHex);
             }
         }
@@ -103,6 +106,7 @@ pub extern "C" fn finish() -> bool {
     match escrow_finish.get_flags() {
         Ok(opt_flags) => {
             if let Some(flags) = opt_flags {
+                assert_eq!(flags, 4294967294);
                 let _ = trace_num("  Flags:", flags as i64);
             }
         }
@@ -115,6 +119,7 @@ pub extern "C" fn finish() -> bool {
     match escrow_finish.get_last_ledger_sequence() {
         Ok(opt_last_ledger_sequence) => {
             if let Some(last_ledger_sequence) = opt_last_ledger_sequence {
+                assert_eq!(last_ledger_sequence, 4294967292);
                 let _ = trace_num("  LastLedgerSequence:", last_ledger_sequence as i64);
             }
         }
@@ -130,6 +135,7 @@ pub extern "C" fn finish() -> bool {
     match escrow_finish.get_network_id() {
         Ok(opt_network_id) => {
             if let Some(network_id) = opt_network_id {
+                assert_eq!(network_id, 4294967291);
                 let _ = trace_num("  NetworkID:", network_id as i64);
             }
         }
@@ -145,6 +151,7 @@ pub extern "C" fn finish() -> bool {
     match escrow_finish.get_source_tag() {
         Ok(opt_source_tag) => {
             if let Some(source_tag) = opt_source_tag {
+                assert_eq!(source_tag, 4294967290);
                 let _ = trace_num("  SourceTag:", source_tag as i64);
             }
         }
@@ -159,6 +166,7 @@ pub extern "C" fn finish() -> bool {
     // Trace Field: SigningPubKey
     match escrow_finish.get_signing_pub_key() {
         Ok(signing_pub_key) => {
+            assert_eq!(signing_pub_key.0, EXPECTED_TX_SIGNING_PUB_KEY);
             let _ = trace_data("  SigningPubKey:", &signing_pub_key.0, DataRepr::AsHex);
         }
         Err(error) => {
@@ -173,6 +181,7 @@ pub extern "C" fn finish() -> bool {
     match escrow_finish.get_ticket_sequence() {
         Ok(opt_ticket_sequence) => {
             if let Some(ticket_sequence) = opt_ticket_sequence {
+                assert_eq!(ticket_sequence, 4294967289);
                 let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
             }
         }
@@ -185,6 +194,7 @@ pub extern "C" fn finish() -> bool {
     };
 
     let array_len = unsafe { host::get_tx_array_len(sfield::Memos) };
+    assert_eq!(array_len, 1);
     let _ = trace_num("  Memos array len:", array_len as i64);
 
     let mut memo_buf = [0u8; 1024];
@@ -239,6 +249,7 @@ pub extern "C" fn finish() -> bool {
     );
 
     let array_len = unsafe { host::get_tx_array_len(sfield::Signers) };
+    assert_eq!(array_len, 2);
     let _ = trace_num("  Signers array len:", array_len as i64);
 
     for i in 0..array_len {
@@ -295,6 +306,9 @@ pub extern "C" fn finish() -> bool {
                 buf.len(),
             )
         };
+        let signing_pub_key: PublicKey = buf.into();
+        assert_eq!(signing_pub_key.0, EXPECTED_TX_SIGNING_PUB_KEY);
+
         if output_len < 0 {
             let _ = trace_num(
                 "  Error getting SigningPubKey. error_code = ",
@@ -310,6 +324,7 @@ pub extern "C" fn finish() -> bool {
     }
 
     let txn_signature: Blob = escrow_finish.get_txn_signature().unwrap_or_panic();
+    assert_eq!(txn_signature.data[..71], EXPECTED_TXN_SIGNATURE);
     let _ = trace_data(
         "  TxnSignature:",
         &txn_signature.data[..txn_signature.len],
@@ -330,12 +345,14 @@ pub extern "C" fn finish() -> bool {
 
     // Trace Field: OfferSequence
     let offer_sequence: u32 = escrow_finish.get_offer_sequence().unwrap_or_panic();
+    assert_eq!(offer_sequence, 4294967293);
     let _ = trace_num("  OfferSequence:", offer_sequence as i64);
 
     // Trace Field: Condition
     match escrow_finish.get_condition() {
         Ok(opt_condition) => {
             if let Some(condition) = opt_condition {
+                debug_assert_eq!(condition.0, EXPECTED_ESCROW_FINISH_CONDITION);
                 let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
             }
         }
@@ -350,6 +367,10 @@ pub extern "C" fn finish() -> bool {
     match escrow_finish.get_fulfillment() {
         Ok(opt_fulfillment) => {
             if let Some(fulfillment) = opt_fulfillment {
+                assert_eq!(
+                    fulfillment.data[..fulfillment.len],
+                    EXPECTED_ESCROW_FINISH_FULFILLMENT
+                );
                 let _ = trace_data(
                     "  Fulfillment:",
                     &fulfillment.data[..fulfillment.len],
@@ -380,6 +401,7 @@ pub extern "C" fn finish() -> bool {
     let current_escrow: CurrentEscrow = get_current_escrow();
     match current_escrow.get_account() {
         Ok(account) => {
+            assert_eq!(account.0, EXPECTED_CURRENT_ESCROW_ACCOUNT_ID);
             let _ = trace_data("  Escrow Account:", &account.0, DataRepr::AsHex);
         }
         Err(error) => {
@@ -507,3 +529,35 @@ pub extern "C" fn finish() -> bool {
 
     false // <-- If we get here, don't finish the escrow.
 }
+
+/// The following are private constants used for testing purposes to enforce value checks in this
+/// contract (to ensure that code changes don't break this contract).
+const EXPECTED_TX_ID: [u8; 32] = [
+    0x74, 0x46, 0x51, 0x21, 0x37, 0x28, 0x13, 0xCB, 0xA4, 0xC7, 0x7E, 0x31, 0xF1, 0x2E, 0x13, 0x71,
+    0x63, 0xF5, 0xB2, 0x50, 0x9B, 0x16, 0xAC, 0x17, 0x03, 0xEC, 0xF0, 0xDA, 0x19, 0x4B, 0x2D, 0xD4,
+];
+
+const EXPECTED_ACCOUNT_TXN_ID: [u8; 32] = [0xDD; 32];
+
+const EXPECTED_TX_SIGNING_PUB_KEY: [u8; 33] = [
+    0x03, 0x30, 0xE7, 0xFC, 0x9D, 0x56, 0xBB, 0x25, 0xD6, 0x89, 0x3B, 0xA3, 0xF3, 0x17, 0xAE, 0x5B,
+    0xCF, 0x33, 0xB3, 0x29, 0x1B, 0xD6, 0x3D, 0xB3, 0x26, 0x54, 0xA3, 0x13, 0x22, 0x2F, 0x7F, 0xD0,
+    0x20,
+];
+
+const EXPECTED_TXN_SIGNATURE: [u8; 71] = [
+    0x30, 0x45, 0x02, 0x21, 0x00, 0x8A, 0xD5, 0xEE, 0x48, 0xF7, 0xF1, 0x04, 0x78, 0x13, 0xE7, 0x9C,
+    0x17, 0x4F, 0xE4, 0x01, 0xD0, 0x23, 0xA4, 0xB4, 0xA7, 0xB9, 0x9A, 0xF8, 0x26, 0xE0, 0x81, 0xDB,
+    0x1D, 0xFF, 0x7B, 0x9C, 0x51, 0x02, 0x20, 0x13, 0x3F, 0x05, 0xB7, 0xFD, 0x3D, 0x7D, 0x7F, 0x16,
+    0x3E, 0x8C, 0x77, 0xEE, 0x0A, 0x49, 0xD0, 0x26, 0x19, 0xAB, 0x6C, 0x77, 0xCC, 0x34, 0x87, 0xD0,
+    0x09, 0x5C, 0x9B, 0x34, 0x03, 0x3C, 0x1C,
+];
+
+const EXPECTED_ESCROW_FINISH_CONDITION: [u8; 32] = [0x33; 32];
+const EXPECTED_ESCROW_FINISH_FULFILLMENT: [u8; 32] = [0x21; 32];
+
+/// Represents rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn
+const EXPECTED_CURRENT_ESCROW_ACCOUNT_ID: [u8; 20] = [
+    0x4B, 0x4E, 0x9C, 0x06, 0xF2, 0x42, 0x96, 0x07, 0x4F, 0x7B, 0xC4, 0x8F, 0x92, 0xA9, 0x79, 0x16,
+    0xC6, 0xDC, 0x5E, 0xA9,
+];

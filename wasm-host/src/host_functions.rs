@@ -562,7 +562,7 @@ pub fn escrow_keylet(
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
     }
     let mut data = get_data(account_ptr, account_len, _caller)?;
-    let sqn_data = sequence.to_be_bytes();
+    let sqn_data = sequence.to_le_bytes();
     data.extend_from_slice(&sqn_data);
 
     let keylet_hash = index_hash(LedgerNameSpace::Escrow, &data);
@@ -586,7 +586,7 @@ pub fn oracle_keylet(
         return Ok(vec![WasmValue::from_i32(HostError::BufferTooSmall as i32)]);
     }
     let mut data = get_data(account_ptr, account_len, _caller)?;
-    let sqn_data = document_id.to_be_bytes();
+    let sqn_data = document_id.to_le_bytes();
     data.extend_from_slice(&sqn_data);
 
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);

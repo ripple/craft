@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -24,7 +25,7 @@ impl std::fmt::Display for WasmTarget {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, ValueEnum)]
 pub enum BuildMode {
     Debug,
     Release,
@@ -39,7 +40,7 @@ impl std::fmt::Display for BuildMode {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, ValueEnum)]
 pub enum OptimizationLevel {
     None,
     Small,

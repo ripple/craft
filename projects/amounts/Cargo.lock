@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "notary"
+name = "amounts"
 version = "0.1.0"
 dependencies = [
  "xrpl-std",

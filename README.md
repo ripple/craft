@@ -1,6 +1,18 @@
 # `craft`
 
-An interactive CLI tool for building and testing WASM modules.
+An interactive CLI tool for building and testing WASM modules for the XRP Ledger.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Command-Line Options](#command-line-options)
+- [Project Structure](#project-structure)
+- [WASM Host Testing Tool](#wasm-host-testing-tool)
+- [Reference Submodules](#reference-submodules)
+- [Managing rippled](#managing-rippled)
+- [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
 ## Installation
 
@@ -29,7 +41,8 @@ Colima is a lightweight, open-source Docker runtime that craft can install autom
 craft docker install  # Installs Colima via Homebrew
 ```
 
-Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use, requires no login, and has no licensing restrictions.
+Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use,
+requires no login, and has no licensing restrictions.
 
 #### Option 2: Docker Desktop
 
@@ -75,28 +88,44 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
 
 ## Usage
 
-Run the tool without any arguments for an interactive experience:
+Use specific commands:
+
+```bash
+craft build --project <name> [--mode <debug|release>] [--opt <none|small|aggressive>] # Build a WASM module
+craft test            # Test a WASM module
+craft start-rippled   # Check if rippled is running and start it if needed
+craft list-rippled    # List and manage running rippled processes
+craft start-explorer  # Set up and run the XRPL Explorer
+```
+
+Or, run the tool without any arguments for an interactive experience:
 
 ```bash
 craft
 ```
 
-Or use specific commands:
-
-```bash
-craft build           # Build a WASM module
-craft test            # Test a WASM module
-craft start-rippled   # Start rippled in Docker container
-craft list-rippled    # List rippled Docker containers
-craft stop-rippled    # Stop the rippled container
-craft advance-ledger  # Advance the ledger in stand-alone mode
-craft docker          # Manage Docker runtime (install/start/stop/status)
-craft open-explorer   # Open the XRPL Explorer
-```
-
 ### Command-Line Options
 
-Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization
+level, and project selection.
+
+- **Build**: Non-interactive build with options:
+
+  ```bash
+  craft build [project-name] [--mode <debug|release>] [--opt <none|small|aggressive>]
+  ```
+
+  Options:
+
+    - `project-name` Name of the project subfolder under `projects/` (positional argument).
+    - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
+    - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
+
+  Example:
+
+  ```bash
+  craft build notary --mode debug --opt aggressive
+  ```
 
 The `test` command supports direct command-line options:
 
@@ -106,7 +135,9 @@ craft test --function <name>  # Test a specific function in your WASM module
 
 #### Non-Interactive Mode
 
-For scripting purposes, you may want to specify options directly without interactive prompts. If there are specific options you'd like to set via command line (for example: `craft build --mode release --opt-level small`), please open a GitHub issue to let us know which interactive prompts you'd like to bypass.
+For scripting purposes, you may want to specify options directly without interactive prompts. If there are specific
+options you'd like to set via command line (for example: `craft build --mode release --opt-level small`), please open a
+GitHub issue to let us know which interactive prompts you'd like to bypass.
 
 ### Testing WASM Modules
 
@@ -134,7 +165,8 @@ The tool automatically detects WASM projects in the `projects` directory.
 
 # WASM Host Testing Tool
 
-This tool provides a testing environment for XLS-100d compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
+This tool provides a testing environment for XLS-100d compliant WebAssembly modules. It simulates the host environment
+that will execute escrow finish conditions on the XRPL.
 
 ## Purpose
 
@@ -147,7 +179,8 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project. The intent is to generalize or reuse for future projects.
+The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to
+the `notary` project. The intent is to generalize or reuse for future projects.
 
 ### Success Case (`fixtures/escrow/success/`)
 
@@ -159,48 +192,60 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory. Cur
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
+## Reference Submodules
+
+See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
+
+### 1. rippled
+
+Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
+
+### 2. XRPL Explorer
+
+Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
+
+### Cloning the Repository with Submodules
+
+To clone this repository including all submodules, use:
+
+```bash
+git clone --recurse-submodules git@github.com:ripple/craft.git
+```
+
+Or if you've already cloned the repository without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Updating Submodules
+
+To update all submodules to their latest versions:
+
+```bash
+git submodule update --remote
+```
+
 ## Managing rippled
 
-The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install Colima (a lightweight Docker runtime) for you:
+The `craft` tool includes commands to manage a local `rippled` instance:
 
 ```bash
-# Check Docker status and install if needed
-craft docker          # Shows status
-craft docker install  # Installs Colima (lightweight Docker)
-craft docker start    # Starts Colima
-craft docker stop     # Stops Colima
+# Check if rippled is running and start it if not (background mode)
+craft start-rippled
 
-# Once Docker is running, manage rippled:
-craft start-rippled   # Start rippled container (background mode)
-craft start-rippled --foreground  # With visible console output
-craft list-rippled    # List running rippled containers
-craft stop-rippled    # Stop the rippled container
+# Start rippled with visible console output (can be terminated with Ctrl+C)
+craft start-rippled --foreground
+
+# List running rippled processes and show how to terminate them
+craft list-rippled
 ```
 
-The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which includes support for smart escrows.
-
-**Note**: If Docker is not installed when you run `craft start-rippled`, it will offer to install Colima automatically.
-
-### Docker Commands
-
-You can also manage the container directly with Docker:
+To terminate `rippled`:
 
 ```bash
-# View logs
-docker logs -f craft-rippled
-
-# Stop container
-docker stop craft-rippled
-
-# Remove container
-docker rm craft-rippled
+killall rippled
 ```
-
-### Ports
-
-- API/WebSocket: `http://localhost:6006`
-- Peer Protocol: `localhost:51235`
-- Admin API: `localhost:5005`
 
 ## Running the XRPL Explorer
 
@@ -211,7 +256,7 @@ The `craft` tool includes commands to open the XRPL Explorer:
 craft open-explorer
 ```
 
-## Usage
+## WASM Host Testing
 
 ### Direct Usage
 
@@ -241,7 +286,8 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case succe
 
 ### Debugging with Verbose Mode
 
-To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
+To see detailed execution information, including memory allocation, data processing, and function execution steps, use
+the `--verbose` flag:
 
 ```bash
 cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --verbose
@@ -272,7 +318,8 @@ Example verbose output:
 
 ### Integration with `craft`
 
-The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
+The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for
+selecting test cases:
 
 ```bash
 # Test a WASM module

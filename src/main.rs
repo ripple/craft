@@ -16,10 +16,20 @@ struct Cli {
     command: Option<Commands>,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 enum Commands {
     /// Build a WASM module
-    Build,
+    Build {
+        /// Project name under projects directory
+        #[arg(index = 1)]
+        project: Option<String>,
+        /// Build mode (debug or release)
+        #[arg(short='m', long, value_enum, default_value_t = config::BuildMode::Release)]
+        mode: config::BuildMode,
+        /// Optimization level (none, small, aggressive)
+        #[arg(short='O', long, value_enum, default_value_t = config::OptimizationLevel::Small)]
+        opt: config::OptimizationLevel,
+    },
     /// Configure build settings
     Configure,
     /// Export WASM as hex
@@ -224,8 +234,24 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build => {
-                let config = commands::configure().await?;
+            Commands::Build { project, mode, opt } => {
+                // Non-interactive build using CLI flags
+                let project_path = if let Some(proj) = project {
+                    std::env::current_dir()?.join("projects").join(proj)
+                } else {
+                    // Fallback to interactive selection
+                    let config = commands::configure().await?;
+                    commands::build(&config).await?;
+                    return Ok(());
+                };
+                // Prepare configuration
+                let config = config::Config {
+                    project_path,
+                    build_mode: mode,
+                    optimization_level: opt,
+                    ..Default::default()
+                };
+                // Execute build
                 let wasm_path = commands::build(&config).await?;
 
                 if !matches!(config.optimization_level, config::OptimizationLevel::None) {
@@ -357,4 +383,52 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod cli_tests {
+    use super::*;
+    use crate::config::{BuildMode, OptimizationLevel};
+    use clap::Parser;
+
+    #[test]
+    fn test_build_command_parsing() {
+        let cli = Cli::parse_from([
+            "craft", "build", "myproj", "--mode", "debug", "--opt", "none",
+        ]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt }) => {
+                assert_eq!(project.unwrap(), "myproj");
+                assert_eq!(mode, BuildMode::Debug);
+                assert_eq!(opt, OptimizationLevel::None);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_build_defaults() {
+        let cli = Cli::parse_from(["craft", "build"]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt }) => {
+                assert!(project.is_none());
+                assert_eq!(mode, BuildMode::Release);
+                assert_eq!(opt, OptimizationLevel::Small);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_build_with_positional_project() {
+        let cli = Cli::parse_from(["craft", "build", "myproj", "--mode", "debug"]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt }) => {
+                assert_eq!(project.unwrap(), "myproj");
+                assert_eq!(mode, BuildMode::Debug);
+                assert_eq!(opt, OptimizationLevel::Small);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
 }

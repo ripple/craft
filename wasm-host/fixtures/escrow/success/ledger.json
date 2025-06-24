@@ -63,5 +63,47 @@
       "TransferRate": 1220000000,
       "index": "2B6AC232AA4C4BE41BF49D2459FA4A0347E1B543A4C92FCEE0821C0201E2E9A8"
     }
+  },
+  {
+    "97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA": {
+      "Account": "rKTNMUSN51ahizUdj3K5w4cZUoq3PkXXP2",
+      "Asset": {
+        "currency": "XRP"
+      },
+      "Asset2": {
+        "currency": "TST",
+        "issuer": "rP9jPyP5kyvFRb6ZiRghAGw5u8SGAmU4bd"
+      },
+      "AuctionSlot": {
+        "Account": "rPpvF7eVkV716EuRmCVWRWC1CVFAqLdn3t",
+        "DiscountedFee": 50,
+        "Expiration": 788882582,
+        "Price": {
+          "currency": "039C99CD9AB0B70B32ECDA51EAAE471625608EA2",
+          "issuer": "rKTNMUSN51ahizUdj3K5w4cZUoq3PkXXP2",
+          "value": "32.4296376304"
+        }
+      },
+      "Flags": 0,
+      "LPTokenBalance": {
+        "currency": "039C99CD9AB0B70B32ECDA51EAAE471625608EA2",
+        "issuer": "rKTNMUSN51ahizUdj3K5w4cZUoq3PkXXP2",
+        "value": "79170.1044740602"
+      },
+      "LedgerEntryType": "AMM",
+      "OwnerNode": "0",
+      "PreviousTxnID": "5DE993FDD2BF9C5E601765C51B65F3886819220FBD175D21786398CEA486914D",
+      "PreviousTxnLgrSeq": 4448286,
+      "TradingFee": 500,
+      "VoteSlots": [
+        {
+          "VoteEntry": {
+            "Account": "r4rtnJpA2ZzMK4Ncsy6TnR9PQX4N9Vigof",
+            "TradingFee": 500,
+            "VoteWeight": 100000
+          }
+        }
+      ]
+    }
   }
 ]

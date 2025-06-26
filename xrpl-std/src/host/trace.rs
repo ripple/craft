@@ -92,3 +92,8 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
 //
 //     result_u64(res)
 // }
+
+// TODO temporary, for testing purposes only
+pub fn trace_float(msg: &str, float: u64) -> i32 {
+    unsafe { host::trace_float(msg.as_ptr(), msg.len(), &float as *const u64 as *const u8, 8) }
+}

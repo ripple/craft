@@ -539,4 +539,7 @@ unsafe extern "C" {
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
     pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32;
+
+    // TODO temporary, for testing purposes only
+    pub fn trace_float(msg_read_ptr: *const u8, msg_read_len: usize, number_ptr: *const u8, number_len: usize) -> i32;
 }

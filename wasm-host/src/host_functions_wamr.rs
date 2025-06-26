@@ -4,6 +4,7 @@ use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
 use wamr_rust_sdk::sys::{wasm_exec_env_t, wasm_runtime_get_function_attachment};
+use crate::decoding::deserialize_issued_currency_amount;
 
 pub fn get_dp(env: wasm_exec_env_t) -> &'static mut DataProvider {
     unsafe { &mut *(wasm_runtime_get_function_attachment(env) as *mut DataProvider) }
@@ -446,6 +447,31 @@ pub fn trace_num(
         return HostError::DecodingError as i32;
     };
 
+    println!("WASM TRACE: {message} {number}");
+    0
+}
+
+pub fn trace_float(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *mut u8,
+    msg_read_len: usize,
+    number_ptr: *mut u8,
+    number_len: usize,
+) -> i32 {
+
+    debug!(
+        "trace() params: msg_read_ptr={:?} msg_read_len={} number_ptr={:?} number_len={}",
+        msg_read_ptr, msg_read_len, number_ptr, number_len
+    );
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::DecodingError as i32;
+    };
+
+    let bytes_vec: Vec<u8> = get_data(number_ptr, number_len);
+    let Some(number) = deserialize_issued_currency_amount(&bytes_vec) else { 
+        return HostError::DecodingError as i32;
+    };
+    
     println!("WASM TRACE: {message} {number}");
     0
 }

@@ -344,6 +344,40 @@ fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 
     }
 }
 
+pub fn deserialize_issued_currency_amount(
+    bytes: &Vec<u8>,
+) -> Option<BigDecimal> {
+    let mut value: BigDecimal;
+
+    // Some wizardry by Amie Corso
+    let exp = ((bytes[0] as i32 & 0x3F) << 2) + ((bytes[1] as i32 & 0xFF) >> 6) - 97;
+
+    if exp < MIN_IOU_EXPONENT {
+        value = BigDecimal::from(0);
+    } else {
+        let hex_mantissa = hex::encode([&[bytes[1] & 0x3F], &bytes[2..]].concat());
+        let int_mantissa = i128::from_str_radix(&hex_mantissa, 16).ok()?;
+            // .map_err(XRPLBinaryCodecException::ParseIntError)?;
+
+        // Adjust scale using the exponent
+        let scale = exp.unsigned_abs();
+        value = BigDecimal::new(int_mantissa.into(), scale as i64);
+
+        // Handle the sign
+        if bytes[0] & 0x40 > 0 {
+            // Set the value to positive (BigDecimal assumes positive by default)
+            value = value.abs();
+        } else {
+            // Set the value to negative
+            value = -value.abs();
+        }
+    }
+    verify_valid_ic_value(&value.to_string()).ok()?;
+        // .map_err(|e| XRPLCoreException::XRPLUtilsError(e.to_string()))?;
+
+    Some(value)
+}
+
 pub fn decode_number(s: &String) -> Option<Vec<u8>> {
     let value = BigDecimal::from_str(s).ok()?;
     _serialize_issued_currency_value(value)

@@ -3,10 +3,8 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 use xrpl_std::decode_hex_32;
-use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
-use xrpl_std::host::{
-    cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
-};
+use xrpl_std::host::trace::{trace, trace_data, trace_float, trace_num, DataRepr};
+use xrpl_std::host::{cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field};
 use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
@@ -247,7 +245,7 @@ fn test_amm() {
     let output_len = unsafe {
         get_ledger_obj_nested_field(slot, locator.get_addr(), locator.num_packed_bytes(), (&mut value) as *mut u64 as *mut u8, 8)
     };
-    let _ = trace_num("  AuctionSlot Price value:", value as i64);
+    let _ = trace_float("  AuctionSlot Price value:", value);
 }
 
 fn test_mpt() {

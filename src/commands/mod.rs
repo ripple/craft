@@ -180,13 +180,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
     println!("WASM Fingerprint: {}", fingerprint);
 
-    // Ask if user wants to export as hex
-    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
-        .with_default(false)
-        .prompt()?
-    {
-        copy_wasm_hex_to_clipboard(&wasm_file).await?;
-    }
+    // Hex file is automatically saved during deployment
 
     Ok(wasm_file)
 }
@@ -220,10 +214,10 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
 
     println!("{}", "Dependencies installed successfully!".green());
 
-    // Run deploy_sample.js with Node.js, passing the hex file
+    // Run deploy_sample.js with Node.js, passing the wasm file (not hex)
     let output = Command::new("node")
         .arg("reference/js/deploy_sample.js")
-        .arg(&hex_file)
+        .arg(wasm_file)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()
@@ -238,12 +232,7 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     Ok(())
 }
 
-pub async fn copy_wasm_hex_to_clipboard(wasm_file: &Path) -> Result<()> {
-    let hex = utils::wasm_to_hex(wasm_file)?;
-    utils::copy_to_clipboard(&hex)?;
-    println!("{}", "WASM hex copied to clipboard!".green());
-    Ok(())
-}
+// Removed: copy_wasm_hex_to_clipboard function - no longer needed
 
 pub async fn optimize(wasm_path: &Path, opt_level: &OptimizationLevel) -> Result<()> {
     if !utils::check_wasm_opt_installed() {

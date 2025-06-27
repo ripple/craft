@@ -42,8 +42,11 @@ impl std::fmt::Display for BuildMode {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, ValueEnum)]
 pub enum OptimizationLevel {
+    #[value(alias = "0")]
     None,
+    #[value(alias = "s")]
     Small,
+    #[value(alias = "z")]
     Aggressive,
 }
 

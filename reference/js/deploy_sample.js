@@ -4,18 +4,21 @@ const path = require('path')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-if (process.argv.length != 3) {
+if (process.argv.length < 3 || process.argv.length > 4) {
   console.error(
     'Usage: ' +
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' (path/to/file.wasm OR project_name)',
+      ' (path/to/file.wasm OR project_name) [server_url]',
   )
+  console.error('Default server: wss://wasm.devnet.rippletest.net:51233')
   process.exit(1)
 }
 
-const client = new xrpl.Client("wss://wasm.devnet.rippletest.net:51233")
+const server = process.argv[3] || "wss://wasm.devnet.rippletest.net:51233"
+console.log(`Connecting to server: ${server}`)
+const client = new xrpl.Client(server)
 
 function getFinishFunctionFromFile(filePath) {
   if (!filePath) {

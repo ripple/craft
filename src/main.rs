@@ -11,6 +11,10 @@ use inquire::Select;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    /// Automatically accept CLI update prompts
+    #[arg(short = 'y', long = "yes", global = true)]
+    yes: bool,
+
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -31,8 +35,6 @@ enum Commands {
     },
     /// Configure build settings
     Configure,
-    /// Export WASM as hex
-    ExportHex,
     /// Test a WASM smart contract
     Test {
         /// Function to test
@@ -53,26 +55,46 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let cli = Cli::parse();
+
     // Check if the CLI binary needs to be updated
     if utils::needs_cli_update().unwrap_or(false) {
-        println!(
-            "{}",
-            "\nDetected changes to the CLI source code that haven't been installed yet.".yellow()
-        );
-        if Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
-            .with_default(true)
-            .prompt()?
-        {
-            utils::install_cli()?;
+        // Check if we're running in a non-interactive environment
+        let is_interactive = atty::is(atty::Stream::Stdin);
+
+        if is_interactive || cli.yes {
             println!(
                 "{}",
-                "Please run the command again to use the updated version.".blue()
+                "\nDetected changes to the CLI source code that haven't been installed yet."
+                    .yellow()
             );
-            return Ok(());
+
+            // Auto-accept if -y flag is provided, otherwise prompt
+            let should_update = if cli.yes {
+                println!("Auto-accepting update due to -y flag...");
+                true
+            } else {
+                Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
+                    .with_default(true)
+                    .prompt()?
+            };
+
+            if should_update {
+                utils::install_cli()?;
+                println!(
+                    "{}",
+                    "Please run the command again to use the updated version.".blue()
+                );
+                return Ok(());
+            }
+        } else {
+            // In non-interactive mode, just warn but continue
+            eprintln!(
+                "Warning: CLI source code has changed but running in non-interactive mode. \
+                 Please run 'cargo install --path .' to update."
+            );
         }
     }
-
-    let cli = Cli::parse();
 
     match cli.command {
         Some(cmd) => match cmd {
@@ -100,35 +122,29 @@ async fn main() -> Result<()> {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
 
-                // After build, ask what to do next
-                let choices = vec![
-                    "Deploy to WASM Devnet",
-                    "Copy WASM hex to clipboard",
-                    "Test WASM library function",
-                    "Exit",
-                ];
+                // Only show interactive menu if we're in an interactive terminal
+                if atty::is(atty::Stream::Stdin) {
+                    // After build, ask what to do next
+                    let choices = vec![
+                        "Deploy to WASM Devnet",
+                        "Test WASM library function",
+                        "Exit",
+                    ];
 
-                match Select::new("What would you like to do next?", choices).prompt()? {
-                    "Deploy to WASM Devnet" => {
-                        commands::deploy_to_wasm_devnet(&wasm_path).await?;
+                    match Select::new("What would you like to do next?", choices).prompt()? {
+                        "Deploy to WASM Devnet" => {
+                            commands::deploy_to_wasm_devnet(&wasm_path).await?;
+                        }
+                        "Test WASM library function" => {
+                            commands::test(&wasm_path, None).await?;
+                        }
+                        _ => (),
                     }
-                    "Copy WASM hex to clipboard" => {
-                        commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-                    }
-                    "Test WASM library function" => {
-                        commands::test(&wasm_path, None).await?;
-                    }
-                    _ => (),
                 }
             }
             Commands::Configure => {
                 commands::configure().await?;
                 println!("{}", "Configuration saved!".green());
-            }
-            Commands::ExportHex => {
-                let config = commands::configure().await?;
-                let wasm_path = commands::build(&config).await?;
-                commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
             }
             Commands::Test { function } => {
                 let config = commands::configure().await?;
@@ -168,7 +184,6 @@ async fn main() -> Result<()> {
                     // After build, ask what to do next
                     let choices = vec![
                         "Deploy to WASM Devnet",
-                        "Copy WASM hex to clipboard",
                         "Test WASM library function",
                         "Exit",
                     ];
@@ -176,9 +191,6 @@ async fn main() -> Result<()> {
                     match Select::new("What would you like to do next?", choices).prompt()? {
                         "Deploy to WASM Devnet" => {
                             commands::deploy_to_wasm_devnet(&wasm_path).await?;
-                        }
-                        "Copy WASM hex to clipboard" => {
-                            commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
                         }
                         "Test WASM library function" => {
                             commands::test(&wasm_path, None).await?;

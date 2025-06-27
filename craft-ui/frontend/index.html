@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craft UI - Smart Escrow Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔨 Craft UI</h1>
+            <p>Smart Escrow Management for XRPL</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-button active" data-tab="code">Code Editor</button>
+            <button class="tab-button" data-tab="build">Build & Deploy</button>
+            <button class="tab-button" data-tab="transactions">Transactions</button>
+            <button class="tab-button" data-tab="status">Status</button>
+        </nav>
+
+        <main>
+            <!-- Code Editor Tab -->
+            <div id="code" class="tab-content active">
+                <div class="editor-header">
+                    <h2>KYC Project Code</h2>
+                    <button id="saveCode" class="btn btn-primary">Save Changes</button>
+                </div>
+                <textarea id="codeEditor"></textarea>
+            </div>
+
+            <!-- Build & Deploy Tab -->
+            <div id="build" class="tab-content">
+                <h2>Build & Deploy</h2>
+                
+                <div class="form-section">
+                    <h3>Build Configuration</h3>
+                    <div class="form-group">
+                        <label>Build Mode:</label>
+                        <select id="buildMode">
+                            <option value="release">Release (Optimized)</option>
+                            <option value="debug">Debug</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Optimization Level:</label>
+                        <select id="optimization">
+                            <option value="z">Aggressive Size (-Oz)</option>
+                            <option value="s">Size (-Os)</option>
+                            <option value="0">No Optimization</option>
+                        </select>
+                    </div>
+                    <button id="buildBtn" class="btn btn-primary">Build WASM</button>
+                </div>
+
+                <div class="form-section">
+                    <h3>Deploy Configuration</h3>
+                    <div class="form-group">
+                        <label>Server:</label>
+                        <input type="text" id="deployServer" value="wss://wasm.devnet.rippletest.net:51233" />
+                    </div>
+                    <button id="deployBtn" class="btn btn-success" disabled>Deploy to WASM Devnet</button>
+                </div>
+
+                <div id="buildOutput" class="output-section"></div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div id="transactions" class="tab-content">
+                <div class="transactions-container">
+                    <div class="transactions-forms">
+                        <h2>Transaction Manager</h2>
+
+                        <div class="transaction-section">
+                            <h3>1. First Escrow Finish (Will Fail - No Credential)</h3>
+                            <div class="form-group">
+                                <label>Destination Account:</label>
+                                <input type="text" id="escrow1Account" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <div class="form-group">
+                                <label>Destination Secret:</label>
+                                <input type="text" id="escrow1Secret" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <div class="form-group">
+                                <label>Origin Account:</label>
+                                <input type="text" id="escrow1Owner" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <div class="form-group">
+                                <label>Escrow Sequence:</label>
+                                <input type="text" id="escrow1Sequence" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <button id="escrow1Btn" class="btn btn-warning">Submit EscrowFinish</button>
+                        </div>
+
+                        <div class="transaction-section">
+                            <h3>2. Create KYC Credential</h3>
+                            <div class="form-group">
+                                <label>Account:</label>
+                                <input type="text" id="credAccount" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <div class="form-group">
+                                <label>Secret:</label>
+                                <input type="text" id="credSecret" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <div class="form-group">
+                                <label>Subject:</label>
+                                <input type="text" id="credSubject" placeholder="Will be auto-filled after deployment" />
+                            </div>
+                            <button id="credBtn" class="btn btn-primary">Create Credential</button>
+                        </div>
+
+                        <div class="transaction-section">
+                            <h3>3. Second Escrow Finish (Will Succeed)</h3>
+                            <p>Uses same fields as first attempt</p>
+                            <button id="escrow2Btn" class="btn btn-success">Submit EscrowFinish Again</button>
+                        </div>
+                    </div>
+                    
+                    <div class="transaction-output-container">
+                        <h3>Transaction Log</h3>
+                        <div id="transactionOutput" class="output-section"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Tab -->
+            <div id="status" class="tab-content">
+                <h2>Status Dashboard</h2>
+                <div id="statusContent">
+                    <p>No deployment information available yet.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/rust/rust.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

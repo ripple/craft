@@ -225,6 +225,29 @@ The `craft` tool includes commands to open the XRPL Explorer:
 craft open-explorer
 ```
 
+## Craft UI - Web Interface
+
+Craft UI provides a web-based interface for managing smart escrows. It includes a code editor, build/deploy, and sample test transactions.
+
+### Starting Craft UI
+
+From the project root:
+
+```bash
+# Start both backend and frontend servers, open in browser
+./start-craft-ui.sh
+
+# Stop all Craft UI servers
+./stop-craft-ui.sh
+```
+
+The UI will be available at:
+
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:3001
+
+For more details, see [craft-ui/README.md](craft-ui/README.md).
+
 ## WASM Host Testing
 
 ### Direct Usage

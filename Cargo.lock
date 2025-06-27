@@ -508,7 +508,6 @@ dependencies = [
  "sha2 0.10.9",
  "tokio",
  "walkdir",
- "wamr-rust-sdk",
  "which",
 ]
 
@@ -3041,7 +3040,7 @@ dependencies = [
 [[package]]
 name = "wamr-rust-sdk"
 version = "1.0.0"
-source = "git+https://github.com/pwang200/wamr-rust-sdk.git#302e56eea8d7b2c2fb5c53aad5c650785d33fb8f"
+source = "git+https://github.com/ripple/wamr-rust-sdk.git#a2e11dc0c9f38d2b4625db50efecedb79aa9077f"
 dependencies = [
  "wamr-sys",
 ]
@@ -3049,7 +3048,7 @@ dependencies = [
 [[package]]
 name = "wamr-sys"
 version = "2.3.1"
-source = "git+https://github.com/pwang200/wamr-rust-sdk.git#302e56eea8d7b2c2fb5c53aad5c650785d33fb8f"
+source = "git+https://github.com/ripple/wamr-rust-sdk.git#a2e11dc0c9f38d2b4625db50efecedb79aa9077f"
 dependencies = [
  "bindgen 0.72.0",
  "cc",

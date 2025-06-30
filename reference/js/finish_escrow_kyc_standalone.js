@@ -15,8 +15,8 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const url = "wss://wasm.devnet.rippletest.net:51233"
-// const url = "ws://127.0.0.1:6006"
+// const url = "wss://wasm.devnet.rippletest.net:51233"
+const url = "ws://127.0.0.1:6006"
 const client = new xrpl.Client(url)
 
 const [, , account, accountSecret, owner, offerSequence] = process.argv
@@ -37,9 +37,9 @@ async function finishEscrow() {
     console.log("Connecting to the WASM Devnet...")
     await client.connect()
     console.log(`Connected to ${url}`)
-    // await client.request({command: 'ledger_accept'})
+    await client.request({command: 'ledger_accept'})
     
-    // interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},2000)
+    interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},2000)
 
     const wallet = xrpl.Wallet.fromSeed(accountSecret)
     

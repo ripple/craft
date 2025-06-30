@@ -15,6 +15,7 @@ use xrpl_std::core::types::hash_256::Hash256;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
+use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
@@ -365,9 +366,25 @@ pub extern "C" fn finish() -> bool {
         }
     };
 
-    // TODO PENG
-    // TODO: CredentialIDs (Array of Strings)
-
+    // CredentialIDs (Array of Hashes)
+    let array_len = unsafe { host::get_tx_array_len(sfield::CredentialIDs) };
+    let _ = trace_num("  CredentialIDs array len:", array_len as i64);
+    for i in 0..array_len {
+        let mut buf = [0x00; 32];
+        let mut locator = LocatorPacker::new();
+        locator.pack(sfield::CredentialIDs);
+        locator.pack(i);
+        let output_len = unsafe {
+            host::get_tx_nested_field(
+                locator.get_addr(),
+                locator.num_packed_bytes(),
+                buf.as_mut_ptr(),
+                buf.len(),
+            )
+        };
+        let _ = trace_data("  CredentialID:", &buf[..output_len as usize], DataRepr::AsHex);
+    }    
+    
     let _ = trace("{ ");
 
     // ########################################

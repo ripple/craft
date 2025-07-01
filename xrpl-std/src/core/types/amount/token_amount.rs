@@ -208,7 +208,7 @@ mod tests {
         // Value: 1,000,000 (0xF4240 in hex)
         let mut bytes = [0u8; 8];
         bytes[0] = 0x40; // XRP positive flag
-        bytes[1..8].copy_from_slice(&1_000_000u64.to_be_bytes()[1..8]);
+        bytes[1..8].copy_from_slice(&1_000_000u64.to_le_bytes()[1..8]);
 
         // Parse the TokenAmount
         let token_amount = TokenAmount::from_bytes(&bytes).unwrap();
@@ -241,11 +241,11 @@ mod tests {
 
         // Set the amount bytes
         bytes[0] = 0x60; // MPT positive flag
-        bytes[1..9].copy_from_slice(&500_000u64.to_be_bytes());
+        bytes[1..9].copy_from_slice(&500_000u64.to_le_bytes());
 
         // Set the MptId bytes
         let sequence_num = 12345u32;
-        bytes[9..13].copy_from_slice(&sequence_num.to_be_bytes());
+        bytes[9..13].copy_from_slice(&sequence_num.to_le_bytes());
 
         let issuer_bytes = [1u8; 20];
         bytes[13..33].copy_from_slice(&issuer_bytes);
@@ -294,7 +294,7 @@ mod tests {
 
         // Set the mantissa in the remaining 7 bytes (54 bits)
         let mantissa: u64 = 12345;
-        let mantissa_bytes = mantissa.to_be_bytes();
+        let mantissa_bytes = mantissa.to_le_bytes();
         bytes[2..9].copy_from_slice(&mantissa_bytes[1..8]);
 
         // Set the currency code bytes

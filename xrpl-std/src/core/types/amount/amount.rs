@@ -150,11 +150,11 @@ mod tests {
     use super::*;
 
     // Helper to create a byte array from a slice
-    fn bytes_from_slice(slice: &[u8]) -> [u8; 9] {
-        let mut arr = [0u8; 9];
-        arr[..slice.len()].copy_from_slice(slice);
-        arr
-    }
+    // fn bytes_from_slice(slice: &[u8]) -> [u8; 9] {
+    //     let mut arr = [0u8; 9];
+    //     arr[..slice.len()].copy_from_slice(slice);
+    //     arr
+    // }
 
     #[test]
     fn test_parse_xrp_zero() {
@@ -177,8 +177,7 @@ mod tests {
 
         // Create a byte array with 1,000,000 drops
         let val: u64 = 1_000_000;
-        let mut value_bytes = [0u8; 8];
-        value_bytes = val.to_be_bytes();
+        let value_bytes = val.to_le_bytes();
 
         let mut input = [0u8; 9];
         input[0] = 0x40; // XRP positive flag
@@ -199,8 +198,7 @@ mod tests {
         // Value: 1,000,000
 
         let val: u64 = 1_000_000;
-        let mut value_bytes = [0u8; 8];
-        value_bytes = val.to_be_bytes();
+        let value_bytes = val.to_le_bytes();
 
         let mut input = [0u8; 9];
         input[0] = 0x00; // XRP negative flag
@@ -220,7 +218,7 @@ mod tests {
         let max_u64_val = u64::MAX;
         let mut input = [0u8; 9];
         input[0] = 0x40; // XRP positive flag
-        input[1..9].copy_from_slice(&max_u64_val.to_be_bytes());
+        input[1..9].copy_from_slice(&max_u64_val.to_le_bytes());
 
         let expected = Amount::XRP {
             num_drops: max_u64_val,
@@ -257,7 +255,7 @@ mod tests {
 
         // Set the mantissa in the remaining 7 bytes (54 bits)
         let mantissa: u64 = 12345;
-        let mantissa_bytes = mantissa.to_be_bytes();
+        let mantissa_bytes = mantissa.to_le_bytes();
         // Copy the mantissa bytes, but ensure we only use 54 bits (not the full 64)
         input[2..9].copy_from_slice(&mantissa_bytes[1..8]);
 
@@ -281,7 +279,7 @@ mod tests {
 
         // Set the mantissa
         let mantissa: u64 = 9876;
-        let mantissa_bytes = mantissa.to_be_bytes();
+        let mantissa_bytes = mantissa.to_le_bytes();
         input[2..9].copy_from_slice(&mantissa_bytes[1..8]);
 
         let expected = Amount::IOU {
@@ -314,7 +312,7 @@ mod tests {
         let val: u64 = 500_000;
         let mut input = [0u8; 9];
         input[0] = 0x60; // MPT positive flag
-        input[1..9].copy_from_slice(&val.to_be_bytes());
+        input[1..9].copy_from_slice(&val.to_le_bytes());
 
         let expected = Amount::MPT {
             num_units: val,
@@ -333,7 +331,7 @@ mod tests {
         let val: u64 = 100;
         let mut input = [0u8; 9];
         input[0] = 0x20; // MPT negative flag
-        input[1..9].copy_from_slice(&val.to_be_bytes());
+        input[1..9].copy_from_slice(&val.to_le_bytes());
 
         let expected = Amount::MPT {
             num_units: val,

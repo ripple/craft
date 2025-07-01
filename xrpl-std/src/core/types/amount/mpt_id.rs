@@ -14,7 +14,7 @@ impl MptId {
         let mut bytes = [0u8; MPT_ID_SIZE];
 
         // Set the sequence number (first 4 bytes)
-        bytes[0..4].copy_from_slice(&sequence_num.to_be_bytes());
+        bytes[0..4].copy_from_slice(&sequence_num.to_le_bytes());
 
         // Set the issuer account ID (last 20 bytes)
         bytes[4..MPT_ID_SIZE].copy_from_slice(&issuer.0);
@@ -78,7 +78,7 @@ mod tests {
         // Create a test byte array
         let mut bytes = [0u8; 24];
         // Set sequence number bytes (first 4 bytes)
-        bytes[0..4].copy_from_slice(&67890u32.to_be_bytes());
+        bytes[0..4].copy_from_slice(&67890u32.to_le_bytes());
         // Set account ID bytes (last 20 bytes)
         for i in 4..24 {
             bytes[i] = 2;

@@ -228,7 +228,27 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
- "rustc-hash",
+ "rustc-hash 1.1.0",
+ "shlex",
+ "syn 2.0.101",
+]
+
+[[package]]
+name = "bindgen"
+version = "0.72.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f72209734318d0b619a5e0f5129918b848c416e122a3c4ce054e03cb87b726f"
+dependencies = [
+ "bitflags 2.9.1",
+ "cexpr",
+ "clang-sys",
+ "itertools",
+ "log",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rustc-hash 2.1.1",
  "shlex",
  "syn 2.0.101",
 ]
@@ -1995,6 +2015,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "prettyplease"
+version = "0.2.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6837b9e10d61f45f987d50808f83d1ee3d206c66acf650c3e4ae2e1f6ddedf55"
+dependencies = [
+ "proc-macro2",
+ "syn 2.0.101",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2184,6 +2214,12 @@ name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
+name = "rustc-hash"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357703d41365b4b27c590e3ed91eabb1b663f07c4c084095e60cbed4362dff0d"
 
 [[package]]
 name = "rustc_version"
@@ -3002,6 +3038,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "wamr-rust-sdk"
+version = "1.0.0"
+source = "git+https://github.com/ripple/wamr-rust-sdk.git#a2e11dc0c9f38d2b4625db50efecedb79aa9077f"
+dependencies = [
+ "wamr-sys",
+]
+
+[[package]]
+name = "wamr-sys"
+version = "2.3.1"
+source = "git+https://github.com/ripple/wamr-rust-sdk.git#a2e11dc0c9f38d2b4625db50efecedb79aa9077f"
+dependencies = [
+ "bindgen 0.72.0",
+ "cc",
+ "cmake",
+]
+
+[[package]]
 name = "want"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3117,6 +3171,7 @@ dependencies = [
  "log",
  "serde_json",
  "sha2 0.11.0-rc.0",
+ "wamr-rust-sdk",
  "wasmedge-sdk",
  "xrpl-rust",
 ]
@@ -3156,7 +3211,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88da93fb54be1deaa84bc68393f09ba8491e20113465c35a9446e14107f55a6e"
 dependencies = [
  "async-wasi",
- "bindgen",
+ "bindgen 0.69.5",
  "cfg-if",
  "cmake",
  "fiber-for-wasmedge",

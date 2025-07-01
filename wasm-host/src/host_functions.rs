@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
 use crate::hashing::{HASH256_LEN, Hash256, LedgerNameSpace, index_hash, sha512_half};
 use crate::host_function_utils::{read_hex_from_wasm, read_utf8_from_wasm};

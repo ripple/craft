@@ -192,24 +192,24 @@ enum DockerAction {
 #[tokio::main]
 async fn main() -> Result<()> {
     // Provide status of rippled in Docker
-    if let Ok(docker_manager) = docker::DockerManager::new() {
-        match docker_manager.is_rippled_running().await {
-            Ok(true) => {
-                println!("{}", "✅ rippled is running in Docker container".green());
-            }
-            Ok(false) => {
-                println!(
-                    "{}",
-                    "ℹ️  rippled is not currently running. To start it, run:".yellow()
-                );
-                println!("{}", "     craft start-rippled".blue());
-            }
-            Err(_) => {
-                // Couldn't check rippled status
-            }
-        }
-        println!();
-    }
+    // if let Ok(docker_manager) = docker::DockerManager::new() {
+    //     match docker_manager.is_rippled_running().await {
+    //         Ok(true) => {
+    //             println!("{}", "✅ rippled is running in Docker container".green());
+    //         }
+    //         Ok(false) => {
+    //             println!(
+    //                 "{}",
+    //                 "ℹ️  rippled is not currently running. To start it, run:".yellow()
+    //             );
+    //             println!("{}", "     craft start-rippled".blue());
+    //         }
+    //         Err(_) => {
+    //             // Couldn't check rippled status
+    //         }
+    //     }
+    //     println!();
+    // }
 
     // Check if the CLI binary needs to be updated
     if utils::needs_cli_update().unwrap_or(false) {

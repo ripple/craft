@@ -1,11 +1,9 @@
-use crate::core::types::amount::Amount;
-use crate::core::types::amount::Amount::Xrp;
-use crate::core::types::amount::xrp_amount::XrpAmount;
 use crate::core::error_codes::{
-    match_result_code_with_expected_bytes, match_result_code_with_expected_bytes_optional,
+    match_result_code, match_result_code_with_expected_bytes, match_result_code_with_expected_bytes_optional,
 };
 use crate::core::ledger_objects::{current_ledger_object, ledger_object};
 use crate::core::types::account_id::AccountID;
+use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::blob::Blob;
 use crate::core::types::contract_data::{ContractData, XRPL_CONTRACT_DATA_SIZE};
 use crate::core::types::crypto_condition::Condition;
@@ -45,19 +43,9 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
         current_ledger_object::get_account_id_field(sfield::Account)
     }
 
-    /// The amount of XRP, in drops, currently held in the escrow.
-    fn get_amount(&self) -> Result<Amount> {
-        // TODO: Use get_amount_field from mod.rs
-        let mut buffer = [0u8; 8]; // Enough to hold a u64
-
-        let result_code = unsafe {
-            get_current_ledger_obj_field(sfield::Amount, buffer.as_mut_ptr(), buffer.len())
-        };
-
-        match_result_code_with_expected_bytes(result_code, 8, || {
-            let amount = i64::from_le_bytes(buffer);
-            Xrp(XrpAmount(amount as u64))
-        })
+    /// The amount currently held in the escrow (could be XRP, IOU, or MPT).
+    fn get_amount(&self) -> Result<TokenAmount> {
+        current_ledger_object::get_amount_field(sfield::Amount)
     }
 
     /// The escrow can be canceled if and only if this field is present and the time it specifies
@@ -182,9 +170,10 @@ pub trait EscrowFields: LedgerObjectCommonFields {
     }
 
     /// The amount of XRP, in drops, currently held in the escrow.
-    fn get_amount(&self, register_num: i32) -> Result<Amount> {
-        // TODO: Use get_amount_field from mod.rs
-        let mut buffer = [0u8; 8]; // Enough to hold a u64
+    fn get_amount(&self, register_num: i32) -> Result<TokenAmount> {
+        // Create a buffer large enough for any TokenAmount type
+        const BUFFER_SIZE: usize = 48usize;
+        let mut buffer = [0u8; BUFFER_SIZE];
 
         let result_code = unsafe {
             get_ledger_obj_field(
@@ -195,10 +184,7 @@ pub trait EscrowFields: LedgerObjectCommonFields {
             )
         };
 
-        match_result_code_with_expected_bytes(result_code, 8, || {
-            let amount = i64::from_le_bytes(buffer);
-            Xrp(XrpAmount(amount as u64))
-        })
+        match_result_code(result_code, || TokenAmount::from(buffer))
     }
 
     /// The escrow can be canceled if and only if this field is present and the time it specifies

@@ -1,4 +1,5 @@
 pub mod account_id;
+pub mod amount;
 pub mod blob;
 pub mod contract_data;
 pub mod credentials;
@@ -7,4 +8,3 @@ pub mod hash_256;
 pub mod keylets;
 pub mod public_key;
 pub mod transaction_type;
-pub mod amount;

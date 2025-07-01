@@ -59,8 +59,6 @@ use crate::host::{Result, get_tx_field, to_non_optional};
 pub mod escrow_finish;
 pub mod traits;
 
-// TODO: Create get_amount_field from mod.rs once Amounts are properly supported.
-
 /// Retrieves an AccountID field from the current transaction.
 ///
 /// This function extracts a 20-byte account identifier from the current XRPL transaction.
@@ -93,6 +91,16 @@ fn get_account_id_field(field_code: i32) -> Result<AccountID> {
 
     match_result_code_with_expected_bytes(result_code, ACCOUNT_ID_SIZE, || buffer.into())
 }
+
+// TODO: For later, when transactions that have amounts are supported.
+// #[inline]
+// fn get_amount_field(field_code: i32) -> Result<TokenAmount> {
+//     let mut buffer = [0u8; TOKEN_AMOUNT_SIZE]; // Enough to hold an Amount
+//
+//     let result_code = unsafe { get_tx_field(field_code, buffer.as_mut_ptr(), buffer.len()) };
+//
+//     match_result_code(result_code, || TokenAmount::from(buffer))
+// }
 
 /// Retrieves a u32 field from the current transaction.
 ///

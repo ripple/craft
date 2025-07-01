@@ -52,14 +52,12 @@ use crate::core::field_codes::{
     SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
 use crate::core::types::account_id::AccountID;
-use crate::core::types::amount::Amount::Xrp;
-use crate::core::types::amount::xrp_amount::XrpAmount;
+use crate::core::types::amount::amount::Amount;
 use crate::core::types::blob::Blob;
 use crate::core::types::crypto_condition::{Condition, Fulfillment};
 use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
-use crate::host::Error::NotXrpAmount;
 use crate::host::{Result, get_tx_field};
 use crate::sfield;
 
@@ -137,24 +135,22 @@ pub trait TransactionCommonFields {
     ///
     /// Currently, returns XRP amounts only. Future versions may support other token types
     /// when the underlying amount handling is enhanced.
-    fn get_fee(&self) -> Result<XrpAmount> {
-        // TODO: Use get_amount_field from mod.rs
-        let mut buffer = [0u8; 8]; // Enough to hold a u64
+    fn get_fee(&self) -> Result<Amount> {
+        // Transaction fees are always denominated in XRP, and are therefore always 8 byte XRP amounts values.
+        let mut buffer = [0u8; 9]; // Enough to hold an Amount::XRP
 
         let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
 
-        let amount = match_result_code_with_expected_bytes(result_code, 8, || {
-            let amount = i64::from_le_bytes(buffer);
-            Xrp(XrpAmount(amount as u64))
-        });
-
-        match amount {
-            Result::Ok(amount_value) => match amount_value {
-                Xrp(amount_value) => Result::Ok(amount_value),
-                _ => Result::Err(NotXrpAmount),
+        match_result_code_with_expected_bytes(result_code, 9, || match Amount::from_bytes(buffer) {
+            Amount::XRP {
+                num_drops: value,
+                is_positive,
+            } => Amount::XRP {
+                num_drops: value,
+                is_positive,
             },
-            Result::Err(error) => Result::Err(error),
-        }
+            _ => panic!("Expected Amount::XRP for fee field"),
+        })
     }
 
     /// Retrieves the sequence number from the current transaction.

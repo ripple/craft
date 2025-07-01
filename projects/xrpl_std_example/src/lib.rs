@@ -8,20 +8,20 @@ use xrpl_std::core::ledger_objects::current_escrow::{CurrentEscrow, get_current_
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::account_id::AccountID;
-use xrpl_std::core::types::amount::xrp_amount::XrpAmount;
+use xrpl_std::core::types::amount::amount::Amount;
 use xrpl_std::core::types::blob::Blob;
 use xrpl_std::core::types::hash_256::Hash256;
 use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
-use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
+use xrpl_std::host::trace::{DataRepr, trace, trace_amount, trace_data, trace_num};
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
-    // First check account and balance
+    // First, check account and balance
     {
         // TODO: Peng to fix.
         // let account: AccountID = current_transaction::get_account();
@@ -77,9 +77,20 @@ pub extern "C" fn finish() -> bool {
     let _ = trace_num("  ComputationAllowance:", computation_allowance as i64);
 
     // Trace Field: Fee
-    let fee: XrpAmount = escrow_finish.get_fee().unwrap_or_panic();
-    assert_eq!(fee.0, 10);
-    let _ = trace_num("  Fee:", fee.0 as i64);
+    let fee = match escrow_finish.get_fee() {
+        Ok(amount) => match amount {
+            Amount::XRP { num_drops, .. } => num_drops,
+            _ => {
+                panic!("unexpected fee amount type; should have been XRP")
+            }
+        },
+        Err(error) => {
+            let _ = trace_num("Error getting escrow fee: ", error.code() as i64);
+            panic!("unexpected fee amount type; should have been XRP")
+        }
+    };
+    assert_eq!(fee, 10);
+    let _ = trace_num("  Fee:", fee as i64);
 
     // Trace Field: Sequence
     let sequence: u32 = escrow_finish.get_sequence().unwrap_or_panic();
@@ -399,6 +410,8 @@ pub extern "C" fn finish() -> bool {
     let _ = trace("  -- Common Fields");
 
     let current_escrow: CurrentEscrow = get_current_escrow();
+
+    // Trace Field: Account
     match current_escrow.get_account() {
         Ok(account) => {
             assert_eq!(account.0, EXPECTED_CURRENT_ESCROW_ACCOUNT_ID);
@@ -409,6 +422,17 @@ pub extern "C" fn finish() -> bool {
                 "  Error getting Account. error_code = ",
                 error.code() as i64,
             );
+        }
+    };
+
+    // Trace Field: Amount
+    match current_escrow.get_amount() {
+        Ok(token_amount) => {
+            let amount: Amount = token_amount.into();
+            let _ = trace_amount("  Escrow Amount:", &amount);
+        }
+        Err(error) => {
+            let _ = trace_num("  Error getting Amount. error_code = ", error.code() as i64);
         }
     };
 

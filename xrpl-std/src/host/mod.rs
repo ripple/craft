@@ -116,7 +116,7 @@ impl From<i64> for Result<u64> {
 /// Possible errors returned by XRPL Programmability APIs.
 ///
 /// Errors are global across all Programmability APIs.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(i32)]
 pub enum Error {
     /// A pointer or buffer length provided as a parameter described memory outside of the Hook's allowed memory region.

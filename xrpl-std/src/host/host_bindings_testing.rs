@@ -202,8 +202,7 @@ pub unsafe fn oracle_keylet(
     32
 }
 
-// TODO: This should be called `get_nft`
-pub unsafe fn get_NFT(
+pub unsafe fn get_nft(
     _account_ptr: *const u8,
     _account_len: usize,
     _nft_id_ptr: *const u8,

@@ -539,4 +539,22 @@ unsafe extern "C" {
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
     pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32;
+
+    /// Print a number to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will
+    /// see this.
+    ///
+    /// # Parameters
+    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// * `msg_read_len`: The byte length of the text to send to the trace log.
+    /// * `opaque_float_ptr`: A pointer to an array of 8 bytes containing the u64 opaque pointer
+    /// value.
+    ///
+    /// # Returns
+    ///
+    /// Returns an integer representing the result of the operation. A value of `0` or higher
+    /// signifies the number of message bytes that were written to the trace function. Non-zero
+    /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
+    /// sizes).
+    pub fn trace_opaque_float(msg_read_ptr: u32, msg_read_len: usize, opaque_float_ptr: u32)
+    -> i32;
 }

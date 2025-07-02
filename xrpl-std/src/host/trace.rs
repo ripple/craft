@@ -89,71 +89,15 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
 pub fn trace_amount(msg: &str, amount: &Amount) -> Result<i32> {
     let result_code: i32 = match *amount {
         Amount::XRP { num_drops, .. } => unsafe {
-            host::trace_num(msg.as_ptr() as u32, msg.len(), num_drops as i64)
+            host::trace_num(msg.as_ptr() as u32, msg.len(), num_drops)
         },
-        Amount::IOU {
-            exponent,
-            mantissa,
-            is_positive,
-        } => {
-            // Create a fixed-size buffer for the formatted message
-            let mut data_buffer = [0u8; 256]; // Adjust size as needed
-            let mut pos = 0;
-
-            // Copy the original message
-            let msg_bytes = msg.as_bytes();
-            data_buffer[pos..pos + msg_bytes.len()].copy_from_slice(msg_bytes);
-            pos += msg_bytes.len();
-
-            // Add " exponent="
-            let exp_prefix = b" exponent=";
-            data_buffer[pos..pos + exp_prefix.len()].copy_from_slice(exp_prefix);
-            pos += exp_prefix.len();
-
-            // Convert exponent to string and copy
-            let exp_bytes: [u8; 1] = exponent.to_le_bytes();
-            data_buffer[pos..pos + exp_bytes.len()].copy_from_slice(&exp_bytes);
-            pos += exp_bytes.len();
-
-            // Add " mantissa="
-            let mantissa_prefix = b" mantissa=";
-            data_buffer[pos..pos + mantissa_prefix.len()].copy_from_slice(mantissa_prefix);
-            pos += mantissa_prefix.len();
-
-            // Convert mantissa to string and copy
-            let mantissa_bytes: [u8; 8] = mantissa.to_le_bytes();
-            data_buffer[pos..pos + mantissa_bytes.len()].copy_from_slice(&mantissa_bytes);
-            pos += mantissa_bytes.len();
-
-            // Add " is_positive="
-            let is_pos_prefix = b" is_positive=";
-            data_buffer[pos..pos + is_pos_prefix.len()].copy_from_slice(is_pos_prefix);
-            pos += is_pos_prefix.len();
-
-            // Convert is_positive to string and copy
-            let is_pos_bytes: [u8; 1] = match is_positive {
-                true => [0x01],
-                false => [0x00],
-            };
-            data_buffer[pos..pos + is_pos_bytes.len()].copy_from_slice(&is_pos_bytes);
-            // pos += is_pos_bytes.len();
-            unsafe {
-                let result_code = host::trace(
-                    msg.as_ptr() as u32,
-                    msg.len(),
-                    data_buffer.as_ptr() as u32,
-                    data_buffer.len(),
-                    DataRepr::AsUTF8 as _,
-                );
-                result_code
-            }
-        }
+        Amount::IOU { opaque_float, .. } => unsafe {
+            let bytes: [u8; 8] = u64::to_le_bytes(opaque_float.0);
+            host::trace_opaque_float(msg.as_ptr() as u32, msg.len(), bytes.as_ptr() as u32)
+        },
         Amount::MPT { num_units, .. } => unsafe {
             host::trace_num(msg.as_ptr() as u32, msg.len(), num_units as i64)
         },
-        Amount::UNKNOWN => {
-            panic!("Unknown Amount type")
-        }
     };
 
     match_result_code(result_code, || result_code)

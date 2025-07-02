@@ -1,8 +1,11 @@
 use crate::core::error_codes;
-
 pub mod trace;
 
+#[cfg(not(target_arch = "wasm32"))]
+include!("host_bindings_testing.rs");
+
 // host functions defined by the host.
+#[cfg(target_arch = "wasm32")]
 include!("host_bindings.rs");
 
 /// `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]) that better

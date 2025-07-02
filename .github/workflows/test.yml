@@ -62,7 +62,7 @@ jobs:
           cd xrpl-std 
           cargo build 
           cargo test
-          cargo build --target wasm32-unknown-unknown -- -D warnings 
+          cargo build --target wasm32-unknown-unknown 
           cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
       - name: Build & Test `wasm-host`

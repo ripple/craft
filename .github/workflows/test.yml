@@ -57,19 +57,16 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build `xrpl-std`
+      - name: Build & Test `xrpl-std`
         run: |
-          (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown && cargo rustc --target wasm32-unknown-unknown -- -D warnings)
+          cd xrpl-std 
+          cargo build 
+          cargo test
+          cargo build --target wasm32-unknown-unknown -- -D warnings 
+          cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Test `xrpl-std`
-        run: |
-          (cd xrpl-std && cargo build && cargo test)
-
-      - name: Build `wasm-host`
-        run: (cd wasm-host && cargo build)
-
-      - name: Test `wasm-host`
-        run: (cd wasm-host && cargo build)
+      - name: Build & Test `wasm-host`
+        run: (cd wasm-host && cargo build && cargo test)
 
       - name: Build all example contracts
         run: |

@@ -120,7 +120,7 @@ impl From<i64> for Result<u64> {
 #[repr(i32)]
 pub enum Error {
     /// A pointer or buffer length provided as a parameter described memory outside of the Hook's allowed memory region.
-    OutOfBounds = error_codes::OUT_OF_BOUNDS,
+    OutOfBounds = error_codes::POINTER_OUT_OF_BOUNDS,
     /// Reserved for internal invariant trips, generally unrelated to inputs.
     /// These should be reported with an issue.
     InternalError = error_codes::INTERNAL_ERROR,

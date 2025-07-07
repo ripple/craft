@@ -16,10 +16,20 @@ struct Cli {
     command: Option<Commands>,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Debug)]
 enum Commands {
     /// Build a WASM module
-    Build,
+    Build {
+        /// Project name under projects directory
+        #[arg(index = 1)]
+        project: Option<String>,
+        /// Build mode (debug or release)
+        #[arg(short='m', long, value_enum, default_value_t = config::BuildMode::Release)]
+        mode: config::BuildMode,
+        /// Optimization level (none, small, aggressive)
+        #[arg(short='O', long, value_enum, default_value_t = config::OptimizationLevel::Small)]
+        opt: config::OptimizationLevel,
+    },
     /// Configure build settings
     Configure,
     /// Export WASM as hex
@@ -47,10 +57,10 @@ enum Commands {
         count: u32,
     },
     /// Manage Docker runtime (Colima)
-    Docker {
-        #[command(subcommand)]
-        action: Option<DockerAction>,
-    },
+    // Docker {
+    //     #[command(subcommand)]
+    //     action: Option<DockerAction>,
+    // },
     /// Open the XRPL Explorer for a local rippled instance
     OpenExplorer,
 }
@@ -67,117 +77,117 @@ enum DockerAction {
     Status,
 }
 
-async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
-    use std::process::Command;
-
-    match action {
-        Some(DockerAction::Install) => {
-            println!(
-                "{}",
-                "Installing Colima (lightweight Docker runtime)...".cyan()
-            );
-
-            // Check if Homebrew is installed
-            let brew_check = Command::new("which")
-                .arg("brew")
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
-
-            if !brew_check {
-                anyhow::bail!(
-                    "Homebrew is not installed. Please install it first:\n\
-                    /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-                );
-            }
-
-            // Install Colima and Docker CLI
-            let status = Command::new("brew")
-                .args(["install", "colima", "docker"])
-                .status()?;
-
-            if status.success() {
-                println!("{}", "Colima installed successfully!".green());
-                println!("{}", "Run 'craft docker start' to start Colima.".blue());
-            } else {
-                anyhow::bail!("Failed to install Colima");
-            }
-        }
-        Some(DockerAction::Start) => {
-            println!("{}", "Starting Colima...".cyan());
-            let status = Command::new("colima").arg("start").status()?;
-
-            if status.success() {
-                println!("{}", "Colima started successfully!".green());
-            } else {
-                anyhow::bail!("Failed to start Colima");
-            }
-        }
-        Some(DockerAction::Stop) => {
-            println!("{}", "Stopping Colima...".cyan());
-            let status = Command::new("colima").arg("stop").status()?;
-
-            if status.success() {
-                println!("{}", "Colima stopped successfully!".green());
-            } else {
-                anyhow::bail!("Failed to stop Colima");
-            }
-        }
-        Some(DockerAction::Status) | None => {
-            // Check Docker status
-            println!("{}", "Checking Docker status...".cyan());
-
-            // Check if Docker CLI is installed
-            let docker_installed = Command::new("which")
-                .arg("docker")
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
-
-            if !docker_installed {
-                println!("{}", "❌ Docker CLI: Not installed".red());
-                println!("{}", "  Run: craft docker install".blue());
-                return Ok(());
-            }
-
-            println!("{}", "✅ Docker CLI: Installed".green());
-
-            // Check if Colima is installed
-            let colima_installed = Command::new("which")
-                .arg("colima")
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
-
-            if !colima_installed {
-                println!("{}", "❌ Colima: Not installed".red());
-                println!("{}", "  Run: craft docker install".blue());
-                return Ok(());
-            }
-
-            println!("{}", "✅ Colima: Installed".green());
-
-            // Check if Docker daemon is running
-            let docker_running = Command::new("docker")
-                .args(["info"])
-                .output()
-                .map(|o| o.status.success())
-                .unwrap_or(false);
-
-            if docker_running {
-                println!("{}", "✅ Docker daemon: Running".green());
-
-                // Show Colima status
-                let _ = Command::new("colima").arg("status").status();
-            } else {
-                println!("{}", "❌ Docker daemon: Not running".red());
-                println!("{}", "  Run: craft docker start".blue());
-            }
-        }
-    }
-
-    Ok(())
-}
+// async fn handle_docker_command(action: Option<DockerAction>) -> Result<()> {
+//     use std::process::Command;
+//
+//     match action {
+//         Some(DockerAction::Install) => {
+//             println!(
+//                 "{}",
+//                 "Installing Colima (lightweight Docker runtime)...".cyan()
+//             );
+//
+//             // Check if Homebrew is installed
+//             let brew_check = Command::new("which")
+//                 .arg("brew")
+//                 .output()
+//                 .map(|o| o.status.success())
+//                 .unwrap_or(false);
+//
+//             if !brew_check {
+//                 anyhow::bail!(
+//                     "Homebrew is not installed. Please install it first:\n\
+//                     /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+//                 );
+//             }
+//
+//             // Install Colima and Docker CLI
+//             let status = Command::new("brew")
+//                 .args(["install", "colima", "docker"])
+//                 .status()?;
+//
+//             if status.success() {
+//                 println!("{}", "Colima installed successfully!".green());
+//                 println!("{}", "Run 'craft docker start' to start Colima.".blue());
+//             } else {
+//                 anyhow::bail!("Failed to install Colima");
+//             }
+//         }
+//         Some(DockerAction::Start) => {
+//             println!("{}", "Starting Colima...".cyan());
+//             let status = Command::new("colima").arg("start").status()?;
+//
+//             if status.success() {
+//                 println!("{}", "Colima started successfully!".green());
+//             } else {
+//                 anyhow::bail!("Failed to start Colima");
+//             }
+//         }
+//         Some(DockerAction::Stop) => {
+//             println!("{}", "Stopping Colima...".cyan());
+//             let status = Command::new("colima").arg("stop").status()?;
+//
+//             if status.success() {
+//                 println!("{}", "Colima stopped successfully!".green());
+//             } else {
+//                 anyhow::bail!("Failed to stop Colima");
+//             }
+//         }
+//         Some(DockerAction::Status) | None => {
+//             // Check Docker status
+//             println!("{}", "Checking Docker status...".cyan());
+//
+//             // Check if Docker CLI is installed
+//             let docker_installed = Command::new("which")
+//                 .arg("docker")
+//                 .output()
+//                 .map(|o| o.status.success())
+//                 .unwrap_or(false);
+//
+//             if !docker_installed {
+//                 println!("{}", "❌ Docker CLI: Not installed".red());
+//                 println!("{}", "  Run: craft docker install".blue());
+//                 return Ok(());
+//             }
+//
+//             println!("{}", "✅ Docker CLI: Installed".green());
+//
+//             // Check if Colima is installed
+//             let colima_installed = Command::new("which")
+//                 .arg("colima")
+//                 .output()
+//                 .map(|o| o.status.success())
+//                 .unwrap_or(false);
+//
+//             if !colima_installed {
+//                 println!("{}", "❌ Colima: Not installed".red());
+//                 println!("{}", "  Run: craft docker install".blue());
+//                 return Ok(());
+//             }
+//
+//             println!("{}", "✅ Colima: Installed".green());
+//
+//             // Check if Docker daemon is running
+//             let docker_running = Command::new("docker")
+//                 .args(["info"])
+//                 .output()
+//                 .map(|o| o.status.success())
+//                 .unwrap_or(false);
+//
+//             if docker_running {
+//                 println!("{}", "✅ Docker daemon: Running".green());
+//
+//                 // Show Colima status
+//                 let _ = Command::new("colima").arg("status").status();
+//             } else {
+//                 println!("{}", "❌ Docker daemon: Not running".red());
+//                 println!("{}", "  Run: craft docker start".blue());
+//             }
+//         }
+//     }
+//
+//     Ok(())
+// }
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -224,8 +234,24 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build => {
-                let config = commands::configure().await?;
+            Commands::Build { project, mode, opt } => {
+                // Non-interactive build using CLI flags
+                let project_path = if let Some(proj) = project {
+                    std::env::current_dir()?.join("projects").join(proj)
+                } else {
+                    // Fallback to interactive selection
+                    let config = commands::configure().await?;
+                    commands::build(&config).await?;
+                    return Ok(());
+                };
+                // Prepare configuration
+                let config = config::Config {
+                    project_path,
+                    build_mode: mode,
+                    optimization_level: opt,
+                    ..Default::default()
+                };
+                // Execute build
                 let wasm_path = commands::build(&config).await?;
 
                 if !matches!(config.optimization_level, config::OptimizationLevel::None) {
@@ -283,9 +309,9 @@ async fn main() -> Result<()> {
                 let docker_manager = docker::DockerManager::new()?;
                 docker_manager.advance_ledger(count).await?;
             }
-            Commands::Docker { action } => {
-                handle_docker_command(action).await?;
-            }
+            // Commands::Docker { action } => {
+            //     handle_docker_command(action).await?;
+            // }
             Commands::OpenExplorer => {
                 commands::open_explorer().await?;
             }
@@ -357,4 +383,52 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod cli_tests {
+    use super::*;
+    use crate::config::{BuildMode, OptimizationLevel};
+    use clap::Parser;
+
+    #[test]
+    fn test_build_command_parsing() {
+        let cli = Cli::parse_from([
+            "craft", "build", "myproj", "--mode", "debug", "--opt", "none",
+        ]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt }) => {
+                assert_eq!(project.unwrap(), "myproj");
+                assert_eq!(mode, BuildMode::Debug);
+                assert_eq!(opt, OptimizationLevel::None);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_build_defaults() {
+        let cli = Cli::parse_from(["craft", "build"]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt }) => {
+                assert!(project.is_none());
+                assert_eq!(mode, BuildMode::Release);
+                assert_eq!(opt, OptimizationLevel::Small);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_build_with_positional_project() {
+        let cli = Cli::parse_from(["craft", "build", "myproj", "--mode", "debug"]);
+        match cli.command {
+            Some(Commands::Build { project, mode, opt }) => {
+                assert_eq!(project.unwrap(), "myproj");
+                assert_eq!(mode, BuildMode::Debug);
+                assert_eq!(opt, OptimizationLevel::Small);
+            }
+            other => panic!("Expected Build command, got: {:?}", other),
+        }
+    }
 }

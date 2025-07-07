@@ -230,7 +230,9 @@ pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<OracleKeylet
 /// use xrpl_std::core::types::account_id::AccountID;
 /// use xrpl_std::core::types::keylets::oracle_keylet_safe;
 /// use xrpl_std::host::cache_ledger_obj;
-/// let owner: AccountID = AccountID::from(b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+/// let bytes:[u8;20] = [0xd5, 0xb9, 0x84, 0x76, 0x70, 0x9f, 0x20, 0xb5, 0x27, 0x9d, 0x1e, 0x6a,
+///     0x2e, 0xe8, 0xb2, 0xaa, 0x82, 0xae, 0x63, 0xe3];
+/// let owner: AccountID = AccountID::from(bytes);
 /// let document_id = 12345;
 /// // This will either return a valid keylet or panic
 /// let keylet = oracle_keylet_safe(&owner, document_id);

@@ -59,6 +59,7 @@ pub type AccountId = Vec<u8>;
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, PartialEq)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum Decodable {
     UINT16,
     Uint16_TX_TYPE,
@@ -137,7 +138,7 @@ impl Decodable {
     }
 }
 
-pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
+pub fn decode(s: &str, decodable: Decodable) -> Option<Vec<u8>> {
     match decodable {
         Decodable::UINT16 => decode_u16(s),
         Decodable::Uint16_TX_TYPE => decode_tx_type(s),
@@ -169,15 +170,15 @@ pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_tx_type(tx_type: &String) -> Option<Vec<u8>> {
+pub fn decode_tx_type(tx_type: &str) -> Option<Vec<u8>> {
     get_transaction_type_code(tx_type).map(|num| num.to_le_bytes().to_vec())
 }
 
-pub fn decode_ledger_obj_type(lo_type: &String) -> Option<Vec<u8>> {
+pub fn decode_ledger_obj_type(lo_type: &str) -> Option<Vec<u8>> {
     get_ledger_entry_type_code(lo_type).map(|num| num.to_le_bytes().to_vec())
 }
 
-pub fn decode_account_id(base58_account_id: &String) -> Option<Vec<u8>> {
+pub fn decode_account_id(base58_account_id: &str) -> Option<Vec<u8>> {
     match decode_base58(base58_account_id, &[0x0]) {
         Ok(aid) => {
             if aid.len() == ACCOUNT_ID_LEN {
@@ -190,7 +191,7 @@ pub fn decode_account_id(base58_account_id: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_hash(hex_hash: &String) -> Option<Vec<u8>> {
+pub fn decode_hash(hex_hash: &str) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
         Ok(bytes) => {
             if bytes.len() == HASH256_LEN {
@@ -202,49 +203,46 @@ pub fn decode_hash(hex_hash: &String) -> Option<Vec<u8>> {
         Err(_) => None,
     }
 }
-pub fn decode_hex(s: &String) -> Option<Vec<u8>> {
-    match hex::decode(s) {
-        Ok(bytes) => Some(bytes),
-        Err(_) => None,
-    }
+pub fn decode_hex(s: &str) -> Option<Vec<u8>> {
+    hex::decode(s).ok()
 }
 
-pub fn decode_u8(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u8(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u8>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode_u16(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u16(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u16>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode_u32(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u32(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u32>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-pub fn decode_u64(s: &String) -> Option<Vec<u8>> {
+pub fn decode_u64(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u64>() {
         Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
-// pub fn decode_i64(s: &String) -> Option<Vec<u8>> {
+// pub fn decode_i64(s: &str) -> Option<Vec<u8>> {
 //     match s.parse::<i64>() {
 //         Ok(num) => Some(num.to_le_bytes().to_vec()),
 //         Err(_) => None,
 //     }
 // }
 
-pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
+pub fn decode_u128(hex_hash: &str) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
         Ok(bytes) => {
             if bytes.len() == 16 {
@@ -257,7 +255,7 @@ pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_vl_other(s: &String) -> Option<Vec<u8>> {
+pub fn decode_vl_other(s: &str) -> Option<Vec<u8>> {
     decode_hex(s)
 }
 
@@ -331,14 +329,14 @@ fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 
     }
 }
 
-pub fn decode_number(s: &String) -> Option<Vec<u8>> {
+pub fn decode_number(s: &str) -> Option<Vec<u8>> {
     let value = BigDecimal::from_str(s).ok()?;
     _serialize_issued_currency_value(value)
         .ok()
         .map(|bytes| bytes.to_vec())
 }
 
-pub fn decode_currency(s: &String) -> Option<Vec<u8>> {
+pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
     if s.len() == 3 {
         let mut bytes = [0u8; 3];
         bytes.copy_from_slice(s.as_bytes());
@@ -394,20 +392,20 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_amount(s: &String) -> Option<Vec<u8>> {
+pub fn decode_amount(s: &str) -> Option<Vec<u8>> {
     let v: Value = serde_json::from_str(s).expect("Invalid json string");
     decode_amount_json(v)
 }
 
-pub fn not_leaf(_: &String) -> Option<Vec<u8>> {
+pub fn not_leaf(_: &str) -> Option<Vec<u8>> {
     None
 }
 
-pub fn decode_not(_: &String) -> Option<Vec<u8>> {
+pub fn decode_not(_: &str) -> Option<Vec<u8>> {
     None
 }
 
-pub fn raw_string_to_bytes(s: &String) -> Option<Vec<u8>> {
+pub fn raw_string_to_bytes(s: &str) -> Option<Vec<u8>> {
     Some(s.as_bytes().to_vec())
 }
 

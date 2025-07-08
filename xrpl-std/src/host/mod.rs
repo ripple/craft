@@ -1,18 +1,30 @@
 use crate::core::error_codes;
 
-mod host_bindings_for_testing;
+pub mod host_bindings;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod host_bindings_testing;
+pub mod host_bindings_trait;
+
+#[cfg(target_arch = "wasm32")]
+pub mod host_bindings_wasm;
 pub mod trace;
 
 //////////////////////////////////////
 // Host functions (defined by the host)
 //////////////////////////////////////
 
-#[cfg(not(target_arch = "wasm32"))]
-include!("host_bindings_for_testing.rs");
-
-// host functions defined by the host.
-#[cfg(target_arch = "wasm32")]
-include!("host_bindings.rs");
+// Single re-export for all external usage.
+pub use crate::host::host_bindings::{
+    account_keylet, cache_ledger_obj, compute_sha512_half, credential_keylet, escrow_keylet,
+    get_current_ledger_obj_array_len, get_current_ledger_obj_field,
+    get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
+    get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
+    get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
+    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_field2, get_tx_field3,
+    get_tx_field4, get_tx_field5, get_tx_field6, get_tx_nested_array_len, get_tx_nested_field,
+    oracle_keylet, trace, trace_num, trace_opaque_float, update_data,
+};
 
 /// `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]) that better
 /// conforms to the xrpld programmability APIs.

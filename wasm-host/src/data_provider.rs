@@ -17,11 +17,16 @@ pub enum HostError {
     LocatorMalformed = -6,
     SlotOutRange = -7,
     SlotsFull = -8,
-    InvalidSlot = -9,
+    EmptySlot = -9,
     LedgerObjNotFound = -10,
     DecodingError = -11,
     DataFieldTooLarge = -12,
-    OutOfBound = -13,
+    PointerOutOfBound = -13, // WAMR VM checks, so we don't need to
+    NoMemoryExported = -14,  // We don't explicitly call WAMR memory functions.
+    InvalidParams = -15,
+    InvalidAccount = -16,
+    InvalidField = -17,
+    IndexOutOfBounds = -18,
 }
 
 pub struct LocatorUnpacker {
@@ -87,7 +92,7 @@ impl DataProvider {
             slot = self.next_slot;
             self.next_slot += 1;
         } else if slot >= NUM_SLOTS {
-            return HostError::InvalidSlot as i32;
+            return HostError::SlotOutRange as i32;
         }
 
         if self.data_source.obj_exist(&keylet) {
@@ -113,20 +118,28 @@ impl DataProvider {
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
         assert!(idx_fields.len() > 0);
-        match self.data_source.get_field_value(source, idx_fields) {
-            None => Self::fill_buf(None, buf_cap, Decodable::NOT),
-            Some((last_field, field_result)) => Self::fill_buf(
-                Some(field_result),
-                buf_cap,
-                Decodable::from_sfield(last_field),
-            ),
-        }
+        let (last_sfield, field_result) = match self.data_source.get_field_value(source, idx_fields)
+        {
+            Ok(v) => v,
+            Err(e) => return (e as i32, vec![]),
+        };
+
+        Self::fill_buf(
+            Some(field_result),
+            buf_cap,
+            Decodable::from_sfield(last_sfield),
+        )
     }
 
     pub fn get_array_len(&self, source: DataSource, idx_fields: Vec<i32>) -> i32 {
-        match self.data_source.get_array_len(source, idx_fields) {
-            None => HostError::NoArray as i32,
-            Some(len) => len as i32,
+        let (_, value) = match self.data_source.get_field_value(source, idx_fields) {
+            Ok(v) => v,
+            Err(e) => return e as i32,
+        };
+        if value.is_array() {
+            value.as_array().unwrap().len() as i32
+        } else {
+            HostError::NoArray as i32
         }
     }
 

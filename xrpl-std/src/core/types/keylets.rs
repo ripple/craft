@@ -4,15 +4,12 @@ use crate::host;
 use crate::host::Result;
 use crate::host::trace::{DataRepr, trace_data, trace_num};
 
-// use keylet hash only (i.e. without 2-byte LedgerEntryType) for now.
-// TODO Check rippled
 pub const XRPL_KEYLET_SIZE: usize = 32;
 // Type aliases for specific keylets, all currently using the same underlying array type.
 pub type KeyletBytes = [u8; XRPL_KEYLET_SIZE];
 pub type AccountKeylet = KeyletBytes;
 pub type CredentialKeylet = KeyletBytes;
 pub type OracleKeylet = KeyletBytes;
-// TODO: Add other keylet types here
 
 /// Generates an account keylet for a given XRP Ledger account.
 ///
@@ -37,25 +34,23 @@ pub type OracleKeylet = KeyletBytes;
 /// # Example
 ///
 /// ```rust
-/// use crate::xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::keylets::account_keylet;
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     use xrpl_std::host::trace::{trace_data, DataRepr};
 ///
-///     let account:AccountID = AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-///     let cred_type: &[u8] = b"termsandconditions";
-///     let keylet = account_keylet(&account);
-///     match account_keylet(&account) {
-///         Ok(keylet) => {
-///             // Handle the successful case
-///             let  _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
-///             keylet
-///         },
-///         Err(e) => {
-///             // Handle the error case
-///             e
-///         }
+/// use xrpl_std::core::types::account_id::AccountID;
+/// use xrpl_std::core::types::keylets::account_keylet;
+/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///   let account:AccountID = AccountID::from(
+///     *b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3"
+///   );
+///   match account_keylet(&account){
+///     xrpl_std::host::Result::Ok(keylet) => {
+///       let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///     }
+///     xrpl_std::host::Result::Err(e) => {
+///       let _ = trace_num("Error assembling keylet", e.code() as i64);
+///     }
+///   }
+///   Ok(())
 /// }
 /// ```
 pub fn account_keylet(account_id: &AccountID) -> Result<AccountKeylet> {
@@ -92,24 +87,22 @@ pub fn account_keylet(account_id: &AccountID) -> Result<AccountKeylet> {
 /// # Example
 ///
 /// ```rust
-/// use crate::xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::keylets::account_keylet;
-///
+/// use xrpl_std::core::types::account_id::AccountID;
+/// use xrpl_std::core::types::keylets::credential_keylet;
+/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     use xrpl_std::core::types::keylets::credential_keylet;
-/// use xrpl_std::host::trace::{trace_data, DataRepr};
-///     let subject:AccountID = AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-///     let issuer:AccountID = AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///     let subject: AccountID =
+///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///     let issuer: AccountID =
+///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///     let cred_type: &[u8] = b"termsandconditions";
-///     match credential_keylet(&subject, &issuer, cred_type){
-///         Ok(keylet) => {
-///             let  _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
-///             keylet
-///         },
-///         Err(e) => {
-///             // Handle the error case
-///             e
-///         }
+///     match credential_keylet(&subject, &issuer, cred_type) {
+///       xrpl_std::host::Result::Ok(keylet) => {
+///         let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
+///       }
+///       xrpl_std::host::Result::Err(e) => {
+///         let _ = trace_num("Error assembling keylet", e.code() as i64);
+///       }
 ///     }
 ///     Ok(())
 /// }
@@ -157,27 +150,24 @@ pub fn credential_keylet(
 /// # Example
 ///
 /// ```rust
-/// use crate::xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::keylets::oracle_keylet;
+/// use xrpl_std::core::types::account_id::AccountID;
+///use xrpl_std::core::types::keylets::oracle_keylet;
+///use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     use xrpl_std::host::trace::{trace_data, DataRepr};
-/// let owner: AccountID = AccountID::from(b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-///     let document_id = 12345;
-///     match oracle_keylet(&owner, document_id) {
-///         Ok(keylet) => {
-///             // Handle the successful case
-///             let  _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
-///             keylet
-///         },
-///         Err(e) => {
-///             // Handle the error case
-///             eprintln!("Failed to generate keylet: {:?}", e);
-///             e
-///         }
+///   let owner: AccountID =
+///       AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///   let document_id = 12345;
+///   match oracle_keylet(&owner, document_id) {
+///     xrpl_std::host::Result::Ok(keylet) => {
+///       let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///     }
-///     Ok(())
-/// }
+///     xrpl_std::host::Result::Err(e) => {
+///       let _ = trace_num("Error assembling keylet", e.code() as i64);
+///     }
+///   }
+///   Ok(())
+///}
 /// ```
 pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<OracleKeylet> {
     create_keylet_from_host_call(|keylet_buffer_ptr, keylet_buffer_len| unsafe {
@@ -227,13 +217,20 @@ pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<OracleKeylet
 /// # Example
 ///
 /// ```rust
-/// use xrpl_std::core::types::account_id::AccountID;
+/// use crate::xrpl_std::core::types::account_id::AccountID;
+/// use xrpl_std::core::types::keylets::oracle_keylet;
+/// use xrpl_std::host::trace::{trace_data, DataRepr};
 /// use xrpl_std::core::types::keylets::oracle_keylet_safe;
-/// use xrpl_std::host::cache_ledger_obj;
-/// let owner: AccountID = AccountID::from(b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-/// let document_id = 12345;
-/// // This will either return a valid keylet or panic
-/// let keylet = oracle_keylet_safe(&owner, document_id);
+/// use xrpl_std::core::types::keylets::OracleKeylet;
+///
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///   let owner: AccountID = AccountID::from(
+///       *b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3"
+///   );
+///   let document_id = 12345;
+///   let keylet:OracleKeylet = oracle_keylet_safe(&owner, document_id);
+///   Ok(())
+/// }
 /// ```
 pub fn oracle_keylet_safe(owner: &AccountID, document_id: i32) -> OracleKeylet {
     let keylet = oracle_keylet(owner, document_id);

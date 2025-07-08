@@ -487,7 +487,7 @@ unsafe extern "C" {
     /// - Returns a positive number of bytes wrote to an output buffer on success    
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
-    pub fn get_NFT(
+    pub fn get_nft(
         account_ptr: *const u8,
         account_len: usize,
         nft_id_ptr: *const u8,

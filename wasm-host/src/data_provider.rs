@@ -117,7 +117,7 @@ impl DataProvider {
         idx_fields: Vec<i32>,
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
-        assert!(idx_fields.len() > 0);
+        assert!(!idx_fields.is_empty());
         let (last_sfield, field_result) = match self.data_source.get_field_value(source, idx_fields)
         {
             Ok(v) => v,
@@ -236,7 +236,7 @@ impl DataProvider {
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
                             }
-                            buf[..bytes.len()].copy_from_slice(&*bytes);
+                            buf[..bytes.len()].copy_from_slice(&bytes);
                             (bytes.len() as i32, buf)
                         }
                     },

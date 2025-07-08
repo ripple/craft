@@ -2,7 +2,6 @@
 
 pub mod core;
 pub mod host;
-pub mod locator;
 pub mod sfield;
 pub mod types;
 

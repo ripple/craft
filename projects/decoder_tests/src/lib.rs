@@ -2,12 +2,13 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
+
+use xrpl_std::core::locator::Locator;
 use xrpl_std::decode_hex_32;
 use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
 use xrpl_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
-use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
     Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
@@ -134,7 +135,7 @@ fn test_amendments() {
     let _ = trace_num("  Amendments array len:", array_len as i64);
     for i in 0..array_len {
         let mut buf = [0x00; 32];
-        let mut locator = LocatorPacker::new();
+        let mut locator = Locator::new();
         locator.pack(sfield::Amendments);
         locator.pack(i);
         let output_len = unsafe {
@@ -161,7 +162,7 @@ fn test_amendments() {
     let _ = trace_num("  LedgerEntryType:", out_buf as i64);
 
     let mut buf = [0x00; 32];
-    let mut locator = LocatorPacker::new();
+    let mut locator = Locator::new();
     locator.pack(sfield::Majorities);
     locator.pack(0);
     locator.pack(sfield::Majority);
@@ -203,7 +204,7 @@ fn test_amendments() {
 //     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 //
 //     let mut buf = [0x00; 32];
-//     let mut locator = LocatorPacker::new();
+//     let mut locator = Locator::new();
 //     locator.pack(sfield::Asset);
 //     locator.pack(0);
 //     locator.pack(sfield::Cuurrency);

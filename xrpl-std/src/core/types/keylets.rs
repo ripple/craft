@@ -580,7 +580,7 @@ pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<KeyletBytes>
 ///
 /// # Returns
 ///
-/// Returns an `OracleKeylet` that can be used to locate and access the Oracle object
+/// Returns a `KeyletBytes` that can be used to locate and access the Oracle object
 /// in the ledger.
 ///
 /// # Panics
@@ -607,18 +607,18 @@ pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<KeyletBytes>
 /// use xrpl_std::core::types::keylets::oracle_keylet;
 /// use xrpl_std::host::trace::{trace_data, DataRepr};
 /// use xrpl_std::core::types::keylets::oracle_keylet_safe;
-/// use xrpl_std::core::types::keylets::OracleKeylet;
+/// use xrpl_std::core::types::keylets::KeyletBytes;
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///   let owner: AccountID = AccountID::from(
 ///       *b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3"
 ///   );
 ///   let document_id = 12345;
-///   let keylet:OracleKeylet = oracle_keylet_safe(&owner, document_id);
+///   let keylet:KeyletBytes = oracle_keylet_safe(&owner, document_id);
 ///   Ok(())
 /// }
 /// ```
-pub fn oracle_keylet_safe(owner: &AccountID, document_id: i32) -> OracleKeylet {
+pub fn oracle_keylet_safe(owner: &AccountID, document_id: i32) -> KeyletBytes {
     let keylet = oracle_keylet(owner, document_id);
     match keylet {
         Result::Ok(keylet) => keylet,

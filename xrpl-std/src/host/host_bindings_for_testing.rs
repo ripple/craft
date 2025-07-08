@@ -197,6 +197,17 @@ pub unsafe fn account_keylet(
 }
 
 #[allow(unused)]
+pub unsafe fn check_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
 pub unsafe fn credential_keylet(
     _subject_ptr: *const u8,
     _subject_len: usize,
@@ -204,6 +215,28 @@ pub unsafe fn credential_keylet(
     _issuer_len: usize,
     _cred_type_ptr: *const u8,
     _cred_type_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn delegate_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _authorize_ptr: *const u8,
+    _authorize_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn did_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
@@ -222,10 +255,80 @@ pub unsafe fn escrow_keylet(
 }
 
 #[allow(unused)]
+pub unsafe fn line_keylet(
+    _account1_ptr: *const u8,
+    _account1_len: usize,
+    _account2_ptr: *const u8,
+    _account2_len: usize,
+    _currency_ptr: *const u8,
+    _currency_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn nft_offer_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn offer_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
 pub unsafe fn oracle_keylet(
     _account_ptr: *const u8,
     _account_len: usize,
     _document_id: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn paychan_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _destination_ptr: *const u8,
+    _destination_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn signers_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+pub unsafe fn ticket_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {

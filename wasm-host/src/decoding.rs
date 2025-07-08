@@ -1,13 +1,14 @@
 use crate::hashing::HASH256_LEN;
-use crate::sfield::{IOUValue, IssueCurrency, IssueIssuer, XRPValue};
 use bigdecimal::{BigDecimal, Signed, ToPrimitive, Zero};
 use hex;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::str::FromStr;
+use serde_json::Value;
 use xrpl::core::addresscodec::utils::decode_base58;
 use xrpl::core::binarycodec::definitions::{get_ledger_entry_type_code, get_transaction_type_code};
 use xrpl::core::binarycodec::exceptions::XRPLBinaryCodecException;
+use xrpl::core::binarycodec::types::Amount;
 use xrpl::core::exceptions::{XRPLCoreException, XRPLCoreResult};
 use xrpl::utils::exceptions::XRPRangeException;
 use xrpl::utils::{MAX_IOU_EXPONENT, MIN_IOU_EXPONENT, verify_valid_ic_value};
@@ -58,6 +59,7 @@ pub type AccountId = Vec<u8>;
 */
 
 #[allow(non_camel_case_types)]
+#[derive(Clone, PartialEq)]
 pub enum Decodable {
     UINT16,
     Uint16_TX_TYPE,
@@ -90,20 +92,7 @@ pub enum Decodable {
 
 impl Decodable {
     pub fn from_sfield(field: i32) -> Self {
-        assert!(field >= 0);
-
-        if field == XRPValue {
-            return Decodable::UINT64;
-        }
-        if field == IOUValue {
-            return Decodable::NUMBER;
-        }
-        if field == IssueIssuer {
-            return Decodable::ACCOUNT;
-        }
-        if field == IssueCurrency {
-            return Decodable::CURRENCY;
-        }
+        assert!(field >= 0);       
 
         if let Some(name) = SField_To_Name.get(&field) {
             if name == "TransactionType" {
@@ -159,7 +148,7 @@ pub fn decode(s: &String, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::UINT64 => decode_u64(s),
         Decodable::UINT128 => decode_u128(s),
         Decodable::UINT256 => decode_hash(s),
-        Decodable::AMOUNT => decode_i64(s),
+        Decodable::AMOUNT => decode_amount(s),
         Decodable::VL_HEX => decode_hex(s),
         Decodable::VL_OTHER => decode_vl_other(s),
         Decodable::ACCOUNT => decode_account_id(s),
@@ -250,12 +239,12 @@ pub fn decode_u64(s: &String) -> Option<Vec<u8>> {
     }
 }
 
-pub fn decode_i64(s: &String) -> Option<Vec<u8>> {
-    match s.parse::<i64>() {
-        Ok(num) => Some(num.to_le_bytes().to_vec()),
-        Err(_) => None,
-    }
-}
+// pub fn decode_i64(s: &String) -> Option<Vec<u8>> {
+//     match s.parse::<i64>() {
+//         Ok(num) => Some(num.to_le_bytes().to_vec()),
+//         Err(_) => None,
+//     }
+// }
 
 pub fn decode_u128(hex_hash: &String) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
@@ -368,6 +357,18 @@ pub fn decode_currency(s: &String) -> Option<Vec<u8>> {
             Err(_) => None,
         }
     }
+}
+
+pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
+    match Amount::try_from(value){
+        Ok(amount) => Some(amount.as_ref().to_vec()),
+        Err(_) => None,
+    } 
+}
+
+pub fn decode_amount(s: &String) -> Option<Vec<u8>> {    
+    let v : Value = serde_json::from_str(s).expect("Invalid json string");    
+    decode_amount_json(v)
 }
 
 pub fn not_leaf(_: &String) -> Option<Vec<u8>> {
@@ -682,10 +683,6 @@ fn polulate_field_names() -> HashMap<i32, String> {
     sfield_names.insert(655491329, "LedgerEntry".to_string());
     sfield_names.insert(655556865, "Validation".to_string());
     sfield_names.insert(655622401, "Metadata".to_string());
-    sfield_names.insert(100, "value".to_string());
-    sfield_names.insert(101, "value".to_string());
-    sfield_names.insert(102, "issuer".to_string());
-    sfield_names.insert(103, "currency".to_string());
 
     sfield_names
 }

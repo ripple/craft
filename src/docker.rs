@@ -763,17 +763,17 @@ impl DockerManager {
         Ok(())
     }
 
-    pub async fn is_rippled_running(&self) -> Result<bool> {
-        // Check if Docker is accessible
-        if (self.docker.ping().await).is_err() {
-            return Ok(false);
-        }
-
-        // Check if container exists
-        let containers = self.docker.containers();
-        match containers.get(CONTAINER_NAME).inspect().await {
-            Ok(info) => Ok(info.state.as_ref().and_then(|s| s.running).unwrap_or(false)),
-            Err(_) => Ok(false),
-        }
-    }
+    // pub async fn is_rippled_running(&self) -> Result<bool> {
+    //     // Check if Docker is accessible
+    //     if (self.docker.ping().await).is_err() {
+    //         return Ok(false);
+    //     }
+    //
+    //     // Check if container exists
+    //     let containers = self.docker.containers();
+    //     match containers.get(CONTAINER_NAME).inspect().await {
+    //         Ok(info) => Ok(info.state.as_ref().and_then(|s| s.running).unwrap_or(false)),
+    //         Err(_) => Ok(false),
+    //     }
+    // }
 }

@@ -1,5 +1,6 @@
 use crate::core::error_codes::match_result_code;
 
+use crate::core::types::amount::amount::Amount;
 use crate::host;
 use crate::host::Result;
 use core::ptr;
@@ -84,11 +85,20 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
     match_result_code(result_code, || result_code)
 }
 
-// TODO: Uncomment this line once we have support for floating point numbers (like XFL or similar).
-// /// Write a XFL float to the XRPLD trace log
-// #[inline(always)]
-// pub fn trace_float(msg: &[u8], float: XFL) -> Result<u64> {
-//     let res = unsafe { _c::trace_float(msg.as_ptr() as u32, msg.len() as u32, float.0) };
-//
-//     result_u64(res)
-// }
+#[inline(always)]
+pub fn trace_amount(msg: &str, amount: &Amount) -> Result<i32> {
+    let result_code: i32 = match *amount {
+        Amount::XRP { num_drops, .. } => unsafe {
+            host::trace_num(msg.as_ptr() as u32, msg.len(), num_drops)
+        },
+        Amount::IOU { opaque_float, .. } => unsafe {
+            let bytes: [u8; 8] = u64::to_le_bytes(opaque_float.0);
+            host::trace_opaque_float(msg.as_ptr() as u32, msg.len(), bytes.as_ptr() as u32)
+        },
+        Amount::MPT { num_units, .. } => unsafe {
+            host::trace_num(msg.as_ptr() as u32, msg.len(), num_units as i64)
+        },
+    };
+
+    match_result_code(result_code, || result_code)
+}

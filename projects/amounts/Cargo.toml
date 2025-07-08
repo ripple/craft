@@ -1,8 +1,8 @@
 [package]
-name = "xrpl_std_example"
-version = "0.0.1"
+name = "amounts"
+version = "0.1.0"
 edition = "2024"
-description = "A Smart Escrow demo that calls every host function and traces values to prove each host function works properly."
+description = "A Smart Escrow demo that operates on XRP, IOU, and MPT amounts to prove functionality of each."
 license = "MIT"
 
 # This empty workspace definition keeps this project independent of the parent workspace

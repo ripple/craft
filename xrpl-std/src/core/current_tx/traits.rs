@@ -38,9 +38,6 @@
 //! - **PublicKey**: 33-byte compressed public keys
 //! - **TransactionType**: Enumerated transaction type identifiers
 
-use crate::core::amount::Amount;
-use crate::core::amount::Amount::Xrp;
-use crate::core::amount::xrp_amount::XrpAmount;
 use crate::core::current_tx::{
     get_account_id_field, get_blob_field, get_hash_256_field, get_hash_256_field_optional,
     get_public_key_field, get_u32_field, get_u32_field_optional,
@@ -55,11 +52,13 @@ use crate::core::field_codes::{
     SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
 use crate::core::types::account_id::AccountID;
+use crate::core::types::amount::amount::Amount;
 use crate::core::types::blob::Blob;
 use crate::core::types::crypto_condition::{Condition, Fulfillment};
 use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
+use crate::host::trace::trace_num;
 use crate::host::{Result, get_tx_field};
 use crate::sfield;
 
@@ -135,17 +134,26 @@ pub trait TransactionCommonFields {
     ///
     /// # Note
     ///
-    /// Currently returns XRP amounts only. Future versions may support other token types
+    /// Currently, returns XRP amounts only. Future versions may support other token types
     /// when the underlying amount handling is enhanced.
     fn get_fee(&self) -> Result<Amount> {
-        // TODO: Use get_amount_field from mod.rs
-        let mut buffer = [0u8; 8]; // Enough to hold a u64
+        // Transaction fees are always denominated in XRP, and are therefore always 8 byte XRP
+        // amounts values. However, the host function must accommodate MPT, so we need to supply it
+        // with a 9-byte buffer.
+        let mut buffer = [0u8; 9];
 
         let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
 
-        match_result_code_with_expected_bytes(result_code, 8, || {
-            let amount = i64::from_le_bytes(buffer);
-            Xrp(XrpAmount(amount as u64))
+        match_result_code_with_expected_bytes(result_code, 9, || {
+            let amount = Amount::from_bytes(buffer).unwrap_or_else(|error| {
+                let _ = trace_num("Invalid bytes for Amount", error.code() as i64);
+                panic!("Invalid bytes for Amount")
+            });
+
+            match amount {
+                Amount::XRP { num_drops, .. } => Amount::XRP { num_drops },
+                _ => panic!("Expected Amount::XRP for fee field"),
+            }
         })
     }
 

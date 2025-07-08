@@ -41,7 +41,8 @@ Colima is a lightweight, open-source Docker runtime that craft can install autom
 craft docker install  # Installs Colima via Homebrew
 ```
 
-Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use, requires no login, and has no licensing restrictions.
+Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use,
+requires no login, and has no licensing restrictions.
 
 #### Option 2: Docker Desktop
 
@@ -107,7 +108,8 @@ craft open-explorer   # Open the XRPL Explorer
 
 ### Command-Line Options
 
-Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization
+level, and project selection.
 
 - **Build**: Non-interactive build with options:
 
@@ -117,9 +119,9 @@ Currently, the `craft` tool primarily uses interactive prompts to gather informa
 
   Options:
 
-  - `project-name` Name of the project subfolder under `projects/` (positional argument).
-  - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
-  - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
+    - `project-name` Name of the project subfolder under `projects/` (positional argument).
+    - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
+    - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
 
   Example:
 
@@ -135,7 +137,9 @@ craft test --function <name>  # Test a specific function in your WASM module
 
 #### Non-Interactive Mode
 
-For scripting purposes, you may want to specify options directly without interactive prompts. If there are specific options you'd like to set via command line (for example: `craft build --mode release --opt-level small`), please open a GitHub issue to let us know which interactive prompts you'd like to bypass.
+For scripting purposes, you may want to specify options directly without interactive prompts. If there are specific
+options you'd like to set via command line (for example: `craft build --mode release --opt-level small`), please open a
+GitHub issue to let us know which interactive prompts you'd like to bypass.
 
 ### Testing WASM Modules
 
@@ -163,7 +167,8 @@ The tool automatically detects WASM projects in the `projects` directory.
 
 # WASM Host Testing Tool
 
-This tool provides a testing environment for XLS-100d compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
+This tool provides a testing environment for XLS-100d compliant WebAssembly modules. It simulates the host environment
+that will execute escrow finish conditions on the XRPL.
 
 ## Purpose
 
@@ -176,7 +181,8 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project. The intent is to generalize or reuse for future projects.
+The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to
+the `notary` project. The intent is to generalize or reuse for future projects.
 
 ### Success Case (`fixtures/escrow/success/`)
 
@@ -224,7 +230,8 @@ git submodule update --remote
 
 ## Managing rippled
 
-The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install Colima (a lightweight Docker runtime) for you:
+The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install
+Colima (a lightweight Docker runtime) for you:
 
 ```bash
 # Check Docker status and install if needed
@@ -304,7 +311,8 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case succe
 
 ### Debugging with Verbose Mode
 
-To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
+To see detailed execution information, including memory allocation, data processing, and function execution steps, use
+the `--verbose` flag:
 
 ```bash
 cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --verbose
@@ -335,7 +343,8 @@ Example verbose output:
 
 ### Integration with `craft`
 
-The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
+The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for
+selecting test cases:
 
 ```bash
 # Test a WASM module

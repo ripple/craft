@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
@@ -57,14 +57,18 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build xrpl-std
+      - name: Build & Test `xrpl-std`
         run: |
-          (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown && cargo rustc --target wasm32-unknown-unknown -- -D warnings)
+          cd xrpl-std 
+          cargo build 
+          cargo test
+          cargo build --target wasm32-unknown-unknown -- -D warnings 
+          cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build wasm-host
-        run: (cd wasm-host && cargo build)
+      - name: Build & Test `wasm-host`
+        run: (cd wasm-host && cargo build && cargo test)
 
-      - name: Build all examples
+      - name: Build all example contracts
         run: |
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
@@ -73,7 +77,7 @@ jobs:
             fi
           done
 
-      - name: Build and test
+      - name: Build and Test `craft`
         run: |
           cargo build
           cargo test

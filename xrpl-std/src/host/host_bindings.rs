@@ -446,27 +446,6 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
-    /// Computes the Keylet for a DID entry in a ledger.
-    ///
-    /// # Parameters
-    ///
-    /// - `account_ptr`: A pointer to the memory location of the accountID.
-    /// - `account_len`: The length of the accountID.
-    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
-    /// - `out_buff_len`: The length of the output buffer.
-    ///
-    /// # Returns
-    ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
-    /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
-    pub fn did_keylet(
-        account_ptr: *const u8,
-        account_len: usize,
-        out_buff_ptr: *mut u8,
-        out_buff_len: usize,
-    ) -> i32;
-
     /// Computes the Keylet for a delegate entry in a ledger.
     ///
     /// # Parameters
@@ -488,6 +467,27 @@ unsafe extern "C" {
         account_len: usize,
         authorize_ptr: *const u8,
         authorize_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a DID entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn did_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
     ) -> i32;

@@ -16,27 +16,27 @@ pub use crate::host::host_bindings_testing::TestingHostBindings as HostBindingsI
 // Re-export all the host functions directly
 #[inline]
 pub unsafe fn get_ledger_sqn(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32 {
-    HostBindingsImpl::get_ledger_sqn(out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_ledger_sqn(out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
 pub unsafe fn get_parent_ledger_time(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32 {
-    HostBindingsImpl::get_parent_ledger_time(out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_parent_ledger_time(out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
 pub unsafe fn get_parent_ledger_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32 {
-    HostBindingsImpl::get_parent_ledger_hash(out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_parent_ledger_hash(out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
 pub unsafe fn cache_ledger_obj(keylet_ptr: *const u8, keylet_len: usize, cache_num: i32) -> i32 {
-    HostBindingsImpl::cache_ledger_obj(keylet_ptr, keylet_len, cache_num)
+    unsafe { HostBindingsImpl::cache_ledger_obj(keylet_ptr, keylet_len, cache_num) }
 }
 
 #[inline]
 pub unsafe fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32 {
-    HostBindingsImpl::get_tx_field(field, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_tx_field(field, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -46,7 +46,7 @@ pub unsafe fn get_tx_field2(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_tx_field2(field, field2, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_tx_field2(field, field2, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -57,7 +57,7 @@ pub unsafe fn get_tx_field3(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_tx_field3(field, field2, field3, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_tx_field3(field, field2, field3, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -69,14 +69,7 @@ pub unsafe fn get_tx_field4(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_tx_field4(
-        field,
-        field2,
-        field3,
-        field4,
-        out_buff_ptr,
-        out_buff_len,
-    )
+    unsafe { HostBindingsImpl::get_tx_field4(field, field2, field3, field4, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -89,7 +82,7 @@ pub unsafe fn get_tx_field5(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_tx_field5(
+    unsafe { HostBindingsImpl::get_tx_field5(
         field,
         field2,
         field3,
@@ -97,7 +90,7 @@ pub unsafe fn get_tx_field5(
         field5,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -111,7 +104,7 @@ pub unsafe fn get_tx_field6(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_tx_field6(
+    unsafe { HostBindingsImpl::get_tx_field6(
         field,
         field2,
         field3,
@@ -120,7 +113,7 @@ pub unsafe fn get_tx_field6(
         field6,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -129,7 +122,7 @@ pub unsafe fn get_current_ledger_obj_field(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_current_ledger_obj_field(field, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_current_ledger_obj_field(field, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -139,7 +132,7 @@ pub unsafe fn get_ledger_obj_field(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_ledger_obj_field(cache_num, field, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::get_ledger_obj_field(cache_num, field, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -149,12 +142,7 @@ pub unsafe fn get_tx_nested_field(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_tx_nested_field(
-        locator_ptr,
-        locator_len,
-        out_buff_ptr,
-        out_buff_len,
-    )
+    unsafe { HostBindingsImpl::get_tx_nested_field(locator_ptr, locator_len, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -164,12 +152,12 @@ pub unsafe fn get_current_ledger_obj_nested_field(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_current_ledger_obj_nested_field(
+    unsafe { HostBindingsImpl::get_current_ledger_obj_nested_field(
         locator_ptr,
         locator_len,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -180,33 +168,33 @@ pub unsafe fn get_ledger_obj_nested_field(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_ledger_obj_nested_field(
+    unsafe { HostBindingsImpl::get_ledger_obj_nested_field(
         cache_num,
         locator_ptr,
         locator_len,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
 pub unsafe fn get_tx_array_len(field: i32) -> i32 {
-    HostBindingsImpl::get_tx_array_len(field)
+    unsafe { HostBindingsImpl::get_tx_array_len(field) }
 }
 
 #[inline]
 pub unsafe fn get_current_ledger_obj_array_len(field: i32) -> i32 {
-    HostBindingsImpl::get_current_ledger_obj_array_len(field)
+    unsafe { HostBindingsImpl::get_current_ledger_obj_array_len(field) }
 }
 
 #[inline]
 pub unsafe fn get_ledger_obj_array_len(cache_num: i32, field: i32) -> i32 {
-    HostBindingsImpl::get_ledger_obj_array_len(cache_num, field)
+    unsafe { HostBindingsImpl::get_ledger_obj_array_len(cache_num, field) }
 }
 
 #[inline]
 pub unsafe fn get_tx_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32 {
-    HostBindingsImpl::get_tx_nested_array_len(locator_ptr, locator_len)
+    unsafe { HostBindingsImpl::get_tx_nested_array_len(locator_ptr, locator_len) }
 }
 
 #[inline]
@@ -214,7 +202,7 @@ pub unsafe fn get_current_ledger_obj_nested_array_len(
     locator_ptr: *const u8,
     locator_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_current_ledger_obj_nested_array_len(locator_ptr, locator_len)
+    unsafe { HostBindingsImpl::get_current_ledger_obj_nested_array_len(locator_ptr, locator_len) }
 }
 
 #[inline]
@@ -223,12 +211,12 @@ pub unsafe fn get_ledger_obj_nested_array_len(
     locator_ptr: *const u8,
     locator_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_ledger_obj_nested_array_len(cache_num, locator_ptr, locator_len)
+    unsafe { HostBindingsImpl::get_ledger_obj_nested_array_len(cache_num, locator_ptr, locator_len) }
 }
 
 #[inline]
 pub unsafe fn update_data(data_ptr: *const u8, data_len: usize) -> i32 {
-    HostBindingsImpl::update_data(data_ptr, data_len)
+    unsafe { HostBindingsImpl::update_data(data_ptr, data_len) }
 }
 
 #[inline]
@@ -238,7 +226,7 @@ pub unsafe fn compute_sha512_half(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::compute_sha512_half(data_ptr, data_len, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::compute_sha512_half(data_ptr, data_len, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -248,7 +236,7 @@ pub unsafe fn account_keylet(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::account_keylet(account_ptr, account_len, out_buff_ptr, out_buff_len)
+    unsafe { HostBindingsImpl::account_keylet(account_ptr, account_len, out_buff_ptr, out_buff_len) }
 }
 
 #[inline]
@@ -262,7 +250,7 @@ pub unsafe fn credential_keylet(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::credential_keylet(
+    unsafe { HostBindingsImpl::credential_keylet(
         subject_ptr,
         subject_len,
         issuer_ptr,
@@ -271,7 +259,7 @@ pub unsafe fn credential_keylet(
         cred_type_len,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -282,13 +270,13 @@ pub unsafe fn escrow_keylet(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::escrow_keylet(
+    unsafe { HostBindingsImpl::escrow_keylet(
         account_ptr,
         account_len,
         sequence,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -299,13 +287,13 @@ pub unsafe fn oracle_keylet(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::oracle_keylet(
+    unsafe { HostBindingsImpl::oracle_keylet(
         account_ptr,
         account_len,
         document_id,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -317,14 +305,14 @@ pub unsafe fn get_nft(
     out_buff_ptr: *mut u8,
     out_buff_len: usize,
 ) -> i32 {
-    HostBindingsImpl::get_nft(
+    unsafe { HostBindingsImpl::get_nft(
         account_ptr,
         account_len,
         nft_id_ptr,
         nft_id_len,
         out_buff_ptr,
         out_buff_len,
-    )
+    ) }
 }
 
 #[inline]
@@ -335,18 +323,18 @@ pub unsafe fn trace(
     data_read_len: usize,
     as_hex: u32,
 ) -> i32 {
-    HostBindingsImpl::trace(
+    unsafe { HostBindingsImpl::trace(
         msg_read_ptr,
         msg_read_len,
         data_read_ptr,
         data_read_len,
         as_hex,
-    )
+    ) }
 }
 
 #[inline]
 pub unsafe fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32 {
-    HostBindingsImpl::trace_num(msg_read_ptr, msg_read_len, number)
+    unsafe { HostBindingsImpl::trace_num(msg_read_ptr, msg_read_len, number) }
 }
 
 #[inline]
@@ -355,5 +343,5 @@ pub unsafe fn trace_opaque_float(
     msg_read_len: usize,
     opaque_float_ptr: u32,
 ) -> i32 {
-    HostBindingsImpl::trace_opaque_float(msg_read_ptr, msg_read_len, opaque_float_ptr)
+    unsafe { HostBindingsImpl::trace_opaque_float(msg_read_ptr, msg_read_len, opaque_float_ptr) }
 }

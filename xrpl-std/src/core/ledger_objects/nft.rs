@@ -10,7 +10,7 @@ use host::{Error, Result, Result::Ok};
 pub fn get_nft(owner: &AccountID, nft: &NFT) -> Result<[u8; XRPL_CONTRACT_DATA_SIZE]> {
     let mut data = [0u8; XRPL_CONTRACT_DATA_SIZE];
     let result_code = unsafe {
-        host::get_NFT(
+        host::get_nft(
             owner.0.as_ptr(),
             owner.0.len(),
             nft.as_ptr(),

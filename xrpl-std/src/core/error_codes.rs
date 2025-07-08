@@ -15,7 +15,12 @@ pub const INVALID_SLOT: i32 = -9;
 pub const LEDGER_OBJ_NOT_FOUND: i32 = -10;
 pub const DECODING_ERROR: i32 = -11;
 pub const DATA_FIELD_TOO_LARGE: i32 = -12;
-pub const OUT_OF_BOUNDS: i32 = -13;
+pub const POINTER_OUT_OF_BOUNDS: i32 = -13;
+pub const NO_MEM_EXPORTED: i32 = -14;
+pub const INVALID_PARAMS: i32 = -15;
+pub const INVALID_ACCOUNT: i32 = -16;
+pub const INVALID_FIELD: i32 = -17;
+pub const INDEX_OUT_OF_BOUNDS: i32 = -18;
 
 /// Evaluates a result code and executes a closure on success (result_code > 0).
 ///

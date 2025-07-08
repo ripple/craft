@@ -1,5 +1,6 @@
 #![allow(unused)]
 use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
+use crate::decoding::ACCOUNT_ID_LEN;
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
@@ -103,7 +104,7 @@ pub fn get_ledger_obj_field(
 ) -> i32 {
     let data_provider = get_dp(env);
     let keylet = match data_provider.slot_get(slot as usize) {
-        None => return HostError::SlotOutRange as i32,
+        None => return HostError::EmptySlot as i32,
         Some(key) => key.clone(),
     };
     let dp_res = data_provider.get_field_value(
@@ -165,7 +166,7 @@ pub fn get_ledger_obj_nested_field(
 ) -> i32 {
     let data_provider = get_dp(env);
     let keylet = match data_provider.slot_get(slot as usize) {
-        None => return HostError::SlotOutRange as i32,
+        None => return HostError::EmptySlot as i32,
         Some(key) => key.clone(),
     };
 
@@ -192,7 +193,7 @@ pub fn get_current_ledger_obj_array_len(env: wasm_exec_env_t, field: i32) -> i32
 pub fn get_ledger_obj_array_len(env: wasm_exec_env_t, slot: i32, field: i32) -> i32 {
     let data_provider = get_dp(env);
     let keylet = match data_provider.slot_get(slot as usize) {
-        None => return HostError::SlotOutRange as i32,
+        None => return HostError::EmptySlot as i32,
         Some(key) => key.clone(),
     };
     data_provider.get_array_len(DataSource::KeyletLedgerObj(keylet), vec![field])
@@ -231,7 +232,7 @@ pub fn get_ledger_obj_nested_array_len(
 ) -> i32 {
     let data_provider = get_dp(env);
     let keylet = match data_provider.slot_get(slot as usize) {
-        None => return HostError::SlotOutRange as i32,
+        None => return HostError::EmptySlot as i32,
         Some(key) => key.clone(),
     };
 
@@ -279,6 +280,9 @@ pub fn account_keylet(
         return HostError::BufferTooSmall as i32;
     }
     let data = get_data(in_buf_ptr, in_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
     // let hex_str = hex::encode(&keylet_hash);
     // println!("Data (keylet_hash): {:?}", hex_str);
@@ -299,9 +303,12 @@ pub fn credential_keylet(
     if HASH256_LEN > out_buf_cap {
         return HostError::BufferTooSmall as i32;
     }
-    let subject = get_data(subject_ptr, subject_len);
+    let subject = get_data(subject_ptr, subject_len); // check length?
     let mut issuer = get_data(issuer_ptr, issuer_len);
-    let mut cred_type = get_data(cred_type_ptr, cred_type_len);
+    if ACCOUNT_ID_LEN != issuer.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let mut cred_type = get_data(cred_type_ptr, cred_type_len); // check length?
     let mut data = subject;
     data.append(&mut issuer);
     data.append(&mut cred_type);
@@ -321,6 +328,9 @@ pub fn escrow_keylet(
         return HostError::BufferTooSmall as i32;
     }
     let mut data = get_data(account_ptr, account_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
     let sqn_data = sequence.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Escrow, &data);
@@ -339,6 +349,9 @@ pub fn oracle_keylet(
         return HostError::BufferTooSmall as i32;
     }
     let mut data = get_data(account_ptr, account_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
     let sqn_data = document_id.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
@@ -357,7 +370,13 @@ pub fn get_nft(
 ) -> i32 {
     let data_provider = get_dp(env);
     let owner_id = get_data(owner_ptr, owner_len);
+    if ACCOUNT_ID_LEN != owner_id.len() {
+        return HostError::InvalidAccount as i32;
+    }
     let nft_id = get_data(nft_id_ptr, nft_id_len);
+    if HASH256_LEN != nft_id.len() {
+        return HostError::InvalidParams as i32;
+    }
     let dp_res = data_provider.get_nft_uri(&nft_id, &owner_id, out_buf_cap);
     set_data(dp_res.0, out_buf_ptr, dp_res.1);
     dp_res.0

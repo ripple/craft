@@ -16,7 +16,6 @@ fn panic(_info: &::core::panic::PanicInfo) -> ! {
     ::core::arch::wasm32::unreachable();
 }
 
-
 fn hex_char_to_nibble(c: u8) -> Option<u8> {
     match c {
         b'0'..=b'9' => Some(c - b'0'),

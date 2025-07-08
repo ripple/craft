@@ -1,4 +1,4 @@
-/// Represents a 256-bit hash (like transaction ID)
+//! Represents a 256-bit hash (like transaction ID)
 
 pub const HASH256_SIZE: usize = 32;
 

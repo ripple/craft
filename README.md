@@ -91,17 +91,19 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
 Use specific commands:
 
 ```bash
-craft build --project <name> [--mode <debug|release>] [--opt <none|small|aggressive>] # Build a WASM module
-craft test            # Test a WASM module
-craft start-rippled   # Check if rippled is running and start it if needed
-craft list-rippled    # List and manage running rippled processes
-craft start-explorer  # Set up and run the XRPL Explorer
+craft
 ```
 
 Or, run the tool without any arguments for an interactive experience:
 
 ```bash
 craft
+craft start-rippled   # Start rippled in Docker container
+craft list-rippled    # List rippled Docker containers
+craft stop-rippled    # Stop the rippled container
+craft advance-ledger  # Advance the ledger in stand-alone mode
+craft docker          # Manage Docker runtime (install/start/stop/status)
+craft open-explorer   # Open the XRPL Explorer
 ```
 
 ### Command-Line Options
@@ -228,24 +230,47 @@ git submodule update --remote
 
 ## Managing rippled
 
-The `craft` tool includes commands to manage a local `rippled` instance:
+The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install
+Colima (a lightweight Docker runtime) for you:
 
 ```bash
-# Check if rippled is running and start it if not (background mode)
-craft start-rippled
+# Check Docker status and install if needed
+craft docker          # Shows status
+craft docker install  # Installs Colima (lightweight Docker)
+craft docker start    # Starts Colima
+craft docker stop     # Stops Colima
 
-# Start rippled with visible console output (can be terminated with Ctrl+C)
-craft start-rippled --foreground
-
-# List running rippled processes and show how to terminate them
-craft list-rippled
+# Once Docker is running, manage rippled:
+craft start-rippled   # Start rippled container (background mode)
+craft start-rippled --foreground  # With visible console output
+craft list-rippled    # List running rippled containers
+craft stop-rippled    # Stop the rippled container
 ```
 
-To terminate `rippled`:
+The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which includes support for smart escrows.
+
+**Note**: If Docker is not installed when you run `craft start-rippled`, it will offer to install Colima automatically.
+
+### Docker Commands
+
+You can also manage the container directly with Docker:
 
 ```bash
-killall rippled
+# View logs
+docker logs -f craft-rippled
+
+# Stop container
+docker stop craft-rippled
+
+# Remove container
+docker rm craft-rippled
 ```
+
+### Ports
+
+- API/WebSocket: `http://localhost:6006`
+- Peer Protocol: `localhost:51235`
+- Admin API: `localhost:5005`
 
 ## Running the XRPL Explorer
 
@@ -256,7 +281,7 @@ The `craft` tool includes commands to open the XRPL Explorer:
 craft open-explorer
 ```
 
-## WASM Host Testing
+## WASM Host
 
 ### Direct Usage
 

@@ -22,11 +22,11 @@ pub extern "C" fn finish() -> bool {
     // "termsandconditions" in hex
     let cred_type: &[u8] = b"termsandconditions";
     match credential_keylet(&account_id, &account_id, &cred_type) {
-        Ok(cred_keylet) => {
-            let _ = trace_data("cred_keylet", &cred_keylet, DataRepr::AsHex);
+        Ok(keylet) => {
+            let _ = trace_data("cred_keylet", &keylet, DataRepr::AsHex);
 
             let slot =
-                unsafe { xrpl_std::host::cache_ledger_obj(cred_keylet.as_ptr(), cred_keylet.len(), 0) };
+                unsafe { xrpl_std::host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot < 0 {
                 let _ = trace_num("CACHE ERROR", i64::from(slot));
                 return false;

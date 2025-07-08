@@ -1,5 +1,6 @@
 use crate::core::error_codes::{
-    match_result_code, match_result_code_with_expected_bytes, match_result_code_with_expected_bytes_optional,
+    match_result_code, match_result_code_with_expected_bytes,
+    match_result_code_with_expected_bytes_optional,
 };
 use crate::core::ledger_objects::{current_ledger_object, ledger_object};
 use crate::core::types::account_id::AccountID;
@@ -92,7 +93,7 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
     }
 
     // TODO: Implement this function.
-    /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
+    // /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
     // fn get_ledger_entry_type(&self) -> Result<LedgerEntryType> {
     //     return Ok(LedgerEntryType::Escrow);
     // }
@@ -236,7 +237,7 @@ pub trait EscrowFields: LedgerObjectCommonFields {
     }
 
     // TODO: Implement this function.
-    /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
+    // /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
     // fn get_ledger_entry_type(&self, register_num: i32) -> Result<LedgerEntryType> {
     //     return Ok(LedgerEntryType::Escrow);
     // }

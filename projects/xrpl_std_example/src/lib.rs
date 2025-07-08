@@ -15,7 +15,6 @@ use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_amount, trace_data, trace_num};
-use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
@@ -403,7 +402,7 @@ pub extern "C" fn finish() -> bool {
     let _ = trace_num("  CredentialIDs array len:", array_len as i64);
     for i in 0..array_len {
         let mut buf = [0x00; 32];
-        let mut locator = LocatorPacker::new();
+        let mut locator = Locator::new();
         locator.pack(sfield::CredentialIDs);
         locator.pack(i);
         let output_len = unsafe {

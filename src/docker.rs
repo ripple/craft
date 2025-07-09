@@ -660,10 +660,7 @@ impl DockerManager {
     }
 
     pub async fn advance_ledger(&self, count: u32) -> Result<()> {
-        println!(
-            "{}",
-            format!("Advancing ledger {count} time(s)...").cyan()
-        );
+        println!("{}", format!("Advancing ledger {count} time(s)...").cyan());
 
         // First check if the container is running
         let containers = self.docker.containers();
@@ -727,10 +724,7 @@ impl DockerManager {
                                     .green()
                                 );
                             } else {
-                                println!(
-                                    "{}",
-                                    format!("  [{i}/{count}] Ledger advanced").green()
-                                );
+                                println!("{}", format!("  [{i}/{count}] Ledger advanced").green());
                             }
                         }
                     } else {

@@ -176,7 +176,7 @@ impl HostBindings for TestingHostBindings {
         _out_buff_ptr: *mut u8,
         _out_buff_len: usize,
     ) -> i32 {
-        -1
+        32
     }
 
     unsafe fn credential_keylet(
@@ -189,7 +189,7 @@ impl HostBindings for TestingHostBindings {
         _out_buff_ptr: *mut u8,
         _out_buff_len: usize,
     ) -> i32 {
-        -1
+        32
     }
 
     unsafe fn escrow_keylet(
@@ -199,7 +199,7 @@ impl HostBindings for TestingHostBindings {
         _out_buff_ptr: *mut u8,
         _out_buff_len: usize,
     ) -> i32 {
-        -1
+        32
     }
 
     unsafe fn oracle_keylet(
@@ -209,7 +209,7 @@ impl HostBindings for TestingHostBindings {
         _out_buff_ptr: *mut u8,
         _out_buff_len: usize,
     ) -> i32 {
-        -1
+        32
     }
 
     unsafe fn get_nft(

@@ -26,14 +26,28 @@ pub fn object_exists(
                 let _ = trace_num("Error: ", slot.into());
                 return Err(host::Error::NoFreeSlots);
             }
-            let _ = trace_num("Getting field: ", field.into());
-            match ledger_object::get_account_id_field(slot, field) {
-                Ok(data) => {
-                    let _ = trace_data("Field data: ", &data.0, DataRepr::AsHex);
+            if field == 0 {
+                let new_field = sfield::PreviousTxnID;
+                let _ = trace_num("Getting field: ", new_field.into());
+                match ledger_object::get_hash_256_field(slot, new_field) {
+                    Ok(data) => {
+                        let _ = trace_data("Field data: ", &data.0, DataRepr::AsHex);
+                    }
+                    Err(result_code) => {
+                        let _ = trace_num("Error getting field: ", result_code.into());
+                        return Err(result_code);
+                    }
                 }
-                Err(result_code) => {
-                    let _ = trace_num("Error getting field: ", result_code.into());
-                    return Err(result_code);
+            } else {
+                let _ = trace_num("Getting field: ", field.into());
+                match ledger_object::get_account_id_field(slot, field) {
+                    Ok(data) => {
+                        let _ = trace_data("Field data: ", &data.0, DataRepr::AsHex);
+                    }
+                    Err(result_code) => {
+                        let _ = trace_num("Error getting field: ", result_code.into());
+                        return Err(result_code);
+                    }
                 }
             }
 
@@ -75,7 +89,7 @@ pub extern "C" fn finish() -> bool {
     let currency_code: &[u8; 3] = b"USD";
     let currency: Currency = Currency::from(*currency_code);
     let line_keylet = keylets::line_keylet(&account, &destination, &currency);
-    match object_exists(line_keylet, "Trustline", sfield::PreviousTxnLgrSeq) {
+    match object_exists(line_keylet, "Trustline", sfield::Generic) {
         Ok(exists) => {
             if exists {
                 let _ = trace("  Trustline object exists, proceeding with escrow finish.");
@@ -159,7 +173,7 @@ pub extern "C" fn finish() -> bool {
     };
     seq += 1;
 
-    let nft_offer_keylet = keylets::nft_offer_keylet(&account, seq);
+    let nft_offer_keylet = keylets::nft_offer_keylet(&destination, 4);
     match object_exists(nft_offer_keylet, "NFTokenOffer", sfield::Owner) {
         Ok(exists) => {
             if exists {
@@ -171,7 +185,6 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
-    seq += 1;
 
     let paychan_keylet = keylets::paychan_keylet(&account, &destination, seq);
     match object_exists(paychan_keylet, "PayChannel", sfield::Account) {
@@ -188,7 +201,7 @@ pub extern "C" fn finish() -> bool {
     seq += 1;
 
     let signers_keylet = keylets::signers_keylet(&account);
-    match object_exists(signers_keylet, "SignerList", sfield::Owner) {
+    match object_exists(signers_keylet, "SignerList", sfield::Generic) {
         Ok(exists) => {
             if exists {
                 let _ = trace("  SignerList object exists, proceeding with escrow finish.");
@@ -201,6 +214,7 @@ pub extern "C" fn finish() -> bool {
     };
     seq += 1;
 
+    seq += 1; // ticket sequence number is one greater
     let ticket_keylet = keylets::ticket_keylet(&account, seq);
     match object_exists(ticket_keylet, "Ticket", sfield::Account) {
         Ok(exists) => {
@@ -213,7 +227,7 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
-    seq += 2; // exception for tickets since it "consumes" an extra sequence number
+    // seq += 1;
 
     true // All keylets exist, finish the escrow.
 }

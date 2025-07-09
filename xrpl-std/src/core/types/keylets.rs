@@ -819,7 +819,8 @@ pub fn ticket_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 /// # Arguments
 ///
 /// * `host_call`: A closure that takes a mutable pointer to the output buffer (`*mut u8`)
-/// and its length (`usize`), performs the specific host FFI call, and returns an `i32` status code.
+///   and its length (`usize`), performs the specific host FFI call, and returns an `i32` status
+///   code.
 fn create_keylet_from_host_call<F>(host_call: F) -> Result<KeyletBytes>
 where
     F: FnOnce(*mut u8, usize) -> i32,

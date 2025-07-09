@@ -22,9 +22,9 @@ impl DockerManager {
 
             // Also check HOME-based paths
             if let Ok(home) = std::env::var("HOME") {
-                possible_sockets.push(format!("{}/.colima/default/docker.sock", home));
-                possible_sockets.push(format!("{}/.colima/docker.sock", home));
-                possible_sockets.push(format!("{}/.docker/run/docker.sock", home));
+                possible_sockets.push(format!("{home}/.colima/default/docker.sock"));
+                possible_sockets.push(format!("{home}/.colima/docker.sock"));
+                possible_sockets.push(format!("{home}/.docker/run/docker.sock"));
             }
 
             // Find first existing socket
@@ -55,7 +55,7 @@ impl DockerManager {
             if let Ok(contexts) = String::from_utf8(output.stdout) {
                 for line in contexts.lines() {
                     if line.contains("*") {
-                        println!("{}", format!("Active Docker context: {}", line).cyan());
+                        println!("{}", format!("Active Docker context: {line}").cyan());
                         if line.contains("colima") && line.contains("/Users") {
                             println!(
                                 "{}",
@@ -71,17 +71,17 @@ impl DockerManager {
         let mut sockets_to_check = vec!["/var/run/docker.sock".to_string()];
 
         if let Ok(home) = std::env::var("HOME") {
-            sockets_to_check.push(format!("{}/.colima/default/docker.sock", home));
-            sockets_to_check.push(format!("{}/.colima/docker.sock", home));
-            sockets_to_check.push(format!("{}/.docker/run/docker.sock", home));
+            sockets_to_check.push(format!("{home}/.colima/default/docker.sock"));
+            sockets_to_check.push(format!("{home}/.colima/docker.sock"));
+            sockets_to_check.push(format!("{home}/.docker/run/docker.sock"));
         }
 
         println!("{}", "Checking Docker socket locations:".cyan());
         for socket in &sockets_to_check {
             if std::path::Path::new(socket).exists() {
-                println!("{}", format!("  ✓ Found: {}", socket).green());
+                println!("{}", format!("  ✓ Found: {socket}").green());
             } else {
-                println!("{}", format!("  ✗ Missing: {}", socket).red());
+                println!("{}", format!("  ✗ Missing: {socket}").red());
             }
         }
     }
@@ -363,7 +363,7 @@ impl DockerManager {
         if !image_exists {
             println!(
                 "{}",
-                format!("Pulling Docker image: {}", RIPPLED_IMAGE).yellow()
+                format!("Pulling Docker image: {RIPPLED_IMAGE}").yellow()
             );
 
             let pull_opts = PullOpts::builder().image(image_name).tag(tag).build();
@@ -519,7 +519,7 @@ impl DockerManager {
             while let Some(log) = logs.next().await {
                 match log {
                     Ok(chunk) => print!("{}", String::from_utf8_lossy(&chunk)),
-                    Err(e) => eprintln!("Error reading logs: {}", e),
+                    Err(e) => eprintln!("Error reading logs: {e}"),
                 }
             }
         } else {
@@ -593,7 +593,7 @@ impl DockerManager {
                 let state = container.state.as_deref().unwrap_or("unknown");
                 let status = container.status.as_deref().unwrap_or("unknown");
 
-                println!("  - {} ({}): {}", name, state, status);
+                println!("  - {name} ({state}): {status}");
             }
 
             println!("\n{}", "Container management commands:".blue());
@@ -660,10 +660,7 @@ impl DockerManager {
     }
 
     pub async fn advance_ledger(&self, count: u32) -> Result<()> {
-        println!(
-            "{}",
-            format!("Advancing ledger {} time(s)...", count).cyan()
-        );
+        println!("{}", format!("Advancing ledger {count} time(s)...").cyan());
 
         // First check if the container is running
         let containers = self.docker.containers();
@@ -727,10 +724,7 @@ impl DockerManager {
                                     .green()
                                 );
                             } else {
-                                println!(
-                                    "{}",
-                                    format!("  [{}/{}] Ledger advanced", i, count).green()
-                                );
+                                println!("{}", format!("  [{i}/{count}] Ledger advanced").green());
                             }
                         }
                     } else {

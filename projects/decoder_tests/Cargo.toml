@@ -1,7 +1,7 @@
 [package]
-edition = "2021"
 name = "decoder_tests"
 version = "0.0.1"
+edition = "2024"
 
 # This empty workspace definition keeps this project independent of the parent workspace
 [workspace]

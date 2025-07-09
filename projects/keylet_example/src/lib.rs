@@ -1,37 +1,52 @@
 #![no_std]
 
-use crate::host::{Result::Err, Result::Ok};
-use xrpl_std::core::amount::Amount;
-use xrpl_std::core::amount::xrp_amount::XrpAmount;
+use crate::host::{Result, Result::Err, Result::Ok};
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::{EscrowFinishFields, TransactionCommonFields};
-use xrpl_std::core::keylets;
-use xrpl_std::core::ledger_objects::current_escrow::{CurrentEscrow, get_current_escrow};
-use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
-use xrpl_std::core::locator::Locator;
-use xrpl_std::core::types::account_id::AccountID;
-use xrpl_std::core::types::blob::Blob;
+use xrpl_std::core::ledger_objects::ledger_object;
 use xrpl_std::core::types::hash_256::Hash256;
-use xrpl_std::core::types::transaction_type::TransactionType;
+use xrpl_std::core::types::keylets;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
-use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
-pub fn object_exists(keylet: &KeyletBytes, slot: &u32, field: u32) -> Result<u32, host::Error> {
-    slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), slot) };
-    if slot <= 0 {
-        let _ = trace_num("Error: ", slot, DataRepr::AsHex);
-        return Err(host::Error::NoFreeSlots);
+pub fn object_exists(
+    keyletResult: Result<keylets::KeyletBytes>,
+    keyletType: &str,
+    field: i32,
+) -> Result<bool> {
+    match keyletResult {
+        Ok(keylet) => {
+            let _ = trace_data(keyletType, &keylet, DataRepr::AsHex);
+
+            let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+            if slot <= 0 {
+                let _ = trace_num("Error: ", slot.into());
+                return Err(host::Error::NoFreeSlots);
+            }
+            let _ = trace_num("Getting field: ", field.into());
+            match ledger_object::get_account_id_field(slot, field) {
+                Ok(data) => {
+                    let _ = trace_data("Field data: ", &data.0, DataRepr::AsHex);
+                }
+                Err(result_code) => {
+                    let _ = trace_num("Error getting field: ", result_code.into());
+                    return Err(result_code);
+                }
+            }
+
+            Ok(true)
+        }
+        Err(error) => {
+            return Err(error.into());
+        }
     }
-    let mut data = [0u8; 32]; // Adjust size as needed for the field
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
-    let slot = 0;
 
     let escrow_finish: EscrowFinish = get_current_escrow_finish();
     let current_tx_id: Hash256 = escrow_finish.get_id().unwrap_or_panic();
@@ -41,19 +56,29 @@ pub extern "C" fn finish() -> bool {
     let _ = trace_data("  Account:", &account.0, DataRepr::AsHex);
 
     let account_keylet = keylets::account_keylet(&account);
-    let _ = trace_data("  Account Keylet:", &account_keylet, DataRepr::AsHex);
-    match object_field() {
-        Ok(opt_last_ledger_sequence) => {
-            if let Some(last_ledger_sequence) = opt_last_ledger_sequence {
-                let _ = trace_num("  LastLedgerSequence:", last_ledger_sequence as i64);
+    match object_exists(account_keylet, "Account", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Check object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Check object does not exist, aborting escrow finish.");
+                return false;
             }
         }
-        Err(error) => {
-            let _ = trace_num(
-                "  Error getting LastLedgerSequence. error_code = ",
-                error.code() as i64,
-            );
+        Err(_error) => return false,
+    };
+
+    let check_keylet = keylets::check_keylet(&account, 3);
+    match object_exists(check_keylet, "Check", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Check object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Check object does not exist, aborting escrow finish.");
+                return false;
+            }
         }
+        Err(_error) => return false,
     };
 
     false // <-- If we get here, don't finish the escrow.

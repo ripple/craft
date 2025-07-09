@@ -16,5 +16,8 @@ lto = true
 opt-level = 's'
 panic = "abort"
 
+[profile.dev]
+panic = "abort"
+
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }

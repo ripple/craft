@@ -55,7 +55,7 @@ pub fn install_wasm_target(target: &str) -> Result<()> {
     Command::new("rustup")
         .args(["target", "add", target])
         .status()
-        .context(format!("Failed to install WASM target: {}", target))?;
+        .context(format!("Failed to install WASM target: {target}"))?;
     Ok(())
 }
 
@@ -183,8 +183,8 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
             .prompt()?
         {
             let updated_content = cargo_content.replace(
-                &format!("name = \"{}\"", package_name),
-                &format!("name = \"{}\"", fixed_name),
+                &format!("name = \"{package_name}\""),
+                &format!("name = \"{fixed_name}\""),
             );
 
             std::fs::write(&cargo_toml_path, updated_content)?;
@@ -241,8 +241,7 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
             println!(
                 "{}",
                 format!(
-                    "\nRenamed folder from '{}' to '{}'!",
-                    project_folder_name, updated_package_name
+                    "\nRenamed folder from '{project_folder_name}' to '{updated_package_name}'!"
                 )
                 .green()
             );
@@ -309,11 +308,10 @@ pub fn needs_cli_update() -> Result<bool> {
 
         let source_modified = source_file
             .metadata()
-            .context(format!("Failed to get metadata for {:?}", source_file))?
+            .context(format!("Failed to get metadata for {source_file:?}"))?
             .modified()
             .context(format!(
-                "Failed to get modification time for {:?}",
-                source_file
+                "Failed to get modification time for {source_file:?}"
             ))?;
 
         // If source file is newer than binary, update is needed

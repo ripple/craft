@@ -2,12 +2,13 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
+
+use xrpl_std::core::locator::Locator;
 use xrpl_std::decode_hex_32;
 use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
 use xrpl_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
-use xrpl_std::locator::LocatorPacker;
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
     Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
@@ -134,7 +135,7 @@ fn test_amendments() {
     let _ = trace_num("  Amendments array len:", array_len as i64);
     for i in 0..array_len {
         let mut buf = [0x00; 32];
-        let mut locator = LocatorPacker::new();
+        let mut locator = Locator::new();
         locator.pack(sfield::Amendments);
         locator.pack(i);
         let output_len = unsafe {
@@ -161,7 +162,7 @@ fn test_amendments() {
     let _ = trace_num("  LedgerEntryType:", out_buf as i64);
 
     let mut buf = [0x00; 32];
-    let mut locator = LocatorPacker::new();
+    let mut locator = Locator::new();
     locator.pack(sfield::Majorities);
     locator.pack(0);
     locator.pack(sfield::Majority);
@@ -201,16 +202,20 @@ fn test_amm() {
     let keylet = <[u8; 32]>::try_from(
         decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap(),
     )
-        .unwrap();
+    .unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
     let mut buf = [0x00; 48];
     let output_len =
         unsafe { get_ledger_obj_field(slot, sfield::LPTokenBalance, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data("  get LPTokenBalance:", &buf[..output_len as usize], DataRepr::AsHex);
+    let _ = trace_data(
+        "  get LPTokenBalance:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
 
-    let mut locator = LocatorPacker::new();
+    let mut locator = Locator::new();
     locator.pack(sfield::AuctionSlot);
     locator.pack(sfield::Price);
     let output_len = unsafe {
@@ -222,7 +227,11 @@ fn test_amm() {
             buf.len(),
         )
     };
-    let _ = trace_data("  AuctionSlot Price:", &buf[..output_len as usize], DataRepr::AsHex);
+    let _ = trace_data(
+        "  AuctionSlot Price:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
 }
 fn test_offer() {
     let _ = trace("\n$$$ test_offer $$$");
@@ -230,14 +239,14 @@ fn test_offer() {
     let keylet = <[u8; 32]>::try_from(
         decode_hex_32(b"D0A063DEE0B0EC9522CF35CD55771B5DCAFA19A133EE46A0295E4D089AF86438").unwrap(),
     )
-        .unwrap();
+    .unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
     let mut buf = [0x00; 48];
     let output_len =
         unsafe { get_ledger_obj_field(slot, sfield::TakerPays, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data("  TakerPays:", &buf[..output_len as usize], DataRepr::AsHex);    
+    let _ = trace_data("  TakerPays:", &buf[..output_len as usize], DataRepr::AsHex);
 }
 
 fn test_mpt_fields() {
@@ -246,7 +255,7 @@ fn test_mpt_fields() {
     let keylet = <[u8; 32]>::try_from(
         decode_hex_32(b"22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13").unwrap(),
     )
-        .unwrap();
+    .unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -278,15 +287,18 @@ fn test_mpt_amount() {
     let keylet = <[u8; 32]>::try_from(
         decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap(),
     )
-        .unwrap();
+    .unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
     let mut buf = [0x00; 48];
-    let output_len = unsafe {
-        get_ledger_obj_field(slot, sfield::Amount2, buf.as_mut_ptr(), buf.len())
-    };
-    let _ = trace_data("  MPT Amount2:", &buf[..output_len as usize], DataRepr::AsHex);
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Amount2, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data(
+        "  MPT Amount2:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
 }
 
 #[no_mangle]
@@ -297,6 +309,6 @@ pub extern "C" fn finish() -> i32 {
     test_offer();
     test_mpt_fields();
     test_mpt_amount();
-    
+
     1
 }

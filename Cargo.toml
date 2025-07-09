@@ -1,8 +1,5 @@
 [workspace]
-members = [
-    ".",
-    "wasm-host"
-]
+members = [".", "wasm-host"]
 
 [package]
 name = "craft"

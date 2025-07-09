@@ -29,6 +29,70 @@ pub enum HostError {
     IndexOutOfBounds = -18,
 }
 
+impl From<i64> for HostError {
+    fn from(value: i64) -> Self {
+        match value {
+            -1 => HostError::InternalError,
+            -2 => HostError::FieldNotFound,
+            -3 => HostError::BufferTooSmall,
+            -4 => HostError::NoArray,
+            -5 => HostError::NotLeafField,
+            -6 => HostError::LocatorMalformed,
+            -7 => HostError::SlotOutRange,
+            -8 => HostError::SlotsFull,
+            -9 => HostError::EmptySlot,
+            -10 => HostError::LedgerObjNotFound,
+            -11 => HostError::DecodingError,
+            -12 => HostError::DataFieldTooLarge,
+            -13 => HostError::PointerOutOfBound,
+            -14 => HostError::NoMemoryExported,
+            -15 => HostError::InvalidParams,
+            -16 => HostError::InvalidAccount,
+            -17 => HostError::InvalidField,
+            -18 => HostError::IndexOutOfBounds,
+            _ => HostError::InternalError, // Default to InternalError for unknown error codes
+        }
+    }
+}
+
+/// Converts an error code to its string representation.
+///
+/// # Arguments
+///
+/// * `code` - An integer representing the error code
+///
+/// # Returns
+///
+/// Returns a string slice representing the name of the error code constant and its integer value.
+/// Returns "UNKNOWN_ERROR (code)" if the error code is not recognized.
+/// ```
+pub fn error_code_to_string(code: i64) -> &'static str {
+    // Convert the code to a HostError
+    let host_error: HostError = code.into();
+
+    // Match on the HostError
+    match host_error {
+        HostError::InternalError => "INTERNAL_ERROR (-1)",
+        HostError::FieldNotFound => "FIELD_NOT_FOUND (-2)",
+        HostError::BufferTooSmall => "BUFFER_TOO_SMALL (-3)",
+        HostError::NoArray => "NO_ARRAY (-4)",
+        HostError::NotLeafField => "NOT_LEAF_FIELD (-5)",
+        HostError::LocatorMalformed => "LOCATOR_MALFORMED (-6)",
+        HostError::SlotOutRange => "SLOT_OUT_RANGE (-7)",
+        HostError::SlotsFull => "SLOTS_FULL (-8)",
+        HostError::EmptySlot => "EMPTY_SLOT (-9)",
+        HostError::LedgerObjNotFound => "LEDGER_OBJ_NOT_FOUND (-10)",
+        HostError::DecodingError => "DECODING_ERROR (-11)",
+        HostError::DataFieldTooLarge => "DATA_FIELD_TOO_LARGE (-12)",
+        HostError::PointerOutOfBound => "POINTER_OUT_OF_BOUND (-13)",
+        HostError::NoMemoryExported => "NO_MEMORY_EXPORTED (-14)",
+        HostError::InvalidParams => "INVALID_PARAMS (-15)",
+        HostError::InvalidAccount => "INVALID_ACCOUNT (-16)",
+        HostError::InvalidField => "INVALID_FIELD (-17)",
+        HostError::IndexOutOfBounds => "INDEX_OUT_OF_BOUNDS (-18)",
+    }
+}
+
 pub struct LocatorUnpacker {
     buffer: Vec<u8>,
     cur_buffer_index: usize,

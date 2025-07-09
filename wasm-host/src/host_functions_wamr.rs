@@ -1,5 +1,7 @@
 #![allow(unused)]
-use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
+use crate::data_provider::{
+    DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, error_code_to_string, unpack_locator,
+};
 use crate::decoding::ACCOUNT_ID_LEN;
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
@@ -455,10 +457,6 @@ pub fn trace_num(
     msg_read_len: usize,
     number: i64,
 ) -> i32 {
-    // Don't need to check number of inputs or types since these will manifest at runtime and
-    // cancel execution of the contract.
-
-    let number: u64 = number as u64;
     debug!(
         "trace() params: msg_read_ptr={:?} msg_read_len={} number={} ",
         msg_read_ptr, msg_read_len, number
@@ -467,6 +465,11 @@ pub fn trace_num(
         return HostError::DecodingError as i32;
     };
 
-    println!("WASM TRACE: {message} {number}");
+    if (number < 0) {
+        let error_code_str = error_code_to_string(number);
+        println!("WASM TRACE[ERROR]: {message} {error_code_str}");
+    } else {
+        println!("WASM TRACE: {message} {number}");
+    }
     0
 }

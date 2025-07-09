@@ -3,17 +3,18 @@
 use xrpl_std::core::ledger_objects::current_escrow;
 use xrpl_std::core::ledger_objects::nft::get_nft;
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
+use xrpl_std::core::locator::Locator;
 use xrpl_std::host::Error::InternalError;
 use xrpl_std::host::get_tx_nested_field;
 use xrpl_std::host::trace::trace_num;
 use xrpl_std::host::{Error, Result, Result::Err, Result::Ok};
+use xrpl_std::sfield;
 use xrpl_std::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
-use xrpl_std::{locator, sfield};
 
 #[unsafe(no_mangle)]
 pub fn get_first_memo() -> Result<Option<ContractData>> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    let mut locator = locator::LocatorPacker::new();
+    let mut locator = Locator::new();
     locator.pack(sfield::Memos);
     locator.pack(0);
     locator.pack(sfield::MemoData);

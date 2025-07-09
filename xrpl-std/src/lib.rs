@@ -2,7 +2,6 @@
 
 pub mod core;
 pub mod host;
-pub mod locator;
 pub mod sfield;
 pub mod types;
 
@@ -15,7 +14,6 @@ fn panic(_info: &::core::panic::PanicInfo) -> ! {
     // It's the WASM equivalent of a trap or an unrecoverable error.
     ::core::arch::wasm32::unreachable();
 }
-
 
 fn hex_char_to_nibble(c: u8) -> Option<u8> {
     match c {

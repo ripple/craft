@@ -1,7 +1,8 @@
 /// The size of the buffer, in bytes, to use for any new locator
 const LOCATOR_BUFFER_SIZE: usize = 64;
 
-/// A Locator may only pack this many levels deep in an object hierarchy (inclusive of first field)
+// /// A Locator may only pack this many levels deep in an object hierarchy (inclusive of the first
+// /// field)
 // const MAX_DEPTH: u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
 
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by
@@ -10,7 +11,7 @@ const LOCATOR_BUFFER_SIZE: usize = 64;
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(C)]
 pub struct Locator {
-    // First packed value is 6 bytes; All nested/packed values are 5 bytes; so 64 bytes allows
+    // The first packed value is 6 bytes; All nested/packed values are 5 bytes; so 64 bytes allow
     // 12 nested levels of access.
     buffer: [u8; LOCATOR_BUFFER_SIZE],
 

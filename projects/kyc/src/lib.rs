@@ -24,7 +24,7 @@ pub extern "C" fn finish() -> bool {
 
     // "termsandconditions" in hex
     let cred_type: &[u8] = b"termsandconditions";
-    match credential_keylet(&account_id, &account_id, &cred_type) {
+    match credential_keylet(&account_id, &account_id, cred_type) {
         Ok(keylet) => {
             let _ = trace_data("cred_keylet", &keylet, DataRepr::AsHex);
 

@@ -34,7 +34,7 @@ pub fn get_first_memo() -> Result<Option<ContractData>> {
         result_code if result_code > 0 => {
             Ok(Some(data)) // <-- Move the buffer into an AccountID
         }
-        result_code if result_code == 0 => Err(InternalError),
+        0 => Err(InternalError),
         result_code => Err(Error::from_code(result_code)),
     }
 }

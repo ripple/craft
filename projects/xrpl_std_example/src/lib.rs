@@ -1,4 +1,7 @@
-#![no_std]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use crate::host::{Result::Err, Result::Ok};
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
@@ -524,7 +527,7 @@ pub extern "C" fn finish() -> bool {
         //
         // println!("wasm finish slot {:?}", slot);
         //
-        // let mut locator = LocatorPacker::new();
+        // let mut locator = Locator::new();
         // locator.pack(SignerEntries);
         // let array_len = unsafe {
         //     host_lib::get_ledger_obj_nested_array_len(slot, locator.get_addr(), locator.num_packed_bytes())

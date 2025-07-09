@@ -46,7 +46,9 @@
     "13F1A95D7AAB7108D5CE7EEAF504B2894B8C674E6D68499076441C4837282BF8": {
       "Account": "rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn",
       "AccountTxnID": "932CC7E9BAC1F7B9FA5381679F293EEC0A646E5E7F2F6D14C85FEE2102F0E66C",
-      "Balance": "1138222650",
+      "note": "Do not change Balance",
+      "Balance": "10000000000",
+      "Balance_encoded": "40000002540BE400",
       "Domain": "6D64756F31332E636F6D",
       "EmailHash": "98B4375E1D753E5B91627516F6D70977",
       "Flags": 9568256,
@@ -243,11 +245,13 @@
       "PreviousTxnLgrSeq": 18555460,
       "Sequence": 359,
       "TakerGets": "1000000000",
+      "note": "Do not change TakerPays",
       "TakerPays": {
-        "currency": "FOO",
-        "issuer": "rUpy3eEg8rqjqfUoLeBnZkscbKbFsKXC3v",
-        "value": "100"
-      }
+        "currency": "USD",
+        "issuer": "r9QxhA9RghPZBbUchA9HkrmLKaWvkLXU29",
+        "value": "10000"
+      },
+      "TakerPays_encoded": "D5838D7EA4C6800000000000000000000000000055534400000000005C488AAC5813270850685FFD89F4A4A8F4CD4C83"
     }
   },
   {
@@ -376,6 +380,37 @@
       ],
       "PreviousTxnID": "BB84C7F9FD90E7AC8A3178580F2F9BD2F00738F53060203025AF80CAF1C5D794",
       "PreviousTxnLgrSeq": 77102208
+    }
+  },
+  {
+    "22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13": {
+      "Account": "rfyWeQpYM3vCXRHA9cMLs2ZEdZv1F1jzm9",
+      "Flags": 0,
+      "LedgerEntryType": "MPToken",
+      "MPTAmount": "200",
+      "MPTokenIssuanceID": "0024D204E07DDDFBCD83B1649C07FE27FD536A3A32E6FDD8",
+      "OwnerNode": "0",
+      "PreviousTxnID": "D002A397F726302BA9280BEC02B398DB187FAA86E1AD77912580A03807F10DEE",
+      "PreviousTxnLgrSeq": 2414912,
+      "index": "22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13"
+    }
+  },
+  {
+    "4444444444444444444444444444444444444444444444444444444444444444": {
+      "Asset": {
+        "currency": "XRP"
+      },
+      "Asset2": {
+        "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83"
+      },
+      "Amount": "10000000000",
+      "note": "Do not change Amount2",
+      "Amount2": {
+        "mpt_issuance_id": "000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+        "value": "10000"
+      },
+      "Amount2_encoded": "600000000000002710000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
+      "LedgerEntryType": "NOT_REAL"
     }
   }
 ]

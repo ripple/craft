@@ -43,6 +43,7 @@ struct Args {
     function: String,
 }
 
+#[allow(clippy::type_complexity)]
 fn load_test_data(
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {

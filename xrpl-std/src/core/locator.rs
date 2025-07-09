@@ -1,7 +1,8 @@
 /// The size of the buffer, in bytes, to use for any new locator
 const LOCATOR_BUFFER_SIZE: usize = 64;
 
-// /// A Locator may only pack this many levels deep in an object hierarchy (inclusive of first field)
+// /// A Locator may only pack this many levels deep in an object hierarchy (inclusive of the first
+// /// field)
 // const MAX_DEPTH: u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
 
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by
@@ -16,6 +17,12 @@ pub struct Locator {
 
     /// An index into `buffer` where the next packing operation can be stored.
     cur_buffer_index: usize,
+}
+
+impl Default for Locator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Locator {
@@ -43,13 +50,15 @@ impl Locator {
         }
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for i in 0..value_bytes.len() {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = value_bytes[i],
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 
@@ -65,13 +74,15 @@ impl Locator {
         self.cur_buffer_index -= 4;
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for i in 0..value_bytes.len() {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = value_bytes[i],
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 }

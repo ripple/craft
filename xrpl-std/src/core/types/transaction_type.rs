@@ -58,7 +58,7 @@ pub enum TransactionType {
 impl From<[u8; 2]> for TransactionType {
     fn from(value: [u8; 2]) -> Self {
         let value_16 = i16::from_le_bytes(value.as_slice().try_into().expect("Incorrect length"));
-        value_16.try_into().unwrap()
+        value_16.into()
     }
 }
 

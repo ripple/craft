@@ -289,6 +289,8 @@ pub fn account_keylet(
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
+
+#[allow(clippy::too_many_arguments)]
 pub fn credential_keylet(
     _env: wasm_exec_env_t,
     subject_ptr: *mut u8,

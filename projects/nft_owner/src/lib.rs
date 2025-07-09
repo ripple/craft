@@ -1,4 +1,7 @@
-#![no_std]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use xrpl_std::core::ledger_objects::current_escrow;
 use xrpl_std::core::ledger_objects::nft::get_nft;
@@ -31,7 +34,7 @@ pub fn get_first_memo() -> Result<Option<ContractData>> {
         result_code if result_code > 0 => {
             Ok(Some(data)) // <-- Move the buffer into an AccountID
         }
-        result_code if result_code == 0 => Err(InternalError),
+        0 => Err(InternalError),
         result_code => Err(Error::from_code(result_code)),
     }
 }

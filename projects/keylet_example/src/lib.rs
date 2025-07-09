@@ -5,6 +5,7 @@ use xrpl_std::core::ledger_objects::current_escrow::CurrentEscrow;
 use xrpl_std::core::ledger_objects::current_escrow::get_current_escrow;
 use xrpl_std::core::ledger_objects::ledger_object;
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
+use xrpl_std::core::types::currency::Currency;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
@@ -39,6 +40,7 @@ pub fn object_exists(
             Ok(true)
         }
         Err(error) => {
+            let _ = trace_num("Error getting keylet: ", error.into());
             return Err(error.into());
         }
     }
@@ -69,8 +71,24 @@ pub extern "C" fn finish() -> bool {
         Err(_error) => return false,
     };
 
-    // created with sequence 3
-    let check_keylet = keylets::check_keylet(&account, 3);
+    let mut seq = 5;
+    let currency_code: &[u8; 3] = b"USD";
+    let currency: Currency = Currency::from(*currency_code);
+    let line_keylet = keylets::line_keylet(&account, &destination, &currency);
+    match object_exists(line_keylet, "Trustline", sfield::PreviousTxnLgrSeq) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Trustline object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Trustline object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+    seq += 1;
+
+    let check_keylet = keylets::check_keylet(&account, seq);
     match object_exists(check_keylet, "Check", sfield::Account) {
         Ok(exists) => {
             if exists {
@@ -82,8 +100,8 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 4
     let cred_type: &[u8] = b"termsandconditions";
     let credential_keylet = keylets::credential_keylet(&account, &account, &cred_type);
     match object_exists(credential_keylet, "Credential", sfield::Subject) {
@@ -97,8 +115,8 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 5
     let delegate_keylet = keylets::delegate_keylet(&account, &destination);
     match object_exists(delegate_keylet, "Delegate", sfield::Account) {
         Ok(exists) => {
@@ -111,8 +129,8 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 6
     let did_keylet = keylets::did_keylet(&account);
     match object_exists(did_keylet, "Account", sfield::Account) {
         Ok(exists) => {
@@ -125,9 +143,9 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 7
-    let escrow_keylet = keylets::escrow_keylet(&account, 7);
+    let escrow_keylet = keylets::escrow_keylet(&account, seq);
     match object_exists(escrow_keylet, "Escrow", sfield::Account) {
         Ok(exists) => {
             if exists {
@@ -139,9 +157,9 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 8
-    let nft_offer_keylet = keylets::nft_offer_keylet(&account, 8);
+    let nft_offer_keylet = keylets::nft_offer_keylet(&account, seq);
     match object_exists(nft_offer_keylet, "NFTokenOffer", sfield::Owner) {
         Ok(exists) => {
             if exists {
@@ -153,9 +171,9 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 9
-    let paychan_keylet = keylets::paychan_keylet(&account, &destination, 9);
+    let paychan_keylet = keylets::paychan_keylet(&account, &destination, seq);
     match object_exists(paychan_keylet, "PayChannel", sfield::Account) {
         Ok(exists) => {
             if exists {
@@ -167,8 +185,8 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 10
     let signers_keylet = keylets::signers_keylet(&account);
     match object_exists(signers_keylet, "SignerList", sfield::Owner) {
         Ok(exists) => {
@@ -181,9 +199,9 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 1;
 
-    // created with sequence 11
-    let ticket_keylet = keylets::ticket_keylet(&account, 11);
+    let ticket_keylet = keylets::ticket_keylet(&account, seq);
     match object_exists(ticket_keylet, "Ticket", sfield::Account) {
         Ok(exists) => {
             if exists {
@@ -195,6 +213,7 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+    seq += 2; // exception for tickets since it "consumes" an extra sequence number
 
     true // All keylets exist, finish the escrow.
 }

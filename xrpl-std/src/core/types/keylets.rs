@@ -1,5 +1,6 @@
 use crate::core::error_codes::match_result_code_with_expected_bytes;
 use crate::core::types::account_id::AccountID;
+use crate::core::types::currency::Currency;
 use crate::host;
 use crate::host::Result;
 use crate::host::trace::{DataRepr, trace_data, trace_num};
@@ -348,7 +349,7 @@ pub fn escrow_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 ///
 /// * `account` - The first AccountID in the trustline relationship
 /// * `account2` - The second AccountID in the trustline relationship
-/// * `currency` - The currency code for the trustline
+/// * `currency` - The Currency for the trustline
 ///
 /// # Returns
 ///
@@ -386,7 +387,7 @@ pub fn escrow_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 pub fn line_keylet(
     account1: &AccountID,
     account2: &AccountID,
-    currency: &[u8],
+    currency: &Currency,
 ) -> Result<KeyletBytes> {
     create_keylet_from_host_call(|keylet_buffer_ptr, keylet_buffer_len| unsafe {
         host::line_keylet(
@@ -394,8 +395,8 @@ pub fn line_keylet(
             account1.0.len(),
             account2.0.as_ptr(),
             account2.0.len(),
-            currency.as_ptr(),
-            currency.len(),
+            currency.0.as_ptr(),
+            currency.0.len(),
             keylet_buffer_ptr,
             keylet_buffer_len,
         )

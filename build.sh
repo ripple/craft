@@ -11,4 +11,16 @@ for dir in ./projects/*/; do
     (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release) || exit 1
   fi
 done
+
+echo "✅  All WASM builds completed successfully"
+
+for dir in ./projects/*/; do
+  if [ -f "$dir/Cargo.toml" ]; then
+    echo "🔧 Building in $dir"
+    (cd "$dir" && cargo build && cargo build --release) || exit 1
+  fi
+done
+
+echo "✅  All Rust builds completed successfully"
+
 cd ../.. || exit

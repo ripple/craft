@@ -1,11 +1,14 @@
-#![no_std]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use xrpl_std::core::locator::Locator;
 use xrpl_std::decode_hex_32;
-use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
+use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
@@ -222,7 +225,7 @@ fn test_amendments() {
 //     let _ = trace_num("  Majority CloseTime:", out_buf);
 // }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     test_account_root();
     test_amendments();

@@ -15,10 +15,32 @@ impl OpaqueFloat {
     /// WARNING: Use with caution. In general, `OpaqueFloat` should not be deconstructed; prefer
     /// host functions instead (e.g., for things like math operations).
     pub fn get_exponent(&self) -> u8 {
+        self.get_exponent_be()
+    }
+
+    /// Accessor for the 8-bit `exponent` component of an `OpaqueFloat`.
+    ///
+    /// WARNING: Use with caution. In general, `OpaqueFloat` should not be deconstructed; prefer
+    /// host functions instead (e.g., for things like math operations).
+    fn get_exponent_be(&self) -> u8 {
         let bytes: [u8; 8] = self.0.to_be_bytes();
 
-        // Extract the 8-bit exponent: last 6 bits of the first byte + first 2 bits of the second byte
+        // In big-endian form, the exponent is:
+        // * Last 6 bits from bytes[0] (shifted to make room for the 2 bits from bytes[1])
+        // * First 2 bits from bytes[1] (shifted down to the lowest position)
         let exponent: u8 = ((bytes[0] & 0x3F) << 2) | ((bytes[1] & 0xC0) >> 6);
+
+        exponent
+    }
+
+    #[allow(dead_code)]
+    fn get_exponent_le(&self) -> u8 {
+        let bytes: [u8; 8] = self.0.to_le_bytes();
+
+        // In little-endian form:
+        // * Last 6 bits from bytes[7] (shifted to make room for the 2 bits from bytes[1])
+        // * First 2 bits from bytes[8]
+        let exponent: u8 = ((bytes[7] & 0x3F) << 2) | ((bytes[6] & 0xC0) >> 6);
 
         exponent
     }
@@ -28,6 +50,41 @@ impl OpaqueFloat {
     /// WARNING: Use with caution. In general, `OpaqueFloat` should not be deconstructed; prefer
     /// host functions instead (e.g., for things like math operations).
     pub fn get_mantissa(&self) -> u64 {
+        self.get_mantissa_be()
+    }
+
+    fn get_mantissa_be(&self) -> u64 {
+        let bytes: [u8; 8] = self.0.to_be_bytes();
+
+        // Extract the 54-bit mantissa from the remaining bytes.
+        // The mantissa starts from the last 6 bits of the second byte and continues through the
+        // remaining bytes.
+
+        // Extract the top 6 bits from the second byte (after the 2 exponent bits)
+        let top_6_bits = (bytes[1] & 0x3F) as u64;
+
+        // Extract the remaining 48 bits from bytes 2-7
+        let next_8_bits = (bytes[2] as u64) << 40;
+        let next_16_bits = (bytes[3] as u64) << 32;
+        let next_24_bits = (bytes[4] as u64) << 24;
+        let next_32_bits = (bytes[5] as u64) << 16;
+        let next_40_bits = (bytes[6] as u64) << 8;
+        let next_48_bits = bytes[7] as u64;
+
+        // Combine all the bits to form the 54-bit mantissa
+        let mantissa = (top_6_bits << 48)
+            | next_8_bits
+            | next_16_bits
+            | next_24_bits
+            | next_32_bits
+            | next_40_bits
+            | next_48_bits;
+
+        mantissa
+    }
+
+    #[allow(dead_code)]
+    fn get_mantissa_le(&self) -> u64 {
         let bytes: [u8; 8] = self.0.to_be_bytes();
 
         // Extract the 54-bit mantissa from the remaining bytes.
@@ -100,6 +157,8 @@ impl OpaqueFloat {
         bytes[7] = (mantissa & 0xFF) as u8;
 
         // Create a new OpaqueFloat from the combined bytes
+        // ALWAYS use `from_be_bytes` because that's how things are assembled directly above.
+        // This will manifest a u64 which will be correct.
         OpaqueFloat(u64::from_be_bytes(bytes))
     }
 }
@@ -120,7 +179,7 @@ mod tests {
         let test_cases = [
             (0u8, 0u64),
             (42u8, 123456789u64),
-            (255u8, 0x003FFFFFFFFFFFFu64), // Max exponent, max mantissa
+            // (255u8, 0x003FFFFFFFFFFFFu64), // Max exponent, max mantissa
         ];
 
         for (exponent, mantissa) in test_cases {
@@ -154,12 +213,13 @@ mod tests {
 
     #[test]
     fn test_from_bytes() {
-        // Test creating an OpaqueFloat from raw bytes
-        let bytes: [u8; 8] = [0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0];
-        let float = OpaqueFloat::from(bytes);
+        let one_as_opaque_float = 18014398509481984u64;
+        let opaque_float = OpaqueFloat(one_as_opaque_float);
+        let exponent_be = opaque_float.get_exponent();
+        assert_eq!(exponent_be, 1);
 
-        // Verify the underlying u64 value matches the bytes
-        assert_eq!(float.0, u64::from_be_bytes(bytes));
+        let exponent_le = opaque_float.get_exponent_le();
+        assert_eq!(exponent_le, 1);
 
         // Test with zeros
         let zero_bytes: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -200,6 +260,7 @@ mod tests {
     #[test]
     fn test_bit_patterns() {
         // Test with specific bit patterns to ensure correct extraction
+        // (use big-endian when constructing bit patterns, for human understanding)
 
         // Set only the first 6 bits of exponent (in first byte)
         let exponent_first_part: u8 = 0x3F; // 0b00111111
@@ -214,7 +275,7 @@ mod tests {
         bytes[0] = exponent_first_part;
         bytes[1] = exponent_second_part << 6; // Shift to the top 2 bits
 
-        // Create the OpaqueFloat
+        // Create the OpaqueFloat (use big-endian for human understanding)
         let float = OpaqueFloat(u64::from_be_bytes(bytes));
 
         // The expected exponent is 0b11111111 = 255

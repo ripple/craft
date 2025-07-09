@@ -1,7 +1,8 @@
 use core::fmt::Display;
 
 /// Represents an amount of XRP in Drops.
-#[derive(Copy, Debug, PartialEq, Eq, Clone, Ord, PartialOrd, Default)]
+
+#[derive(Copy, Default, Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub struct XrpAmount(pub u64);
 
 impl XrpAmount {

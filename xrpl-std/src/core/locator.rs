@@ -50,13 +50,15 @@ impl Locator {
         }
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for &byte in &value_bytes {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = byte,
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 
@@ -72,13 +74,15 @@ impl Locator {
         self.cur_buffer_index -= 4;
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for &byte in &value_bytes {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = byte,
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 }

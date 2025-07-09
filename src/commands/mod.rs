@@ -111,8 +111,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
         .join(config.build_mode.to_string());
 
     // Get the project name from Cargo.toml instead of directory name
-    let cargo_toml_path = cargo_toml.clone(); // Clone the PathBuf to avoid borrowing issues
-    let cargo_content = std::fs::read_to_string(&cargo_toml_path)?;
+    let cargo_content = std::fs::read_to_string(&cargo_toml)?;
     let name_pattern = regex::Regex::new(r#"name\s*=\s*"([^"]*)""#)?;
 
     let project_name = if let Some(caps) = name_pattern.captures(&cargo_content) {
@@ -436,7 +435,6 @@ pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
 }
 
 pub async fn open_explorer() -> Result<()> {
-    use open;
     open::that("https://custom.xrpl.org/localhost:6006")?;
     println!(
         "{}",

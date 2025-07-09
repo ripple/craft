@@ -23,7 +23,7 @@
 //!
 //! ## Field Categories
 //!
-//! ### Mandatory vs Optional Fields
+//! ### Mandatory vs. Optional Fields
 //!
 //! - **Mandatory fields** return `Result<T>` and will error if missing
 //! - **Optional fields** return `Result<Option<T>>` and return `None` if missing
@@ -87,14 +87,14 @@ pub trait TransactionCommonFields {
 
     /// Retrieves the transaction type from the current transaction.
     ///
-    /// This field specifies Required) The type of transaction. Valid transaction types include:
+    /// This field specifies the type of transaction. Valid transaction types include:
     /// Payment, OfferCreate, TrustSet, and many others.
     ///
     /// # Returns
     ///
     /// Returns a `Result<TransactionType>` where:
     /// * `Ok(TransactionType)` - An enumerated value representing the transaction type
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     fn get_transaction_type(&self) -> Result<TransactionType> {
         let mut buffer = [0u8; 2]; // Allocate memory to read into (this is an i32)
@@ -131,11 +131,11 @@ pub trait TransactionCommonFields {
     ///
     /// Returns a `Result<Amount>` where:
     /// * `Ok(Amount)` - The fee amount as an XRP amount in drops
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     /// # Note
     ///
-    /// Currently returns XRP amounts only. Future versions may support other token types
+    /// Returns XRP amounts only (for now). Future versions may support other token types
     /// when the underlying amount handling is enhanced.
     fn get_fee(&self) -> Result<Amount> {
         // TODO: Use get_amount_field from mod.rs
@@ -160,7 +160,7 @@ pub trait TransactionCommonFields {
     ///
     /// Returns a `Result<u32>` where:
     /// * `Ok(u32)` - The transaction sequence number
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     /// # Note
     ///
@@ -186,7 +186,7 @@ pub trait TransactionCommonFields {
         get_hash_256_field_optional(SF_ACCOUNT_TXN_ID)
     }
 
-    /// Retrieves the flags field from the current transaction.
+    /// Retrieves the `flags` field from the current transaction.
     ///
     /// This optional field contains a bitfield of transaction-specific flags that modify
     /// the transaction's behavior.
@@ -259,13 +259,13 @@ pub trait TransactionCommonFields {
     ///
     /// Returns a `Result<PublicKey>` where:
     /// * `Ok(PublicKey)` - The 33-byte compressed public key used for signing
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     /// # Security Note
     ///
-    /// The presence of this field doesn't guarantee the signature is valid - it only
-    /// provides the key that was claimed to be used for signing. Signature validation
-    /// is performed by the XRPL network before transaction execution.
+    /// The presence of this field doesn't guarantee the signature is valid. Instead, this field
+    /// only provides the key claimed to be used for signing. The XRPL network performs signature
+    /// validation before transaction execution.
     fn get_signing_pub_key(&self) -> Result<PublicKey> {
         get_public_key_field(SF_SIGNING_PUB_KEY)
     }
@@ -323,7 +323,7 @@ pub trait TransactionCommonFields {
 /// Types implementing this trait should:
 /// - Also implement `TransactionCommonFields` for access to common transaction fields
 /// - Only be used in the context of processing EscrowFinish transactions
-/// - Ensure proper error handling when accessing conditional fieldsd
+/// - Ensure proper error handling when accessing conditional fields
 pub trait EscrowFinishFields: TransactionCommonFields {
     /// Retrieves the transaction ID (hash) from the current transaction.
     ///
@@ -350,7 +350,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     ///
     /// Returns a `Result<AccountID>` where:
     /// * `Ok(AccountID)` - The 20-byte account identifier of the escrow owner
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_owner(&self) -> Result<AccountID> {
         get_account_id_field(SF_OWNER)
     }
@@ -366,14 +366,14 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     ///
     /// Returns a `Result<u32>` where:
     /// * `Ok(u32)` - The sequence number of the EscrowCreate transaction
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_offer_sequence(&self) -> Result<u32> {
         get_u32_field(SF_OFFER_SEQUENCE)
     }
 
     /// Retrieves the cryptographic condition from the current EscrowFinish transaction.
     ///
-    /// This optional field contains the cryptographic condition that was specified in the
+    /// This optional field contains the cryptographic condition specified in the
     /// original EscrowCreate transaction. If present, a valid `Fulfillment` must be provided
     /// in the `Fulfillment` field for the escrow to be successfully finished. Conditions
     /// enable complex release criteria beyond simple time-based locks.
@@ -416,7 +416,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// # Size Limits
     ///
     /// Fulfillments are limited to 256 bytes in the current XRPL implementation.
-    /// This limit ensures network performance while supporting most practical
+    /// This limit ensures network performance while supporting the most practical
     /// cryptographic proof scenarios.
     fn get_fulfillment(&self) -> Result<Option<Fulfillment>> {
         // Fulfillment fields are limited in rippled to 256 bytes, so we don't use `get_blob_field`

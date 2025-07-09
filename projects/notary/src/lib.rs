@@ -1,4 +1,7 @@
-#![no_std]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use xrpl_std::core::current_tx::escrow_finish;
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;

@@ -14,10 +14,11 @@ crate-type = ["cdylib"]
 [profile.release]
 lto = true
 opt-level = 's'
+codegen-units = 1
 panic = "abort"
 
 [profile.dev]
-panic = "abort"
+panic = "unwind" # For debugging, support std-lib with unwinding in the `dev` profile
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }

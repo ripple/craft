@@ -58,7 +58,7 @@ pub fn object_exists(
         }
         Err(error) => {
             let _ = trace_num("Error getting keylet: ", error.into());
-            Err(error.into())
+            Err(error)
         }
     }
 }

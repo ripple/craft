@@ -56,7 +56,6 @@ pub type AccountId = Vec<u8>;
     STYPE(STI_METADATA, 10004)
 
 */
-
 #[allow(non_camel_case_types)]
 #[derive(Clone, PartialEq)]
 #[allow(clippy::upper_case_acronyms)]

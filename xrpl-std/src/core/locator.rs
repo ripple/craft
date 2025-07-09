@@ -19,6 +19,12 @@ pub struct Locator {
     cur_buffer_index: usize,
 }
 
+impl Default for Locator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Locator {
     /// Create a new Locator using an unsigned 8-bit slot number. Valid slots are 0 to 255.
     pub fn new_with_slot(slot_num: u8) -> Locator {
@@ -44,13 +50,15 @@ impl Locator {
         }
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for i in 0..value_bytes.len() {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = value_bytes[i],
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 
@@ -66,13 +74,15 @@ impl Locator {
         self.cur_buffer_index -= 4;
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for i in 0..value_bytes.len() {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = value_bytes[i],
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 }

@@ -1,8 +1,10 @@
-#![no_std]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use crate::host::{Result::Err, Result::Ok};
 use xrpl_std::core::amount::Amount;
-use xrpl_std::core::amount::xrp_amount::XrpAmount;
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::{EscrowFinishFields, TransactionCommonFields};
@@ -75,9 +77,7 @@ pub extern "C" fn finish() -> bool {
 
     // Trace Field: Fee
     let fee: Amount = escrow_finish.get_fee().unwrap_or_panic();
-    let fee_as_xrp_amount: XrpAmount = match fee {
-        Amount::Xrp(xrp_amount) => xrp_amount,
-    };
+    let Amount::Xrp(fee_as_xrp_amount) = fee;
     let _ = trace_num("  Fee:", fee_as_xrp_amount.0 as i64);
 
     // Trace Field: Sequence
@@ -381,9 +381,13 @@ pub extern "C" fn finish() -> bool {
                 buf.len(),
             )
         };
-        let _ = trace_data("  CredentialID:", &buf[..output_len as usize], DataRepr::AsHex);
-    }    
-    
+        let _ = trace_data(
+            "  CredentialID:",
+            &buf[..output_len as usize],
+            DataRepr::AsHex,
+        );
+    }
+
     let _ = trace("{ ");
 
     // ########################################

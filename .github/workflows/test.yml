@@ -30,13 +30,41 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
+      - name: Run Clippy (xrpl-std)
+        run: |
+          cd xrpl-std 
+          cargo clippy --all-targets --all-features
+
+      - name: Run Clippy (All Contracts)
+        run: |
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Clippy in $dir"
+              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+            fi
+          done
+
   rustfmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run fmt
+      - name: Run fmt (Craft)
         run: cargo fmt --all -- --check
+
+      - name: Run fmt (xrpl-std)
+        run: |
+          cd xrpl-std 
+          cargo fmt --all -- --check
+
+      - name: Run fmt (All Contracts)
+        run: |
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Fmt in $dir"
+              (cd "$dir" && cargo fmt --all -- --check) || exit 1
+            fi
+          done
 
   build_and_test:
     runs-on: ubuntu-latest

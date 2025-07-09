@@ -1,11 +1,14 @@
-#![no_std]
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use xrpl_std::core::locator::Locator;
 use xrpl_std::decode_hex_32;
-use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
+use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
@@ -199,10 +202,8 @@ fn test_amendments() {
 fn test_amm() {
     let _ = trace("\n$$$ test_amm $$$");
 
-    let keylet = <[u8; 32]>::try_from(
-        decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap(),
-    )
-    .unwrap();
+    let keylet =
+        decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -236,10 +237,8 @@ fn test_amm() {
 fn test_offer() {
     let _ = trace("\n$$$ test_offer $$$");
 
-    let keylet = <[u8; 32]>::try_from(
-        decode_hex_32(b"D0A063DEE0B0EC9522CF35CD55771B5DCAFA19A133EE46A0295E4D089AF86438").unwrap(),
-    )
-    .unwrap();
+    let keylet =
+        decode_hex_32(b"D0A063DEE0B0EC9522CF35CD55771B5DCAFA19A133EE46A0295E4D089AF86438").unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -252,10 +251,8 @@ fn test_offer() {
 fn test_mpt_fields() {
     let _ = trace("\n$$$ test_mpt_fields, access individual fields $$$");
 
-    let keylet = <[u8; 32]>::try_from(
-        decode_hex_32(b"22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13").unwrap(),
-    )
-    .unwrap();
+    let keylet =
+        decode_hex_32(b"22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13").unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -284,10 +281,8 @@ fn test_mpt_fields() {
 fn test_mpt_amount() {
     let _ = trace("\n$$$ test_mpt_amount, access an MPT Amount $$$");
 
-    let keylet = <[u8; 32]>::try_from(
-        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap(),
-    )
-    .unwrap();
+    let keylet =
+        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap();
 
     let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
 
@@ -301,7 +296,7 @@ fn test_mpt_amount() {
     );
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     test_account_root();
     test_amendments();

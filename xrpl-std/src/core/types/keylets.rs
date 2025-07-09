@@ -365,6 +365,7 @@ pub fn escrow_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 ///
 /// ```rust
 /// use xrpl_std::core::types::account_id::AccountID;
+/// use xrpl_std::core::types::currency::Currency;
 /// use xrpl_std::core::types::keylets::line_keylet;
 /// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -374,7 +375,7 @@ pub fn escrow_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 ///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///     let currency_code = b"524C555344000000000000000000000000000000"; // RLUSD currency code
 ///     let currency: Currency = Currency::from(*currency_code);
-///     match keylets::line_keylet(&account, &destination, &currency); {
+///     match keylets::line_keylet(&account, &destination, &currency) {
 ///       xrpl_std::host::Result::Ok(keylet) => {
 ///         let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///       }

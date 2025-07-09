@@ -58,7 +58,7 @@ pub fn object_exists(
         }
         Err(error) => {
             let _ = trace_num("Error getting keylet: ", error.into());
-            return Err(error.into());
+            Err(error.into())
         }
     }
 }
@@ -120,7 +120,7 @@ pub extern "C" fn finish() -> bool {
     seq += 1;
 
     let cred_type: &[u8] = b"termsandconditions";
-    let credential_keylet = keylets::credential_keylet(&account, &account, &cred_type);
+    let credential_keylet = keylets::credential_keylet(&account, &account, cred_type);
     match object_exists(credential_keylet, "Credential", sfield::Subject) {
         Ok(exists) => {
             if exists {

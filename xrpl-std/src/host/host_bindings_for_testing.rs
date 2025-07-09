@@ -222,7 +222,7 @@ pub unsafe fn account_keylet(
 }
 
 #[allow(unused)]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn check_keylet(
     _account_ptr: *const u8,
     _account_len: usize,

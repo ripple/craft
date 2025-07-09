@@ -264,6 +264,19 @@ pub unsafe fn delegate_keylet(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn deposit_preauth_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _authorize_ptr: *const u8,
+    _authorize_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn did_keylet(
     _account_ptr: *const u8,
     _account_len: usize,

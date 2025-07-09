@@ -179,7 +179,7 @@ pub fn credential_keylet(
     })
 }
 
-/// Generates a delegate keylet for a given subject, issuer, and delegate type.
+/// Generates a delegate keylet for a given given account and authorized account.
 ///
 /// A delegate keylet is used to reference delegate entries in the XRP Ledger.
 ///
@@ -223,6 +223,60 @@ pub fn credential_keylet(
 pub fn delegate_keylet(account: &AccountID, authorize: &AccountID) -> Result<KeyletBytes> {
     create_keylet_from_host_call(|keylet_buffer_ptr, keylet_buffer_len| unsafe {
         host::delegate_keylet(
+            account.0.as_ptr(),
+            account.0.len(),
+            authorize.0.as_ptr(),
+            authorize.0.len(),
+            keylet_buffer_ptr,
+            keylet_buffer_len,
+        )
+    })
+}
+
+/// Generates a deposit preauth keylet for a given account and authorized account.
+///
+/// A deposit preauth keylet is used to reference deposit preauth entries in the XRP Ledger.
+///
+/// # Arguments
+///
+/// * `account` - The AccountID of the account that is doing the pre-authorizing
+/// * `authorize` - The AccountID of the account that is pre-authorizing
+///
+/// # Returns
+///
+/// * `Result<KeyletBytes>` - On success, returns a 32-byte deposit preauth keylet.
+///   On failure, returns an `Error` with the corresponding error code.
+///
+/// # Safety
+///
+/// This function makes unsafe FFI calls to the host environment through
+/// the `host::deposit_preauth_keylet` function.
+///
+/// # Example
+///
+/// ```rust
+/// use xrpl_std::core::types::account_id::AccountID;
+/// use xrpl_std::core::types::keylets::deposit_preauth_keylet;
+/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let account: AccountID =
+///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///     let authorize: AccountID =
+///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///     match deposit_preauth_keylet(&account, &authorize) {
+///       xrpl_std::host::Result::Ok(keylet) => {
+///         let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
+///       }
+///       xrpl_std::host::Result::Err(e) => {
+///         let _ = trace_num("Error assembling keylet", e.code() as i64);
+///       }
+///     }
+///     Ok(())
+/// }
+/// ```
+pub fn deposit_preauth_keylet(account: &AccountID, authorize: &AccountID) -> Result<KeyletBytes> {
+    create_keylet_from_host_call(|keylet_buffer_ptr, keylet_buffer_len| unsafe {
+        host::deposit_preauth_keylet(
             account.0.as_ptr(),
             account.0.len(),
             authorize.0.as_ptr(),

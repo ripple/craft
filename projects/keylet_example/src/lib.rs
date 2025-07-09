@@ -148,6 +148,20 @@ pub extern "C" fn finish() -> bool {
     };
     seq += 1;
 
+    let deposit_preauth_keylet = keylets::deposit_preauth_keylet(&account, &destination);
+    match object_exists(deposit_preauth_keylet, "Delegate", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Delegate object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Delegate object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+    seq += 1;
+
     let did_keylet = keylets::did_keylet(&account);
     match object_exists(did_keylet, "Account", sfield::Account) {
         Ok(exists) => {

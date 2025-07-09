@@ -1,10 +1,10 @@
 #![no_std]
 
 use crate::host::{Result, Result::Err, Result::Ok};
-use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
-use xrpl_std::core::current_tx::traits::{EscrowFinishFields, TransactionCommonFields};
+use xrpl_std::core::ledger_objects::current_escrow::CurrentEscrow;
+use xrpl_std::core::ledger_objects::current_escrow::get_current_escrow;
 use xrpl_std::core::ledger_objects::ledger_object;
-use xrpl_std::core::types::hash_256::Hash256;
+use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
@@ -48,12 +48,13 @@ pub fn object_exists(
 pub extern "C" fn finish() -> bool {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
-    let escrow_finish: EscrowFinish = get_current_escrow_finish();
-    let current_tx_id: Hash256 = escrow_finish.get_id().unwrap_or_panic();
-    let _ = trace_data("  EscrowFinish TxId:", &current_tx_id.0, DataRepr::AsHex);
+    let escrow: CurrentEscrow = get_current_escrow();
 
-    let account = escrow_finish.get_account().unwrap_or_panic();
+    let account = escrow.get_account().unwrap_or_panic();
     let _ = trace_data("  Account:", &account.0, DataRepr::AsHex);
+
+    let destination = escrow.get_destination().unwrap_or_panic();
+    let _ = trace_data("  Destination:", &destination.0, DataRepr::AsHex);
 
     let account_keylet = keylets::account_keylet(&account);
     match object_exists(account_keylet, "Account", sfield::Account) {
@@ -68,6 +69,7 @@ pub extern "C" fn finish() -> bool {
         Err(_error) => return false,
     };
 
+    // created with sequence 3
     let check_keylet = keylets::check_keylet(&account, 3);
     match object_exists(check_keylet, "Check", sfield::Account) {
         Ok(exists) => {
@@ -81,5 +83,118 @@ pub extern "C" fn finish() -> bool {
         Err(_error) => return false,
     };
 
-    false // <-- If we get here, don't finish the escrow.
+    // created with sequence 4
+    let cred_type: &[u8] = b"termsandconditions";
+    let credential_keylet = keylets::credential_keylet(&account, &account, &cred_type);
+    match object_exists(credential_keylet, "Credential", sfield::Subject) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Credential object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Credential object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 5
+    let delegate_keylet = keylets::delegate_keylet(&account, &destination);
+    match object_exists(delegate_keylet, "Delegate", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Delegate object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Delegate object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 6
+    let did_keylet = keylets::did_keylet(&account);
+    match object_exists(did_keylet, "Account", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Check object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Check object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 7
+    let escrow_keylet = keylets::escrow_keylet(&account, 7);
+    match object_exists(escrow_keylet, "Escrow", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Escrow object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Escrow object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 8
+    let nft_offer_keylet = keylets::nft_offer_keylet(&account, 8);
+    match object_exists(nft_offer_keylet, "NFTokenOffer", sfield::Owner) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  NFTokenOffer object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  NFTokenOffer object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 9
+    let paychan_keylet = keylets::paychan_keylet(&account, &destination, 9);
+    match object_exists(paychan_keylet, "PayChannel", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  PayChannel object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  PayChannel object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 10
+    let signers_keylet = keylets::signers_keylet(&account);
+    match object_exists(signers_keylet, "SignerList", sfield::Owner) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  SignerList object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  SignerList object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    // created with sequence 11
+    let ticket_keylet = keylets::ticket_keylet(&account, 11);
+    match object_exists(ticket_keylet, "Ticket", sfield::Account) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Ticket object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Ticket object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+
+    true // All keylets exist, finish the escrow.
 }

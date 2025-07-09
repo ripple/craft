@@ -1,4 +1,4 @@
-use crate::decoding::{AccountId, Decodable, decode, decode_amount_json};
+use crate::decoding::{AccountId, Decodable, decode, decode_amount_json, decode_issue_json};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
 use std::ffi::c_void;
@@ -182,6 +182,17 @@ impl DataProvider {
             Some(value) => {
                 if decodable == Decodable::AMOUNT {
                     match decode_amount_json(value.clone()) {
+                        None => (HostError::DecodingError as i32, buf),
+                        Some(bytes) => {
+                            if bytes.len() > buf_cap {
+                                return (HostError::BufferTooSmall as i32, buf);
+                            }
+                            buf[..bytes.len()].copy_from_slice(&bytes);
+                            (bytes.len() as i32, buf)
+                        }
+                    }
+                } else if decodable == Decodable::ISSUE {
+                    match decode_issue_json(value.clone()) {
                         None => (HostError::DecodingError as i32, buf),
                         Some(bytes) => {
                             if bytes.len() > buf_cap {

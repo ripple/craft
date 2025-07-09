@@ -296,6 +296,36 @@ fn test_mpt_amount() {
     );
 }
 
+fn test_issue() {
+    let _ = trace("\n$$$ test_issue $$$");
+
+    let keylet =
+        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    // XRP
+    let mut buf = [0x00; 20];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Asset, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  XRP Asset:", &buf[..output_len as usize], DataRepr::AsHex);
+
+    // MPT
+    let mut buf = [0x00; 24];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Asset2, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  MPT Asset:", &buf[..output_len as usize], DataRepr::AsHex);
+
+    let keylet =
+        decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    //IOU
+    let mut buf = [0x00; 40];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Asset2, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  IOU Asset:", &buf[..output_len as usize], DataRepr::AsHex);
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     test_account_root();
@@ -304,6 +334,7 @@ pub extern "C" fn finish() -> i32 {
     test_offer();
     test_mpt_fields();
     test_mpt_amount();
+    test_issue();
 
     1
 }

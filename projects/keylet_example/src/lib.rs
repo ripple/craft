@@ -12,13 +12,13 @@ use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
 pub fn object_exists(
-    keyletResult: Result<keylets::KeyletBytes>,
-    keyletType: &str,
+    keylet_result: Result<keylets::KeyletBytes>,
+    keylet_type: &str,
     field: i32,
 ) -> Result<bool> {
-    match keyletResult {
+    match keylet_result {
         Ok(keylet) => {
-            let _ = trace_data(keyletType, &keylet, DataRepr::AsHex);
+            let _ = trace_data(keylet_type, &keylet, DataRepr::AsHex);
 
             let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot <= 0 {

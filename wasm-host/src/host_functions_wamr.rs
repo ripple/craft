@@ -1,10 +1,14 @@
 #![allow(unused)]
+
+use bigdecimal::{BigDecimal, ToPrimitive};
+use bigdecimal::num_bigint::{BigInt, ToBigInt};
+use bigdecimal::num_traits::real::Real;
 use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
-use crate::decoding::ACCOUNT_ID_LEN;
+use crate::decoding::{_deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN};
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
 use log::debug;
-use wamr_rust_sdk::sys::{wasm_exec_env_t, wasm_runtime_get_function_attachment};
+use wamr_rust_sdk::sys::{wasm_exec_env_t, wasm_runtime_get_function_attachment, wasm_runtime_get_module_inst, wasm_runtime_validate_app_addr};
 
 pub fn get_dp(env: wasm_exec_env_t) -> &'static mut DataProvider {
     unsafe { &mut *(wasm_runtime_get_function_attachment(env) as *mut DataProvider) }
@@ -383,6 +387,157 @@ pub fn get_nft(
     set_data(dp_res.0, out_buf_ptr, dp_res.1);
     dp_res.0
 }
+
+fn unpack_in_float(env: wasm_exec_env_t, in_buf: *const u8) -> Result<BigDecimal, HostError> {
+    let bytes: [u8; 8] = unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_app_addr(inst, in_buf as u64, 8) {
+            return Err(HostError::PointerOutOfBound);
+        }
+        match std::slice::from_raw_parts(in_buf, 8).try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return Err(HostError::FloatInputMalformed),
+        }
+    };
+    _deserialize_issued_currency_amount(bytes).map_err(|_| HostError::FloatInputMalformed)
+}
+
+fn pack_out_float(decimal: BigDecimal, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
+    let bytes: [u8; 8] = match _serialize_issued_currency_value(decimal) {
+        Ok(bytes) => bytes,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+
+    unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_app_addr(inst, out_buf as u64, 8) {
+            return HostError::PointerOutOfBound as i32;
+        }
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), out_buf, 8);
+    }
+    8
+}
+
+pub fn float_from_int(env: wasm_exec_env_t, in_int: i64, out_buf: *mut u8) -> i32 {
+    let a = BigDecimal::from(in_int);
+    pack_out_float(a, env, out_buf)
+}
+
+pub fn float_set(env: wasm_exec_env_t, exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32 {    
+    let value = BigDecimal::from_bigint(BigInt::from(mantissa), exponent as i64);
+    // let ten = BigDecimal::from(10);
+    // 
+    // if exponent > 0 {
+    //     for _ in 0..exponent {
+    //         value = value * ten.clone();
+    //     }
+    // } else if exponent < 0 {
+    //     for _ in 0..(-exponent) {
+    //         value = value / ten.clone();
+    //     }
+    // }
+
+    pack_out_float(value, env, out_buf)
+}
+
+pub fn float_compare(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    if f1 == f2 { 0 } else if f1 > f2 { 1 } else { 2 }
+}
+pub fn float_add(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1+f2;
+    pack_out_float(r, env, out_buf)
+}
+pub fn float_subtract(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1-f2;
+    pack_out_float(r, env, out_buf)
+}
+pub fn float_multiply(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1*f2;
+    pack_out_float(r, env, out_buf)
+}
+pub fn float_divide(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1/f2;
+    pack_out_float(r, env, out_buf)
+}
+pub fn float_root(env: wasm_exec_env_t, in_buf: *const u8, in_int: i32, out_buf: *mut u8) -> i32 {
+    let f = match unpack_in_float(env, in_buf) {
+        Ok(val) => match val.to_f64(){
+            Some(f) => f,
+            None => return HostError::FloatComputationError as i32,
+        }
+        Err(e) => return e as i32,
+    };
+
+    if in_int <= 0 {
+        return HostError::InvalidParams as i32;
+    }
+
+    let f = f.powf(in_int as f64);
+    let r = match BigDecimal::try_from(f){
+        Ok(val) => val,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    
+    pack_out_float(r, env, out_buf)
+}
+pub fn float_log(env: wasm_exec_env_t, in_buf: *const u8, out_buf: *mut u8) -> i32 {
+    let f = match unpack_in_float(env, in_buf) {
+        Ok(val) => match val.to_f64() {
+            Some(f) => f,
+            None => return HostError::FloatComputationError as i32,
+        }
+        Err(e) => return e as i32,
+    };
+
+    let f = f.log10();
+    let r = match BigDecimal::try_from(f) {
+        Ok(val) => val,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+
+    pack_out_float(r, env, out_buf)
+}
+///////////////////////////////////////////////////////////////////////////////
 
 fn read_utf8_from_wasm(msg_read_ptr: *mut u8, msg_read_len: usize) -> Option<String> {
     String::from_utf8(get_data(msg_read_ptr, msg_read_len)).ok()

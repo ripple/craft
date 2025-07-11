@@ -2,7 +2,7 @@ use crate::core::error_codes;
 
 mod host_bindings_for_testing;
 pub mod trace;
-
+mod host_bindings;
 //////////////////////////////////////
 // Host functions (defined by the host)
 //////////////////////////////////////
@@ -257,3 +257,6 @@ pub(crate) fn to_non_optional<T>(result: Result<Option<T>>) -> Result<T> {
         Result::Err(err) => Result::Err(err),
     }
 }
+
+pub const FLOAT_ONE: [u8;8] = [0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+pub const FLOAT_NEGATIVE_ONE: [u8;8] = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];

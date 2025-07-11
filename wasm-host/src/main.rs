@@ -1,3 +1,5 @@
+extern crate core;
+
 mod data_provider;
 mod decoding;
 mod hashing;

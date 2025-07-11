@@ -295,10 +295,60 @@ pub unsafe fn trace_num(_msg_read_ptr: u32, _msg_read_len: usize, _number: i64) 
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32 {
+    -1
+}
+// pub fn float_negate(in_buf: *const u8, out_buf: *mut u8) -> i32;
+// pub fn float_invert(in_buf: *const u8, out_buf: *mut u8) -> i32;
+// pub fn float_one(out_buf: *mut u8) -> i32;
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32 {
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32 {
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8) -> i32 {
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_log(in_buf: *const u8, out_buf: *mut u8) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace_opaque_float(
-    _msg_read_ptr: u32,
+    _msg_read_ptr: *const u8,
     _msg_read_len: usize,
-    _opaque_float_ptr: u32,
+    _opaque_float_ptr: *const u8,
 ) -> i32 {
     -1
 }

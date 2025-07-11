@@ -27,6 +27,8 @@ pub enum HostError {
     InvalidAccount = -16,
     InvalidField = -17,
     IndexOutOfBounds = -18,
+    FloatInputMalformed = -19,
+    FloatComputationError = -20,
 }
 
 impl From<i64> for HostError {

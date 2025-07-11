@@ -11,7 +11,7 @@ unsafe extern "C" {
     /// # Arguments
     ///
     /// - `out_buff_ptr`: A mutable raw pointer to the buffer where the ledger sequence
-    ///                   number will be written.
+    ///   number will be written.
     /// - `out_buff_len`: Specifies the size of the buffer pointed to by `out_buff_ptr`.
     ///
     /// # Returns
@@ -28,10 +28,9 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to the output buffer where the parent ledger time will
-    ///                   be stored. The buffer should be pre-allocated with enough space to hold
-    ///                   the data.
+    ///   be stored. The buffer should be pre-allocated with enough space to hold the data.
     /// - `out_buff_len`: The length of the output buffer. This value must be at least as large as
-    ///                   the data intended to be written to avoid memory issues.
+    ///   the data intended to be written to avoid memory issues.
     ///
     /// # Returns
     ///
@@ -48,10 +47,9 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to a buffer where the parent ledger hash will be written.
-    ///                   The buffer must be allocated and managed by the caller.
+    ///   The buffer must be allocated and managed by the caller.
     /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///                   buffer and ensures that the function does not write beyond the allowed
-    ///                   length.
+    ///   buffer and ensures that the function does not write beyond the allowed length.
     ///
     /// # Returns
     ///
@@ -70,10 +68,10 @@ unsafe extern "C" {
     /// # Parameters
     ///
     /// - `keylet_ptr`: A raw pointer to the keylet, which is a unique identifier used to
-    ///                 locate or store data in the ledger.
+    ///   locate or store data in the ledger.
     /// - `keylet_len`: The length of the keylet specified by `keylet_ptr`.
     /// - `cache_num`: The cache number to which the keylet will be placed in.
-    ///                If 0, the host will assign a new cache space.
+    ///   If 0, the host will assign a new cache space.
     ///
     /// # Returns
     ///
@@ -186,7 +184,7 @@ unsafe extern "C" {
     /// # Parameters
     /// - `cache_num`: The cache index of the ledger object to access.
     /// - `locator_ptr`: A pointer to the memory location containing the locator string data
-    ///                  (used to identify the nested field in the ledger object).
+    ///   (used to identify the nested field in the ledger object).
     /// - `locator_len`: The length of the locator string.
     /// - `out_buff_ptr`: A pointer to the buffer where the retrieved nested field value will be written.
     /// - `out_buff_len`: The size of the output buffer in bytes.
@@ -213,7 +211,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_tx_array_len(field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided field value.
@@ -225,7 +223,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_current_ledger_obj_array_len(field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided cache number and field value.
@@ -238,7 +236,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_ledger_obj_array_len(cache_num: i32, field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
@@ -251,7 +249,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_tx_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
@@ -264,7 +262,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_current_ledger_obj_nested_array_len(
         locator_ptr: *const u8,
         locator_len: usize,
@@ -281,7 +279,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_ledger_obj_nested_array_len(
         cache_num: i32,
         locator_ptr: *const u8,
@@ -321,7 +319,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn compute_sha512_half(
         data_ptr: *const u8,
         data_len: usize,
@@ -697,18 +695,37 @@ unsafe extern "C" {
     ) -> i32;
 
     // #############################
+    // Host Function Category: FLOAT
+    // #############################
+    //TODO add docs after discussing the interface
+    //TODO David: should in_int be u64, and have a dedicated input (i32) for sign?
+    pub fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32;
+    pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32;
+    //TODO David: the following can be easily implemented in std-lib if needed, ok to skip?
+    // pub fn float_negate(in_buf: *const u8, out_buf: *mut u8) -> i32;
+    // pub fn float_invert(in_buf: *const u8, out_buf: *mut u8) -> i32;
+    // pub fn float_one(out_buf: *mut u8) -> i32;
+    pub fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32;
+    pub fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8) -> i32;
+    pub fn float_log(in_buf: *const u8, out_buf: *mut u8) -> i32;
+
+    // #############################
     // Host Function Category: TRACE
     // #############################
 
     /// Print to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will see this.
     ///
     /// # Parameters
-    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
-    /// * `msg_read_len`: The byte length of the text to send to the trace log.
-    /// * `data_read_ptr`: A pointer to an array of bytes containing arbitrary data.
-    /// * `data_read_len`: The byte length of the data to send to the trace log.
-    /// * `as_hex`: If 0 treat the data_read_ptr as pointing at a string of text, otherwise treat it
-    ///      as data and print hex.
+    /// - `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// - `msg_read_len`: The byte length of the text to send to the trace log.
+    /// - `data_read_ptr`: A pointer to an array of bytes containing arbitrary data.
+    /// - `data_read_len`: The byte length of the data to send to the trace log.
+    /// - `as_hex`: If 0 treat the data_read_ptr as pointing at a string of text, otherwise treat it
+    ///   as data and print hex.
     ///
     /// # Returns
     ///

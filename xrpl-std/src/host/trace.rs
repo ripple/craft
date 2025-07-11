@@ -99,3 +99,11 @@ pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
 
     match_result_code(result_code, || result_code)
 }
+
+// TODO: Uncomment this line once we have support for floating point numbers (like XFL or similar).
+/// Write a float to the XRPLD trace log
+#[inline(always)]
+pub fn trace_float(msg: &str, f: &[u8; 8]) -> Result<i32> {
+    let result_code = unsafe { host::trace_opaque_float(msg.as_ptr(), msg.len(), f.as_ptr()) };
+    match_result_code(result_code, || result_code)
+}

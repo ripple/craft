@@ -26,7 +26,6 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
-- WasmEdge
 - Docker (required for running rippled)
 
 ### Installing Docker
@@ -53,38 +52,6 @@ Traditional option with GUI:
 - **Linux**: https://docs.docker.com/engine/install/
 
 After installation, ensure Docker is running before using rippled-related commands.
-
-### Installing WasmEdge
-
-If you don't already have WasmEdge, you can install it:
-
-```bash
-curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
-```
-
-After installation, source the updated environment variables:
-
-```bash
-source ~/.zshenv  # For zsh users
-# OR
-source ~/.bashrc  # For bash users
-```
-
-To verify the installation:
-
-```bash
-which wasmedge
-```
-
-If you encounter any dynamic library loading errors when running WASM tests, set the library path:
-
-```bash
-# For macOS
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.wasmedge/lib
-
-# For Linux
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
-```
 
 ## Usage
 
@@ -328,7 +295,7 @@ The verbose output may include:
 Example verbose output:
 
 ```
-[INFO wasm_host] Starting WasmEdge host application
+[INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
 [INFO wasm_host] Using test case: success

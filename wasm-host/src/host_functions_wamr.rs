@@ -6,6 +6,8 @@ use crate::mock_data::{DataSource, Keylet};
 use log::debug;
 use wamr_rust_sdk::sys::{wasm_exec_env_t, wasm_runtime_get_function_attachment};
 
+const MAX_WASM_PARAM_LENGTH: usize = 1024;
+
 pub fn get_dp(env: wasm_exec_env_t) -> &'static mut DataProvider {
     unsafe { &mut *(wasm_runtime_get_function_attachment(env) as *mut DataProvider) }
 }
@@ -263,6 +265,9 @@ pub fn compute_sha512_half(
     if HASH256_LEN > out_buf_cap {
         return HostError::BufferTooSmall as i32;
     }
+    if in_buf_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
     let data = get_data(in_buf_ptr, in_buf_len);
     let hash_half = sha512_half(&data);
     set_data(hash_half.len() as i32, out_buf_ptr, hash_half);
@@ -415,6 +420,10 @@ pub fn trace(
     // Don't need to check number of inputs or types since these will manifest at runtime and
     // cancel execution of the contract.
 
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || data_read_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
+
     let data_as_hex = {
         match data_as_hex {
             0 => false,
@@ -457,6 +466,10 @@ pub fn trace_num(
 ) -> i32 {
     // Don't need to check number of inputs or types since these will manifest at runtime and
     // cancel execution of the contract.
+
+    if msg_read_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
 
     let number: u64 = number as u64;
     debug!(

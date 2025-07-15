@@ -1,5 +1,39 @@
 # WASM Devnet Details
 
+## Devnet4 - 2025-07-03 Release
+
+The Programmability Devnet has been updated to its fourth monthly release.
+
+Devnet details:
+
+URL: wasm.devnet.rippletest.net (port 51234 for HTTP, 51233 for WS)
+
+Explorer: https://custom.xrpl.org/wasm.devnet.rippletest.net
+
+Faucet: https://wasmfaucet.devnet.rippletest.net/accounts
+
+Changelog:
+
+- `EscrowCreate` will now prevent you from uploading bad WASM code.
+- A fee schedule skeleton was added.
+- Misc performance fixes in the host functions.
+
+Craft Changelog:
+
+- Better Docker support
+- Switch from using WasmEdge to WAMR (to match rippled)
+
+Tooling:
+
+- Writing Rust WASM extensions: https://github.com/ripple/craft
+- Python: xrpl-py v4.3.0b0
+- JS: xrpl@4.4.0-smartescrow.0, ripple-binary-codec@2.5.0-smartescrow.0 (you can also use the @smartescrow or @smart-escrow tags)
+
+The rippled commit hash is: 65b0b976d98e54226136fad8e733d17b7fbb511e
+
+
+## Historical WASM Devnets
+
 ## Devnet3 - 2025-06-04 Release
 
 The Programmability Devnet has been updated to its third monthly release.
@@ -24,9 +58,6 @@ Changelog:
 - Writing Rust WASM extensions: https://github.com/ripple/craft
 - Python: xrpl-py v4.2.0b3
 - JS: xrpl@4.3.0-smartescrow.3, ripple-binary-codec@2.4.0-smartescrow.2 (you can also use the @smartescrow or @smart-escrow tags)
-
-
-## Historical WASM Devnets
 
 ### Devnet2 - 2025-05-01 Release
 

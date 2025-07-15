@@ -402,7 +402,7 @@ mod cli_tests {
                 assert_eq!(mode, BuildMode::Debug);
                 assert_eq!(opt, OptimizationLevel::None);
             }
-            other => panic!("Expected Build command, got: {:?}", other),
+            other => panic!("Expected Build command, got: {other:?}"),
         }
     }
 
@@ -415,7 +415,7 @@ mod cli_tests {
                 assert_eq!(mode, BuildMode::Release);
                 assert_eq!(opt, OptimizationLevel::Small);
             }
-            other => panic!("Expected Build command, got: {:?}", other),
+            other => panic!("Expected Build command, got: {other:?}"),
         }
     }
 
@@ -428,7 +428,7 @@ mod cli_tests {
                 assert_eq!(mode, BuildMode::Debug);
                 assert_eq!(opt, OptimizationLevel::Small);
             }
-            other => panic!("Expected Build command, got: {:?}", other),
+            other => panic!("Expected Build command, got: {other:?}"),
         }
     }
 }

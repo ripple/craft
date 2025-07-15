@@ -214,9 +214,9 @@ impl Error {
     }
 }
 
-impl Into<i64> for Error {
-    fn into(self) -> i64 {
-        self as i64
+impl From<Error> for i64 {
+    fn from(val: Error) -> Self {
+        val as i64
     }
 }
 

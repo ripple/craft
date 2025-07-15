@@ -1,17 +1,12 @@
 use core::fmt::Display;
 
 /// Represents an amount of XRP in Drops.
-#[derive(Copy, Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
+#[derive(Copy, Debug, PartialEq, Eq, Clone, Ord, PartialOrd, Default)]
 pub struct XrpAmount(pub u64);
 
 impl XrpAmount {
     pub fn new(drops: u64) -> Self {
         Self(drops)
-    }
-}
-impl Default for XrpAmount {
-    fn default() -> Self {
-        Self(0u64)
     }
 }
 

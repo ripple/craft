@@ -227,10 +227,8 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
             if new_path.exists() {
                 println!(
                     "{}",
-                    format!(
-                        "\nError: A folder named '{updated_package_name}' already exists."
-                    )
-                    .red()
+                    format!("\nError: A folder named '{updated_package_name}' already exists.")
+                        .red()
                 );
                 return Ok(project_path.to_path_buf());
             }

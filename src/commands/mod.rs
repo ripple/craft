@@ -78,10 +78,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
             format!("WASM target {target_str} not found. Installing...").yellow()
         );
         utils::install_wasm_target(&target_str)?;
-        println!(
-            "{}",
-            format!("Successfully installed {target_str}").green()
-        );
+        println!("{}", format!("Successfully installed {target_str}").green());
     }
 
     let cargo_toml = utils::find_cargo_toml(&config.project_path)

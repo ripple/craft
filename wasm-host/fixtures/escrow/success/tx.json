@@ -2,7 +2,7 @@
   "Account": "rrrrrrrrrrrrrrrrrrrrBZbvji",
   "TransactionType": "EscrowFinish",
   "ComputationAllowance": "1000001",
-  "Fee": 10,
+  "Fee": "10",
   "Sequence": 4294967295,
   "Flags": 4294967294,
   "OfferSequence": 4294967293,

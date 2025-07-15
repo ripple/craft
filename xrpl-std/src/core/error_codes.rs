@@ -101,7 +101,7 @@ where
 {
     match result_code {
         code if code as usize == expected_num_bytes => Ok(on_success()),
-        code if code >= 0 => Err(InternalError),
+        code if code >= 0 => Err(InternalError), // If here, this is a bug
         code => Err(Error::from_code(code)),
     }
 }

@@ -1,9 +1,8 @@
 use crate::core::types::account_id::AccountID;
-use crate::core::types::amount::amount::Amount;
 use crate::core::types::amount::currency_code::CurrencyCode;
 use crate::core::types::amount::mpt_id::MptId;
+use crate::core::types::amount::opaque_float::OpaqueFloat;
 use crate::host;
-use crate::host::Error::InternalError;
 use crate::host::trace::trace_num;
 
 pub const TOKEN_AMOUNT_SIZE: usize = 48;
@@ -11,49 +10,49 @@ pub const TOKEN_AMOUNT_SIZE: usize = 48;
 /// A zero-cost abstraction for XRPL tokens. Tokens conform to the following binary layout:
 ///
 /// ```markdown
-///              ┌────────────────────────────────────────────────────────────────────────────┐   
-///              │                       XRP Amount (64 bits / 8 bytes)                       │   
-///              ├────────────────────────────────────────────────────────────────────────────┤   
-///              │                     ┌────────────────────────────────────────────────────┐ │   
-///              │ ┌─┐┌─┐┌─┐ ┌─┬─┬─┬─┐ │ ┌────────────────────────────────────────────────┐ │ │   
-///              │ │0││1││0│ │0│0│0│0│ │ │                      ...                       │ │ │   
-///              │ └─┘└─┘└─┘ └─┴─┴─┴─┘ │ └────────────────────────────────────────────────┘ │ │   
-///              │  ▲  ▲  ▲       ▲    │              Integer Drops (57 bits)               │ │   
-///              │  │  │  │       │    └────────────────────────────────────────────────────┘ │   
-///          ┌───┼──┘  │  └─────┐ └────────────────┐                                          │   
-///          │   └─────┼────────┼──────────────────┼──────────────────────────────────────────┘   
-///          │         │        │                  │                                              
-/// ┌────────────────┐ │ ┌─────────────┐ ┌──────────────────┐                                     
-/// │    Type Bit    │ │ │ Is MPT Bit  │ │     Reserved     │                                     
-/// │(0=XRP/MPT;1=IOU│ │ │(1=MPT/0=XRP)│ └──────────────────┘                                     
-/// └────────────────┘ │ └─────────────┘                                                          
-///           ┌────────────────┐                                                                  
-///           │    Sign bit    │                                                                  
-///           │(1 for positive)│                                                                  
-///           └────────────────┘                                                                  
-///                                                                                               
-///              ┌────────────────────────────────────────────────────────────────────────────┐   
-///              │                       MPT Amount (264-bits/33-bytes)                       │   
-///              ├────────────────────────────────────────────────────────────────────────────┤   
-///              │                       ┌──────────┐ ┌────────────┐ ┌────────────────┐       │   
-///              │ ┌─┐┌─┐┌─┐ ┌─┬─┬─┬─┬─┐ │┌────────┐│ │ ┌────────┐ │ │   ┌────────┐   │       │   
-///              │ │0││1││1│ │0│0│0│0│0│ ││  ...   ││ │ │  ...   │ │ │   │  ...   │   │       │   
-///              │ └─┘└─┘└─┘ └─┴─┴─┴─┴─┘ │└────────┘│ │ └────────┘ │ │   └────────┘   │       │   
-///              │  ▲  ▲  ▲       ▲      │  Amount  │ │Sequence Num│ │Issuer AccountID│       │   
-///              │  │  │  │       │      │(64 bits) │ │ (32 bits)  │ │   (160 bits)   │       │   
-///          ┌───┼──┘  │  └────┐  │      └──────────┘ └────────────┘ └────────────────┘       │   
-///          │   └─────┼───────┼──┼───────────────────────────────────────────────────────────┘   
-///          │         │       │  └───────────────┐                                               
-/// ┌─────────────────┐│┌─────────────┐           │                                               
-/// │    Type Bit     │││ Is MPT Bit  │           │                                               
-/// │(0=XRP/MPT;1=IOU)│││(1=MPT/0=XRP)│           │                                               
-/// └─────────────────┘│└─────────────┘           │                                               
-///           ┌────────────────┐        ┌──────────────────┐                                      
-///           │    Sign bit    │        │     Reserved     │                                      
-///           │(1 for positive)│        └──────────────────┘                                      
-///           └────────────────┘                                                                  
-///                                                                                               
-///                                                                                               
+///              ┌────────────────────────────────────────────────────────────────────────────┐
+///              │                       XRP Amount (64 bits / 8 bytes)                       │
+///              ├────────────────────────────────────────────────────────────────────────────┤
+///              │                     ┌────────────────────────────────────────────────────┐ │
+///              │ ┌─┐┌─┐┌─┐ ┌─┬─┬─┬─┐ │ ┌────────────────────────────────────────────────┐ │ │
+///              │ │0││1││0│ │0│0│0│0│ │ │                      ...                       │ │ │
+///              │ └─┘└─┘└─┘ └─┴─┴─┴─┘ │ └────────────────────────────────────────────────┘ │ │
+///              │  ▲  ▲  ▲       ▲    │              Integer Drops (57 bits)               │ │
+///              │  │  │  │       │    └────────────────────────────────────────────────────┘ │
+///          ┌───┼──┘  │  └─────┐ └────────────────┐                                          │
+///          │   └─────┼────────┼──────────────────┼──────────────────────────────────────────┘
+///          │         │        │                  │
+/// ┌────────────────┐ │ ┌─────────────┐ ┌──────────────────┐
+/// │    Type Bit    │ │ │ Is MPT Bit  │ │     Reserved     │
+/// │(0=XRP/MPT;1=IOU│ │ │(1=MPT/0=XRP)│ └──────────────────┘
+/// └────────────────┘ │ └─────────────┘
+///           ┌────────────────┐
+///           │    Sign bit    │
+///           │(1 for positive)│
+///           └────────────────┘
+///
+///              ┌────────────────────────────────────────────────────────────────────────────┐
+///              │                       MPT Amount (264-bits/33-bytes)                       │
+///              ├────────────────────────────────────────────────────────────────────────────┤
+///              │                       ┌──────────┐ ┌────────────┐ ┌────────────────┐       │
+///              │ ┌─┐┌─┐┌─┐ ┌─┬─┬─┬─┬─┐ │┌────────┐│ │ ┌────────┐ │ │   ┌────────┐   │       │
+///              │ │0││1││1│ │0│0│0│0│0│ ││  ...   ││ │ │  ...   │ │ │   │  ...   │   │       │
+///              │ └─┘└─┘└─┘ └─┴─┴─┴─┴─┘ │└────────┘│ │ └────────┘ │ │   └────────┘   │       │
+///              │  ▲  ▲  ▲       ▲      │  Amount  │ │Sequence Num│ │Issuer AccountID│       │
+///              │  │  │  │       │      │(64 bits) │ │ (32 bits)  │ │   (160 bits)   │       │
+///          ┌───┼──┘  │  └────┐  │      └──────────┘ └────────────┘ └────────────────┘       │
+///          │   └─────┼───────┼──┼───────────────────────────────────────────────────────────┘
+///          │         │       │  └───────────────┐
+/// ┌─────────────────┐│┌─────────────┐           │
+/// │    Type Bit     │││ Is MPT Bit  │           │
+/// │(0=XRP/MPT;1=IOU)│││(1=MPT/0=XRP)│           │
+/// └─────────────────┘│└─────────────┘           │
+///           ┌────────────────┐        ┌──────────────────┐
+///           │    Sign bit    │        │     Reserved     │
+///           │(1 for positive)│        └──────────────────┘
+///           └────────────────┘
+///
+///
 ///             ┌────────────────────────────────────────────────────────────────────────────────┐
 ///             │                         IOU Amount (384-bits/48-bytes)                         │
 ///             ├────────────────────────────────────────────────────────────────────────────────┤
@@ -66,28 +65,40 @@ pub const TOKEN_AMOUNT_SIZE: usize = 48;
 ///             │  │  └────────────────┐     └──────────────┘ └──────────────┘ └────────────────┘│
 ///             │  │                   │                                                         │
 ///             └──┴───────────────────┴─────────────────────────────────────────────────────────┘
-///      ┌──────────────────┐┌──────────────────┐                                                 
-///      │     Type Bit     ││     Sign bit     │                                                 
-///      │(0=XRP/MPT;1=IOU) ││ (1 for positive) │                                                 
-///      └──────────────────┘└──────────────────┘                                                 
+///      ┌──────────────────┐┌──────────────────┐
+///      │     Type Bit     ││     Sign bit     │
+///      │(0=XRP/MPT;1=IOU) ││ (1 for positive) │
+///      └──────────────────┘└──────────────────┘
 /// ```
 ///
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(C)]
 pub enum TokenAmount {
     XRP {
-        amount: Amount,
+        // amount: Amount::XRP,
+        /// Design decision note: Per the pattern in `Amount`, we considered having this be an
+        /// unsigned u64 and adding an `is_positve` boolean to this variant. However, we decided to
+        /// break that patter and instead use an i64 here for two reasonse. First, this allows
+        /// simple math like `add`, `sub`, etc. to be performed in WASM without having to check for
+        /// negative values. Second, the total supply of XRP is capped at
+        /// 100B XRP (100B * 1M Drops), which fits just fine into an i64
+        num_drops: i64,
     },
     IOU {
-        amount: Amount,
+        // amount: Amount::IOU,
+        amount: OpaqueFloat, // TODO: Make a helper to detect sign from 2nd bit (trait?)
         issuer: AccountID,
         currency_code: CurrencyCode,
     },
     MPT {
-        amount: Amount,
+        // amount: MptAmount,
+        num_units: u64,
+        is_positive: bool, // not expected, but just in case.
         mpt_id: MptId,
     },
 }
+
+const MASK_57_BIT: u64 = 0x01FFFFFFFFFFFFFFu64;
 
 impl TokenAmount {
     /// Parses a TokenAmount from a byte array.
@@ -99,9 +110,8 @@ impl TokenAmount {
     ///
     /// Returns None if the byte array is not a valid TokenAmount.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, host::Error> {
-        if bytes.len() < 9 {
-            return Err(InternalError);
-        }
+        // TODO: Move to trait!
+        // TODO: Check for 48 bytes.
 
         let byte0 = bytes[0]; // Get the first byte for flag extraction
 
@@ -110,59 +120,61 @@ impl TokenAmount {
         let is_xrp_or_mpt = !is_iou;
         let is_xrp: bool = byte0 & 0x20 == 0x00; // Bit 5 (only used if type_bit is 0)
 
+        let is_positive: bool = byte0 & 0x40 == 0x40; // Bit 6
+
         if is_xrp_or_mpt {
             if is_xrp {
-                if bytes.len() != 9 {
-                    return Err(InternalError);
-                }
+                // If we get here, we'll have 8 bytes.
+                let mut amount_bytes = [0u8; 8];
+                amount_bytes.copy_from_slice(&bytes[0..8]);
 
-                // Parse the Amount::XRP from the first 8 bytes
-                let mut nine_amount_bytes = [0u8; 9];
-                nine_amount_bytes[0] = byte0;
-                nine_amount_bytes[1..9].copy_from_slice(&bytes[1..9]);
+                // For XRP, we need to handle the first byte specially to mask out the flag bits
+                // and then use the remaining 7 bytes as is.
+                let num_drops_abs = u64::from_be_bytes(amount_bytes) & MASK_57_BIT;
 
-                let amount = Amount::from_bytes(nine_amount_bytes)?;
-                match amount {
-                    Amount::XRP { .. } => Ok(TokenAmount::XRP { amount }),
-                    _ => Err(InternalError),
-                }
+                let token_amount = TokenAmount::XRP {
+                    num_drops: match is_positive {
+                        true => num_drops_abs as i64,
+                        false => num_drops_abs as i64 * -1,
+                    },
+                };
+
+                Ok(token_amount)
             }
             // is_mpt
             else {
-                // MPT amount: 33 bytes
-                if bytes.len() != 33 {
-                    return Err(InternalError);
-                }
-
-                // Parse the Amount::MPT from the first 9 bytes
-                let mut amount_bytes = [0u8; 9];
-                amount_bytes.copy_from_slice(&bytes[0..9]);
+                // If we get here, we'll have 33 bytes.
+                // MPT amount: [0/type][1/sign][1/is-mpt][5/reserved][64/value]
+                let mut num_units_bytes = [0u8; 8];
+                // Skip the first MPT byte, which is control bytes. Grab the next 8 for the u64
+                num_units_bytes.copy_from_slice(&bytes[1..9]);
+                let num_units = u64::from_be_bytes(num_units_bytes);
 
                 // Parse the MptId from the remaining bytes
                 let mut mpt_id_bytes = [0u8; 24];
                 mpt_id_bytes.copy_from_slice(&bytes[9..33]);
                 let mpt_id = MptId::from(mpt_id_bytes);
 
-                let amount = Amount::from_bytes(amount_bytes)?;
-                match amount {
-                    Amount::MPT { .. } => Ok(TokenAmount::MPT {
-                        amount: amount,
-                        mpt_id,
-                    }),
-                    _ => Err(InternalError),
-                }
+                let token_amount = TokenAmount::MPT {
+                    num_units: num_units,
+                    is_positive: is_positive,
+                    mpt_id: mpt_id,
+                };
+
+                Ok(token_amount)
             }
         }
         // is_iou
         else {
-            // IOU amount: 48 bytes
-            if bytes.len() != 48 {
-                return Err(InternalError);
-            }
+            // If we get here, we'll have 48 bytes.
+
+            // IOU amount: [1/type][1/sign][8/exponent][54/mantissa]
+            let opaque_float_amount_bytes: [u8; 8] = bytes[0..8].try_into().unwrap();
+            let opaque_float: OpaqueFloat = opaque_float_amount_bytes.into();
 
             // Parse the Amount::IOU from the first 9 bytes
-            let mut amount_bytes = [0u8; 9];
-            amount_bytes.copy_from_slice(&bytes[0..9]);
+            // let mut amount_bytes = [0u8; 9];
+            // amount_bytes.copy_from_slice(&bytes[0..9]);
 
             // Parse the CurrencyCode from the next 20 bytes
             let mut currency_code_bytes = [0u8; 20];
@@ -174,15 +186,13 @@ impl TokenAmount {
             issuer_bytes.copy_from_slice(&bytes[28..48]);
             let issuer = AccountID::from(issuer_bytes);
 
-            let amount = Amount::from_bytes(amount_bytes).unwrap();
-            match amount {
-                Amount::IOU { .. } => Ok(TokenAmount::IOU {
-                    amount,
-                    issuer,
-                    currency_code,
-                }),
-                _ => Err(InternalError),
-            }
+            let token_amount = TokenAmount::IOU {
+                amount: opaque_float,
+                issuer: issuer,
+                currency_code: currency_code,
+            };
+
+            Ok(token_amount)
         }
     }
 }

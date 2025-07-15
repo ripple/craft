@@ -12,7 +12,6 @@ use xrpl_std::core::ledger_objects::current_escrow::{CurrentEscrow, get_current_
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::account_id::AccountID;
-use xrpl_std::core::types::amount::amount::Amount;
 use xrpl_std::core::types::blob::Blob;
 use xrpl_std::core::types::hash_256::Hash256;
 use xrpl_std::core::types::public_key::PublicKey;
@@ -24,6 +23,7 @@ use xrpl_std::sfield;
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> bool {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
+    let _ = trace("");
 
     // The transaction prompting execution of this contract.
     let escrow_finish: EscrowFinish = get_current_escrow_finish();
@@ -32,7 +32,7 @@ pub extern "C" fn finish() -> bool {
     // Step #1: Access & Emit All EscrowFinish Fields
     // ########################################
     {
-        let _ = trace("Step #1: Trace EscrowFinish");
+        let _ = trace("### Step #1: Trace EscrowFinish");
         let _ = trace("{ ");
         let _ = trace("  -- Common Fields");
 
@@ -69,21 +69,8 @@ pub extern "C" fn finish() -> bool {
         let _ = trace_num("  ComputationAllowance:", computation_allowance as i64);
 
         // Trace Field: Fee
-        let fee = match escrow_finish.get_fee() {
-            Ok(amount) => match amount {
-                Amount::XRP { num_drops, .. } => num_drops,
-                _ => {
-                    panic!("unexpected fee amount type; should have been XRP")
-                }
-            },
-            Err(error) => {
-                let _ = trace_num("Error getting escrow fee: ", error.code() as i64);
-                // panic!("unexpected fee amount type; should have been XRP")
-                -1
-            }
-        };
-        // assert_eq!(fee, 10);
-        let _ = trace_num("  Fee:", fee as i64);
+        let fee = escrow_finish.get_fee().unwrap();
+        let _ = trace_amount("  Fee:", &fee);
 
         // Trace Field: Sequence
         let sequence: u32 = escrow_finish.get_sequence().unwrap_or_panic();
@@ -412,13 +399,16 @@ pub extern "C" fn finish() -> bool {
                 DataRepr::AsHex,
             );
         }
+
+        let _ = trace("}");
+        let _ = trace(""); // Newline
     }
 
     // ########################################
     // Step #2: Access & Emit All Current Escrow ledger object fields
     // ########################################
     {
-        let _ = trace("Step #2: Trace Current Escrow Ledger Object");
+        let _ = trace("### Step #2: Trace Current Escrow Ledger Object");
         let _ = trace("{ ");
         let _ = trace("  -- Common Fields");
 
@@ -441,8 +431,7 @@ pub extern "C" fn finish() -> bool {
         // Trace Field: Amount
         match current_escrow.get_amount() {
             Ok(token_amount) => {
-                let amount: Amount = token_amount.into();
-                let _ = trace_amount("  Escrow Amount:", &amount);
+                let _ = trace_amount("  Escrow Amount:", &token_amount);
             }
             Err(error) => {
                 let _ = trace_num("  Error getting Amount. error_code = ", error.code() as i64);
@@ -454,13 +443,14 @@ pub extern "C" fn finish() -> bool {
         // TODO: Trace all fields from the Escrow object, including common field.
         // (see https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow)
         let _ = trace("}");
+        let _ = trace("");
     }
 
     // ########################################
     // Step #3 [EscrowFinish Account]: Trace Current Balance
     // ########################################
     {
-        let _ = trace("Step #3: Trace EscrowFinish Account Balance");
+        let _ = trace("### Step #3: Trace EscrowFinish Account Balance");
         let _ = trace("{ ");
         let account: AccountID = escrow_finish.get_account().unwrap();
         let balance = account::get_account_balance(&account).unwrap();
@@ -470,19 +460,21 @@ pub extern "C" fn finish() -> bool {
             return false;
         }
         let _ = trace("}");
+        let _ = trace("");
     }
 
     // ########################################
     // Step #4 [Arbitrary Ledger Object]: Get arbitrary fields from an AccountRoot object.
     // ########################################
     {
-        let _ = trace("Step #4: Trace AccountRoot Ledger Object");
+        let _ = trace("### Step #4a: Trace AccountRoot Ledger Object");
         let _ = trace("{ ");
         let _ = trace("  -- Common Fields");
         let _ = trace("    -- TODO: Finish tracing all fields");
         let _ = trace("  -- Specific Fields");
         let _ = trace("    -- TODO: Finish tracing all fields");
         let _ = trace("}");
+        let _ = trace("");
         // TODO: Implement these.
         // let sender = get_tx_account_id();
         // let dest_balance = get_account_balance(&dest);
@@ -495,7 +487,7 @@ pub extern "C" fn finish() -> bool {
         // ########################################
         // Step #4 [NFT]: Trace all fields from an NFT
         // ########################################
-        let _ = trace("Step #4: Trace Nft Ledger Object");
+        let _ = trace("### Step #4b: Trace Nft Ledger Object");
         let _ = trace("{ ");
         let _ = trace("  -- Common Fields");
         let _ = trace("    -- TODO: Finish tracing all fields");
@@ -508,7 +500,7 @@ pub extern "C" fn finish() -> bool {
     // Step #5 [Ledger Headers]: Emit all ledger headers.
     // ########################################
     {
-        let _ = trace("Step #5: Trace Ledger Headers");
+        let _ = trace("### Step #5: Trace Ledger Headers");
         let _ = trace("{ ");
         // TODO: Implement this.
         let _ = trace("    -- TODO: Finish tracing all fields");

@@ -16,7 +16,7 @@ pub enum HostError {
     NotLeafField = -5,
     LocatorMalformed = -6,
     SlotOutRange = -7,
-    SlotsFull = -8,
+    NoFreeSlots = -8,
     EmptySlot = -9,
     LedgerObjNotFound = -10,
     DecodingError = -11,
@@ -39,7 +39,7 @@ impl From<i64> for HostError {
             -5 => HostError::NotLeafField,
             -6 => HostError::LocatorMalformed,
             -7 => HostError::SlotOutRange,
-            -8 => HostError::SlotsFull,
+            -8 => HostError::NoFreeSlots,
             -9 => HostError::EmptySlot,
             -10 => HostError::LedgerObjNotFound,
             -11 => HostError::DecodingError,
@@ -79,7 +79,7 @@ pub fn error_code_to_string(code: i64) -> &'static str {
         HostError::NotLeafField => "NOT_LEAF_FIELD (-5)",
         HostError::LocatorMalformed => "LOCATOR_MALFORMED (-6)",
         HostError::SlotOutRange => "SLOT_OUT_RANGE (-7)",
-        HostError::SlotsFull => "SLOTS_FULL (-8)",
+        HostError::NoFreeSlots => "SLOTS_FULL (-8)",
         HostError::EmptySlot => "EMPTY_SLOT (-9)",
         HostError::LedgerObjNotFound => "LEDGER_OBJ_NOT_FOUND (-10)",
         HostError::DecodingError => "DECODING_ERROR (-11)",
@@ -151,7 +151,7 @@ impl DataProvider {
     pub fn slot_set(&mut self, keylet: Keylet, mut slot: usize) -> i32 {
         if slot == 0 {
             if self.next_slot >= NUM_SLOTS {
-                return HostError::SlotsFull as i32;
+                return HostError::NoFreeSlots as i32;
             }
             slot = self.next_slot;
             self.next_slot += 1;

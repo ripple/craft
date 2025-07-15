@@ -1,6 +1,6 @@
 use crate::core::error_codes::match_result_code;
 
-use crate::core::types::amount::amount::Amount;
+use crate::core::types::amount::token_amount::TokenAmount;
 use crate::host;
 use crate::host::Result;
 use core::ptr;
@@ -86,16 +86,19 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
 }
 
 #[inline(always)]
-pub fn trace_amount(msg: &str, amount: &Amount) -> Result<i32> {
+pub fn trace_amount(msg: &str, amount: &TokenAmount) -> Result<i32> {
+    // TODO: instead of manually calling `trace_num`, create a new host function called
+    // `trace_amount` and call that instead.
+
     let result_code: i32 = match *amount {
-        Amount::XRP { num_drops, .. } => unsafe {
+        TokenAmount::XRP { num_drops, .. } => unsafe {
             host::trace_num(msg.as_ptr() as u32, msg.len(), num_drops)
         },
-        Amount::IOU { opaque_float, .. } => unsafe {
-            let bytes: [u8; 8] = u64::to_le_bytes(opaque_float.0);
-            host::trace_opaque_float(msg.as_ptr() as u32, msg.len(), bytes.as_ptr() as u32)
+        TokenAmount::IOU { amount, .. } => unsafe {
+            host::trace_opaque_float(msg.as_ptr() as u32, msg.len(), amount.0.as_ptr() as u32)
         },
-        Amount::MPT { num_units, .. } => unsafe {
+        TokenAmount::MPT { num_units, .. } => unsafe {
+            // TODO: Consider trace_amount?
             host::trace_num(msg.as_ptr() as u32, msg.len(), num_units as i64)
         },
     };

@@ -43,7 +43,7 @@ use crate::core::current_tx::{
     get_public_key_field, get_u32_field, get_u32_field_optional,
 };
 use crate::core::error_codes::{
-    match_result_code_optional, match_result_code_with_expected_bytes,
+    match_result_code, match_result_code_optional, match_result_code_with_expected_bytes,
     match_result_code_with_expected_bytes_optional,
 };
 use crate::core::field_codes::{
@@ -52,7 +52,7 @@ use crate::core::field_codes::{
     SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
 use crate::core::types::account_id::AccountID;
-use crate::core::types::amount::amount::Amount;
+use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::blob::Blob;
 use crate::core::types::crypto_condition::{Condition, Fulfillment};
 use crate::core::types::hash_256::Hash256;
@@ -136,24 +136,19 @@ pub trait TransactionCommonFields {
     ///
     /// Returns XRP amounts only (for now). Future versions may support other token types
     /// when the underlying amount handling is enhanced.
-    fn get_fee(&self) -> Result<Amount> {
+    fn get_fee(&self) -> Result<TokenAmount> {
         // Transaction fees are always denominated in XRP, and are therefore always 8 byte XRP
-        // amounts values. However, the host function must accommodate MPT, so we need to supply it
-        // with a 9-byte buffer.
-        let mut buffer = [0u8; 9];
+        // amounts values. However, the host function requires 48 bytes for any token amount.
+        let mut buffer = [0u8; 48];
 
         let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
-
-        match_result_code_with_expected_bytes(result_code, 9, || {
-            let amount = Amount::from_bytes(buffer).unwrap_or_else(|error| {
+        match_result_code(result_code, || {
+            let token_amount = TokenAmount::from_bytes(&buffer).unwrap_or_else(|error| {
                 let _ = trace_num("Invalid bytes for Amount", error.code() as i64);
                 panic!("Invalid bytes for Amount")
             });
 
-            match amount {
-                Amount::XRP { num_drops, .. } => Amount::XRP { num_drops },
-                _ => panic!("Expected Amount::XRP for fee field"),
-            }
+            token_amount
         })
     }
 

@@ -1,4 +1,3 @@
-pub mod amount;
 pub mod asset;
 pub mod currency_code;
 pub mod mpt_id;

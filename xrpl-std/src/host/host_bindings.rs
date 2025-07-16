@@ -1,5 +1,3 @@
-
-
 //TODO add docs after discussing the interface
 //Note that Craft currently does not honor the rounding modes
 #[allow(unused)]

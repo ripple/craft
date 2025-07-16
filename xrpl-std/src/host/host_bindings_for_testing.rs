@@ -368,7 +368,7 @@ pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number:
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub fn float_set_rounding_mode(rounding_modes: i32) -> i32{
+pub unsafe fn float_set_rounding_mode(rounding_modes: i32) -> i32 {
     //Note that Craft currently does not honor the rounding modes
     -1
 }
@@ -379,7 +379,7 @@ pub unsafe fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32 {
 }
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8) -> i32{
+pub unsafe fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8) -> i32 {
     -1
 }
 #[allow(unused)]

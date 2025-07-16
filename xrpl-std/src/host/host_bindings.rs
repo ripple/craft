@@ -1,3 +1,24 @@
+
+
+//TODO add docs after discussing the interface
+//Note that Craft currently does not honor the rounding modes
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TO_NEAREST: i32 = 0;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TOWARDS_ZERO: i32 = 1;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_DOWNWARD: i32 = 2;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_UPWARD: i32 = 3;
+
+// pub enum RippledRoundingModes{
+//     ToNearest = 0,
+//     TowardsZero = 1,
+//     DOWNWARD = 2,
+//     UPWARD = 3
+// }
+
+#[allow(unused)]
 #[link(wasm_import_module = "host_lib")]
 unsafe extern "C" {
     // ###############################
@@ -93,6 +114,46 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
     pub fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field2(
+        field: i32,
+        field2: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field3(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field4(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        field4: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field5(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        field4: i32,
+        field5: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field6(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        field4: i32,
+        field5: i32,
+        field6: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
 
     /// Retrieves a specific field from the current ledger object and writes it into the provided buffer.
     ///
@@ -698,13 +759,11 @@ unsafe extern "C" {
     // Host Function Category: FLOAT
     // #############################
     //TODO add docs after discussing the interface
-    //TODO David: should in_int be u64, and have a dedicated input (i32) for sign?
+    //Note that Craft currently does not honor the rounding modes
+    pub fn float_set_rounding_mode(rounding_modes: i32) -> i32;
     pub fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32;
+    pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8) -> i32;
     pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32;
-    //TODO David: the following can be easily implemented in std-lib if needed, ok to skip?
-    // pub fn float_negate(in_buf: *const u8, out_buf: *mut u8) -> i32;
-    // pub fn float_invert(in_buf: *const u8, out_buf: *mut u8) -> i32;
-    // pub fn float_one(out_buf: *mut u8) -> i32;
     pub fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32;
     pub fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
     pub fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;

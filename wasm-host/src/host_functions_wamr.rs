@@ -4,7 +4,9 @@ use crate::data_provider::{
 };
 use crate::decoding::ACCOUNT_ID_LEN;
 
-use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
+use crate::data_provider::{
+    DataProvider, HostError, RippledRoundingMode, XRPL_CONTRACT_DATA_SIZE, unpack_locator,
+};
 use crate::decoding::{
     _deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN,
 };
@@ -14,6 +16,7 @@ use bigdecimal::num_bigint::{BigInt, ToBigInt};
 use bigdecimal::num_traits::real::Real;
 use bigdecimal::{BigDecimal, ToPrimitive};
 use log::{debug, warn};
+use num_traits::FromPrimitive;
 use wamr_rust_sdk::sys::{
     wasm_exec_env_t, wasm_runtime_get_function_attachment, wasm_runtime_get_module_inst,
     wasm_runtime_validate_native_addr,
@@ -431,9 +434,32 @@ fn pack_out_float(decimal: BigDecimal, env: wasm_exec_env_t, out_buf: *mut u8) -
     }
     8
 }
-
+pub fn float_set_rounding_mode(env: wasm_exec_env_t, rounding_mode: i32) -> i32 {
+    let mode = match RippledRoundingMode::from_i32(rounding_mode) {
+        Some(mode) => mode,
+        None => return HostError::InvalidParams as i32,
+    };
+    let data_provider = get_dp(env);
+    data_provider.rounding_mode = mode;
+    0
+}
 pub fn float_from_int(env: wasm_exec_env_t, in_int: i64, out_buf: *mut u8) -> i32 {
     let a = BigDecimal::from(in_int);
+    pack_out_float(a, env, out_buf)
+}
+pub fn float_from_uint(env: wasm_exec_env_t, in_uint_ptr: *const u8, out_buf: *mut u8) -> i32 {
+    let v: u64 = unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(inst, in_uint_ptr as *mut ::core::ffi::c_void, 8) {
+            return HostError::PointerOutOfBound as i32;
+        }
+        let bytes: [u8; 8] = match std::slice::from_raw_parts(in_uint_ptr, 8).try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return HostError::FloatInputMalformed as i32,
+        };
+        u64::from_le_bytes(bytes)
+    };
+    let a = BigDecimal::from(v);
     pack_out_float(a, env, out_buf)
 }
 

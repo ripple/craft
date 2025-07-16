@@ -134,19 +134,31 @@ pub fn unpack_locator(buffer: Vec<u8>) -> Result<Vec<i32>, HostError> {
     Ok(result)
 }
 
+use num_derive::FromPrimitive;
+#[derive(FromPrimitive, Debug)]
+pub enum RippledRoundingMode {
+    ToNearest = 0,
+    TowardsZero = 1,
+    DOWNWARD = 2,
+    UPWARD = 3,
+}
+
 pub struct DataProvider {
     data_source: MockData,
     next_slot: usize,
     slots: [Keylet; NUM_SLOTS],
+    pub rounding_mode: RippledRoundingMode,
 }
 
 impl DataProvider {
     pub fn new(data_source: MockData) -> Self {
         let slots: [Hash256; 256] = core::array::from_fn(|_| Hash256::default());
+        let rounding_mode: RippledRoundingMode = RippledRoundingMode::ToNearest;
         Self {
             data_source,
             next_slot: 1,
             slots,
+            rounding_mode,
         }
     }
 

@@ -1,6 +1,18 @@
 // This file exists as a host_binding stand-in for non-WASM targets. For example, this file will
 // be used during unit tests.
 
+//TODO add docs after discussing the interface
+//Note that Craft currently does not honor the rounding modes
+//TODO discuss reason for this file
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TO_NEAREST: i32 = 0;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TOWARDS_ZERO: i32 = 1;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_DOWNWARD: i32 = 2;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_UPWARD: i32 = 3;
+
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_ledger_sqn(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
@@ -356,18 +368,25 @@ pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number:
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub fn float_set_rounding_mode(rounding_modes: i32) -> i32{
+    //Note that Craft currently does not honor the rounding modes
+    -1
+}
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32 {
     -1
 }
-
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8) -> i32{
+    -1
+}
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32 {
     -1
 }
-// pub fn float_negate(in_buf: *const u8, out_buf: *mut u8) -> i32;
-// pub fn float_invert(in_buf: *const u8, out_buf: *mut u8) -> i32;
-// pub fn float_one(out_buf: *mut u8) -> i32;
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32 {

@@ -11,16 +11,32 @@ use xrpl_std::decode_hex_32;
 use xrpl_std::host::trace::DataRepr::AsHex;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_float, trace_num};
 use xrpl_std::host::{
-    FLOAT_NEGATIVE_ONE, FLOAT_ONE, cache_ledger_obj, float_add, float_compare, float_divide,
-    float_from_int, float_log, float_multiply, float_root, float_set, float_subtract,
-    get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
-    trace_opaque_float,
+    FLOAT_NEGATIVE_ONE, FLOAT_ONE, FLOAT_ROUNDING_MODES_DOWNWARD, cache_ledger_obj, float_add,
+    float_compare, float_divide, float_from_int, float_from_uint, float_log, float_multiply,
+    float_root, float_set, float_set_rounding_mode, float_subtract, get_ledger_obj_array_len,
+    get_ledger_obj_field, get_ledger_obj_nested_field, trace_opaque_float,
 };
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
     Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
     OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TicketCount, TransferRate,
 };
+
+fn test_float_set_rounding_mode() {
+    let _ = trace("\n$$$ test_float_set_rounding_mode $$$");
+
+    if 0 == unsafe { float_set_rounding_mode(FLOAT_ROUNDING_MODES_DOWNWARD) } {
+        let _ = trace("  float_set_rounding_mode good case passed");
+    } else {
+        let _ = trace("  float_set_rounding_mode good case failed");
+    }
+
+    if 0 > unsafe { float_set_rounding_mode(FLOAT_ROUNDING_MODES_DOWNWARD + 1000) } {
+        let _ = trace("  float_set_rounding_mode bad case passed");
+    } else {
+        let _ = trace("  float_set_rounding_mode bad case failed");
+    }
+}
 
 fn test_float_from_host() {
     let _ = trace("\n$$$ test_float_from_host $$$");
@@ -62,16 +78,22 @@ fn test_float_from_host() {
 fn test_float_from_wasm() {
     let _ = trace("\n$$$ test_float_from_wasm $$$");
 
-    let mut f1: [u8; 8] = [0u8; 8];
-    if 8 == unsafe { float_from_int(12300, f1.as_mut_ptr()) } {
-        let _ = trace_float("  float from 12300:", &f1);
+    let mut f: [u8; 8] = [0u8; 8];
+    if 8 == unsafe { float_from_int(12300, f.as_mut_ptr()) } {
+        let _ = trace_float("  float from i64 12300:", &f);
     } else {
-        let _ = trace("  float from 12300: failed");
+        let _ = trace("  float from i64 12300: failed");
     }
 
-    let mut f2: [u8; 8] = [0u8; 8];
-    if 8 == unsafe { float_set(2, 123, f2.as_mut_ptr()) } {
-        let _ = trace_float("  float from exp 2, mantissa 123:", &f2);
+    let u64_value: u64 = 12300;
+    if 8 == unsafe { float_from_uint(&u64_value as *const u64 as *const u8, f.as_mut_ptr()) } {
+        let _ = trace_float("  float from u64 12300:", &f);
+    } else {
+        let _ = trace("  float from u64 12300: failed");
+    }
+
+    if 8 == unsafe { float_set(2, 123, f.as_mut_ptr()) } {
+        let _ = trace_float("  float from exp 2, mantissa 123:", &f);
     } else {
         let _ = trace("  float from exp 2, mantissa 3: failed");
     }
@@ -268,6 +290,7 @@ fn test_float_invert() {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
+    test_float_set_rounding_mode();
     test_float_from_host();
     test_float_from_wasm();
     test_float_compare();

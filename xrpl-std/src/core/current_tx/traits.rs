@@ -351,7 +351,6 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// Returns a `Result<AccountID>` where:
     /// * `Ok(AccountID)` - The 20-byte account identifier of the escrow owner
     /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
-
     fn get_owner(&self) -> Result<AccountID> {
         get_account_id_field(SF_OWNER)
     }
@@ -419,7 +418,6 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// Fulfillments are limited to 256 bytes in the current XRPL implementation.
     /// This limit ensures network performance while supporting most practical
     /// cryptographic proof scenarios.
-
     fn get_fulfillment(&self) -> Result<Option<Fulfillment>> {
         // Fulfillment fields are limited in rippled to 256 bytes, so we don't use `get_blob_field`
         // but instead just use a smaller buffer directly.

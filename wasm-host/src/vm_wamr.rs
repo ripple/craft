@@ -1,8 +1,9 @@
 use crate::data_provider::DataProvider;
 use crate::host_functions_wamr::{
     account_keylet, cache_ledger_obj, compute_sha512_half, credential_keylet, escrow_keylet,
-    float_add, float_compare, float_divide, float_from_int, float_log, float_multiply, float_root,
-    float_set, float_subtract, get_current_ledger_obj_array_len, get_current_ledger_obj_field,
+    float_add, float_compare, float_divide, float_from_int, float_from_uint, float_log,
+    float_multiply, float_root, float_set, float_set_rounding_mode, float_subtract,
+    get_current_ledger_obj_array_len, get_current_ledger_obj_field,
     get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
     get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
     get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
@@ -50,7 +51,9 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("escrow_keylet", escrow_keylet as *mut c_void, "(*~i*~)i", 200, data_provider.as_ptr())
         .register_host_function("oracle_keylet", oracle_keylet as *mut c_void, "(*~i*~)i", 200, data_provider.as_ptr())
         .register_host_function("get_NFT", get_nft as *mut c_void, "(*~*~*~)i", 30, data_provider.as_ptr())
+        .register_host_function("float_set_rounding_mode", float_set_rounding_mode as *mut c_void, "(i)i", 30, data_provider.as_ptr())
         .register_host_function("float_from_int", float_from_int as *mut c_void, "(I*)i", 30, data_provider.as_ptr())
+        .register_host_function("float_from_uint", float_from_uint as *mut c_void, "(**)i", 30, data_provider.as_ptr())
         .register_host_function("float_set", float_set as *mut c_void, "(iI*)i", 30, data_provider.as_ptr())
         .register_host_function("float_compare", float_compare as *mut c_void, "(**)i", 30, data_provider.as_ptr())
         .register_host_function("float_add", float_add as *mut c_void, "(***)i", 30, data_provider.as_ptr())

@@ -1,5 +1,3 @@
-
-
 //TODO add docs after discussing the interface
 //Note that Craft currently does not honor the rounding modes
 #[allow(unused)]
@@ -579,4 +577,3 @@ unsafe extern "C" {
     pub fn trace_opaque_float(msg_ptr: *const u8, msg_len: usize, opaque_float: *const u8) -> i32;
 
 }
-

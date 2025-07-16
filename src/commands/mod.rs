@@ -61,7 +61,7 @@ fn handle_build_output(output: &Output, config: &Config, project_dir: &Path) -> 
 
     // Print any other warnings or errors
     if !stderr.is_empty() {
-        println!("\n{}", stderr);
+        println!("\n{stderr}");
     }
 
     Ok(())
@@ -75,13 +75,10 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     if !utils::check_wasm_target_installed(&target_str) {
         println!(
             "{}",
-            format!("WASM target {} not found. Installing...", target_str).yellow()
+            format!("WASM target {target_str} not found. Installing...").yellow()
         );
         utils::install_wasm_target(&target_str)?;
-        println!(
-            "{}",
-            format!("Successfully installed {}", target_str).green()
-        );
+        println!("{}", format!("Successfully installed {target_str}").green());
     }
 
     let cargo_toml = utils::find_cargo_toml(&config.project_path)
@@ -95,7 +92,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     println!("{}", "Running cargo build...".cyan());
-    println!("args: {:?}", args);
+    println!("args: {args:?}");
     let output = Command::new("cargo")
         .current_dir(project_dir)
         .args(&args)
@@ -174,11 +171,11 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     println!("{}", wasm_file.display().to_string().white().bold());
 
     let size = std::fs::metadata(&wasm_file)?.len();
-    println!("Size: {} bytes", size);
+    println!("Size: {size} bytes");
 
     // Calculate and display WASM fingerprint
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
-    println!("WASM Fingerprint: {}", fingerprint);
+    println!("WASM Fingerprint: {fingerprint}");
 
     // Ask if user wants to export as hex
     if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")

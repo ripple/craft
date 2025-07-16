@@ -85,10 +85,9 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
 }
 
 // TODO: Uncomment this line once we have support for floating point numbers (like XFL or similar).
-// /// Write a XFL float to the XRPLD trace log
-// #[inline(always)]
-// pub fn trace_float(msg: &[u8], float: XFL) -> Result<u64> {
-//     let res = unsafe { _c::trace_float(msg.as_ptr() as u32, msg.len() as u32, float.0) };
-//
-//     result_u64(res)
-// }
+/// Write a float to the XRPLD trace log
+#[inline(always)]
+pub fn trace_float(msg: &str, f: &[u8; 8]) -> Result<i32> {
+    let result_code = unsafe { host::trace_opaque_float(msg.as_ptr(), msg.len(), f.as_ptr()) };
+    match_result_code(result_code, || result_code)
+}

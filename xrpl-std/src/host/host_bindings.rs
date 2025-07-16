@@ -1,3 +1,22 @@
+//TODO add docs after discussing the interface
+//Note that Craft currently does not honor the rounding modes
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TO_NEAREST: i32 = 0;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TOWARDS_ZERO: i32 = 1;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_DOWNWARD: i32 = 2;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_UPWARD: i32 = 3;
+
+// pub enum RippledRoundingModes{
+//     ToNearest = 0,
+//     TowardsZero = 1,
+//     DOWNWARD = 2,
+//     UPWARD = 3
+// }
+
+#[allow(unused)]
 #[link(wasm_import_module = "host_lib")]
 unsafe extern "C" {
     // ###############################
@@ -11,7 +30,7 @@ unsafe extern "C" {
     /// # Arguments
     ///
     /// - `out_buff_ptr`: A mutable raw pointer to the buffer where the ledger sequence
-    ///                   number will be written.
+    ///   number will be written.
     /// - `out_buff_len`: Specifies the size of the buffer pointed to by `out_buff_ptr`.
     ///
     /// # Returns
@@ -28,10 +47,9 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to the output buffer where the parent ledger time will
-    ///                   be stored. The buffer should be pre-allocated with enough space to hold
-    ///                   the data.
+    ///   be stored. The buffer should be pre-allocated with enough space to hold the data.
     /// - `out_buff_len`: The length of the output buffer. This value must be at least as large as
-    ///                   the data intended to be written to avoid memory issues.
+    ///   the data intended to be written to avoid memory issues.
     ///
     /// # Returns
     ///
@@ -48,10 +66,9 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to a buffer where the parent ledger hash will be written.
-    ///                   The buffer must be allocated and managed by the caller.
+    ///   The buffer must be allocated and managed by the caller.
     /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///                   buffer and ensures that the function does not write beyond the allowed
-    ///                   length.
+    ///   buffer and ensures that the function does not write beyond the allowed length.
     ///
     /// # Returns
     ///
@@ -70,10 +87,10 @@ unsafe extern "C" {
     /// # Parameters
     ///
     /// - `keylet_ptr`: A raw pointer to the keylet, which is a unique identifier used to
-    ///                 locate or store data in the ledger.
+    ///   locate or store data in the ledger.
     /// - `keylet_len`: The length of the keylet specified by `keylet_ptr`.
     /// - `cache_num`: The cache number to which the keylet will be placed in.
-    ///                If 0, the host will assign a new cache space.
+    ///   If 0, the host will assign a new cache space.
     ///
     /// # Returns
     ///
@@ -226,7 +243,7 @@ unsafe extern "C" {
     /// # Parameters
     /// - `cache_num`: The cache index of the ledger object to access.
     /// - `locator_ptr`: A pointer to the memory location containing the locator string data
-    ///                  (used to identify the nested field in the ledger object).
+    ///   (used to identify the nested field in the ledger object).
     /// - `locator_len`: The length of the locator string.
     /// - `out_buff_ptr`: A pointer to the buffer where the retrieved nested field value will be written.
     /// - `out_buff_len`: The size of the output buffer in bytes.
@@ -497,18 +514,35 @@ unsafe extern "C" {
     ) -> i32;
 
     // #############################
+    // Host Function Category: FLOAT
+    // #############################
+    //TODO add docs after discussing the interface
+    //Note that Craft currently does not honor the rounding modes
+    pub fn float_set_rounding_mode(rounding_modes: i32) -> i32;
+    pub fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32;
+    pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32;
+    pub fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32;
+    pub fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8) -> i32;
+    pub fn float_log(in_buf: *const u8, out_buf: *mut u8) -> i32;
+
+    // #############################
     // Host Function Category: TRACE
     // #############################
 
     /// Print to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will see this.
     ///
     /// # Parameters
-    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
-    /// * `msg_read_len`: The byte length of the text to send to the trace log.
-    /// * `data_read_ptr`: A pointer to an array of bytes containing arbitrary data.
-    /// * `data_read_len`: The byte length of the data to send to the trace log.
-    /// * `as_hex`: If 0 treat the data_read_ptr as pointing at a string of text, otherwise treat it
-    ///      as data and print hex.
+    /// - `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// - `msg_read_len`: The byte length of the text to send to the trace log.
+    /// - `data_read_ptr`: A pointer to an array of bytes containing arbitrary data.
+    /// - `data_read_len`: The byte length of the data to send to the trace log.
+    /// - `as_hex`: If 0 treat the data_read_ptr as pointing at a string of text, otherwise treat it
+    ///   as data and print hex.
     ///
     /// # Returns
     ///
@@ -539,4 +573,7 @@ unsafe extern "C" {
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
     pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32;
+
+    pub fn trace_opaque_float(msg_ptr: *const u8, msg_len: usize, opaque_float: *const u8) -> i32;
+
 }

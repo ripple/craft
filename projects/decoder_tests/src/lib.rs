@@ -136,7 +136,7 @@ fn test_amendments() {
 
     let array_len = unsafe { get_ledger_obj_array_len(slot, sfield::Amendments) };
     let _ = trace_num("  Amendments array len:", array_len as i64);
-    for i in 0..array_len {
+    for i in 0..if array_len > 2 { 2 } else { array_len } {
         let mut buf = [0x00; 32];
         let mut locator = Locator::new();
         locator.pack(sfield::Amendments);

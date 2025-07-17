@@ -28,7 +28,7 @@ async function main() {
 
     let rustHits = [
         ...rustHostFunctionFile.matchAll(
-            /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]+)\) -> ([A-Za-z0-9]+);$/gm,
+            /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+);$/gm,
         ),
     ]
     const rustFuncs = rustHits.map((hit) => [

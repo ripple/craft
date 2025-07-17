@@ -146,13 +146,10 @@ async function main() {
             rustHostFunctions.length +
             ' !== ' + cppHostFunctions.length
             )
-            if (rustHostFunctions.length < cppHostFunctions.length) {
-                const missing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
-                console.error('Missing Rust Host Functions:', missing.map(f => f.name).join(', '))
-            } else {
-                const missing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
-                console.error('Missing C++ Host Functions:', missing.map(f => f.name).join(', '))
-            }
+            const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
+            const cppMissing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
+            console.error('Missing Rust Host Functions:', rustMissing.map(f => f.name).join(', '))
+            console.error('Missing C++ Host Functions:', cppMissing.map(f => f.name).join(', '))
             process.exit(1)
         }
 

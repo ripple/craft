@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -65,6 +65,16 @@ jobs:
               (cd "$dir" && cargo fmt --all -- --check) || exit 1
             fi
           done
+
+  # Note: This job should not be "required" for PRs, as during development there may be temporary
+  # discrepancies between craft and rippled
+  host_function_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit host functions to ensure they match the XRPLd host functions
+        run: node tools/compareHostFunctions.js https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 
   build_and_test:
     runs-on: ubuntu-latest

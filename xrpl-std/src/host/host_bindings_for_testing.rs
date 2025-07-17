@@ -15,16 +15,13 @@ pub unsafe fn get_parent_ledger_time(_out_buff_ptr: *mut u8, _out_buff_len: usiz
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_parent_ledger_hash(__out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
+pub unsafe fn get_parent_ledger_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
     -1
 }
+
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn cache_ledger_obj(
-    _keylet_ptr: *const u8,
-    _keylet_len: usize,
-    __cache_num: i32,
-) -> i32 {
+pub unsafe fn cache_ledger_obj(_keylet_ptr: *const u8, _keylet_len: usize, _cache_num: i32) -> i32 {
     -1
 }
 
@@ -33,6 +30,7 @@ pub unsafe fn cache_ledger_obj(
 pub unsafe fn get_tx_field(_field: i32, _out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
     -1
 }
+
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_field2(
@@ -43,6 +41,7 @@ pub unsafe fn get_tx_field2(
 ) -> i32 {
     -1
 }
+
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_field3(
@@ -54,6 +53,7 @@ pub unsafe fn get_tx_field3(
 ) -> i32 {
     -1
 }
+
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_field4(
@@ -66,6 +66,7 @@ pub unsafe fn get_tx_field4(
 ) -> i32 {
     -1
 }
+
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_field5(
@@ -79,6 +80,7 @@ pub unsafe fn get_tx_field5(
 ) -> i32 {
     -1
 }
+
 #[allow(unused)]
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::missing_safety_doc)]
@@ -207,7 +209,7 @@ pub unsafe fn compute_sha512_half(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    32
+    -1
 }
 
 #[allow(unused)]
@@ -261,7 +263,6 @@ pub unsafe fn oracle_keylet(
     32
 }
 
-// TODO: This should be called `get_nft`
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_nft(
@@ -278,27 +279,17 @@ pub unsafe fn get_nft(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace(
-    _msg_read_ptr: u32,
+    _msg_read_ptr: *const u8,
     _msg_read_len: usize,
-    _data_read_ptr: u32,
+    _data_read_ptr: *const u8,
     _data_read_len: usize,
-    _as_hex: u32,
+    _as_hex: i32,
 ) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn trace_num(_msg_read_ptr: u32, _msg_read_len: usize, _number: i64) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn trace_opaque_float(
-    _msg_read_ptr: u32,
-    _msg_read_len: usize,
-    _opaque_float_ptr: u32,
-) -> i32 {
+pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number: i64) -> i32 {
     -1
 }

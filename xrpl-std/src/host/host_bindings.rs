@@ -543,11 +543,11 @@ unsafe extern "C" {
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
     pub fn trace(
-        msg_read_ptr: u32,
+        msg_read_ptr: *const u8,
         msg_read_len: usize,
-        data_read_ptr: u32,
+        data_read_ptr: *const u8,
         data_read_len: usize,
-        as_hex: u32,
+        as_hex: i32,
     ) -> i32;
 
     /// Print a number to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will
@@ -564,5 +564,5 @@ unsafe extern "C" {
     /// signifies the number of message bytes that were written to the trace function. Non-zero
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
-    pub fn trace_num(msg_read_ptr: u32, msg_read_len: usize, number: i64) -> i32;
+    pub fn trace_num(msg_read_ptr: *const u8, msg_read_len: usize, number: i64) -> i32;
 }

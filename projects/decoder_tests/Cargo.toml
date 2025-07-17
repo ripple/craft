@@ -2,7 +2,7 @@
 name = "decoder_tests"
 version = "0.0.1"
 edition = "2024"
-description = "A Smart Escrow for testing decoder functionality in wasm-host."
+description = "Test the WASM host's ability to decode and access various ledger object fields."
 license = "MIT"
 
 # This empty workspace definition keeps this project independent of the parent workspace

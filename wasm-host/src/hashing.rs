@@ -55,7 +55,7 @@ pub fn sha512_half(data: &[u8]) -> Hash256 {
 
 pub fn index_hash(space: LedgerNameSpace, args: &[u8]) -> Hash256 {
     let mut data = Vec::with_capacity(2 + args.len());
-    data.extend_from_slice(&(space as u16).to_le_bytes());
+    data.extend_from_slice(&(space as u16).to_be_bytes());
     data.extend_from_slice(args);
     sha512_half(&data)
 }

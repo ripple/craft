@@ -68,7 +68,6 @@ pub unsafe fn get_tx_field4(
 }
 
 #[allow(unused)]
-#[allow(clippy::too_many_arguments)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_field5(
     _field: i32,

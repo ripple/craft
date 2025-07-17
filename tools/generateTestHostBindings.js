@@ -44,7 +44,7 @@ async function main() {
     const rustHostFunctions = `// This file exists as a host_binding stand-in for non-WASM targets. For example, this file will
 // be used during unit tests.\n\n` + rustFuncs.map((hit) => {
         return `#[allow(unused)]
-    ${((hit[1].match(/:/g) || []).length >= 7) ? '#[allow(clippy::too_many_arguments)]\n' : ''}#[allow(clippy::missing_safety_doc)]
+    ${((hit[1].match(/:/g) || []).length > 7) ? '#[allow(clippy::too_many_arguments)]\n' : ''}#[allow(clippy::missing_safety_doc)]
     pub unsafe fn ${hit[0]}(${hit[1]}) -> ${hit[2]} {
         ${hit[0].includes("keylet") ? '32' : '-1'}
     }`

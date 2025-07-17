@@ -141,7 +141,7 @@ async function main() {
         })
 
         if (new Set(rustHostFunctions.map(f => f.name)) !== new Set(cppHostFunctions.map(f => f.name))) {
-            console.error('Rust Host Functions and Host Functions do not match!')
+            console.error('Rust Host Functions and C++ Host Functions do not match!')
             const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
             const cppMissing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
             console.error('Missing Rust Host Functions:', rustMissing.map(f => f.name).join(', '))

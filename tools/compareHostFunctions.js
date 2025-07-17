@@ -64,7 +64,7 @@ async function main() {
 
     let importHits = [
     ...wasmImportFile.matchAll(
-        /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z]+), *("([A-Za-z_]+)",)? *hfs, *[0-9]+\);$/gm,
+        /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z]+), *("([A-Za-z0-9_]+)",)? *hfs, *[0-9]+\);$/gm,
     ),
     ]
     const imports = importHits.map((hit) => [hit[1], hit[3] != null ? hit[3] : hit[1]]).filter(
@@ -128,7 +128,7 @@ async function main() {
     for (let file of [rustHostFunctionFile, rustHostFunctionTestFile]) {
         let rustHits = [
             ...file.matchAll(
-                /^ *pub fn ([A-Za-z_]+)\([ \n]*([A-Za-z0-9_:*, \n]+)\) -> ([A-Za-z0-9]+);$/gm,
+                /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]+)\) -> ([A-Za-z0-9]+);$/gm,
             ),
         ]
         const rustFuncs = rustHits.map((hit) => [hit[1], hit[3], hit[2].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])

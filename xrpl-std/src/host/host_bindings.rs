@@ -470,7 +470,11 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
-    /// Retrieves the details of a specific NFT (Non-Fungible Token) associated with a given account.
+    // #############################
+    // Host Function Category: NFT
+    // #############################
+
+    /// Retrieves the URI details of a specific NFT (Non-Fungible Token) associated with a given account.
     ///
     /// # Parameters
     ///
@@ -478,7 +482,7 @@ unsafe extern "C" {
     /// - `account_len`: The length of the accountID.
     /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
     /// - `nft_id_len`: The length of the NFT identifier in bytes.
-    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved NFT uri
+    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved NFT URI
     ///   will be written.
     /// - `out_buff_len`: The maximum length of the output buffer.
     ///
@@ -490,6 +494,28 @@ unsafe extern "C" {
     pub fn get_nft(
         account_ptr: *const u8,
         account_len: usize,
+        nft_id_ptr: *const u8,
+        nft_id_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Retrieves the issuer of a specific NFT (Non-Fungible Token).
+    ///
+    /// # Parameters
+    ///
+    /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
+    /// - `nft_id_len`: The length of the NFT identifier in bytes.
+    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved issuer
+    ///   account will be written.
+    /// - `out_buff_len`: The maximum length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_nft_issuer(
         nft_id_ptr: *const u8,
         nft_id_len: usize,
         out_buff_ptr: *mut u8,

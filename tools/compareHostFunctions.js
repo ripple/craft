@@ -1,4 +1,4 @@
-if (process.argv.length != 3) {
+if (process.argv.length !== 3) {
   console.error(
     'Usage: ' +
       process.argv[0] +
@@ -68,7 +68,7 @@ async function main() {
     ),
     ]
     const imports = importHits.map((hit) => [hit[1], hit[3] != null ? hit[3] : hit[1]]).filter(
-    (hit) => hit[0] != 'getLedgerSqnOld')
+    (hit) => hit[0] !== 'getLedgerSqnOld')
 
     let wrapperHits = [
     ...hostWrapperFile.matchAll(
@@ -76,24 +76,24 @@ async function main() {
     ),
     ]
     const wrappers = wrapperHits.map((hit) => [hit[1], hit[2], hit[3].split(',').map((s) => s.trim())])
-    if (imports.length != wrappers.length) {
+    if (imports.length !== wrappers.length) {
     console.error(
         'Imports and Host Functions do not match in length! ' +
         imports.length +
-        ' != ' +
+        ' !== ' +
         wrappers.length,
     )
     process.exit(1)
     }
 
     for (let i = 0; i < imports.length; i++) {
-    if (imports[i][0] != wrappers[i][0]) {
+    if (imports[i][0] !== wrappers[i][0]) {
         console.error(
         'Imports and Host Functions do not match at index ' +
             i +
             ': ' +
             imports[i][0] +
-            ' != ' +
+            ' !== ' +
             wrappers[i][0],
         )
         process.exit(1)
@@ -140,11 +140,11 @@ async function main() {
         }
         })
 
-        if (rustHostFunctions.length != cppHostFunctions.length) {
+        if (rustHostFunctions.length !== cppHostFunctions.length) {
         console.error(
             'Rust Host Functions and Host Functions do not match in length! ' +
             rustHostFunctions.length +
-            ' != ' + cppHostFunctions.length
+            ' !== ' + cppHostFunctions.length
             )
             if (rustHostFunctions.length < cppHostFunctions.length) {
                 const missing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
@@ -158,28 +158,28 @@ async function main() {
 
         let hasError = false
         rustHostFunctions.forEach((hit, index) => {
-            if (hit.name != cppHostFunctions[index].name) {
+            if (hit.name !== cppHostFunctions[index].name) {
                 console.error(
-                    `Rust Host Function name mismatch: ${hit.name} != ${cppHostFunctions[index].name}`,
+                    `Rust Host Function name mismatch: ${hit.name} !== ${cppHostFunctions[index].name}`,
                 )
                 hasError = true
             }
-            else if (hit.return != cppHostFunctions[index].return) {
+            else if (hit.return !== cppHostFunctions[index].return) {
                 console.error(
-                    `Rust Host Function return type mismatch for ${hit.name}: ${hit.return} != ${cppHostFunctions[index].return}`,
+                    `Rust Host Function return type mismatch for ${hit.name}: ${hit.return} !== ${cppHostFunctions[index].return}`,
                 )
                 hasError = true
             }
-            else if (hit.params.length != cppHostFunctions[index].params.length) {
+            else if (hit.params.length !== cppHostFunctions[index].params.length) {
                 console.error(
-                    `Rust Host Function parameter count mismatch for ${hit.name}: ${hit.params.length} != ${cppHostFunctions[index].params.length}`,
+                    `Rust Host Function parameter count mismatch for ${hit.name}: ${hit.params.length} !== ${cppHostFunctions[index].params.length}`,
                 )
                 hasError = true
             } else {
                 hit.params.forEach((param, paramIndex) => {
-                    if (param != cppHostFunctions[index].params[paramIndex]) {
+                    if (param !== cppHostFunctions[index].params[paramIndex]) {
                         console.error(
-                            `Rust Host Function parameter type mismatch for ${hit.name}, parameter ${paramIndex}: ${param} != ${cppHostFunctions[index].params[paramIndex]}`,
+                            `Rust Host Function parameter type mismatch for ${hit.name}, parameter ${paramIndex}: ${param} !== ${cppHostFunctions[index].params[paramIndex]}`,
                         )
                         hasError = true
                     }

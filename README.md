@@ -10,7 +10,6 @@ An interactive CLI tool for building and testing WASM modules for the XRP Ledger
 - [Command-Line Options](#command-line-options)
 - [Project Structure](#project-structure)
 - [WASM Host Testing Tool](#wasm-host-testing-tool)
-- [Reference Submodules](#reference-submodules)
 - [Managing rippled](#managing-rippled)
 - [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
@@ -161,38 +160,12 @@ the `notary` project. The intent is to generalize or reuse for future projects.
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
-## Reference Submodules
+### Cloning the Repository
 
-See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
-
-### 1. rippled
-
-Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
-
-### 2. XRPL Explorer
-
-Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
-
-### Cloning the Repository with Submodules
-
-To clone this repository including all submodules, use:
+To clone this repository, use:
 
 ```bash
-git clone --recurse-submodules git@github.com:ripple/craft.git
-```
-
-Or if you've already cloned the repository without submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-### Updating Submodules
-
-To update all submodules to their latest versions:
-
-```bash
-git submodule update --remote
+git clone git@github.com:ripple/craft.git
 ```
 
 ## Managing rippled

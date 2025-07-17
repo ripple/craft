@@ -160,3 +160,5 @@ rustHostFunctions.forEach((hit, index) => {
 if (hasError) {
   process.exit(1)
 }
+
+console.log('All host functions match between Rust and C++ implementations.')

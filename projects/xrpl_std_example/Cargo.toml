@@ -2,7 +2,7 @@
 name = "xrpl_std_example"
 version = "0.0.1"
 edition = "2024"
-description = "A Smart Escrow demo that calls every host function and traces values to prove each host function works properly."
+description = "A Smart Escrow that calls every host function and accesses every field of every Craft primitive."
 license = "MIT"
 
 # This empty workspace definition keeps this project independent of the parent workspace

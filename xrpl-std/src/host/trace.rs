@@ -30,9 +30,9 @@ pub fn trace(msg: &str) -> Result<i32> {
 
     let result_code = unsafe {
         host::trace(
-            msg.as_ptr() as u32,
+            msg.as_ptr(),
             msg.len(),
-            null_ptr as u32,
+            null_ptr,
             0usize,
             DataRepr::AsUTF8 as _,
         )
@@ -56,13 +56,7 @@ pub fn trace_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
     let result_code = unsafe {
         let data_ptr = data.as_ptr();
         let data_len = data.len();
-        host::trace(
-            msg.as_ptr() as u32,
-            msg.len(),
-            data_ptr as u32,
-            data_len,
-            data_repr as _,
-        )
+        host::trace(msg.as_ptr(), msg.len(), data_ptr, data_len, data_repr as _)
     };
 
     match_result_code(result_code, || result_code)
@@ -81,7 +75,7 @@ pub fn trace_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
 /// an error (e.g., incorrect buffer sizes).
 #[inline(always)]
 pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
-    let result_code = unsafe { host::trace_num(msg.as_ptr() as u32, msg.len(), number) };
+    let result_code = unsafe { host::trace_num(msg.as_ptr(), msg.len(), number) };
     match_result_code(result_code, || result_code)
 }
 

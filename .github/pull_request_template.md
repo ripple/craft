@@ -31,10 +31,13 @@ Please check relevant options, delete irrelevant ones.
 - [ ] Documentation Updates
 - [ ] Release
 
+<!--
+This part will be included after the first official release
 ### Did you update HISTORY.md?
 
 - [ ] Yes
 - [ ] No, this change does not impact library users
+-->
 
 ## Test Plan
 

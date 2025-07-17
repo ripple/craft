@@ -39,7 +39,6 @@ let importHits = [
 ]
 const imports = importHits.map((hit) => [hit[1], hit[3] != null ? hit[3] : hit[1]]).filter(
   (hit) => hit[0] != 'getLedgerSqnOld')
-// console.log(imports)
 
 let wrapperHits = [
   ...hostWrapperFile.matchAll(
@@ -47,7 +46,6 @@ let wrapperHits = [
   ),
 ]
 const wrappers = wrapperHits.map((hit) => [hit[1], hit[2], hit[3].split(',').map((s) => s.trim())])
-// console.log(wrappers)
 if (imports.length != wrappers.length) {
   console.error(
     'Imports and Host Functions do not match in length! ' +

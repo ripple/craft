@@ -46,7 +46,7 @@ async function main() {
         return `#[allow(unused)]
     ${((hit[1].match(/:/g) || []).length > 7) ? '#[allow(clippy::too_many_arguments)]\n' : ''}#[allow(clippy::missing_safety_doc)]
     pub unsafe fn ${hit[0]}(${hit[1]}) -> ${hit[2]} {
-        -1
+        ${hit[0].includes("keylet") ? '32' : '-1'}
     }`
     }).join('\n\n')
 

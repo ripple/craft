@@ -278,18 +278,18 @@ pub unsafe fn get_nft(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace(
-    _msg_read_ptr: u32,
+    _msg_read_ptr: *const u8,
     _msg_read_len: usize,
-    _data_read_ptr: u32,
+    _data_read_ptr: *const u8,
     _data_read_len: usize,
-    _as_hex: u32,
+    _as_hex: i32,
 ) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn trace_num(_msg_read_ptr: u32, _msg_read_len: usize, _number: i64) -> i32 {
+pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number: i64) -> i32 {
     -1
 }
 

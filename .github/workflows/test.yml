@@ -47,10 +47,10 @@ jobs:
       - name: Check for missing newline at EOF
         run: |
           missing_newline=false
-          for f in $(git ls-files); do
+          git ls-files -z | while IFS= read -r -d '' f; do
             [ -f "$f" ] && [ -s "$f" ] && file --mime "$f" | grep -q text && {
               last_byte=$(tail -c1 "$f")
-              if [ "$last_byte" != "" ] && [ "$last_byte" != $'\n' ]; then
+              if [ "$last_byte" != $'\n' ]; then
                 echo "❌ $f is missing a newline at EOF"
                 missing_newline=true
               fi

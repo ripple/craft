@@ -220,7 +220,7 @@ pub unsafe fn account_keylet(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    32
+    -1
 }
 
 #[allow(unused)]
@@ -236,7 +236,7 @@ pub unsafe fn credential_keylet(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    32
+    -1
 }
 
 #[allow(unused)]
@@ -248,7 +248,7 @@ pub unsafe fn escrow_keylet(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    32
+    -1
 }
 
 #[allow(unused)]
@@ -260,7 +260,7 @@ pub unsafe fn oracle_keylet(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    32
+    -1
 }
 
 #[allow(unused)]

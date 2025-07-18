@@ -130,8 +130,10 @@ async function main() {
             console.error('Rust Host Functions and C++ Host Functions do not match!')
             const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
             const cppMissing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
-            console.error('Missing Rust Host Functions:', rustMissing.map(f => f.name).join(', '))
-            console.error('Missing C++ Host Functions:', cppMissing.map(f => f.name).join(', '))
+            if (rustMissing.length > 0)
+                console.error('Missing Rust Host Functions:', rustMissing.map(f => f.name).join(', '))
+            if (cppMissing.length > 0)
+                console.error('Missing C++ Host Functions:', cppMissing.map(f => f.name).join(', '))
             process.exit(1)
         }
 

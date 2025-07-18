@@ -15,4 +15,3 @@ WebAssembly.instantiate(wasmBuffer, importObject).then(({ instance }) => {
     const result = instance.exports.ready(); // Pass args as needed
     console.log("Result:", result);
 });
-

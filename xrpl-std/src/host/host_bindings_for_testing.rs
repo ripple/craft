@@ -33,72 +33,6 @@ pub unsafe fn get_tx_field(_field: i32, _out_buff_ptr: *mut u8, _out_buff_len: u
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_tx_field2(
-    _field: i32,
-    _field2: i32,
-    _out_buff_ptr: *mut u8,
-    _out_buff_len: usize,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_tx_field3(
-    _field: i32,
-    _field2: i32,
-    _field3: i32,
-    _out_buff_ptr: *mut u8,
-    _out_buff_len: usize,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_tx_field4(
-    _field: i32,
-    _field2: i32,
-    _field3: i32,
-    _field4: i32,
-    _out_buff_ptr: *mut u8,
-    _out_buff_len: usize,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_tx_field5(
-    _field: i32,
-    _field2: i32,
-    _field3: i32,
-    _field4: i32,
-    _field5: i32,
-    _out_buff_ptr: *mut u8,
-    _out_buff_len: usize,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::too_many_arguments)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_tx_field6(
-    _field: i32,
-    _field2: i32,
-    _field3: i32,
-    _field4: i32,
-    _field5: i32,
-    _field6: i32,
-    _out_buff_ptr: *mut u8,
-    _out_buff_len: usize,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_current_ledger_obj_field(
     _field: i32,
     _out_buff_ptr: *mut u8,
@@ -224,6 +158,18 @@ pub unsafe fn account_keylet(
 }
 
 #[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn check_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
 #[allow(clippy::too_many_arguments)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn credential_keylet(
@@ -233,6 +179,43 @@ pub unsafe fn credential_keylet(
     _issuer_len: usize,
     _cred_type_ptr: *const u8,
     _cred_type_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn delegate_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _authorize_ptr: *const u8,
+    _authorize_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn deposit_preauth_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _authorize_ptr: *const u8,
+    _authorize_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn did_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
@@ -252,11 +235,88 @@ pub unsafe fn escrow_keylet(
 }
 
 #[allow(unused)]
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn line_keylet(
+    _account1_ptr: *const u8,
+    _account1_len: usize,
+    _account2_ptr: *const u8,
+    _account2_len: usize,
+    _currency_ptr: *const u8,
+    _currency_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn nft_offer_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn offer_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn oracle_keylet(
     _account_ptr: *const u8,
     _account_len: usize,
     _document_id: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn paychan_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _destination_ptr: *const u8,
+    _destination_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn signers_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn ticket_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {

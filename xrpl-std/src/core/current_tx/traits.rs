@@ -143,12 +143,10 @@ pub trait TransactionCommonFields {
 
         let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
         match_result_code(result_code, || {
-            let token_amount = TokenAmount::from_bytes(&buffer).unwrap_or_else(|error| {
+            TokenAmount::from_bytes(&buffer).unwrap_or_else(|error| {
                 let _ = trace_num("Invalid bytes for Amount", error.code() as i64);
                 panic!("Invalid bytes for Amount")
-            });
-
-            token_amount
+            })
         })
     }
 

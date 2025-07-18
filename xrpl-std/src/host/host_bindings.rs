@@ -546,8 +546,8 @@ unsafe extern "C" {
     /// # Parameters
     /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
     /// * `msg_read_len`: The byte length of the text to send to the trace log.
-    /// * `opaque_float_ptr`: A pointer to an array of 8 bytes containing the u64 opaque pointer
-    /// value.
+    /// * `opaque_float_ptr`: A pointer to an array of 8 bytes containing the u64 opaque pointer value.
+    /// * `opaque_float_len`: The byte length of the text to send to the trace log.
     ///
     /// # Returns
     ///
@@ -555,5 +555,10 @@ unsafe extern "C" {
     /// signifies the number of message bytes that were written to the trace function. Non-zero
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
-    pub fn trace_opaque_float(msg_read_ptr: *const u8, msg_read_len: usize, number: i64) -> i32;
+    pub fn trace_opaque_float(
+        _msg_read_ptr: *const u8,
+        _msg_read_len: usize,
+        _opaque_float_ptr: *const u8,
+        _opaque_float_len: usize,
+    ) -> i32;
 }

@@ -80,8 +80,11 @@ mod tests {
         // Set sequence number bytes (first 4 bytes)
         bytes[0..4].copy_from_slice(&67890u32.to_be_bytes());
         // Set account ID bytes (last 20 bytes)
-        for i in 4..24 {
-            bytes[i] = 2;
+        // 1. **`bytes.iter_mut().skip(4)`** - Creates a mutable iterator over the bytes array and skips the first 4 elements
+        // 2. **`.take(20)`** - Takes only the next 20 elements (since we want indices 4 through 23, which is 20 elements)
+        // 3. **`*byte = 2`** - Dereferences the mutable reference to set the value to the integer 2 (for testing purposes)
+        for byte in bytes.iter_mut().skip(4).take(20) {
+            *byte = 2;
         }
 
         // Create an MptId from bytes

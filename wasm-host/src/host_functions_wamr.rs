@@ -489,3 +489,30 @@ pub fn trace_num(
     }
     0
 }
+
+pub fn trace_opaque_float(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *mut u8,
+    msg_read_len: usize,
+    opaque_float_ptr: *mut u8,
+    opaque_float_len: usize,
+) -> i32 {
+    debug!(
+        "trace() params: msg_read_ptr={:#?} msg_read_len={:#?} _opaque_float_ptr={:#?} _opaque_float_len={:#?}",
+        msg_read_ptr, msg_read_len, opaque_float_ptr, opaque_float_len
+    );
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::DecodingError as i32;
+    };
+
+    let data = get_data(opaque_float_ptr, opaque_float_len);
+    let array: [u8; 8] = data
+        .try_into()
+        .map_err(|v: Vec<u8>| format!("Expected 8 bytes, got {}", v.len()))
+        .unwrap();
+    let opaque_float: u64 = u64::from_be_bytes(array);
+
+    // TODO: call trace_num when it supports u64?
+    println!("WASM TRACE: {message} {opaque_float}");
+    0
+}

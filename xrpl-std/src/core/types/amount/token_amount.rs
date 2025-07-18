@@ -3,6 +3,7 @@ use crate::core::types::amount::currency_code::CurrencyCode;
 use crate::core::types::amount::mpt_id::MptId;
 use crate::core::types::amount::opaque_float::OpaqueFloat;
 use crate::host;
+use crate::host::Error::InternalError;
 use crate::host::trace::trace_num;
 
 pub const TOKEN_AMOUNT_SIZE: usize = 48;
@@ -111,7 +112,10 @@ impl TokenAmount {
     /// Returns None if the byte array is not a valid TokenAmount.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, host::Error> {
         // TODO: Move to trait!
-        // TODO: Check for 48 bytes.
+
+        if bytes.len() != 48 {
+            return Err(InternalError);
+        }
 
         let byte0 = bytes[0]; // Get the first byte for flag extraction
 
@@ -135,7 +139,7 @@ impl TokenAmount {
                 let token_amount = TokenAmount::XRP {
                     num_drops: match is_positive {
                         true => num_drops_abs as i64,
-                        false => num_drops_abs as i64 * -1,
+                        false => -(num_drops_abs as i64),
                     },
                 };
 
@@ -156,9 +160,9 @@ impl TokenAmount {
                 let mpt_id = MptId::from(mpt_id_bytes);
 
                 let token_amount = TokenAmount::MPT {
-                    num_units: num_units,
-                    is_positive: is_positive,
-                    mpt_id: mpt_id,
+                    num_units,
+                    is_positive,
+                    mpt_id,
                 };
 
                 Ok(token_amount)
@@ -188,8 +192,8 @@ impl TokenAmount {
 
             let token_amount = TokenAmount::IOU {
                 amount: opaque_float,
-                issuer: issuer,
-                currency_code: currency_code,
+                issuer,
+                currency_code,
             };
 
             Ok(token_amount)
@@ -221,7 +225,7 @@ mod tests {
         // XRP amount: [0/type][1/sign][0/is-mpt][4/reserved][57/value]
         // First byte: 0b0100_0000 (0x40)
         // Value: 1,000,000 (0xF4240 in hex)
-        let mut bytes = [0u8; 9];
+        let mut bytes = [0u8; 48];
         bytes[0] = 0x40; // XRP positive flag
         bytes[1..8].copy_from_slice(&1_000_000u64.to_be_bytes()[1..8]);
 
@@ -230,12 +234,9 @@ mod tests {
 
         // Verify it's an XRP amount with the correct value
         match token_amount {
-            TokenAmount::XRP { amount: value } => match value {
-                Amount::XRP { num_drops: value } => {
-                    assert_eq!(value, 1_000_000);
-                }
-                _ => panic!("Expected Amount::XRP"),
-            },
+            TokenAmount::XRP { num_drops } => {
+                assert_eq!(num_drops, 1_000_000);
+            }
             _ => panic!("Expected TokenAmount::XRP"),
         }
     }
@@ -249,7 +250,7 @@ mod tests {
         const SEQUENCE_NUM: u32 = 12345; // 4 bytes
         const ISSUER_BYTES: [u8; 20] = [1u8; 20]; // 20 bytes
 
-        let mut bytes = [0u8; 33];
+        let mut bytes = [0u8; 48];
 
         // Set the amount bytes
         bytes[0] = 0x60; // MPT positive flag
@@ -266,20 +267,15 @@ mod tests {
         // Verify it's an MPT amount with the correct values
         match token_amount {
             TokenAmount::MPT {
-                amount: value,
+                num_units,
+                is_positive,
                 mpt_id,
-            } => match value {
-                Amount::MPT {
-                    num_units: value,
-                    is_positive,
-                } => {
-                    assert_eq!(value, VALUE);
-                    assert!(is_positive);
-                    assert_eq!(mpt_id.get_sequence_num(), SEQUENCE_NUM);
-                    assert_eq!(mpt_id.get_issuer(), AccountID::from(ISSUER_BYTES));
-                }
-                _ => panic!("Expected Amount::MPT"),
-            },
+            } => {
+                assert_eq!(num_units, VALUE);
+                assert!(is_positive);
+                assert_eq!(mpt_id.get_sequence_num(), SEQUENCE_NUM);
+                assert_eq!(mpt_id.get_issuer(), AccountID::from(ISSUER_BYTES));
+            }
             _ => panic!("Expected TokenAmount::MPT"),
         }
     }
@@ -346,18 +342,14 @@ mod tests {
         // Verify it's an IOU amount with the correct values
         match token_amount {
             TokenAmount::IOU {
-                amount: value,
+                amount,
                 issuer,
                 currency_code,
-            } => match value {
-                Amount::IOU { opaque_float, .. } => {
-                    let opaque_float_value = u64::from_be_bytes(eight_input_bytes);
-                    assert_eq!(opaque_float, OpaqueFloat(opaque_float_value));
-                    assert_eq!(issuer, AccountID::from(ISSUER_BYTES));
-                    assert_eq!(currency_code, CurrencyCode::from(CURRENCY_BYTES));
-                }
-                _ => panic!("Expected Amount::XRP"),
-            },
+            } => {
+                assert_eq!(amount, OpaqueFloat(eight_input_bytes));
+                assert_eq!(issuer, AccountID::from(ISSUER_BYTES));
+                assert_eq!(currency_code, CurrencyCode::from(CURRENCY_BYTES));
+            }
             _ => panic!("Expected TokenAmount::IOU"),
         }
     }

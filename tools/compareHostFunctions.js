@@ -64,7 +64,7 @@ async function main() {
 
     let importHits = [
     ...wasmImportFile.matchAll(
-        /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z]+), *("([A-Za-z0-9_]+)",)? *hfs, *[0-9]+\);$/gm,
+        /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z0-9]+), *("([A-Za-z0-9_]+)",)? *hfs, *[0-9]+\);$/gm,
     ),
     ]
     const imports = importHits.map((hit) => [hit[1], hit[3] != null ? hit[3] : hit[1]]).filter(
@@ -72,7 +72,7 @@ async function main() {
 
     let wrapperHits = [
     ...hostWrapperFile.matchAll(
-        /^ *using ([A-Za-z]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]+)\);$/gm,
+        /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]+)\);$/gm,
     ),
     ]
     const wrappers = wrapperHits.map((hit) => [hit[1], hit[2], hit[3].split(',').map((s) => s.trim())])

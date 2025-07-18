@@ -128,23 +128,23 @@ async function main() {
     for (let file of [rustHostFunctionFile, rustHostFunctionTestFile]) {
         let rustHits = [
             ...file.matchAll(
-                /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]+)\) -> ([A-Za-z0-9]+);$/gm,
+                /^ *pub (unsafe )?fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]+)\) -> ([A-Za-z0-9]+)/gm,
             ),
         ]
-        const rustFuncs = rustHits.map((hit) => [hit[1], hit[3], hit[2].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])
+        const rustFuncs = rustHits.map((hit) => [hit[2], hit[4], hit[3].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])
         const rustHostFunctions = rustFuncs.map((hit) => {
-        return {
-            name: hit[0],
-            return: translateParamType(hit[1]),
-            params: hit[2].map(translateParamType),
-        }
+            return {
+                name: hit[0],
+                return: translateParamType(hit[1]),
+                params: hit[2].map(translateParamType),
+            }
         })
 
         if (rustHostFunctions.length !== cppHostFunctions.length) {
-        console.error(
-            'Rust Host Functions and Host Functions do not match in length! ' +
-            rustHostFunctions.length +
-            ' !== ' + cppHostFunctions.length
+            console.error(
+                'Rust Host Functions and C++ Host Functions do not match in length! ' +
+                rustHostFunctions.length +
+                ' !== ' + cppHostFunctions.length
             )
             if (rustHostFunctions.length < cppHostFunctions.length) {
                 const missing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))

@@ -436,15 +436,17 @@ pub extern "C" fn finish() -> bool {
     // Step #3 [EscrowFinish Account]: Trace Current Balance
     // ########################################
     {
+
         let _ = trace("### Step #3: Trace EscrowFinish Account Balance");
         let _ = trace("{ ");
-        let account: AccountID = escrow_finish.get_account().unwrap();
-        let balance = account::get_account_balance(&account).unwrap();
-        let _ = trace_num("  Balance of Account Finishing the Escrow:", balance as i64);
-        if balance == 0 {
-            let _ = trace("  Balance of Account Finishing the Escrow was 0");
-            return false;
-        }
+        let _ = trace("  -- TODO: Support multiple ledger objects in decoder!");
+        // let account: AccountID = escrow_finish.get_account().unwrap();
+        // let balance = account::get_account_balance(&account).unwrap();
+        // let _ = trace_num("  Balance of Account Finishing the Escrow:", balance as i64);
+        // if balance == 0 {
+        //     let _ = trace("  Balance of Account Finishing the Escrow was 0");
+        //     return false;
+        // }
         let _ = trace("}");
         let _ = trace("");
     }

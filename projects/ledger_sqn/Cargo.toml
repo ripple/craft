@@ -12,10 +12,13 @@ license = "MIT"
 crate-type = ["cdylib"]
 
 [profile.release]
-opt-level = "s"  # Optimize for size
-lto = true       # Link-time optimization
-codegen-units = 1
-panic = "abort"  # Minimize size by avoiding panic handling code
+opt-level = "s"   # Optimize for size
+lto = true        # Link-time optimization
+codegen-units = 1 # Compile in one unit for better optimization and smaller binary size
+panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no panic handler means smaller binary)
+
+[profile.dev]
+panic = "unwind" # For debugging, support std-lib with unwinding in the `dev` profile
 
 [dependencies]
-# Add dependencies as needed 
+xrpl-std = { path = "../../xrpl-std" }

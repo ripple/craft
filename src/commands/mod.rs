@@ -61,7 +61,7 @@ fn handle_build_output(output: &Output, config: &Config, project_dir: &Path) -> 
 
     // Print any other warnings or errors
     if !stderr.is_empty() {
-        println!("\n{}", stderr);
+        println!("\n{stderr}");
     }
 
     Ok(())
@@ -75,13 +75,10 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     if !utils::check_wasm_target_installed(&target_str) {
         println!(
             "{}",
-            format!("WASM target {} not found. Installing...", target_str).yellow()
+            format!("WASM target {target_str} not found. Installing...").yellow()
         );
         utils::install_wasm_target(&target_str)?;
-        println!(
-            "{}",
-            format!("Successfully installed {}", target_str).green()
-        );
+        println!("{}", format!("Successfully installed {target_str}").green());
     }
 
     let cargo_toml = utils::find_cargo_toml(&config.project_path)
@@ -95,7 +92,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     }
 
     println!("{}", "Running cargo build...".cyan());
-    println!("args: {:?}", args);
+    println!("args: {args:?}");
     let output = Command::new("cargo")
         .current_dir(project_dir)
         .args(&args)
@@ -114,8 +111,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
         .join(config.build_mode.to_string());
 
     // Get the project name from Cargo.toml instead of directory name
-    let cargo_toml_path = cargo_toml.clone(); // Clone the PathBuf to avoid borrowing issues
-    let cargo_content = std::fs::read_to_string(&cargo_toml_path)?;
+    let cargo_content = std::fs::read_to_string(&cargo_toml)?;
     let name_pattern = regex::Regex::new(r#"name\s*=\s*"([^"]*)""#)?;
 
     let project_name = if let Some(caps) = name_pattern.captures(&cargo_content) {
@@ -174,11 +170,11 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     println!("{}", wasm_file.display().to_string().white().bold());
 
     let size = std::fs::metadata(&wasm_file)?.len();
-    println!("Size: {} bytes", size);
+    println!("Size: {size} bytes");
 
     // Calculate and display WASM fingerprint
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
-    println!("WASM Fingerprint: {}", fingerprint);
+    println!("WASM Fingerprint: {fingerprint}");
 
     // Ask if user wants to export as hex
     if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
@@ -438,469 +434,7 @@ pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
     Ok(())
 }
 
-pub async fn start_rippled_with_foreground(foreground: bool) -> Result<()> {
-    use std::path::Path;
-    use std::process::{Command, Stdio};
-    use std::str;
-
-    use inquire::Select;
-
-    println!("{}", "Checking if rippled is running...".blue());
-
-    // Try to find the config file
-    let mut config_paths = Vec::new();
-
-    // Check for config in current directory first
-    let current_dir_config = Path::new("rippled.cfg").to_path_buf();
-    if current_dir_config.exists() && current_dir_config.is_file() {
-        println!("{}", "Found rippled.cfg in current directory".green());
-        config_paths.push(current_dir_config);
-    }
-
-    // Check for config in the default location
-    let default_config_path =
-        Path::new("reference/rippled-cfg/smart-escrow-rippled.cfg").to_path_buf();
-    if default_config_path.exists() && default_config_path.is_file() {
-        config_paths.push(default_config_path);
-    }
-
-    // Find all rippled executables in build-rippled-* directories
-    let mut rippled_paths = Vec::new();
-
-    // Check current directory first
-    let current_dir_rippled = Path::new("rippled").to_path_buf();
-    if current_dir_rippled.exists() && current_dir_rippled.is_file() {
-        println!("{}", "Found rippled in current directory".green());
-        rippled_paths.push(current_dir_rippled);
-    }
-
-    // Also check for rippled.exe on Windows
-    #[cfg(target_os = "windows")]
-    {
-        let current_dir_rippled_exe = Path::new("rippled.exe").to_path_buf();
-        if current_dir_rippled_exe.exists() && current_dir_rippled_exe.is_file() {
-            println!("{}", "Found rippled.exe in current directory".green());
-            rippled_paths.push(current_dir_rippled_exe);
-        }
-    }
-
-    // Use standard library glob pattern matching instead of relying on WalkDir to handle the glob
-    let build_rippled_dir = Path::new("reference");
-    if build_rippled_dir.exists() {
-        if let Ok(entries) = std::fs::read_dir(build_rippled_dir) {
-            for entry in entries.filter_map(|e| e.ok()) {
-                let path = entry.path();
-                if path.is_dir()
-                    && path
-                        .file_name()
-                        .and_then(|name| name.to_str())
-                        .map(|name| name.starts_with("build-rippled-"))
-                        .unwrap_or(false)
-                {
-                    // Check for rippled executable in this directory
-                    let rippled_path = path.join("rippled");
-                    if rippled_path.exists() && rippled_path.is_file() {
-                        rippled_paths.push(rippled_path);
-                    }
-                }
-            }
-        }
-    }
-
-    // Also check the original path
-    let fallback_path = Path::new("reference/rippled/Debug/rippled").to_path_buf();
-    if fallback_path.exists() {
-        rippled_paths.push(fallback_path);
-    }
-
-    // Verify at least one rippled exists
-    if rippled_paths.is_empty() {
-        anyhow::bail!(
-            "rippled executable not found in current directory, reference/build-rippled-* or reference/rippled/Debug/"
-        );
-    }
-
-    // Choose rippled executable
-    let rippled_path = if rippled_paths.len() == 1 {
-        println!(
-            "{}",
-            format!("Found rippled at: {}", rippled_paths[0].display()).green()
-        );
-        rippled_paths[0].clone()
-    } else {
-        // Convert paths to strings for selection
-        let path_strings: Vec<String> = rippled_paths
-            .iter()
-            .map(|p| p.display().to_string())
-            .collect();
-
-        // Let user select which rippled to use
-        let selected = Select::new(
-            "Multiple rippled executables found. Please select one:",
-            path_strings,
-        )
-        .prompt()?;
-
-        // Find the matching path
-        let selected_path = rippled_paths
-            .iter()
-            .find(|p| p.display().to_string() == selected)
-            .unwrap()
-            .clone();
-
-        println!(
-            "{}",
-            format!("Selected rippled at: {}", selected_path.display()).green()
-        );
-        selected_path
-    };
-
-    // Determine if we need to use ./ for the executable
-    // This is needed when running an executable from the current directory
-    let is_current_dir = rippled_path.parent() == Some(Path::new(""))
-        || rippled_path.to_string_lossy() == "rippled"
-        || rippled_path.to_string_lossy() == "rippled.exe";
-
-    // Verify at least one config exists
-    if config_paths.is_empty() {
-        anyhow::bail!(
-            "rippled config not found in current directory or at reference/rippled-cfg/smart-escrow-rippled.cfg"
-        );
-    }
-
-    // Choose config file
-    let config_path = if config_paths.len() == 1 {
-        println!(
-            "{}",
-            format!("Using config at: {}", config_paths[0].display()).green()
-        );
-        config_paths[0].clone()
-    } else {
-        // Convert paths to strings for selection
-        let path_strings: Vec<String> = config_paths
-            .iter()
-            .map(|p| p.display().to_string())
-            .collect();
-
-        // Let user select which config to use
-        let selected = Select::new(
-            "Multiple rippled config files found. Please select one:",
-            path_strings,
-        )
-        .prompt()?;
-
-        // Find the matching path
-        let selected_path = config_paths
-            .iter()
-            .find(|p| p.display().to_string() == selected)
-            .unwrap()
-            .clone();
-
-        println!(
-            "{}",
-            format!("Selected config at: {}", selected_path.display()).green()
-        );
-        selected_path
-    };
-
-    // Check if rippled is running by executing server_info
-    let exec_path = if is_current_dir {
-        "./rippled".to_string()
-    } else {
-        rippled_path.display().to_string()
-    };
-    let full_command = format!("{} server_info --conf={}", exec_path, config_path.display());
-    println!("{}", format!("Running command: {}", full_command).blue());
-
-    let check_output_result = Command::new(if is_current_dir {
-        "./rippled"
-    } else {
-        rippled_path.to_str().unwrap_or("rippled")
-    })
-    .arg("server_info")
-    .arg(format!("--conf={}", config_path.display()))
-    .output();
-
-    let check_output = match check_output_result {
-        Ok(output) => output,
-        Err(e) => {
-            println!(
-                "{}",
-                format!("Error executing command: {}", full_command).red()
-            );
-            println!(
-                "{}",
-                format!(
-                    "Absolute path to rippled: {}",
-                    rippled_path
-                        .canonicalize()
-                        .unwrap_or(rippled_path.clone())
-                        .display()
-                )
-                .yellow()
-            );
-            println!("{}", format!("Error details: {}", e).red());
-            return Err(anyhow::anyhow!(
-                "Failed to execute command: {}",
-                full_command
-            ));
-        }
-    };
-
-    let output_str = str::from_utf8(&check_output.stdout)?;
-    let error_str = str::from_utf8(&check_output.stderr)?;
-
-    // Print the output for debugging
-    println!("{}", "Server info output:".blue());
-    println!("{}", output_str);
-
-    if !error_str.is_empty() {
-        println!("{}", "Server info stderr:".blue());
-        println!("{}", error_str);
-    }
-
-    // If output contains error_code 73, rippled is not running
-    if output_str.contains("\"error_code\" : 73") {
-        println!("{}", "rippled is not running. Starting it now...".yellow());
-
-        if foreground {
-            // Run rippled in foreground mode with console output visible
-            println!(
-                "{}",
-                "Starting rippled in foreground mode. Press Ctrl+C to terminate.".yellow()
-            );
-
-            let exec_path = if is_current_dir {
-                "./rippled".to_string()
-            } else {
-                rippled_path.display().to_string()
-            };
-            let foreground_cmd = format!("{} -a --conf={}", exec_path, config_path.display());
-            println!("{}", format!("Running command: {}", foreground_cmd).blue());
-
-            let status_result = Command::new(if is_current_dir {
-                "./rippled"
-            } else {
-                rippled_path.to_str().unwrap_or("rippled")
-            })
-            .arg("-a")
-            .arg(format!("--conf={}", config_path.display()))
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .status();
-
-            let status = match status_result {
-                Ok(s) => s,
-                Err(e) => {
-                    println!(
-                        "{}",
-                        format!("Error executing command: {}", foreground_cmd).red()
-                    );
-                    println!(
-                        "{}",
-                        format!(
-                            "Absolute path to rippled: {}",
-                            rippled_path
-                                .canonicalize()
-                                .unwrap_or(rippled_path.clone())
-                                .display()
-                        )
-                        .yellow()
-                    );
-                    println!("{}", format!("Error details: {}", e).red());
-                    return Err(anyhow::anyhow!(
-                        "Failed to execute command: {}",
-                        foreground_cmd
-                    ));
-                }
-            };
-
-            // This will only execute when rippled is terminated
-            if status.success() {
-                println!("{}", "\nrippled exited successfully.".green());
-            } else {
-                println!(
-                    "{}",
-                    format!("\nrippled exited with status: {}", status).red()
-                );
-            }
-        } else {
-            // Start rippled in background mode (as before)
-            let exec_path = if is_current_dir {
-                "./rippled".to_string()
-            } else {
-                rippled_path.display().to_string()
-            };
-            let background_cmd = format!("{} -a --conf={}", exec_path, config_path.display());
-            println!("{}", format!("Running command: {}", background_cmd).blue());
-
-            let start_cmd_result = Command::new(if is_current_dir {
-                "./rippled"
-            } else {
-                rippled_path.to_str().unwrap_or("rippled")
-            })
-            .arg("-a")
-            .arg(format!("--conf={}", config_path.display()))
-            .spawn();
-
-            let start_cmd = match start_cmd_result {
-                Ok(cmd) => cmd,
-                Err(e) => {
-                    println!(
-                        "{}",
-                        format!("Error executing command: {}", background_cmd).red()
-                    );
-                    println!(
-                        "{}",
-                        format!(
-                            "Absolute path to rippled: {}",
-                            rippled_path
-                                .canonicalize()
-                                .unwrap_or(rippled_path.clone())
-                                .display()
-                        )
-                        .yellow()
-                    );
-                    println!("{}", format!("Error details: {}", e).red());
-                    return Err(anyhow::anyhow!(
-                        "Failed to execute command: {}",
-                        background_cmd
-                    ));
-                }
-            };
-
-            println!(
-                "{}",
-                "rippled started successfully with PID: "
-                    .green()
-                    .to_string()
-                    + &start_cmd.id().to_string()
-            );
-            println!("Using rippled from: {}", rippled_path.display());
-            println!("Started with config: {}", config_path.display());
-
-            // Give rippled some time to start up
-            println!("Waiting for rippled to start up...");
-            std::thread::sleep(std::time::Duration::from_secs(2));
-
-            // Verify rippled is now running
-            let verify_cmd = format!("{} server_info --conf={}", exec_path, config_path.display());
-            println!(
-                "{}",
-                format!("Verifying rippled is running with command: {}", verify_cmd).blue()
-            );
-
-            let verify_output_result = Command::new(if is_current_dir {
-                "./rippled"
-            } else {
-                rippled_path.to_str().unwrap_or("rippled")
-            })
-            .arg("server_info")
-            .arg(format!("--conf={}", config_path.display()))
-            .output();
-
-            let verify_output = match verify_output_result {
-                Ok(output) => output,
-                Err(e) => {
-                    println!(
-                        "{}",
-                        format!("Error executing verification command: {}", verify_cmd).red()
-                    );
-                    println!("{}", format!("Error details: {}", e).red());
-                    println!(
-                        "{}",
-                        "rippled may be running but not responding to API commands yet.".yellow()
-                    );
-                    return Ok(());
-                }
-            };
-
-            let verify_str = str::from_utf8(&verify_output.stdout)?;
-
-            if verify_str.contains("\"error_code\" : 73") {
-                println!(
-                    "{}",
-                    "Warning: rippled may still be starting up. Please try again in a moment."
-                        .yellow()
-                );
-            } else {
-                println!(
-                    "{}",
-                    "✓ rippled is now running and responding to commands.".green()
-                );
-            }
-
-            println!(
-                "\n{}",
-                "Note: To see console output, restart with --foreground flag.".blue()
-            );
-            println!("{}", "To terminate rippled, run: killall rippled".blue());
-        }
-    } else {
-        println!("{}", "✓ rippled may be already running.".green());
-
-        if foreground {
-            println!("{}", "rippled is already running. To see its console output, first terminate the current process:".yellow());
-            println!("killall rippled");
-            println!("Then start it again with the --foreground flag.");
-        }
-    }
-
-    Ok(())
-}
-
-pub async fn list_rippled() -> Result<()> {
-    use std::process::Command;
-
-    println!("{}", "Checking for running rippled processes...".blue());
-
-    // Use ps to find rippled processes
-    let output = Command::new("ps")
-        .args(["aux"])
-        .output()
-        .context("Failed to execute ps command")?;
-
-    let output_str = String::from_utf8_lossy(&output.stdout);
-
-    // Filter lines containing 'rippled' but exclude our CLI command
-    let rippled_processes: Vec<&str> = output_str
-        .lines()
-        .filter(|line| {
-            line.contains("rippled")
-                && !line.contains("grep")
-                && !line.contains("list-rippled")
-                && !line.contains("craft list")
-        })
-        .collect();
-
-    if rippled_processes.is_empty() {
-        println!("{}", "No rippled processes found.".yellow());
-    } else {
-        println!(
-            "{}",
-            format!("Found {} rippled processes:", rippled_processes.len()).green()
-        );
-
-        for (i, process) in rippled_processes.iter().enumerate() {
-            println!("{}. {}", i + 1, process);
-        }
-
-        println!("\n{}", "To terminate rippled processes:".blue());
-        println!("1. Use killall: {}", "killall rippled".green());
-        println!("2. Or kill by PID: {} <PID>", "kill".green());
-
-        println!(
-            "\n{}",
-            "To start rippled with console output visible:".blue()
-        );
-        println!("{}", "craft start-rippled --foreground".green());
-    }
-
-    Ok(())
-}
-
 pub async fn open_explorer() -> Result<()> {
-    use open;
     open::that("https://custom.xrpl.org/localhost:6006")?;
     println!(
         "{}",

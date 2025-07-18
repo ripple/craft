@@ -1,180 +1,9 @@
 #![no_std]
 
-use crate::host::trace::trace;
-
 pub mod core;
 pub mod host;
-pub mod keylet;
-pub mod locator;
 pub mod sfield;
 pub mod types;
-use host::trace::trace_num;
-
-use crate::keylet::account_keylet;
-use crate::locator::LocatorPacker;
-use crate::types::{AccountID, ContractData, NFT, XRPL_ACCOUNT_ID_SIZE, XRPL_CONTRACT_DATA_SIZE};
-
-//TODO replace some of the helper functions with Objects, e.g. AccountRoot, Escrow, Tx
-
-pub fn get_tx_account_id() -> Option<AccountID> {
-    let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    let retcode =
-        unsafe { host::get_tx_field(sfield::Account, account_id.as_mut_ptr(), account_id.len()) };
-    if retcode > 0 {
-        Some(account_id)
-    } else {
-        let _ = trace_num("get_tx_account_id error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn get_current_escrow_account_id() -> Option<AccountID> {
-    let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    let retcode = unsafe {
-        host::get_current_ledger_obj_field(
-            sfield::Account,
-            account_id.as_mut_ptr(),
-            account_id.len(),
-        )
-    };
-    if retcode > 0 {
-        Some(account_id)
-    } else {
-        let _ = trace_num("get_current_escrow_account_id error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn get_current_escrow_destination() -> Option<AccountID> {
-    let mut account_id: AccountID = [0; XRPL_ACCOUNT_ID_SIZE];
-    let retcode = unsafe {
-        host::get_current_ledger_obj_field(
-            sfield::Destination,
-            account_id.as_mut_ptr(),
-            account_id.len(),
-        )
-    };
-    if retcode > 0 {
-        Some(account_id)
-    } else {
-        let _ = trace_num("get_current_escrow_destination error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn get_current_escrow_data() -> Option<ContractData> {
-    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-    let retcode =
-        unsafe { host::get_current_ledger_obj_field(sfield::Data, data.as_mut_ptr(), data.len()) };
-    if retcode > 0 {
-        Some(data)
-    } else {
-        let _ = trace_num("get_current_escrow_data error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn get_current_escrow_finish_after() -> Option<i32> {
-    let mut after = 0i32;
-    let retcode = unsafe {
-        host::get_current_ledger_obj_field(
-            sfield::FinishAfter,
-            (&mut after) as *mut i32 as *mut u8,
-            4,
-        )
-    };
-    if retcode > 0 {
-        Some(after)
-    } else {
-        let _ = trace_num("get_current_escrow_finish_after error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn get_account_balance(aid: &AccountID) -> Option<u64> {
-    let keylet = match account_keylet(aid) {
-        None => return None,
-        Some(keylet) => keylet,
-    };
-    // let _ = trace_data("std-lib keylet ", &keylet, DataRepr::AsHex);
-    let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-    if slot <= 0 {
-        let _ = trace_num(
-            "get_account_balance cache_ledger_obj failed",
-            i64::from(slot),
-        );
-        return None;
-    }
-    // let _ = trace("std-lib slot ");
-    let mut balance = 0u64;
-    let result_code;
-    unsafe {
-        result_code = host::get_ledger_obj_field(
-            slot,
-            sfield::Balance,
-            (&mut balance) as *mut u64 as *mut u8,
-            8,
-        );
-    }
-
-    if result_code == 8 {
-        Some(balance)
-    } else {
-        let _ = trace("Host function get_current_escrow_finish_field failed!");
-        panic!(
-            "Failed to get Account Balance for field_code={} from host. Error code: {}",
-            sfield::Balance,
-            result_code
-        );
-    }
-}
-
-pub fn get_nft(owner: &AccountID, nft: &NFT) -> Option<ContractData> {
-    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-
-    let retcode = unsafe {
-        host::get_NFT(
-            owner.as_ptr(),
-            owner.len(),
-            nft.as_ptr(),
-            nft.len(),
-            data.as_mut_ptr(),
-            data.len(),
-        )
-    };
-    if retcode > 0 {
-        Some(data)
-    } else {
-        let _ = trace_num("get_nft error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn get_ledger_obj_nested_field(slot: i32, locator: &LocatorPacker) -> Option<ContractData> {
-    let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
-
-    let retcode = unsafe {
-        host::get_ledger_obj_nested_field(
-            slot,
-            locator.get_addr(),
-            locator.num_packed_bytes(),
-            data.as_mut_ptr(),
-            data.len(),
-        )
-    };
-    if retcode > 0 {
-        Some(data)
-    } else {
-        let _ = trace_num("get_ledger_obj_nested_field error", i64::from(retcode));
-        None
-    }
-}
-
-pub fn update_current_escrow_data(data: ContractData) {
-    unsafe {
-        host::update_data(data.as_ptr(), data.len());
-    }
-}
 
 /// This function is called on panic, but only in the WASM architecture. In non-WASM (e.g., in the
 /// Host Simulator) the standard lib is available, which includes a panic handler.
@@ -184,4 +13,25 @@ fn panic(_info: &::core::panic::PanicInfo) -> ! {
     // This instruction will halt execution of the WASM module.
     // It's the WASM equivalent of a trap or an unrecoverable error.
     ::core::arch::wasm32::unreachable();
+}
+
+fn hex_char_to_nibble(c: u8) -> Option<u8> {
+    match c {
+        b'0'..=b'9' => Some(c - b'0'),
+        b'a'..=b'f' => Some(c - b'a' + 10),
+        b'A'..=b'F' => Some(c - b'A' + 10),
+        _ => None,
+    }
+}
+
+pub fn decode_hex_32(hex: &[u8; 64]) -> Option<[u8; 32]> {
+    let mut out = [0u8; 32];
+    let mut i = 0;
+    while i < 32 {
+        let high = hex_char_to_nibble(hex[i * 2])?;
+        let low = hex_char_to_nibble(hex[i * 2 + 1])?;
+        out[i] = (high << 4) | low;
+        i += 1;
+    }
+    Some(out)
 }

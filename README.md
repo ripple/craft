@@ -1,6 +1,17 @@
 # `craft`
 
-An interactive CLI tool for building and testing WASM modules.
+An interactive CLI tool for building and testing WASM modules for the XRP Ledger.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Command-Line Options](#command-line-options)
+- [Project Structure](#project-structure)
+- [WASM Host Testing Tool](#wasm-host-testing-tool)
+- [Managing rippled](#managing-rippled)
+- [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
 ## Installation
 
@@ -14,61 +25,73 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
-- WasmEdge
+- Docker (required for running rippled)
 
-### Installing WasmEdge
+### Installing Docker
 
-If you don't already have WasmEdge, you can install it:
+Docker is required to run the rippled server. You have two options:
 
-```bash
-curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
-```
+#### Option 1: Colima (for macOS)
 
-After installation, source the updated environment variables:
+Colima is a lightweight, open-source Docker runtime that craft can install automatically:
 
 ```bash
-source ~/.zshenv  # For zsh users
-# OR
-source ~/.bashrc  # For bash users
+craft docker install  # Installs Colima via Homebrew
 ```
 
-To verify the installation:
+Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use, requires no login, and has no licensing restrictions.
 
-```bash
-which wasmedge
-```
+#### Option 2: Docker Desktop
 
-If you encounter any dynamic library loading errors when running WASM tests, set the library path:
+Traditional option with GUI:
 
-```bash
-# For macOS
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.wasmedge/lib
+- **macOS**: https://docs.docker.com/desktop/install/mac-install/
+- **Windows**: https://docs.docker.com/desktop/install/windows-install/
+- **Linux**: https://docs.docker.com/engine/install/
 
-# For Linux
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
-```
+After installation, ensure Docker is running before using rippled-related commands.
 
 ## Usage
 
-Run the tool without any arguments for an interactive experience:
+Use specific commands:
 
 ```bash
 craft
 ```
 
-Or use specific commands:
+Or, run the tool without any arguments for an interactive experience:
 
 ```bash
-craft build           # Build a WASM module
-craft test            # Test a WASM module
-craft start-rippled   # Check if rippled is running and start it if needed
-craft list-rippled    # List and manage running rippled processes
+craft
+craft start-rippled   # Start rippled in Docker container
+craft list-rippled    # List rippled Docker containers
+craft stop-rippled    # Stop the rippled container
+craft advance-ledger  # Advance the ledger in stand-alone mode
+craft docker          # Manage Docker runtime (install/start/stop/status)
 craft open-explorer   # Open the XRPL Explorer
 ```
 
 ### Command-Line Options
 
 Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+
+- **Build**: Non-interactive build with options:
+
+  ```bash
+  craft build [project-name] [--mode <debug|release>] [--opt <none|small|aggressive>]
+  ```
+
+  Options:
+
+  - `project-name` Name of the project subfolder under `projects/` (positional argument).
+  - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
+  - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
+
+  Example:
+
+  ```bash
+  craft build notary --mode debug --opt aggressive
+  ```
 
 The `test` command supports direct command-line options:
 
@@ -131,26 +154,56 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory. Cur
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
+### Cloning the Repository
+
+To clone this repository, use:
+
+```bash
+git clone git@github.com:ripple/craft.git
+```
+
 ## Managing rippled
 
-The `craft` tool includes commands to manage a local `rippled` instance:
+The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install Colima (a lightweight Docker runtime) for you:
 
 ```bash
-# Check if rippled is running and start it if not (background mode)
-craft start-rippled
+# Check Docker status and install if needed
+craft docker          # Shows status
+craft docker install  # Installs Colima (lightweight Docker)
+craft docker start    # Starts Colima
+craft docker stop     # Stops Colima
 
-# Start rippled with visible console output (can be terminated with Ctrl+C)
-craft start-rippled --foreground
-
-# List running rippled processes and show how to terminate them
-craft list-rippled
+# Once Docker is running, manage rippled:
+craft start-rippled   # Start rippled container (background mode)
+craft start-rippled --foreground  # With visible console output
+craft list-rippled    # List running rippled containers
+craft stop-rippled    # Stop the rippled container
 ```
 
-To terminate `rippled`:
+The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which includes support for smart escrows.
+
+**Note**: If Docker is not installed when you run `craft start-rippled`, it will offer to install Colima automatically.
+
+### Docker Commands
+
+You can also manage the container directly with Docker:
 
 ```bash
-killall rippled
+# View logs
+docker logs -f craft-rippled
+
+# Stop container
+docker stop craft-rippled
+
+# Remove container
+docker rm craft-rippled
 ```
+
+### Ports
+
+- API/WebSocket: `http://localhost:6006`
+- Peer Protocol: `localhost:51235`
+- Admin API: `localhost:5005`
 
 ## Running the XRPL Explorer
 
@@ -161,7 +214,7 @@ The `craft` tool includes commands to open the XRPL Explorer:
 craft open-explorer
 ```
 
-## Usage
+## WASM Host
 
 ### Direct Usage
 
@@ -207,7 +260,7 @@ The verbose output may include:
 Example verbose output:
 
 ```
-[INFO wasm_host] Starting WasmEdge host application
+[INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
 [INFO wasm_host] Using test case: success

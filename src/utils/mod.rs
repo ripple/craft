@@ -5,6 +5,7 @@ use std::process::Command;
 use std::thread;
 use std::time::Duration;
 use walkdir::WalkDir;
+use which::which;
 
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
@@ -54,12 +55,12 @@ pub fn install_wasm_target(target: &str) -> Result<()> {
     Command::new("rustup")
         .args(["target", "add", target])
         .status()
-        .context(format!("Failed to install WASM target: {}", target))?;
+        .context(format!("Failed to install WASM target: {target}"))?;
     Ok(())
 }
 
 pub fn check_wasm_opt_installed() -> bool {
-    which::which("wasm-opt").is_ok()
+    which("wasm-opt").is_ok()
 }
 
 pub fn install_wasm_opt() -> Result<()> {
@@ -182,8 +183,8 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
             .prompt()?
         {
             let updated_content = cargo_content.replace(
-                &format!("name = \"{}\"", package_name),
-                &format!("name = \"{}\"", fixed_name),
+                &format!("name = \"{package_name}\""),
+                &format!("name = \"{fixed_name}\""),
             );
 
             std::fs::write(&cargo_toml_path, updated_content)?;
@@ -226,11 +227,8 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
             if new_path.exists() {
                 println!(
                     "{}",
-                    format!(
-                        "\nError: A folder named '{}' already exists.",
-                        updated_package_name
-                    )
-                    .red()
+                    format!("\nError: A folder named '{updated_package_name}' already exists.")
+                        .red()
                 );
                 return Ok(project_path.to_path_buf());
             }
@@ -240,8 +238,7 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
             println!(
                 "{}",
                 format!(
-                    "\nRenamed folder from '{}' to '{}'!",
-                    project_folder_name, updated_package_name
+                    "\nRenamed folder from '{project_folder_name}' to '{updated_package_name}'!"
                 )
                 .green()
             );
@@ -296,6 +293,7 @@ pub fn needs_cli_update() -> Result<bool> {
         workspace_dir.join("src/commands/mod.rs"),
         workspace_dir.join("src/utils/mod.rs"),
         workspace_dir.join("src/config/mod.rs"),
+        workspace_dir.join("src/docker.rs"),
         workspace_dir.join("Cargo.toml"),
     ];
 
@@ -307,11 +305,10 @@ pub fn needs_cli_update() -> Result<bool> {
 
         let source_modified = source_file
             .metadata()
-            .context(format!("Failed to get metadata for {:?}", source_file))?
+            .context(format!("Failed to get metadata for {source_file:?}"))?
             .modified()
             .context(format!(
-                "Failed to get modification time for {:?}",
-                source_file
+                "Failed to get modification time for {source_file:?}"
             ))?;
 
         // If source file is newer than binary, update is needed

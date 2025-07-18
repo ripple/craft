@@ -6,10 +6,11 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
 serde_json = "1.0"
-wasmedge-sdk = { version = "0.14.0", features = ["standalone"] }
 log = "0.4"
 env_logger = "0.11"
 sha2 = "0.11.0-pre.5"
 xrpl-rust = { version = "0.5.0", default-features = false, features = ["core"] }
 hex = "0.4.3"
 lazy_static = "1.5.0"
+wamr-rust-sdk = { git = "https://github.com/ripple/wamr-rust-sdk.git"}
+bigdecimal = {version = "0.4.8", features = ["serde-json"]}

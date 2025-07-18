@@ -30,13 +30,51 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
+      - name: Run Clippy (xrpl-std)
+        run: |
+          cd xrpl-std 
+          cargo clippy --all-targets --all-features
+
+      - name: Run Clippy (All Contracts)
+        run: |
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Clippy in $dir"
+              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+            fi
+          done
+
   rustfmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run fmt
+      - name: Run fmt (Craft)
         run: cargo fmt --all -- --check
+
+      - name: Run fmt (xrpl-std)
+        run: |
+          cd xrpl-std 
+          cargo fmt --all -- --check
+
+      - name: Run fmt (All Contracts)
+        run: |
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Fmt in $dir"
+              (cd "$dir" && cargo fmt --all -- --check) || exit 1
+            fi
+          done
+
+  # Note: This job should not be "required" for PRs, as during development there may be temporary
+  # discrepancies between craft and rippled
+  host_function_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit host functions to ensure they match the XRPLd host functions
+        run: node tools/compareHostFunctions.js https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 
   build_and_test:
     runs-on: ubuntu-latest
@@ -57,14 +95,18 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build xrpl-std
+      - name: Build & Test `xrpl-std`
         run: |
-          (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown && cargo rustc --target wasm32-unknown-unknown -- -D warnings)
+          cd xrpl-std 
+          cargo build 
+          cargo test
+          cargo build --target wasm32-unknown-unknown 
+          cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build wasm-host
-        run: (cd wasm-host && cargo build)
+      - name: Build & Test `wasm-host`
+        run: (cd wasm-host && cargo build && cargo test)
 
-      - name: Build all examples
+      - name: Build all example contracts
         run: |
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
@@ -73,7 +115,7 @@ jobs:
             fi
           done
 
-      - name: Build and test
+      - name: Build and Test `craft`
         run: |
           cargo build
           cargo test

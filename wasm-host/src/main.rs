@@ -1,14 +1,12 @@
 mod data_provider;
 mod decoding;
 mod hashing;
-mod host_function_utils;
-mod host_functions;
+mod host_functions_wamr;
 mod mock_data;
 mod sfield;
-mod vm;
+mod vm_wamr;
 
 use crate::mock_data::MockData;
-use crate::vm::run_func;
 use clap::Parser;
 use env_logger::Builder;
 use log::LevelFilter;
@@ -17,7 +15,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-/// WasmEdge WASM testing utility
+/// Wasm WASM testing utility
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -42,6 +40,7 @@ struct Args {
     function: String,
 }
 
+#[allow(clippy::type_complexity)]
 fn load_test_data(
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
@@ -98,7 +97,7 @@ fn main() {
         .filter(None, log_level)
         .init();
 
-    info!("Starting WasmEdge host application {:?}", args);
+    info!("Starting Wasm host application {:?}", args);
     info!("Loading WASM module from: {}", wasm_file);
     info!("Target function: {} (default is 'finish')", args.function);
     info!("Using test case: {}", args.test_case);
@@ -116,9 +115,9 @@ fn main() {
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
-    match run_func(wasm_file, &args.function, data_source) {
+    match vm_wamr::run_func(wasm_file, &args.function, Some(100000), data_source) {
         Ok(result) => {
-            println!("\\n-------------------------------------------------");
+            println!("-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
             println!("-------------------------------------------------");
             println!("| Function:   {:<33} |", args.function);
@@ -128,7 +127,7 @@ fn main() {
             info!("Function completed successfully with result: {}", result);
         }
         Err(e) => {
-            println!("\\n-------------------------------------------------");
+            println!("-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION ERROR                 |");
             println!("-------------------------------------------------");
             println!("| Function:   {:<33} |", args.function);
@@ -139,5 +138,5 @@ fn main() {
         }
     }
 
-    info!("WasmEdge host application execution completed");
+    info!("Wasm host application execution completed");
 }

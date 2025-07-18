@@ -41,7 +41,7 @@ const ORACLE_DOCUMENT_ID: i32 = 1;
 ### Prerequisites
 
 - Rust with `wasm32-unknown-unknown` target
-  - This is necessary for blockchain deployments because the module cannot rely on a specific vendor (e.g., `apple`) or operating system (e.g., `darwin`), so both are `unknown`
+  - This is necessary for blockchain deployments because WebAssembly does not require a specific vendor (e.g., `apple`) or operating system (e.g., `darwin`), so both are `unknown`
 - XRPL standard library (dependency)
 
 ### Build Commands

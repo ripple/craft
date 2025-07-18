@@ -436,7 +436,6 @@ pub extern "C" fn finish() -> bool {
     // Step #3 [EscrowFinish Account]: Trace Current Balance
     // ########################################
     {
-
         let _ = trace("### Step #3: Trace EscrowFinish Account Balance");
         let _ = trace("{ ");
         let _ = trace("  -- TODO: Support multiple ledger objects in decoder!");

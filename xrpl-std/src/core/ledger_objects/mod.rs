@@ -47,6 +47,24 @@ pub mod current_ledger_object {
 
         match_result_code(result_code, || TokenAmount::from(buffer))
     }
+
+    #[inline]
+    pub fn get_u16_field(field_code: i32) -> Result<u16> {
+        to_non_optional(get_u16_field_optional(field_code))
+    }
+
+    #[inline]
+    pub fn get_u16_field_optional(field_code: i32) -> Result<Option<u16>> {
+        let mut buffer = [0u8; 2]; // Enough to hold an u32
+
+        let result_code =
+            unsafe { get_current_ledger_obj_field(field_code, buffer.as_mut_ptr(), buffer.len()) };
+
+        match_result_code_with_expected_bytes_optional(result_code, 2, || {
+            Some(u16::from_be_bytes(buffer)) // <-- Move the buffer into an AccountID
+        })
+    }
+
     #[inline]
     pub fn get_u32_field(field_code: i32) -> Result<u32> {
         to_non_optional(get_u32_field_optional(field_code))
@@ -61,6 +79,23 @@ pub mod current_ledger_object {
 
         match_result_code_with_expected_bytes_optional(result_code, 4, || {
             Some(u32::from_be_bytes(buffer)) // <-- Move the buffer into an AccountID
+        })
+    }
+
+    #[inline]
+    pub fn get_u64_field(field_code: i32) -> Result<u64> {
+        to_non_optional(get_u64_field_optional(field_code))
+    }
+
+    #[inline]
+    pub fn get_u64_field_optional(field_code: i32) -> Result<Option<u64>> {
+        let mut buffer = [0u8; 8]; // Enough to hold an u64
+
+        let result_code =
+            unsafe { get_current_ledger_obj_field(field_code, buffer.as_mut_ptr(), buffer.len()) };
+
+        match_result_code_with_expected_bytes_optional(result_code, 8, || {
+            Some(u64::from_be_bytes(buffer)) // <-- Move the buffer into an AccountID
         })
     }
 

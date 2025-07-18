@@ -49,6 +49,11 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
         current_ledger_object::get_amount_field(sfield::Amount)
     }
 
+    /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
+    fn get_ledger_entry_type(&self) -> Result<u16> {
+        current_ledger_object::get_u16_field(sfield::LedgerEntryType)
+    }
+
     /// The escrow can be canceled if and only if this field is present and the time it specifies
     /// has passed. Specifically, this is specified as seconds since the Ripple Epoch and it
     /// "has passed" if it's earlier than the close time of the previous validated ledger.
@@ -75,8 +80,8 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
 
     /// A hint indicating which page of the destination's owner directory links to this object, in
     /// case the directory consists of multiple pages. Omitted on escrows created before enabling the fix1523 amendment.
-    fn get_destination_node(&self) -> Result<Option<Hash256>> {
-        current_ledger_object::get_hash_256_field_optional(sfield::DestinationNode)
+    fn get_destination_node(&self) -> Result<Option<u64>> {
+        current_ledger_object::get_u64_field_optional(sfield::DestinationNode)
     }
 
     /// An arbitrary tag to further specify the destination for this escrow, such as a hosted
@@ -100,8 +105,8 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
 
     /// A hint indicating which page of the sender's owner directory links to this entry, in case
     /// the directory consists of multiple pages.
-    fn get_owner_node(&self) -> Result<Hash256> {
-        current_ledger_object::get_hash_256_field(sfield::OwnerNode)
+    fn get_owner_node(&self) -> Result<u64> {
+        current_ledger_object::get_u64_field(sfield::OwnerNode)
     }
 
     /// The identifying hash of the transaction that most recently modified this entry.

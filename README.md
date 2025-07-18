@@ -10,7 +10,6 @@ An interactive CLI tool for building and testing WASM modules for the XRP Ledger
 - [Command-Line Options](#command-line-options)
 - [Project Structure](#project-structure)
 - [WASM Host Testing Tool](#wasm-host-testing-tool)
-- [Reference Submodules](#reference-submodules)
 - [Managing rippled](#managing-rippled)
 - [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
@@ -26,7 +25,6 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
-- WasmEdge
 - Docker (required for running rippled)
 
 ### Installing Docker
@@ -52,38 +50,6 @@ Traditional option with GUI:
 - **Linux**: https://docs.docker.com/engine/install/
 
 After installation, ensure Docker is running before using rippled-related commands.
-
-### Installing WasmEdge
-
-If you don't already have WasmEdge, you can install it:
-
-```bash
-curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
-```
-
-After installation, source the updated environment variables:
-
-```bash
-source ~/.zshenv  # For zsh users
-# OR
-source ~/.bashrc  # For bash users
-```
-
-To verify the installation:
-
-```bash
-which wasmedge
-```
-
-If you encounter any dynamic library loading errors when running WASM tests, set the library path:
-
-```bash
-# For macOS
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.wasmedge/lib
-
-# For Linux
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
-```
 
 ## Usage
 
@@ -188,38 +154,12 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory. Cur
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
-## Reference Submodules
+### Cloning the Repository
 
-See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
-
-### 1. rippled
-
-Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
-
-### 2. XRPL Explorer
-
-Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
-
-### Cloning the Repository with Submodules
-
-To clone this repository including all submodules, use:
+To clone this repository, use:
 
 ```bash
-git clone --recurse-submodules git@github.com:ripple/craft.git
-```
-
-Or if you've already cloned the repository without submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-### Updating Submodules
-
-To update all submodules to their latest versions:
-
-```bash
-git submodule update --remote
+git clone git@github.com:ripple/craft.git
 ```
 
 ## Managing rippled
@@ -320,7 +260,7 @@ The verbose output may include:
 Example verbose output:
 
 ```
-[INFO wasm_host] Starting WasmEdge host application
+[INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
 [INFO wasm_host] Using test case: success

@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -44,6 +44,25 @@ jobs:
             fi
           done
 
+      - name: Check for missing newline at EOF
+        run: |
+          missing_newline=false
+          git ls-files -z | while IFS= read -r -d '' f; do
+            [ -f "$f" ] && [ -s "$f" ] && file --mime "$f" | grep -q text && {
+              last_byte=$(tail -c1 "$f")
+              if [ "$last_byte" != $'\n' ]; then
+                echo "❌ $f is missing a newline at EOF"
+                missing_newline=true
+              fi
+            }
+          done
+          if [ "$missing_newline" = true ]; then
+            echo "::error::Some files are missing a newline at EOF"
+            exit 1
+          else
+            echo "✅ All files have a newline at EOF"
+          fi
+
   rustfmt:
     runs-on: ubuntu-latest
     steps:
@@ -65,6 +84,16 @@ jobs:
               (cd "$dir" && cargo fmt --all -- --check) || exit 1
             fi
           done
+
+  # Note: This job should not be "required" for PRs, as during development there may be temporary
+  # discrepancies between craft and rippled
+  host_function_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit host functions to ensure they match the XRPLd host functions
+        run: node tools/compareHostFunctions.js https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 
   build_and_test:
     runs-on: ubuntu-latest

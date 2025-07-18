@@ -168,7 +168,7 @@ fn get_u32_field_optional(field_code: i32) -> Result<Option<u32>> {
     let result_code = unsafe { get_tx_field(field_code, buffer.as_mut_ptr(), buffer.len()) };
 
     match_result_code_with_expected_bytes_optional(result_code, 4, || {
-        Some(u32::from_le_bytes(buffer)) // <-- Move the buffer into a u32
+        Some(u32::from_be_bytes(buffer)) // <-- Move the buffer into a u32
     })
 }
 

@@ -101,7 +101,7 @@ pub trait TransactionCommonFields {
         let result_code =
             unsafe { get_tx_field(SF_TRANSACTION_TYPE, buffer.as_mut_ptr(), buffer.len()) };
 
-        match_result_code_with_expected_bytes(result_code, 2, || i16::from_le_bytes(buffer).into())
+        match_result_code_with_expected_bytes(result_code, 2, || i16::from_be_bytes(buffer).into())
     }
 
     /// Retrieves the computation allowance from the current transaction.

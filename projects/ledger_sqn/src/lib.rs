@@ -15,7 +15,7 @@ pub extern "C" fn finish() -> bool {
         let result_code = host::get_ledger_sqn(buffer.as_mut_ptr(), 8);
 
         let ledger_sequence = match_result_code(result_code, || {
-            Some(u32::from_le_bytes(buffer)) // <-- Move the value into a buffer
+            Some(u32::from_be_bytes(buffer)) // <-- Move the value into a buffer
         })
         .unwrap()
         .unwrap();

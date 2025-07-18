@@ -170,11 +170,11 @@ pub fn decode(s: &str, decodable: Decodable) -> Option<Vec<u8>> {
 }
 
 pub fn decode_tx_type(tx_type: &str) -> Option<Vec<u8>> {
-    get_transaction_type_code(tx_type).map(|num| num.to_le_bytes().to_vec())
+    get_transaction_type_code(tx_type).map(|num| num.to_be_bytes().to_vec())
 }
 
 pub fn decode_ledger_obj_type(lo_type: &str) -> Option<Vec<u8>> {
-    get_ledger_entry_type_code(lo_type).map(|num| num.to_le_bytes().to_vec())
+    get_ledger_entry_type_code(lo_type).map(|num| num.to_be_bytes().to_vec())
 }
 
 pub fn decode_account_id(base58_account_id: &str) -> Option<Vec<u8>> {
@@ -208,35 +208,35 @@ pub fn decode_hex(s: &str) -> Option<Vec<u8>> {
 
 pub fn decode_u8(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u8>() {
-        Ok(num) => Some(num.to_le_bytes().to_vec()),
+        Ok(num) => Some(num.to_be_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 pub fn decode_u16(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u16>() {
-        Ok(num) => Some(num.to_le_bytes().to_vec()),
+        Ok(num) => Some(num.to_be_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 pub fn decode_u32(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u32>() {
-        Ok(num) => Some(num.to_le_bytes().to_vec()),
+        Ok(num) => Some(num.to_be_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 pub fn decode_u64(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u64>() {
-        Ok(num) => Some(num.to_le_bytes().to_vec()),
+        Ok(num) => Some(num.to_be_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 // pub fn decode_i64(s: &str) -> Option<Vec<u8>> {
 //     match s.parse::<i64>() {
-//         Ok(num) => Some(num.to_le_bytes().to_vec()),
+//         Ok(num) => Some(num.to_be_bytes().to_vec()),
 //         Err(_) => None,
 //     }
 // }

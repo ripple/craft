@@ -3,7 +3,6 @@
 <!--
 Please include a summary/list of the changes.
 If too broad, please consider splitting into multiple PRs.
-If a relevant Asana task, please link it here.
 -->
 
 ### Context of Change
@@ -42,7 +41,8 @@ This part will be included after the first official release
 ## Test Plan
 
 <!--
-Please describe the tests that you ran to verify your changes and provide instructions so that others can reproduce.
+Please describe the tests that you ran to verify your changes. Include as much
+detail as necessary so that others can repeat the same tests.
 -->
 
 <!--

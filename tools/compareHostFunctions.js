@@ -125,21 +125,7 @@ async function main() {
     process.exit(1)
     }
 
-    for (let file of [rustHostFunctionFile, rustHostFunctionTestFile]) {
-        let rustHits = [
-            ...file.matchAll(
-                /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+);$/gm,
-            ),
-        ]
-        const rustFuncs = rustHits.map((hit) => [hit[1], hit[3], hit[2].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])
-        const rustHostFunctions = rustFuncs.map((hit) => {
-        return {
-            name: hit[0],
-            return: translateParamType(hit[1]),
-            params: hit[2].map(translateParamType),
-        }
-        })
-
+    function checkHits(fileTitle, rustHostFunctions) {
         if (new Set(rustHostFunctions.map(f => f.name)) !== new Set(cppHostFunctions.map(f => f.name))) {
             console.error('Rust Host Functions and C++ Host Functions do not match!')
             const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
@@ -153,26 +139,26 @@ async function main() {
         rustHostFunctions.forEach((hit, index) => {
             if (hit.name !== cppHostFunctions[index].name) {
                 console.error(
-                    `Rust Host Function name mismatch: ${hit.name} !== ${cppHostFunctions[index].name}`,
+                    `Rust Host Function name mismatch in ${fileTitle}: ${hit.name} !== ${cppHostFunctions[index].name}`,
                 )
                 hasError = true
             }
             else if (hit.return !== cppHostFunctions[index].return) {
                 console.error(
-                    `Rust Host Function return type mismatch for ${hit.name}: ${hit.return} !== ${cppHostFunctions[index].return}`,
+                    `Rust Host Function return type mismatch in ${fileTitle} for ${hit.name}: ${hit.return} !== ${cppHostFunctions[index].return}`,
                 )
                 hasError = true
             }
             else if (hit.params.length !== cppHostFunctions[index].params.length) {
                 console.error(
-                    `Rust Host Function parameter count mismatch for ${hit.name}: ${hit.params.length} !== ${cppHostFunctions[index].params.length}`,
+                    `Rust Host Function parameter count mismatch in ${fileTitle} for ${hit.name}: ${hit.params.length} !== ${cppHostFunctions[index].params.length}`,
                 )
                 hasError = true
             } else {
                 hit.params.forEach((param, paramIndex) => {
                     if (param !== cppHostFunctions[index].params[paramIndex]) {
                         console.error(
-                            `Rust Host Function parameter type mismatch for ${hit.name}, parameter ${paramIndex}: ${param} !== ${cppHostFunctions[index].params[paramIndex]}`,
+                            `Rust Host Function parameter type mismatch in ${fileTitle} for ${hit.name}, parameter ${paramIndex}: ${param} !== ${cppHostFunctions[index].params[paramIndex]}`,
                         )
                         hasError = true
                     }
@@ -180,9 +166,40 @@ async function main() {
             }
         })
         if (hasError) {
-        process.exit(1)
+            process.exit(1)
         }
     }
+
+    let rustHits = [
+        ...rustHostFunctionFile.matchAll(
+            /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+);$/gm,
+        ),
+    ]
+    const rustFuncs = rustHits.map((hit) => [hit[1], hit[3], hit[2].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])
+    const rustHostFunctions = rustFuncs.map((hit) => {
+        return {
+            name: hit[0],
+            return: translateParamType(hit[1]),
+            params: hit[2].map(translateParamType),
+        }
+    })
+    checkHits("host_bindings.rs", rustHostFunctions)
+
+    let rustTestHits = [
+        ...rustHostFunctionTestFile.matchAll(
+            /^ *pub (unsafe )?fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+)/gm,
+        ),
+    ]
+    const rustTestFuncs = rustTestHits.map((hit) => [hit[2], hit[4], hit[3].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])
+    const rustTestHostFunctions = rustTestFuncs.map((hit) => {
+        return {
+            name: hit[0],
+            return: translateParamType(hit[1]),
+            params: hit[2].map(translateParamType),
+        }
+    })
+    checkHits("host_bindings.rs", rustTestHostFunctions)
+
 
     console.log('All host functions match between Rust and C++ implementations.')
 }

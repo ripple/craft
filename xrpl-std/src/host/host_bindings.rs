@@ -160,46 +160,6 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-    pub fn get_tx_field2(
-        field: i32,
-        field2: i32,
-        out_buff_ptr: *mut u8,
-        out_buff_len: usize,
-    ) -> i32;
-    pub fn get_tx_field3(
-        field: i32,
-        field2: i32,
-        field3: i32,
-        out_buff_ptr: *mut u8,
-        out_buff_len: usize,
-    ) -> i32;
-    pub fn get_tx_field4(
-        field: i32,
-        field2: i32,
-        field3: i32,
-        field4: i32,
-        out_buff_ptr: *mut u8,
-        out_buff_len: usize,
-    ) -> i32;
-    pub fn get_tx_field5(
-        field: i32,
-        field2: i32,
-        field3: i32,
-        field4: i32,
-        field5: i32,
-        out_buff_ptr: *mut u8,
-        out_buff_len: usize,
-    ) -> i32;
-    pub fn get_tx_field6(
-        field: i32,
-        field2: i32,
-        field3: i32,
-        field4: i32,
-        field5: i32,
-        field6: i32,
-        out_buff_ptr: *mut u8,
-        out_buff_len: usize,
-    ) -> i32;
 
     /// Retrieves a specific field from the current ledger object and writes it into the provided buffer.
     ///

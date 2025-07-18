@@ -7,7 +7,6 @@ use crate::host::{Result::Err, Result::Ok};
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::{EscrowFinishFields, TransactionCommonFields};
-use xrpl_std::core::ledger_objects::account;
 use xrpl_std::core::ledger_objects::current_escrow::{CurrentEscrow, get_current_escrow};
 use xrpl_std::core::ledger_objects::traits::{
     CurrentEscrowFields, CurrentLedgerObjectCommonFields,

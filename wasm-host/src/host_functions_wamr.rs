@@ -340,7 +340,7 @@ pub fn escrow_keylet(
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = sequence.to_be_bytes();
+    let sqn_data = sequence.to_le_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Escrow, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
@@ -361,7 +361,7 @@ pub fn oracle_keylet(
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = document_id.to_be_bytes();
+    let sqn_data = document_id.to_le_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);

@@ -39,11 +39,11 @@
 //! - **TransactionType**: Enumerated transaction type identifiers
 
 use crate::core::current_tx::{
-    get_account_id_field, get_blob_field, get_hash_256_field, get_hash_256_field_optional,
-    get_public_key_field, get_u32_field, get_u32_field_optional,
+    get_account_id_field, get_amount_field, get_blob_field, get_hash_256_field,
+    get_hash_256_field_optional, get_public_key_field, get_u32_field, get_u32_field_optional,
 };
 use crate::core::error_codes::{
-    match_result_code, match_result_code_optional, match_result_code_with_expected_bytes,
+    match_result_code_optional, match_result_code_with_expected_bytes,
     match_result_code_with_expected_bytes_optional,
 };
 use crate::core::field_codes::{
@@ -58,7 +58,6 @@ use crate::core::types::crypto_condition::{Condition, Fulfillment};
 use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
-use crate::host::trace::trace_num;
 use crate::host::{Result, get_tx_field};
 use crate::sfield;
 
@@ -101,7 +100,7 @@ pub trait TransactionCommonFields {
         let result_code =
             unsafe { get_tx_field(SF_TRANSACTION_TYPE, buffer.as_mut_ptr(), buffer.len()) };
 
-        match_result_code_with_expected_bytes(result_code, 2, || i16::from_be_bytes(buffer).into())
+        match_result_code_with_expected_bytes(result_code, 2, || i16::from_le_bytes(buffer).into())
     }
 
     /// Retrieves the computation allowance from the current transaction.
@@ -137,17 +136,20 @@ pub trait TransactionCommonFields {
     /// Returns XRP amounts only (for now). Future versions may support other token types
     /// when the underlying amount handling is enhanced.
     fn get_fee(&self) -> Result<TokenAmount> {
-        // Transaction fees are always denominated in XRP, and are therefore always 8 byte XRP
-        // amounts values. However, the host function requires 48 bytes for any token amount.
-        let mut buffer = [0u8; 48];
+        get_amount_field(SF_FEE)
 
-        let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
-        match_result_code(result_code, || {
-            TokenAmount::from_bytes(&buffer).unwrap_or_else(|error| {
-                let _ = trace_num("Invalid bytes for Amount", error.code() as i64);
-                panic!("Invalid bytes for Amount")
-            })
-        })
+        // TODO: Remove if unused.
+        // // Transaction fees are always denominated in XRP, and are therefore always 8 byte XRP
+        // // amounts values. However, the host function requires 48 bytes for any token amount.
+        // let mut buffer = [0u8; 48];
+        //
+        // let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
+        // match_result_code(result_code, || {
+        //     TokenAmount::from_bytes(&buffer).unwrap_or_else(|error| {
+        //         let _ = trace_num("Invalid bytes for Amount", error.code() as i64);
+        //         panic!("Invalid bytes for Amount")
+        //     })
+        // })
     }
 
     /// Retrieves the sequence number from the current transaction.

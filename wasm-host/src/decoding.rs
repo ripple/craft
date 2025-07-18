@@ -170,11 +170,11 @@ pub fn decode(s: &str, decodable: Decodable) -> Option<Vec<u8>> {
 }
 
 pub fn decode_tx_type(tx_type: &str) -> Option<Vec<u8>> {
-    get_transaction_type_code(tx_type).map(|num| num.to_be_bytes().to_vec())
+    get_transaction_type_code(tx_type).map(|num| num.to_le_bytes().to_vec())
 }
 
 pub fn decode_ledger_obj_type(lo_type: &str) -> Option<Vec<u8>> {
-    get_ledger_entry_type_code(lo_type).map(|num| num.to_be_bytes().to_vec())
+    get_ledger_entry_type_code(lo_type).map(|num| num.to_le_bytes().to_vec())
 }
 
 pub fn decode_account_id(base58_account_id: &str) -> Option<Vec<u8>> {
@@ -208,38 +208,31 @@ pub fn decode_hex(s: &str) -> Option<Vec<u8>> {
 
 pub fn decode_u8(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u8>() {
-        Ok(num) => Some(num.to_be_bytes().to_vec()),
+        Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 pub fn decode_u16(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u16>() {
-        Ok(num) => Some(num.to_be_bytes().to_vec()),
+        Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 pub fn decode_u32(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u32>() {
-        Ok(num) => Some(num.to_be_bytes().to_vec()),
+        Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
 
 pub fn decode_u64(s: &str) -> Option<Vec<u8>> {
     match s.parse::<u64>() {
-        Ok(num) => Some(num.to_be_bytes().to_vec()),
+        Ok(num) => Some(num.to_le_bytes().to_vec()),
         Err(_) => None,
     }
 }
-
-// pub fn decode_i64(s: &str) -> Option<Vec<u8>> {
-//     match s.parse::<i64>() {
-//         Ok(num) => Some(num.to_be_bytes().to_vec()),
-//         Err(_) => None,
-//     }
-// }
 
 pub fn decode_u128(hex_hash: &str) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
@@ -324,7 +317,7 @@ fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 
         // last 54 bits are mantissa
         serial |= mantissa as i128;
 
-        Ok((serial as u64).to_be_bytes())
+        Ok((serial as u64).to_le_bytes())
     }
 }
 
@@ -375,7 +368,7 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
 
             let mut bytes = Vec::new();
             bytes.push(if negative { NEGATIVE_MPT } else { POSITIVE_MPT });
-            // to_be_bytes() matches what rippled returns
+            // Big Endian matches what rippled returns
             bytes.append(&mut amount_abs.to_be_bytes().to_vec());
             let mpt_issuance_id = mpt_issuance_id.as_str()?.to_string();
             let mut mpt_issuance_id_bytes = hex::decode(mpt_issuance_id.as_str()).ok()?;

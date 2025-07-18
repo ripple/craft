@@ -118,7 +118,7 @@ impl LocatorUnpacker {
         let mut bytes: [u8; 4] = [0u8; 4];
         bytes.copy_from_slice(&self.buffer[self.cur_buffer_index..self.cur_buffer_index + 4]);
         self.cur_buffer_index += 4;
-        Some(i32::from_be_bytes(bytes))
+        Some(i32::from_le_bytes(bytes))
     }
 }
 
@@ -265,11 +265,11 @@ impl DataProvider {
                                     if num > u32::MAX as i64 || num < u32::MIN as i64 {
                                         return (HostError::BufferTooSmall as i32, buf);
                                     }
-                                    let bytes = (num as u32).to_be_bytes();
+                                    let bytes = (num as u32).to_le_bytes();
                                     buf[..4].copy_from_slice(&bytes);
                                     (4, buf)
                                 } else {
-                                    let bytes = num.to_be_bytes();
+                                    let bytes = num.to_le_bytes();
                                     if bytes.len() > buf_cap {
                                         return (HostError::BufferTooSmall as i32, buf);
                                     }
@@ -283,11 +283,11 @@ impl DataProvider {
                                     if num > u32::MAX as u64 {
                                         return (HostError::BufferTooSmall as i32, buf);
                                     }
-                                    let bytes = (num as u32).to_be_bytes();
+                                    let bytes = (num as u32).to_le_bytes();
                                     buf[..4].copy_from_slice(&bytes);
                                     (4, buf)
                                 } else {
-                                    let bytes = num.to_be_bytes();
+                                    let bytes = num.to_le_bytes();
                                     if bytes.len() > buf_cap {
                                         return (HostError::BufferTooSmall as i32, buf);
                                     }

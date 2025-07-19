@@ -7,7 +7,7 @@ use std::str::FromStr;
 use xrpl::core::addresscodec::utils::decode_base58;
 use xrpl::core::binarycodec::definitions::{get_ledger_entry_type_code, get_transaction_type_code};
 use xrpl::core::binarycodec::exceptions::XRPLBinaryCodecException;
-use xrpl::core::binarycodec::types::Amount;
+use xrpl::core::binarycodec::types::{Amount, Currency, Issue};
 use xrpl::core::exceptions::{XRPLCoreException, XRPLCoreResult};
 use xrpl::utils::exceptions::XRPRangeException;
 use xrpl::utils::{MAX_IOU_EXPONENT, MIN_IOU_EXPONENT, verify_valid_ic_value};
@@ -161,7 +161,7 @@ pub fn decode(s: &str, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::UINT192 => decode_hex(s),
         Decodable::UINT384 => decode_hex(s),
         Decodable::UINT512 => decode_hex(s),
-        Decodable::ISSUE => not_leaf(s),
+        Decodable::ISSUE => decode_issue(s),
         Decodable::XCHAIN_BRIDGE => not_leaf(s),
         Decodable::CURRENCY => decode_currency(s),
         Decodable::AS_IS => raw_string_to_bytes(s),
@@ -329,23 +329,12 @@ pub fn decode_number(s: &str) -> Option<Vec<u8>> {
 }
 
 pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
-    if s.len() == 3 {
-        let mut bytes = [0u8; 3];
-        bytes.copy_from_slice(s.as_bytes());
-        Some(bytes.to_vec())
-    } else {
-        match hex::decode(s) {
-            Ok(bytes) => {
-                if bytes.len() == 20 {
-                    Some(bytes)
-                } else {
-                    None
-                }
-            }
-            Err(_) => None,
-        }
+    match Currency::try_from(s) {
+        Ok(currency) => Some(currency.as_ref().to_vec()),
+        Err(_) => None,
     }
 }
+
 const POSITIVE_MPT: u8 = 0b_0110_0000;
 const NEGATIVE_MPT: u8 = 0b_0010_0000;
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
@@ -387,6 +376,21 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
 pub fn decode_amount(s: &str) -> Option<Vec<u8>> {
     let v: Value = serde_json::from_str(s).expect("Invalid json string");
     decode_amount_json(v)
+}
+
+pub fn decode_issue_json(value: Value) -> Option<Vec<u8>> {
+    if let Some(mpt_issuance_id) = value.get("mpt_issuance_id") {
+        return decode_hex(mpt_issuance_id.as_str()?);
+    }
+    match Issue::try_from(value) {
+        Ok(issue) => Some(issue.as_ref().to_vec()),
+        Err(_) => None,
+    }
+}
+
+pub fn decode_issue(s: &str) -> Option<Vec<u8>> {
+    let v: Value = serde_json::from_str(s).expect("Invalid json string");
+    decode_issue_json(v)
 }
 
 pub fn not_leaf(_: &str) -> Option<Vec<u8>> {

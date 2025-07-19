@@ -337,49 +337,49 @@ pub extern "C" fn finish() -> bool {
         // Trace Field: Account
         let account = current_escrow.get_account().unwrap();
         assert_eq!(account.0, EXPECTED_CURRENT_ESCROW_ACCOUNT_ID);
-        let _ = trace_data("  Escrow Account:", &account.0, DataRepr::AsHex);
+        let _ = trace_data("  Account:", &account.0, DataRepr::AsHex);
 
         // Trace Field: Amount
         let amount = current_escrow.get_amount().unwrap();
-        let _ = trace_amount("  Escrow Amount:", &amount);
+        let _ = trace_amount("  Amount:", &amount);
 
         // Trace Field: LedgerEntryType
         let ledger_entry_type = current_escrow.get_ledger_entry_type().unwrap();
         assert_eq!(ledger_entry_type, 117);
-        let _ = trace_num("  Escrow LedgerEntryType:", ledger_entry_type as i64);
+        let _ = trace_num("  LedgerEntryType:", ledger_entry_type as i64);
 
         // Trace Field: CancelAfter
         let opt_cancel_after = current_escrow.get_cancel_after().unwrap();
         if let Some(cancel_after) = opt_cancel_after {
-            let _ = trace_num("  Escrow CancelAfter:", cancel_after as i64);
+            let _ = trace_num("  CancelAfter:", cancel_after as i64);
         }
 
         // Trace Field: Condition
         let opt_condition = current_escrow.get_condition().unwrap();
         if let Some(condition) = opt_condition {
-            let _ = trace_data("  Escrow Condition:", &condition.0, DataRepr::AsHex);
+            let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
         }
 
         // Trace Field: Destination
         let destination = current_escrow.get_destination().unwrap();
-        let _ = trace_data("  Escrow Destination:", &destination.0, DataRepr::AsHex);
+        let _ = trace_data("  Destination:", &destination.0, DataRepr::AsHex);
 
         // Trace Field: DestinationTag
         let opt_destination_tag = current_escrow.get_destination_tag().unwrap();
         if let Some(destination_tag) = opt_destination_tag {
-            let _ = trace_num("  Escrow DestinationTag:", destination_tag as i64);
+            let _ = trace_num("  DestinationTag:", destination_tag as i64);
         }
 
         // Trace Field: FinishAfter
         let opt_finish_after = current_escrow.get_finish_after().unwrap();
         if let Some(finish_after) = opt_finish_after {
-            let _ = trace_num("  Escrow FinishAfter:", finish_after as i64);
+            let _ = trace_num("  FinishAfter:", finish_after as i64);
         }
 
         // Trace Field: Flags
         let result = current_escrow.get_get_flags();
         if let Ok(flags) = result {
-            let _ = trace_num("  Escrow Flags:", flags as i64);
+            let _ = trace_num("  Flags:", flags as i64);
         } else if let Err(error) = result {
             let _ = trace_num("  Error getting Flags. error_code = ", error.code() as i64);
         }
@@ -388,7 +388,7 @@ pub extern "C" fn finish() -> bool {
         let opt_finish_function = current_escrow.get_finish_function().unwrap();
         if let Some(finish_function) = opt_finish_function {
             let _ = trace_data(
-                "  Escrow FinishFunction:",
+                "  FinishFunction:",
                 &finish_function.data[..finish_function.len],
                 DataRepr::AsHex,
             );
@@ -396,36 +396,32 @@ pub extern "C" fn finish() -> bool {
 
         // Trace Field: OwnerNode
         let owner_node = current_escrow.get_owner_node().unwrap();
-        let _ = trace_num("  Escrow OwnerNode:", owner_node as i64);
+        let _ = trace_num("  OwnerNode:", owner_node as i64);
 
         // Trace Field: DestinationNode
         let opt_destination_node = current_escrow.get_destination_node().unwrap();
         if let Some(destination_node) = opt_destination_node {
-            let _ = trace_num("  Escrow DestinationNode:", destination_node as i64);
+            let _ = trace_num("  DestinationNode:", destination_node as i64);
         }
 
         // Trace Field: PreviousTxnID
         let previous_txn_id = current_escrow.get_previous_txn_id().unwrap();
-        let _ = trace_data(
-            "  Escrow PreviousTxnID:",
-            &previous_txn_id.0,
-            DataRepr::AsHex,
-        );
+        let _ = trace_data("  PreviousTxnID:", &previous_txn_id.0, DataRepr::AsHex);
 
         // Trace Field: PreviousTxnLgrSeq
         let previous_txn_lgr_seq = current_escrow.get_previous_txn_lgr_seq().unwrap();
-        let _ = trace_num("  Escrow PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
+        let _ = trace_num("  PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
 
         // Trace Field: SourceTag
         let opt_source_tag = current_escrow.get_source_tag().unwrap();
         if let Some(source_tag) = opt_source_tag {
-            let _ = trace_num("  Escrow SourceTag:", source_tag as i64);
+            let _ = trace_num("  SourceTag:", source_tag as i64);
         }
 
         // TODO: Provide access?
         // Trace Field: index
         // let ledger_index = current_escrow.get_ledger_index().unwrap();
-        // let _ = trace_data("  Escrow index:", &ledger_index.0, DataRepr::AsHex);
+        // let _ = trace_data("  index:", &ledger_index.0, DataRepr::AsHex);
 
         let _ = trace("}");
         let _ = trace("");

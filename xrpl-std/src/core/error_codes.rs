@@ -1,4 +1,5 @@
-use crate::host::Error::InternalError;
+use crate::host::Error::{InternalError, OutOfBounds};
+use crate::host::trace::trace_num;
 use crate::host::{Error, Result, Result::Err, Result::Ok};
 
 // TODO: Translate these into the Error enum (see host/mod.rs) or else move that enum into here?
@@ -118,7 +119,19 @@ where
     match result_code {
         code if code as usize == expected_num_bytes => Ok(on_success()),
         code if code == FIELD_NOT_FOUND => Ok(None),
-        code if code >= 0 => Err(InternalError), // <-- Handle all positive, unexpected values.
-        code => Err(Error::from_code(code)),     // <-- Handle all negative error values.
+        // Handle all positive, unexpected values as an internal error.
+        code if code >= 0 => {
+            let _ = trace_num(
+                "Byte array was expected to have this many bytes: ",
+                expected_num_bytes as i64,
+            );
+            let _ = trace_num("Byte array had this many bytes: ", code as i64);
+            Err(OutOfBounds)
+        }
+        // Handle all error values overtly.
+        code => {
+            let _ = trace_num("Encountered error_code:", code as i64);
+            Err(Error::from_code(code))
+        }
     }
 }

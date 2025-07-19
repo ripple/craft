@@ -14,7 +14,7 @@ impl MptId {
         let mut bytes = [0u8; MPT_ID_SIZE];
 
         // Set the sequence number (first 4 bytes)
-        bytes[0..4].copy_from_slice(&sequence_num.to_le_bytes());
+        bytes[0..4].copy_from_slice(&sequence_num.to_be_bytes());
 
         // Set the issuer account ID (last 20 bytes)
         bytes[4..MPT_ID_SIZE].copy_from_slice(&issuer.0);
@@ -25,7 +25,7 @@ impl MptId {
     /// Gets the sequence number part of the MptId.
     pub fn get_sequence_num(&self) -> u32 {
         // Transform the first 4 bytes of self.0 into a u32.
-        u32::from_le_bytes([self.0[0], self.0[1], self.0[2], self.0[3]])
+        u32::from_be_bytes([self.0[0], self.0[1], self.0[2], self.0[3]])
     }
 
     /// Gets the issuer account ID part of the MptId.

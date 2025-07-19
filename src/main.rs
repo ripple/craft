@@ -192,24 +192,24 @@ enum DockerAction {
 #[tokio::main]
 async fn main() -> Result<()> {
     // Provide status of rippled in Docker
-    // if let Ok(docker_manager) = docker::DockerManager::new() {
-    //     match docker_manager.is_rippled_running().await {
-    //         Ok(true) => {
-    //             println!("{}", "✅ rippled is running in Docker container".green());
-    //         }
-    //         Ok(false) => {
-    //             println!(
-    //                 "{}",
-    //                 "ℹ️  rippled is not currently running. To start it, run:".yellow()
-    //             );
-    //             println!("{}", "     craft start-rippled".blue());
-    //         }
-    //         Err(_) => {
-    //             // Couldn't check rippled status
-    //         }
-    //     }
-    //     println!();
-    // }
+    if let Ok(docker_manager) = docker::DockerManager::new() {
+        match docker_manager.is_rippled_running().await {
+            Ok(true) => {
+                println!("{}", "✅ rippled is running in Docker container".green());
+            }
+            Ok(false) => {
+                println!(
+                    "{}",
+                    "ℹ️  rippled is not currently running. To start it, run:".yellow()
+                );
+                println!("{}", "     craft start-rippled".blue());
+            }
+            Err(_) => {
+                // Couldn't check rippled status
+            }
+        }
+        println!();
+    }
 
     // Check if the CLI binary needs to be updated
     if utils::needs_cli_update().unwrap_or(false) {
@@ -364,8 +364,8 @@ async fn main() -> Result<()> {
                 }
                 "Start rippled" => {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
-                        .with_default(true)
-                        .prompt()?;
+                      .with_default(true)
+                      .prompt()?;
 
                     let docker_manager = docker::DockerManager::new()?;
                     docker_manager.start_rippled(foreground).await?;

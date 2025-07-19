@@ -137,19 +137,6 @@ pub trait TransactionCommonFields {
     /// when the underlying amount handling is enhanced.
     fn get_fee(&self) -> Result<TokenAmount> {
         get_amount_field(SF_FEE)
-
-        // TODO: Remove if unused.
-        // // Transaction fees are always denominated in XRP, and are therefore always 8 byte XRP
-        // // amounts values. However, the host function requires 48 bytes for any token amount.
-        // let mut buffer = [0u8; 48];
-        //
-        // let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
-        // match_result_code(result_code, || {
-        //     TokenAmount::from_bytes(&buffer).unwrap_or_else(|error| {
-        //         let _ = trace_num("Invalid bytes for Amount", error.code() as i64);
-        //         panic!("Invalid bytes for Amount")
-        //     })
-        // })
     }
 
     /// Retrieves the sequence number from the current transaction.

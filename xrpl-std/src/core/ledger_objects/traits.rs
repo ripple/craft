@@ -131,8 +131,16 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
         current_ledger_object::get_blob_field_optional(sfield::FinishFunction)
     }
 
-    // TODO: Redo docs.
-    /// Retrieves the contract data from the current ledger object.
+    /// Retrieves the contract `data` from the current escrow object.
+    ///
+    /// This function fetches the `data` field from the current ledger object and returns it as a
+    /// ContractData structure. The data is read into a fixed-size buffer of XRPL_CONTRACT_DATA_SIZE.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<ContractData>` where:
+    /// * `Ok(ContractData)` - Contains the retrieved data and its actual length
+    /// * `Err(Error)` - If the retrieval operation failed
     fn get_data(&self) -> Result<ContractData> {
         let mut data: [u8; XRPL_CONTRACT_DATA_SIZE] = [0; XRPL_CONTRACT_DATA_SIZE];
 
@@ -159,10 +167,10 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
     /// Returns a `Result<()>` where:
     /// * `Ok(())` - The data was successfully updated
     /// * `Err(Error)` - If the update operation failed
-    fn get_update_current_escrow_data(data: ContractData) -> Result<()> {
-        // TODO: Make sure Olek always deletes any existing data bytes in rippled, and sets the new
+    fn update_current_escrow_data(data: ContractData) -> Result<()> {
+        // TODO: Make sure rippled always deletes any existing data bytes in rippled, and sets the new
         // length to be `data.len` (e.g., if the developer writes 2 bytes, then that's the new
-        // length and any old bytes are lost.
+        // length and any old bytes are lost).
         let result_code = unsafe { update_data(data.data.as_ptr(), data.len) };
         match_result_code_with_expected_bytes(result_code, data.len, || ())
     }

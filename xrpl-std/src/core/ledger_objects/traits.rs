@@ -1,3 +1,8 @@
+/// This module provides traits for interacting with XRP Ledger objects.
+///
+/// It defines common interfaces for accessing and manipulating different types of ledger objects,
+/// particularly focusing on Escrow objects. The traits provide methods to get and set various
+/// fields of ledger objects, with separate traits for current ledger objects and general ledger objects.
 use crate::core::error_codes::{
     match_result_code, match_result_code_with_expected_bytes,
     match_result_code_with_expected_bytes_optional,
@@ -13,30 +18,89 @@ use crate::host::{Error, get_current_ledger_obj_field, get_ledger_obj_field, upd
 use crate::host::{Result, Result::Err, Result::Ok};
 use crate::sfield;
 
+/// Trait providing access to common fields present in all ledger objects.
+///
+/// This trait defines methods to access standard fields that are common across
+/// different types of ledger objects in the XRP Ledger.
 pub trait LedgerObjectCommonFields {
+    /// Retrieves the ledger index (unique identifier) of the ledger object.
+    ///
+    /// # Arguments
+    ///
+    /// * `register_num` - The register number where the ledger object is stored
+    ///
+    /// # Returns
+    ///
+    /// The ledger index as a Hash256 value
     fn get_ledger_index(&self, register_num: i32) -> Result<Hash256> {
         ledger_object::get_hash_256_field(register_num, sfield::LedgerIndex)
     }
+
+    /// Retrieves the flags field of the ledger object.
+    ///
+    /// # Arguments
+    ///
+    /// * `register_num` - The register number where the ledger object is stored
+    ///
+    /// # Returns
+    ///
+    /// The flags as a u32 value
     fn get_flags(&self, register_num: i32) -> Result<u32> {
         ledger_object::get_u32_field(register_num, sfield::Flags)
     }
 
-    // TODO: Add LedgerEntryType struct and implement this function.
-    // fn get_ledger_entry_type(&self, register_num: i32) -> &LedgerEntryType;
+    /// Retrieves the ledger entry type of the object.
+    ///
+    /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
+    ///
+    /// # Returns
+    ///
+    /// The ledger entry type as a u16 value
+    fn get_ledger_entry_type(&self) -> Result<u16> {
+        current_ledger_object::get_u16_field(sfield::LedgerEntryType)
+    }
 }
 
+/// Trait providing access to common fields in the current ledger object.
+///
+/// This trait defines methods to access standard fields that are common across
+/// different types of ledger objects, specifically for the current ledger object
+/// being processed.
 pub trait CurrentLedgerObjectCommonFields {
+    /// Retrieves the ledger index (unique identifier) of the current ledger object.
+    ///
+    /// # Returns
+    ///
+    /// The ledger index as a Hash256 value
     fn get_ledger_index(&self) -> Result<Hash256> {
         current_ledger_object::get_hash_256_field(sfield::LedgerIndex)
     }
+
+    /// Retrieves the flags field of the current ledger object.
+    ///
+    /// # Returns
+    ///
+    /// The flags as a u32 value
     fn get_get_flags(&self) -> Result<u32> {
         current_ledger_object::get_u32_field(sfield::Flags)
     }
 
-    // TODO: Add LedgerEntryType struct and implement this function.
-    // get_fn get_ledger_entry_type(&self, register_num: i32) -> &LedgerEntryType;
+    /// Retrieves the ledger entry type of the current ledger object.
+    ///
+    /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
+    ///
+    /// # Returns
+    ///
+    /// The ledger entry type as a u16 value
+    fn get_ledger_entry_type(&self) -> Result<u16> {
+        current_ledger_object::get_u16_field(sfield::LedgerEntryType)
+    }
 }
 
+/// Trait providing access to fields specific to Escrow objects in the current ledger.
+///
+/// This trait extends `CurrentLedgerObjectCommonFields` and provides methods to access
+/// fields that are specific to Escrow objects in the current ledger being processed.
 pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
     /// The address of the owner (sender) of this escrow. This is the account that provided the XRP
     /// and gets it back if the escrow is canceled.
@@ -47,11 +111,6 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
     /// The amount currently held in the escrow (could be XRP, IOU, or MPT).
     fn get_amount(&self) -> Result<TokenAmount> {
         current_ledger_object::get_amount_field(sfield::Amount)
-    }
-
-    /// The value 0x0075, mapped to the string Escrow, indicates that this is an Escrow entry.
-    fn get_ledger_entry_type(&self) -> Result<u16> {
-        current_ledger_object::get_u16_field(sfield::LedgerEntryType)
     }
 
     /// The escrow can be canceled if and only if this field is present and the time it specifies
@@ -176,6 +235,11 @@ pub trait CurrentEscrowFields: CurrentLedgerObjectCommonFields {
     }
 }
 
+/// Trait providing access to fields specific to Escrow objects in any ledger.
+///
+/// This trait extends `LedgerObjectCommonFields` and provides methods to access
+/// fields that are specific to Escrow objects in any ledger, not just the current one.
+/// Each method requires a register number to identify which ledger object to access.
 pub trait EscrowFields: LedgerObjectCommonFields {
     /// The address of the owner (sender) of this escrow. This is the account that provided the XRP
     /// and gets it back if the escrow is canceled.
@@ -283,8 +347,21 @@ pub trait EscrowFields: LedgerObjectCommonFields {
         ledger_object::get_blob_field_optional(register_num, sfield::FinishFunction)
     }
 
-    // TODO: Redo docs.
-    /// Retrieves the contract data from the current ledger object.
+    /// Retrieves the contract data from the specified ledger object.
+    ///
+    /// This function fetches the `data` field from the ledger object at the specified register
+    /// and returns it as a ContractData structure. The data is read into a fixed-size buffer
+    /// of XRPL_CONTRACT_DATA_SIZE.
+    ///
+    /// # Arguments
+    ///
+    /// * `register_num` - The register number where the ledger object is stored
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<ContractData>` where:
+    /// * `Ok(ContractData)` - Contains the retrieved data and its actual length
+    /// * `Err(Error)` - If the retrieval operation failed
     fn get_data(&self, register_num: i32) -> Result<ContractData> {
         let mut data: [u8; XRPL_CONTRACT_DATA_SIZE] = [0; XRPL_CONTRACT_DATA_SIZE];
 

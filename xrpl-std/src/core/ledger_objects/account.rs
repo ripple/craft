@@ -1,6 +1,3 @@
-// TODO: Define functions for accessing data from any account on the ledger.
-// TODO: Adapt this to support STAmount for all token types.
-
 use crate::core::types::account_id::AccountID;
 use crate::core::types::keylets::account_keylet;
 use crate::{host, sfield};

@@ -364,8 +364,8 @@ async fn main() -> Result<()> {
                 }
                 "Start rippled" => {
                     let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
-                        .with_default(true)
-                        .prompt()?;
+                      .with_default(true)
+                      .prompt()?;
 
                     let docker_manager = docker::DockerManager::new()?;
                     docker_manager.start_rippled(foreground).await?;

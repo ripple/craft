@@ -1,5 +1,6 @@
 use crate::core::error_codes::match_result_code;
 
+use crate::core::types::amount::token_amount::TokenAmount;
 use crate::host;
 use crate::host::Result;
 use core::ptr;
@@ -78,11 +79,23 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
     match_result_code(result_code, || result_code)
 }
 
-// TODO: Uncomment this line once we have support for floating point numbers (like XFL or similar).
-// /// Write a XFL float to the XRPLD trace log
-// #[inline(always)]
-// pub fn trace_float(msg: &[u8], float: XFL) -> Result<u64> {
-//     let res = unsafe { _c::trace_float(msg.as_ptr() as u32, msg.len() as u32, float.0) };
-//
-//     result_u64(res)
-// }
+#[inline(always)]
+pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
+    // TODO: instead of manually calling `trace_num`, create a new host function called
+    // `trace_amount` and call that instead.
+
+    let result_code: i32 = match token_amount {
+        TokenAmount::XRP { num_drops, .. } => unsafe {
+            host::trace_num(msg.as_ptr(), msg.len(), *num_drops)
+        },
+        TokenAmount::IOU { amount, .. } => unsafe {
+            host::trace_opaque_float(msg.as_ptr(), msg.len(), amount.0.as_ptr(), 8)
+        },
+        TokenAmount::MPT { num_units, .. } => unsafe {
+            // TODO: Consider trace_amount?
+            host::trace_num(msg.as_ptr(), msg.len(), *num_units as i64)
+        },
+    };
+
+    match_result_code(result_code, || result_code)
+}

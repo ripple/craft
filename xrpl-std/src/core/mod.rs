@@ -1,4 +1,3 @@
-pub mod amount;
 pub mod constants;
 pub mod current_tx;
 pub mod error_codes;

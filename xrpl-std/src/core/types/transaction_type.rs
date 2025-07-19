@@ -130,8 +130,7 @@ impl From<TransactionType> for [u8; 2] {
         let value_i16: i16 = value as i16;
 
         // 2. Convert the i16 value into a fixed-size byte array ([u8; 2]).
-        //    We choose little-endian here. Use .from_le_bytes() for big-endian.
-        let bytes_array: [u8; 2] = value_i16.to_be_bytes();
+        let bytes_array: [u8; 2] = value_i16.to_le_bytes();
 
         bytes_array
     }

@@ -1,6 +1,6 @@
 use crate::core::error_codes::match_result_code_with_expected_bytes;
 use crate::core::types::account_id::AccountID;
-use crate::core::types::currency::Currency;
+use crate::core::types::amount::currency_code::CurrencyCode;
 use crate::host;
 use crate::host::Result;
 use crate::host::trace::{DataRepr, trace_data, trace_num};
@@ -419,31 +419,31 @@ pub fn escrow_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 ///
 /// ```rust
 /// use xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::currency::Currency;
+/// use xrpl_std::core::types::amount::currency_code::CurrencyCode;
 /// use xrpl_std::core::types::keylets::line_keylet;
 /// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let account1: AccountID =
-///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-///     let account2: AccountID =
-///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-///     let currency_code = b"RLUSD\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"; // RLUSD currency code
-///     let currency: Currency = Currency::from(*currency_code);
-///     match line_keylet(&account1, &account2, &currency) {
-///       xrpl_std::host::Result::Ok(keylet) => {
-///         let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
-///       }
-///       xrpl_std::host::Result::Err(e) => {
-///         let _ = trace_num("Error assembling keylet", e.code() as i64);
-///       }
-///     }
-///     Ok(())
+///  let account1: AccountID =
+///    AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///  let account2: AccountID =
+///    AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///  let currency_code = b"RLUSD\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"; // RLUSD currency code
+///  let currency: CurrencyCode = CurrencyCode::from(*currency_code);
+///  match line_keylet(&account1, &account2, &currency) {
+///    xrpl_std::host::Result::Ok(keylet) => {
+///      let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
+///    }
+///    xrpl_std::host::Result::Err(e) => {
+///      let _ = trace_num("Error assembling keylet", e.code() as i64);
+///    }
+///  }
+///  Ok(())
 /// }
 /// ```
 pub fn line_keylet(
     account1: &AccountID,
     account2: &AccountID,
-    currency: &Currency,
+    currency: &CurrencyCode,
 ) -> Result<KeyletBytes> {
     create_keylet_from_host_call(|keylet_buffer_ptr, keylet_buffer_len| unsafe {
         host::line_keylet(

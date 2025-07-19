@@ -8,7 +8,7 @@ use xrpl_std::core::ledger_objects::current_escrow::CurrentEscrow;
 use xrpl_std::core::ledger_objects::current_escrow::get_current_escrow;
 use xrpl_std::core::ledger_objects::ledger_object;
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
-use xrpl_std::core::types::currency::Currency;
+use xrpl_std::core::types::amount::currency_code::CurrencyCode;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
@@ -90,7 +90,7 @@ pub extern "C" fn finish() -> bool {
 
     let mut seq = 5;
     let currency_code: &[u8; 3] = b"USD";
-    let currency: Currency = Currency::from(*currency_code);
+    let currency: CurrencyCode = CurrencyCode::from(*currency_code);
     let line_keylet = keylets::line_keylet(&account, &destination, &currency);
     match object_exists(line_keylet, "Trustline", sfield::Generic) {
         Ok(exists) => {

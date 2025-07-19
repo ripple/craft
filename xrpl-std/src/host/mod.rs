@@ -125,10 +125,10 @@ impl From<i64> for Result<u64> {
 /// Possible errors returned by XRPL Programmability APIs.
 ///
 /// Errors are global across all Programmability APIs.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(i32)]
 pub enum Error {
-    /// A pointer or buffer length provided as a parameter described memory outside of the Hook's allowed memory region.
+    /// A pointer or buffer length provided as a parameter described memory outside the allowed memory region.
     OutOfBounds = error_codes::POINTER_OUT_OF_BOUNDS,
     /// Reserved for internal invariant trips, generally unrelated to inputs.
     /// These should be reported with an issue.
@@ -201,10 +201,14 @@ pub enum Error {
     // ExponentUndersized = -29,
     // /// A floating point operation done on an XFL resulted in a value larger than XFL format is able to represent.
     // Overflow = -30,
-    // /// An API assumed an STAmount was an IOU when in fact it was XRP.
-    // NotIouAmount = -31,
-    // /// An API assumed an STObject was an STAmount when in fact it was not.
-    // NotAnAmount = -32,
+    /// An API assumed an STAmount was an IOU when in fact it was XRP or MPT.
+    NotIouAmount = -31,
+    /// An API assumed an STAmount was an IOU when in fact it was XRP or MPT.
+    NotMptAmount = -32,
+    /// An API assumed an STAmount was an IOU when in fact it was XRP or MPT.
+    NotXrpAmount = -33,
+    /// An API assumed an STObject was an STAmount when in fact it was not.
+    NotAnAmount = -34,
     // /// An API would have returned a negative integer except that negative integers are reserved for error codes (i.e. what you are reading.)
     // CantReturnNegative = -33,
 }

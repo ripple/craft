@@ -5,7 +5,7 @@ pub mod host;
 pub mod sfield;
 pub mod types;
 
-/// This function is called on panic, but only in the WASM architecture. In non-WASM (e.g., in the
+/// This function is called on panic but only in the WASM architecture. In non-WASM (e.g., in the
 /// Host Simulator) the standard lib is available, which includes a panic handler.
 #[cfg(target_arch = "wasm32")]
 #[panic_handler]

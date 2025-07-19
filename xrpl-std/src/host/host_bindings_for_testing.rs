@@ -353,3 +353,14 @@ pub unsafe fn trace(
 pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number: i64) -> i32 {
     -1
 }
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn trace_opaque_float(
+    _msg_read_ptr: *const u8,
+    _msg_read_len: usize,
+    _opaque_float_ptr: *const u8,
+    _opaque_float_len: usize,
+) -> i32 {
+    -1
+}

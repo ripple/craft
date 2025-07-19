@@ -6,7 +6,7 @@ use crate::host_functions_wamr::{
     get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
     get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
     get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len,
-    get_tx_nested_field, oracle_keylet, trace, trace_num, update_data,
+    get_tx_nested_field, oracle_keylet, trace, trace_num, trace_opaque_float, update_data,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};
@@ -48,9 +48,10 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("credential_keylet", credential_keylet as *mut c_void, "(*~*~*~*~)i", 350, data_provider.as_ptr())
         .register_host_function("escrow_keylet", escrow_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
         .register_host_function("oracle_keylet", oracle_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
-        .register_host_function("get_NFT", get_nft as *mut c_void, "(*~*~*~)i", 1000, data_provider.as_ptr())
+        .register_host_function("get_nft", get_nft as *mut c_void, "(*~*~*~)i", 1000, data_provider.as_ptr())
         .register_host_function("trace", trace as *mut c_void, "(*~*~i)i", 500, data_provider.as_ptr())
         .register_host_function("trace_num", trace_num as *mut c_void, "(*~I)i", 500, data_provider.as_ptr())
+        .register_host_function("trace_opaque_float", trace_opaque_float as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .build()?;
 
     debug!("Loading WASM module from file: {}", wasm_file);

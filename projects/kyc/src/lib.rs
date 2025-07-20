@@ -14,7 +14,7 @@ use xrpl_std::host::{Result::Err, Result::Ok};
 pub extern "C" fn finish() -> bool {
     let current_escrow: CurrentEscrow = current_escrow::get_current_escrow();
 
-    let account_id = match current_escrow.get_account() {
+    let account_id = match current_escrow.get_destination() {
         Ok(account_id) => account_id,
         Err(e) => {
             let _ = trace_num("Error getting account_id", e.code() as i64);
@@ -22,7 +22,6 @@ pub extern "C" fn finish() -> bool {
         }
     };
 
-    // "termsandconditions" in hex
     let cred_type: &[u8] = b"termsandconditions";
     match credential_keylet(&account_id, &account_id, cred_type) {
         Ok(keylet) => {

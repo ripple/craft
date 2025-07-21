@@ -1,5 +1,7 @@
 #![allow(unused)]
-use crate::data_provider::{DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, unpack_locator};
+use crate::data_provider::{
+    DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, error_code_to_string, unpack_locator,
+};
 use crate::decoding::ACCOUNT_ID_LEN;
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
@@ -338,7 +340,7 @@ pub fn escrow_keylet(
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = sequence.to_be_bytes();
+    let sqn_data = sequence.to_le_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Escrow, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
@@ -359,7 +361,7 @@ pub fn oracle_keylet(
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = document_id.to_be_bytes();
+    let sqn_data = document_id.to_le_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
@@ -471,7 +473,6 @@ pub fn trace_num(
         return HostError::DataFieldTooLarge as i32;
     }
 
-    let number: u64 = number as u64;
     debug!(
         "trace() params: msg_read_ptr={:?} msg_read_len={} number={} ",
         msg_read_ptr, msg_read_len, number
@@ -480,6 +481,38 @@ pub fn trace_num(
         return HostError::DecodingError as i32;
     };
 
-    println!("WASM TRACE: {message} {number}");
+    if (number < 0) {
+        let error_code_str = error_code_to_string(number);
+        println!("WASM TRACE[ERROR]: {message} {error_code_str}");
+    } else {
+        println!("WASM TRACE: {message} {number}");
+    }
+    0
+}
+
+pub fn trace_opaque_float(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *mut u8,
+    msg_read_len: usize,
+    opaque_float_ptr: *mut u8,
+    opaque_float_len: usize,
+) -> i32 {
+    debug!(
+        "trace() params: msg_read_ptr={:#?} msg_read_len={:#?} _opaque_float_ptr={:#?} _opaque_float_len={:#?}",
+        msg_read_ptr, msg_read_len, opaque_float_ptr, opaque_float_len
+    );
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::DecodingError as i32;
+    };
+
+    let data = get_data(opaque_float_ptr, opaque_float_len);
+    let array: [u8; 8] = data
+        .try_into()
+        .map_err(|v: Vec<u8>| format!("Expected 8 bytes, got {}", v.len()))
+        .unwrap();
+    let opaque_float: u64 = u64::from_be_bytes(array);
+
+    // TODO: call trace_num when it supports u64?
+    println!("WASM TRACE: {message} {opaque_float}");
     0
 }

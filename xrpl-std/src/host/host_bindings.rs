@@ -18,7 +18,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_ledger_sqn(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
     /// Retrieves the parent ledger time.
@@ -37,7 +37,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_parent_ledger_time(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
     /// Retrieves the hash of the parent ledger.
@@ -57,7 +57,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_parent_ledger_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
     /// Fetch a ledger entry pointed by the given keylet.
@@ -93,7 +93,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
     /// Retrieves a specific field from the current ledger object and writes it into the provided buffer.
@@ -108,7 +108,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_current_ledger_obj_field(
         field: i32,
         out_buff_ptr: *mut u8,
@@ -128,7 +128,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_ledger_obj_field(
         cache_num: i32,
         field: i32,
@@ -148,7 +148,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_tx_nested_field(
         locator_ptr: *const u8,
         locator_len: usize,
@@ -173,7 +173,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_current_ledger_obj_nested_field(
         locator_ptr: *const u8,
         locator_len: usize,
@@ -195,7 +195,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_ledger_obj_nested_field(
         cache_num: i32,
         locator_ptr: *const u8,
@@ -213,7 +213,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_tx_array_len(field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided field value.
@@ -225,7 +225,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_current_ledger_obj_array_len(field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided cache number and field value.
@@ -238,7 +238,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_ledger_obj_array_len(cache_num: i32, field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
@@ -251,7 +251,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_tx_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
@@ -264,7 +264,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_current_ledger_obj_nested_array_len(
         locator_ptr: *const u8,
         locator_len: usize,
@@ -281,7 +281,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_ledger_obj_nested_array_len(
         cache_num: i32,
         locator_ptr: *const u8,
@@ -321,7 +321,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn compute_sha512_half(
         data_ptr: *const u8,
         data_len: usize,
@@ -346,7 +346,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn account_keylet(
         account_ptr: *const u8,
         account_len: usize,
@@ -394,7 +394,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success    
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn credential_keylet(
         subject_ptr: *const u8,
         subject_len: usize,
@@ -491,7 +491,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success    
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn escrow_keylet(
         account_ptr: *const u8,
         account_len: usize,
@@ -590,7 +590,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success    
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn oracle_keylet(
         account_ptr: *const u8,
         account_len: usize,
@@ -686,7 +686,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success    
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
+    ///   `../core/error_codes.rs`
     pub fn get_nft(
         account_ptr: *const u8,
         account_len: usize,
@@ -739,4 +739,26 @@ unsafe extern "C" {
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
     pub fn trace_num(msg_read_ptr: *const u8, msg_read_len: usize, number: i64) -> i32;
+
+    /// Print an OpaqueFloat number to the trace log on XRPLd. Any XRPLd instance set to \"trace\"
+    /// log level will see this.
+    ///
+    /// # Parameters
+    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// * `msg_read_len`: The byte length of the text to send to the trace log.
+    /// * `opaque_float_ptr`: A pointer to an array of 8 bytes containing the u64 opaque pointer value.
+    /// * `opaque_float_len`: The byte length of the text to send to the trace log.
+    ///
+    /// # Returns
+    ///
+    /// Returns an integer representing the result of the operation. A value of `0` or higher
+    /// signifies the number of message bytes that were written to the trace function. Non-zero
+    /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
+    /// sizes).
+    pub fn trace_opaque_float(
+        _msg_read_ptr: *const u8,
+        _msg_read_len: usize,
+        _opaque_float_ptr: *const u8,
+        _opaque_float_len: usize,
+    ) -> i32;
 }

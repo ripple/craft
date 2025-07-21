@@ -10,7 +10,12 @@ use xrpl_std::core::locator::Locator;
 use xrpl_std::decode_hex_32;
 use xrpl_std::host::trace::DataRepr::AsHex;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_float, trace_num};
-use xrpl_std::host::{FLOAT_NEGATIVE_ONE, FLOAT_ONE, cache_ledger_obj, float_add, float_compare, float_divide, float_from_int, float_from_uint, float_log, float_multiply, float_root, float_set, float_subtract, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field, trace_opaque_float, FLOAT_ROUNDING_MODES_TO_NEAREST};
+use xrpl_std::host::{
+    FLOAT_NEGATIVE_ONE, FLOAT_ONE, FLOAT_ROUNDING_MODES_TO_NEAREST, cache_ledger_obj, float_add,
+    float_compare, float_divide, float_from_int, float_from_uint, float_log, float_multiply,
+    float_root, float_set, float_subtract, get_ledger_obj_array_len, get_ledger_obj_field,
+    get_ledger_obj_nested_field, trace_opaque_float,
+};
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
     Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
@@ -65,7 +70,13 @@ fn test_float_from_wasm() {
     }
 
     let u64_value: u64 = 12300;
-    if 8 == unsafe { float_from_uint(&u64_value as *const u64 as *const u8, f.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) } {
+    if 8 == unsafe {
+        float_from_uint(
+            &u64_value as *const u64 as *const u8,
+            f.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    } {
         let _ = trace_float("  float from u64 12300:", &f);
     } else {
         let _ = trace("  float from u64 12300: failed");
@@ -117,13 +128,14 @@ fn test_float_add_subtract() {
             float_add(
                 f_compute.as_ptr(),
                 FLOAT_ONE.as_ptr(),
-                f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST,
+                f_compute.as_mut_ptr(),
+                FLOAT_ROUNDING_MODES_TO_NEAREST,
             )
         };
         // let _ = trace_float("  float:", &f_compute);
     }
     let mut f10: [u8; 8] = [0u8; 8];
-    if 8 != unsafe { float_from_int(10, f10.as_mut_ptr()) } {
+    if 8 != unsafe { float_from_int(10, f10.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) } {
         // let _ = trace("  float from 10: failed");
     }
     if 0 == unsafe { float_compare(f10.as_ptr(), f_compute.as_ptr()) } {
@@ -137,7 +149,8 @@ fn test_float_add_subtract() {
             float_subtract(
                 f_compute.as_ptr(),
                 FLOAT_ONE.as_ptr(),
-                f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST,
+                f_compute.as_mut_ptr(),
+                FLOAT_ROUNDING_MODES_TO_NEAREST,
             )
         };
     }
@@ -155,11 +168,24 @@ fn test_float_multiply_divide() {
     unsafe { float_from_int(10, f10.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
     let mut f_compute: [u8; 8] = FLOAT_ONE;
     for i in 0..6 {
-        unsafe { float_multiply(f_compute.as_ptr(), f10.as_ptr(), f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+        unsafe {
+            float_multiply(
+                f_compute.as_ptr(),
+                f10.as_ptr(),
+                f_compute.as_mut_ptr(),
+                FLOAT_ROUNDING_MODES_TO_NEAREST,
+            )
+        };
         // let _ = trace_float("  float:", &f_compute);
     }
     let mut f1000000: [u8; 8] = [0u8; 8];
-    unsafe { float_from_int(1000000, f1000000.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_from_int(
+            1000000,
+            f1000000.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
 
     if 0 == unsafe { float_compare(f1000000.as_ptr(), f_compute.as_ptr()) } {
         let _ = trace("  repeated multiply: good");
@@ -168,7 +194,14 @@ fn test_float_multiply_divide() {
     }
 
     for i in 0..7 {
-        unsafe { float_divide(f_compute.as_ptr(), f10.as_ptr(), f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+        unsafe {
+            float_divide(
+                f_compute.as_ptr(),
+                f10.as_ptr(),
+                f_compute.as_mut_ptr(),
+                FLOAT_ROUNDING_MODES_TO_NEAREST,
+            )
+        };
     }
     let mut f01: [u8; 8] = [0u8; 8];
     unsafe { float_set(-1, 1, f01.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
@@ -186,16 +219,50 @@ fn test_float_root() {
     let mut f9: [u8; 8] = [0u8; 8];
     unsafe { float_from_int(9, f9.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
     let mut f_compute: [u8; 8] = [0u8; 8];
-    unsafe { float_root(f9.as_ptr(), 2, f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_root(
+            f9.as_ptr(),
+            2,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let _ = trace_float("  float sqrt of 9:", &f_compute);
-    unsafe { float_root(f9.as_ptr(), 3, f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_root(
+            f9.as_ptr(),
+            3,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let _ = trace_float("  float cbrt of 9:", &f_compute);
 
     let mut f1000000: [u8; 8] = [0u8; 8];
-    unsafe { float_from_int(1000000, f1000000.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
-    unsafe { float_root(f1000000.as_ptr(), 3, f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_from_int(
+            1000000,
+            f1000000.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    unsafe {
+        float_root(
+            f1000000.as_ptr(),
+            3,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let _ = trace_float("  float cbrt of 1000000:", &f_compute);
-    unsafe { float_root(f1000000.as_ptr(), 6, f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_root(
+            f1000000.as_ptr(),
+            6,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let _ = trace_float("  float 6th root of 1000000:", &f_compute);
 }
 
@@ -203,9 +270,21 @@ fn test_float_log() {
     let _ = trace("\n$$$ test_float_log $$$");
 
     let mut f1000000: [u8; 8] = [0u8; 8];
-    unsafe { float_from_int(1000000, f1000000.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_from_int(
+            1000000,
+            f1000000.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let mut f_compute: [u8; 8] = [0u8; 8];
-    unsafe { float_log(f1000000.as_ptr(), f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_log(
+            f1000000.as_ptr(),
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let _ = trace_float("  log_10 of 1000000:", &f_compute);
 }
 
@@ -217,7 +296,8 @@ fn test_float_negate() {
         float_multiply(
             FLOAT_ONE.as_ptr(),
             FLOAT_NEGATIVE_ONE.as_ptr(),
-            f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
     // let _ = trace_float("  float:", &f_compute);
@@ -231,7 +311,8 @@ fn test_float_negate() {
         float_multiply(
             FLOAT_NEGATIVE_ONE.as_ptr(),
             FLOAT_NEGATIVE_ONE.as_ptr(),
-            f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
     // let _ = trace_float("  float:", &f_compute);
@@ -248,13 +329,21 @@ fn test_float_invert() {
     let mut f_compute: [u8; 8] = [0u8; 8];
     let mut f10: [u8; 8] = [0u8; 8];
     unsafe { float_from_int(10, f10.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
-    unsafe { float_divide(FLOAT_ONE.as_ptr(), f10.as_ptr(), f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_divide(
+            FLOAT_ONE.as_ptr(),
+            f10.as_ptr(),
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
     let _ = trace_float("  float:", &f_compute);
     unsafe {
         float_divide(
             FLOAT_ONE.as_ptr(),
             f_compute.as_ptr(),
-            f_compute.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
     let _ = trace_float("  float:", &f_compute);

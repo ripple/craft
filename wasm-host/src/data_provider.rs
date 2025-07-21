@@ -147,18 +147,17 @@ pub struct DataProvider {
     data_source: MockData,
     next_slot: usize,
     slots: [Keylet; NUM_SLOTS],
-    pub rounding_mode: RippledRoundingMode,
+    pub _rounding_mode: RippledRoundingMode,
 }
 
 impl DataProvider {
     pub fn new(data_source: MockData) -> Self {
         let slots: [Hash256; 256] = core::array::from_fn(|_| Hash256::default());
-        let rounding_mode: RippledRoundingMode = RippledRoundingMode::ToNearest;
         Self {
             data_source,
             next_slot: 1,
             slots,
-            rounding_mode,
+            _rounding_mode: RippledRoundingMode::ToNearest,
         }
     }
 

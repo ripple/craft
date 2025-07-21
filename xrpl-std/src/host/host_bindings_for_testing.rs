@@ -374,13 +374,22 @@ pub unsafe fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32)
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_from_uint(
+    in_uint_ptr: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_set(
+    exponent: i32,
+    mantissa: i64,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 
@@ -392,31 +401,56 @@ pub unsafe fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32 {
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_add(
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_subtract(
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_multiply(
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_divide(
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_root(
+    in_buf: *const u8,
+    in_int: i32,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     -1
 }
 

@@ -435,12 +435,22 @@ fn pack_out_float(decimal: BigDecimal, env: wasm_exec_env_t, out_buf: *mut u8) -
     8
 }
 
-pub fn float_from_int(env: wasm_exec_env_t, in_int: i64, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub fn float_from_int(
+    env: wasm_exec_env_t,
+    in_int: i64,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     let a = BigDecimal::from(in_int);
     pack_out_float(a, env, out_buf)
 }
 
-pub fn float_from_uint(env: wasm_exec_env_t, in_uint_ptr: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub fn float_from_uint(
+    env: wasm_exec_env_t,
+    in_uint_ptr: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     let v: u64 = unsafe {
         let inst = wasm_runtime_get_module_inst(env);
         if !wasm_runtime_validate_native_addr(inst, in_uint_ptr as *mut ::core::ffi::c_void, 8) {
@@ -456,7 +466,13 @@ pub fn float_from_uint(env: wasm_exec_env_t, in_uint_ptr: *const u8, out_buf: *m
     pack_out_float(a, env, out_buf)
 }
 
-pub fn float_set(env: wasm_exec_env_t, exponent: i32, mantissa: i64, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub fn float_set(
+    env: wasm_exec_env_t,
+    exponent: i32,
+    mantissa: i64,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     let value = BigDecimal::from_bigint(BigInt::from(mantissa), -exponent as i64);
     // warn!("float_set {value}");
     pack_out_float(value, env, out_buf)
@@ -485,7 +501,8 @@ pub fn float_add(
     env: wasm_exec_env_t,
     in_buf1: *const u8,
     in_buf2: *const u8,
-    out_buf: *mut u8, rounding_modes: i32
+    out_buf: *mut u8,
+    rounding_modes: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -503,7 +520,8 @@ pub fn float_subtract(
     env: wasm_exec_env_t,
     in_buf1: *const u8,
     in_buf2: *const u8,
-    out_buf: *mut u8, rounding_modes: i32,
+    out_buf: *mut u8,
+    rounding_modes: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -521,7 +539,8 @@ pub fn float_multiply(
     env: wasm_exec_env_t,
     in_buf1: *const u8,
     in_buf2: *const u8,
-    out_buf: *mut u8, rounding_modes: i32,
+    out_buf: *mut u8,
+    rounding_modes: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -539,7 +558,8 @@ pub fn float_divide(
     env: wasm_exec_env_t,
     in_buf1: *const u8,
     in_buf2: *const u8,
-    out_buf: *mut u8, rounding_modes: i32,
+    out_buf: *mut u8,
+    rounding_modes: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -553,7 +573,13 @@ pub fn float_divide(
     pack_out_float(r, env, out_buf)
 }
 
-pub fn float_root(env: wasm_exec_env_t, in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub fn float_root(
+    env: wasm_exec_env_t,
+    in_buf: *const u8,
+    in_int: i32,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     let f = match unpack_in_float(env, in_buf) {
         Ok(val) => match val.to_f64() {
             Some(f) => f,
@@ -575,7 +601,12 @@ pub fn float_root(env: wasm_exec_env_t, in_buf: *const u8, in_int: i32, out_buf:
     pack_out_float(r, env, out_buf)
 }
 
-pub fn float_log(env: wasm_exec_env_t, in_buf: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub fn float_log(
+    env: wasm_exec_env_t,
+    in_buf: *const u8,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
     let f = match unpack_in_float(env, in_buf) {
         Ok(val) => match val.to_f64() {
             Some(f) => f,

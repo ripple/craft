@@ -10,6 +10,13 @@ use crate::host_functions_wamr::{
     get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
     get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len,
     get_tx_nested_field, oracle_keylet, trace, trace_num, update_data,
+    float_multiply, float_root, float_set, float_subtract, get_current_ledger_obj_array_len,
+    get_current_ledger_obj_field, get_current_ledger_obj_nested_array_len,
+    get_current_ledger_obj_nested_field, get_ledger_obj_array_len, get_ledger_obj_field,
+    get_ledger_obj_nested_array_len, get_ledger_obj_nested_field, get_ledger_sqn, get_nft,
+    get_parent_ledger_hash, get_parent_ledger_time, get_tx_array_len, get_tx_field,
+    get_tx_nested_array_len, get_tx_nested_field, oracle_keylet, trace, trace_num,
+    trace_opaque_float, update_data,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};

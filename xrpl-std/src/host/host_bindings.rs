@@ -423,7 +423,30 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn check_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a check entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the check entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn check_keylet(
@@ -476,7 +499,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn delegate_keylet(
@@ -501,7 +524,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn deposit_preauth_keylet(
@@ -524,7 +547,78 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn did_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a delegate entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `authorize_ptr`: A pointer to the memory location of the authorized account.
+    /// - `authorize_len`: The length of the authorized account.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn delegate_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        authorize_ptr: *const u8,
+        authorize_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a deposit preauth entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `authorize_ptr`: A pointer to the memory location of the authorized account.
+    /// - `authorize_len`: The length of the authorized account.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn deposit_preauth_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        authorize_ptr: *const u8,
+        authorize_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a DID entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn did_keylet(
@@ -556,7 +650,6 @@ unsafe extern "C" {
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
     ) -> i32;
-
     /// Computes the Keylet for a trustline entry in a ledger.
     ///
     /// # Parameters
@@ -572,7 +665,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn line_keylet(
@@ -598,7 +691,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn nft_offer_keylet(
@@ -621,7 +714,82 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn offer_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a trustline entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account1_ptr`: A pointer to the memory location of the first accountID.
+    /// - `account1_len`: The length of the first accountID.
+    /// - `account2_ptr`: A pointer to the memory location of the second accountID.
+    /// - `account2_len`: The length of the second accountID.
+    /// - `currency_ptr`: A pointer to the memory location of the currency.
+    /// - `currency_len`: The length of the currency.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn line_keylet(
+        account1_ptr: *const u8,
+        account1_len: usize,
+        account2_ptr: *const u8,
+        account2_len: usize,
+        currency_ptr: *const u8,
+        currency_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for an NFT offer entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the NFT offer entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn nft_offer_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for an offer entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the offer entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn offer_keylet(
@@ -670,7 +838,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn paychan_keylet(
@@ -694,7 +862,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn signers_keylet(
@@ -716,7 +884,78 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn ticket_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a payment channel entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `destination_ptr`: A pointer to the memory location of the destination.
+    /// - `destination_len`: The length of the destination.
+    /// - `sequence`: The account sequence number associated with the payment channel entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn paychan_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        destination_ptr: *const u8,
+        destination_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a signer entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn signers_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a ticket entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the ticket entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn ticket_keylet(

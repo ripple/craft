@@ -323,6 +323,7 @@ pub fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[
     }
 }
 
+//TODO we will use rippled Number class for computation
 pub fn _deserialize_issued_currency_amount(bytes: [u8; 8]) -> XRPLCoreResult<BigDecimal> {
     let mut value: BigDecimal;
 

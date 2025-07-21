@@ -758,17 +758,16 @@ unsafe extern "C" {
     // #############################
     //TODO add docs after discussing the interface
     //Note that Craft currently does not honor the rounding modes
-    pub fn float_set_rounding_mode(rounding_modes: i32) -> i32;
-    pub fn float_from_int(in_int: i64, out_buf: *mut u8) -> i32;
-    pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8) -> i32;
-    pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8) -> i32;
+    pub fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
     pub fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32;
-    pub fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
-    pub fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
-    pub fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
-    pub fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8) -> i32;
-    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8) -> i32;
-    pub fn float_log(in_buf: *const u8, out_buf: *mut u8) -> i32;
+    pub fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_log(in_buf: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
 
     // #############################
     // Host Function Category: TRACE

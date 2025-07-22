@@ -338,8 +338,11 @@ pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
 const POSITIVE_MPT: u8 = 0b_0110_0000;
 const NEGATIVE_MPT: u8 = 0b_0010_0000;
 // Constants for XRP amount encoding
+// In XRPL binary format:
+// - Bit 63 (0x8000...) indicates this is NOT an XRP amount (it's an IOU/token)
+// - Bit 62 (0x4000...) indicates this is a positive XRP amount
 const XRP_POSITIVE_FLAG: u64 = 0x4000000000000000;
-const XRP_NOT_SIGN_FLAG: u64 = 0x8000000000000000;
+const NOT_XRP_FLAG: u64 = 0x8000000000000000; // Indicates IOU/token amount, not XRP
 
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
     // try to decode an MPT
@@ -385,8 +388,9 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
                 // Positive XRP: value | XRP_POSITIVE_FLAG
                 (drops as u64) | XRP_POSITIVE_FLAG
             } else {
-                // Negative XRP: set the not-XRP bit and clear the sign bit
-                ((drops.abs() as u64) | XRP_NOT_SIGN_FLAG) & !XRP_POSITIVE_FLAG
+                // This encodes the value as an IOU/token amount format, not as XRP
+                // Setting the NOT_XRP_FLAG bit indicates this is not an XRP amount
+                ((drops.abs() as u64) | NOT_XRP_FLAG) & !XRP_POSITIVE_FLAG
             };
 
             // Return as 8 bytes in big-endian format (network byte order)

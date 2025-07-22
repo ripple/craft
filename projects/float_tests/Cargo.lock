@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "decoder_tests"
+name = "float_tests"
 version = "0.0.1"
 dependencies = [
  "xrpl-std",

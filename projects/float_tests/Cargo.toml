@@ -1,5 +1,5 @@
 [package]
-name = "xrpl-std"
+name = "float_tests"
 version = "0.0.1"
 edition = "2024"
 
@@ -7,6 +7,12 @@ edition = "2024"
 [workspace]
 
 [lib]
-crate-type = ["lib"]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+opt-level = 's'
+panic = "abort"
 
 [dependencies]
+xrpl-std = { path = "../../xrpl-std" }

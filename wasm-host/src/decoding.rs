@@ -7,10 +7,10 @@ use std::str::FromStr;
 use xrpl::core::addresscodec::utils::decode_base58;
 use xrpl::core::binarycodec::definitions::{get_ledger_entry_type_code, get_transaction_type_code};
 use xrpl::core::binarycodec::exceptions::XRPLBinaryCodecException;
-use xrpl::core::binarycodec::types::Amount;
+use xrpl::core::binarycodec::types::{Amount, Currency, Issue};
 use xrpl::core::exceptions::{XRPLCoreException, XRPLCoreResult};
 use xrpl::utils::exceptions::XRPRangeException;
-use xrpl::utils::{MAX_IOU_EXPONENT, MIN_IOU_EXPONENT, verify_valid_ic_value};
+use xrpl::utils::{MAX_IOU_EXPONENT, MAX_IOU_PRECISION, MIN_IOU_EXPONENT, verify_valid_ic_value};
 
 pub const ACCOUNT_ID_LEN: usize = 20;
 pub type AccountId = Vec<u8>;
@@ -161,7 +161,7 @@ pub fn decode(s: &str, decodable: Decodable) -> Option<Vec<u8>> {
         Decodable::UINT192 => decode_hex(s),
         Decodable::UINT384 => decode_hex(s),
         Decodable::UINT512 => decode_hex(s),
-        Decodable::ISSUE => not_leaf(s),
+        Decodable::ISSUE => decode_issue(s),
         Decodable::XCHAIN_BRIDGE => not_leaf(s),
         Decodable::CURRENCY => decode_currency(s),
         Decodable::AS_IS => raw_string_to_bytes(s),
@@ -234,13 +234,6 @@ pub fn decode_u64(s: &str) -> Option<Vec<u8>> {
     }
 }
 
-// pub fn decode_i64(s: &str) -> Option<Vec<u8>> {
-//     match s.parse::<i64>() {
-//         Ok(num) => Some(num.to_le_bytes().to_vec()),
-//         Err(_) => None,
-//     }
-// }
-
 pub fn decode_u128(hex_hash: &str) -> Option<Vec<u8>> {
     match hex::decode(hex_hash) {
         Ok(bytes) => {
@@ -258,7 +251,8 @@ pub fn decode_vl_other(s: &str) -> Option<Vec<u8>> {
     decode_hex(s)
 }
 
-// the following consts and _serialize_issued_currency_value function are copied
+// the following consts, _serialize_issued_currency_value and
+// _deserialize_issued_currency_amount functions are copied
 // from https://github.com/sephynox/xrpl-rust
 const _MIN_MANTISSA: u128 = u128::pow(10, 15);
 const _MAX_MANTISSA: u128 = u128::pow(10, 16) - 1;
@@ -266,7 +260,8 @@ const _POS_SIGN_BIT_MASK: i64 = 0x4000000000000000;
 const _ZERO_CURRENCY_AMOUNT_HEX: u64 = 0x8000000000000000;
 /// Serializes the value field of an issued currency amount
 /// to its bytes representation.
-fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 8]> {
+pub fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 8]> {
+    let decimal = decimal.with_prec(MAX_IOU_PRECISION as u64);
     verify_valid_ic_value(&decimal.to_scientific_notation())
         .map_err(|e| XRPLCoreException::XRPLUtilsError(e.to_string()))?;
 
@@ -328,6 +323,39 @@ fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 
     }
 }
 
+//TODO we will use rippled Number class for computation
+pub fn _deserialize_issued_currency_amount(bytes: [u8; 8]) -> XRPLCoreResult<BigDecimal> {
+    let mut value: BigDecimal;
+
+    // Some wizardry by Amie Corso
+    let exp = ((bytes[0] as i32 & 0x3F) << 2) + ((bytes[1] as i32 & 0xFF) >> 6) - 97;
+
+    if exp < MIN_IOU_EXPONENT {
+        value = BigDecimal::from(0);
+    } else {
+        let hex_mantissa = hex::encode([&[bytes[1] & 0x3F], &bytes[2..]].concat());
+        let int_mantissa = i128::from_str_radix(&hex_mantissa, 16)
+            .map_err(XRPLBinaryCodecException::ParseIntError)?;
+
+        // Adjust scale using the exponent
+        let scale = exp.unsigned_abs();
+        value = BigDecimal::new(int_mantissa.into(), scale as i64);
+
+        // Handle the sign
+        if bytes[0] & 0x40 > 0 {
+            // Set the value to positive (BigDecimal assumes positive by default)
+            value = value.abs();
+        } else {
+            // Set the value to negative
+            value = -value.abs();
+        }
+    }
+    verify_valid_ic_value(&value.to_string())
+        .map_err(|e| XRPLCoreException::XRPLUtilsError(e.to_string()))?;
+
+    Ok(value)
+}
+
 pub fn decode_number(s: &str) -> Option<Vec<u8>> {
     let value = BigDecimal::from_str(s).ok()?;
     _serialize_issued_currency_value(value)
@@ -336,23 +364,12 @@ pub fn decode_number(s: &str) -> Option<Vec<u8>> {
 }
 
 pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
-    if s.len() == 3 {
-        let mut bytes = [0u8; 3];
-        bytes.copy_from_slice(s.as_bytes());
-        Some(bytes.to_vec())
-    } else {
-        match hex::decode(s) {
-            Ok(bytes) => {
-                if bytes.len() == 20 {
-                    Some(bytes)
-                } else {
-                    None
-                }
-            }
-            Err(_) => None,
-        }
+    match Currency::try_from(s) {
+        Ok(currency) => Some(currency.as_ref().to_vec()),
+        Err(_) => None,
     }
 }
+
 const POSITIVE_MPT: u8 = 0b_0110_0000;
 const NEGATIVE_MPT: u8 = 0b_0010_0000;
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
@@ -375,7 +392,7 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
 
             let mut bytes = Vec::new();
             bytes.push(if negative { NEGATIVE_MPT } else { POSITIVE_MPT });
-            // to_be_bytes() matches what rippled returns
+            // Big Endian matches what rippled returns
             bytes.append(&mut amount_abs.to_be_bytes().to_vec());
             let mpt_issuance_id = mpt_issuance_id.as_str()?.to_string();
             let mut mpt_issuance_id_bytes = hex::decode(mpt_issuance_id.as_str()).ok()?;
@@ -394,6 +411,21 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
 pub fn decode_amount(s: &str) -> Option<Vec<u8>> {
     let v: Value = serde_json::from_str(s).expect("Invalid json string");
     decode_amount_json(v)
+}
+
+pub fn decode_issue_json(value: Value) -> Option<Vec<u8>> {
+    if let Some(mpt_issuance_id) = value.get("mpt_issuance_id") {
+        return decode_hex(mpt_issuance_id.as_str()?);
+    }
+    match Issue::try_from(value) {
+        Ok(issue) => Some(issue.as_ref().to_vec()),
+        Err(_) => None,
+    }
+}
+
+pub fn decode_issue(s: &str) -> Option<Vec<u8>> {
+    let v: Value = serde_json::from_str(s).expect("Invalid json string");
+    decode_issue_json(v)
 }
 
 pub fn not_leaf(_: &str) -> Option<Vec<u8>> {

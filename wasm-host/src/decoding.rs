@@ -337,6 +337,10 @@ pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
 
 const POSITIVE_MPT: u8 = 0b_0110_0000;
 const NEGATIVE_MPT: u8 = 0b_0010_0000;
+// Constants for XRP amount encoding
+const XRP_POSITIVE_FLAG: u64 = 0x4000000000000000;
+const XRP_NOT_SIGN_FLAG: u64 = 0x8000000000000000;
+
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
     // try to decode an MPT
     if let Some(mpt_issuance_id) = value.get("mpt_issuance_id") {
@@ -366,7 +370,31 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
         }
         return None;
     }
-    // if not an MPT, try to decode an XRP or IOU amount using the library
+
+    // Check if it's an XRP amount (simple number or string)
+    if value.is_number() || value.is_string() {
+        let amount_str = if value.is_number() {
+            value.as_i64()?.to_string()
+        } else {
+            value.as_str()?.to_string()
+        };
+
+        // Try to parse as XRP amount in drops
+        if let Ok(drops) = amount_str.parse::<i64>() {
+            let encoded = if drops >= 0 {
+                // Positive XRP: value | cPositive flag
+                (drops as u64) | XRP_POSITIVE_FLAG
+            } else {
+                // Negative XRP: set the not-XRP bit and clear the sign bit
+                ((drops.abs() as u64) | XRP_NOT_SIGN_FLAG) & !XRP_POSITIVE_FLAG
+            };
+
+            // Return as 8 bytes in big-endian format (network byte order)
+            return Some(encoded.to_be_bytes().to_vec());
+        }
+    }
+
+    // If not XRP, try to decode as IOU amount using the library
     match Amount::try_from(value) {
         Ok(amount) => Some(amount.as_ref().to_vec()),
         Err(_) => None,

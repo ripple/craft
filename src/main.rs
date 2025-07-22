@@ -4,7 +4,7 @@ mod docker;
 mod utils;
 
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
 use inquire::Confirm;
 use inquire::Select;
@@ -16,19 +16,43 @@ struct Cli {
     command: Option<Commands>,
 }
 
+#[derive(Debug, Clone, ValueEnum)]
+enum ListResource {
+    /// List all projects in the projects/ directory
+    Projects,
+    /// List all available test cases
+    Tests,
+    /// List all test fixtures
+    Fixtures,
+}
+
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Build a WASM module
     Build {
         /// Project name under projects directory
-        #[arg(index = 1)]
         project: Option<String>,
-        /// Build mode (debug or release)
-        #[arg(short='m', long, value_enum, default_value_t = config::BuildMode::Release)]
-        mode: config::BuildMode,
+        /// Build in release mode (default for WASM)
+        #[arg(short, long)]
+        release: bool,
+        /// Build in debug mode
+        #[arg(short, long, conflicts_with = "release")]
+        debug: bool,
         /// Optimization level (none, small, aggressive)
-        #[arg(short='O', long, value_enum, default_value_t = config::OptimizationLevel::Small)]
-        opt: config::OptimizationLevel,
+        #[arg(short = 'O', long, value_enum)]
+        opt: Option<config::OptimizationLevel>,
+        /// Run cargo fmt after building
+        #[arg(long)]
+        fmt: bool,
+        /// Additional arguments to pass to cargo
+        #[arg(last = true)]
+        cargo_args: Vec<String>,
+    },
+    /// List available projects, tests, or other resources
+    List {
+        /// What to list
+        #[arg(value_enum)]
+        resource: ListResource,
     },
     /// Configure build settings
     Configure,
@@ -36,9 +60,26 @@ enum Commands {
     ExportHex,
     /// Test a WASM smart contract
     Test {
-        /// Function to test
+        /// Project name to test
+        project: Option<String>,
+        /// Test case to run (defaults to 'success')
+        #[arg(short, long)]
+        case: Option<String>,
+        /// Run all test cases
+        #[arg(long, conflicts_with = "case")]
+        all: bool,
+        /// Function to test (defaults to 'finish')
         #[arg(short, long)]
         function: Option<String>,
+        /// Build before testing
+        #[arg(long, default_value_t = true)]
+        build: bool,
+        /// Verbose output
+        #[arg(short, long)]
+        verbose: bool,
+        /// List available test cases
+        #[arg(long)]
+        list: bool,
     },
     /// Check if rippled is running and start it if not
     StartRippled {
@@ -234,25 +275,58 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Some(cmd) => match cmd {
-            Commands::Build { project, mode, opt } => {
-                // Non-interactive build using CLI flags
+            Commands::Build {
+                project,
+                release: _,
+                debug,
+                opt,
+                fmt,
+                cargo_args,
+            } => {
+                // Determine build mode - default to release for WASM
+                let build_mode = if debug {
+                    config::BuildMode::Debug
+                } else {
+                    config::BuildMode::Release
+                };
+
                 let project_path = if let Some(proj) = project {
                     std::env::current_dir()?.join("projects").join(proj)
-                } else {
-                    // Fallback to interactive selection
+                } else if atty::is(atty::Stream::Stdout) {
+                    // Interactive selection if TTY available
                     let config = commands::configure().await?;
                     commands::build(&config).await?;
+                    if fmt {
+                        utils::run_cargo_fmt()?;
+                    }
                     return Ok(());
+                } else {
+                    // Non-interactive mode - list projects and exit
+                    println!("{}", "No project specified in non-interactive mode.".red());
+                    println!();
+                    commands::list_projects()?;
+                    println!();
+                    println!("{}", "To build a project, use one of:".yellow());
+                    println!("  craft build <project-name>    # Build specific project");
+                    println!("  craft build --help            # Show all options");
+                    anyhow::bail!("No project specified");
                 };
+
                 // Prepare configuration
                 let config = config::Config {
                     project_path,
-                    build_mode: mode,
-                    optimization_level: opt,
+                    build_mode,
+                    optimization_level: opt.unwrap_or(config::OptimizationLevel::Small),
                     ..Default::default()
                 };
+
                 // Execute build
-                let wasm_path = commands::build(&config).await?;
+                let wasm_path = commands::build_with_args(&config, &cargo_args).await?;
+
+                // Run formatter if requested
+                if fmt {
+                    utils::run_cargo_fmt()?;
+                }
 
                 if !matches!(config.optimization_level, config::OptimizationLevel::None) {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
@@ -279,6 +353,17 @@ async fn main() -> Result<()> {
                     _ => (),
                 }
             }
+            Commands::List { resource } => match resource {
+                ListResource::Projects => {
+                    commands::list_projects()?;
+                }
+                ListResource::Tests => {
+                    commands::list_all_tests()?;
+                }
+                ListResource::Fixtures => {
+                    commands::list_fixtures()?;
+                }
+            },
             Commands::Configure => {
                 commands::configure().await?;
                 println!("{}", "Configuration saved!".green());
@@ -288,10 +373,83 @@ async fn main() -> Result<()> {
                 let wasm_path = commands::build(&config).await?;
                 commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
             }
-            Commands::Test { function } => {
-                let config = commands::configure().await?;
-                let wasm_path = commands::build(&config).await?;
-                commands::test(&wasm_path, function).await?;
+            Commands::Test {
+                project,
+                case,
+                all,
+                function,
+                build,
+                verbose,
+                list,
+            } => {
+                // Handle list mode
+                if list {
+                    commands::list_test_cases(project.as_deref())?;
+                    return Ok(());
+                }
+
+                let project_name = if let Some(proj) = project {
+                    proj
+                } else if atty::is(atty::Stream::Stdout) {
+                    // Interactive mode
+                    let config = commands::configure().await?;
+                    let wasm_path = if build {
+                        commands::build(&config).await?
+                    } else {
+                        utils::find_wasm_output(&config.project_path)?
+                    };
+                    commands::test(&wasm_path, function).await?;
+                    return Ok(());
+                } else {
+                    // Non-interactive mode
+                    println!("{}", "No project specified in non-interactive mode.".red());
+                    println!();
+                    commands::list_projects()?;
+                    println!();
+                    println!("{}", "To test a project, use one of:".yellow());
+                    println!(
+                        "  craft test <project-name>              # Test with default 'success' case"
+                    );
+                    println!("  craft test <project-name> --case all   # Run all test cases");
+                    println!(
+                        "  craft test <project-name> --list       # List available test cases"
+                    );
+                    println!("  craft test --help                      # Show all options");
+                    anyhow::bail!("No project specified");
+                };
+
+                // Build if requested
+                let wasm_path = if build {
+                    let project_path = std::env::current_dir()?
+                        .join("projects")
+                        .join(&project_name);
+                    let config = config::Config {
+                        project_path,
+                        build_mode: config::BuildMode::Release,
+                        optimization_level: config::OptimizationLevel::Small,
+                        ..Default::default()
+                    };
+                    commands::build(&config).await?
+                } else {
+                    let project_path = std::env::current_dir()?
+                        .join("projects")
+                        .join(&project_name);
+                    utils::find_wasm_output(&project_path)?
+                };
+
+                // Determine test cases to run
+                let test_cases = if all {
+                    commands::discover_test_cases(&project_name)?
+                } else if let Some(case_name) = case {
+                    vec![case_name]
+                } else {
+                    vec!["success".to_string()] // default
+                };
+
+                // Run tests
+                for test_case in test_cases {
+                    commands::run_test(&wasm_path, &test_case, function.as_deref(), verbose)?;
+                }
             }
             Commands::StartRippled { foreground } => {
                 let docker_manager = docker::DockerManager::new()?;
@@ -393,14 +551,17 @@ mod cli_tests {
 
     #[test]
     fn test_build_command_parsing() {
-        let cli = Cli::parse_from([
-            "craft", "build", "myproj", "--mode", "debug", "--opt", "none",
-        ]);
+        let cli = Cli::parse_from(["craft", "build", "myproj", "--debug", "--opt", "none"]);
         match cli.command {
-            Some(Commands::Build { project, mode, opt }) => {
+            Some(Commands::Build {
+                project,
+                debug,
+                opt,
+                ..
+            }) => {
                 assert_eq!(project.unwrap(), "myproj");
-                assert_eq!(mode, BuildMode::Debug);
-                assert_eq!(opt, OptimizationLevel::None);
+                assert!(debug);
+                assert_eq!(opt.unwrap(), OptimizationLevel::None);
             }
             other => panic!("Expected Build command, got: {other:?}"),
         }
@@ -410,10 +571,17 @@ mod cli_tests {
     fn test_build_defaults() {
         let cli = Cli::parse_from(["craft", "build"]);
         match cli.command {
-            Some(Commands::Build { project, mode, opt }) => {
+            Some(Commands::Build {
+                project,
+                release,
+                debug,
+                opt,
+                ..
+            }) => {
                 assert!(project.is_none());
-                assert_eq!(mode, BuildMode::Release);
-                assert_eq!(opt, OptimizationLevel::Small);
+                assert!(!release);
+                assert!(!debug); // defaults to release mode for WASM
+                assert!(opt.is_none());
             }
             other => panic!("Expected Build command, got: {other:?}"),
         }
@@ -421,12 +589,11 @@ mod cli_tests {
 
     #[test]
     fn test_build_with_positional_project() {
-        let cli = Cli::parse_from(["craft", "build", "myproj", "--mode", "debug"]);
+        let cli = Cli::parse_from(["craft", "build", "myproj", "--debug"]);
         match cli.command {
-            Some(Commands::Build { project, mode, opt }) => {
+            Some(Commands::Build { project, debug, .. }) => {
                 assert_eq!(project.unwrap(), "myproj");
-                assert_eq!(mode, BuildMode::Debug);
-                assert_eq!(opt, OptimizationLevel::Small);
+                assert!(debug);
             }
             other => panic!("Expected Build command, got: {other:?}"),
         }

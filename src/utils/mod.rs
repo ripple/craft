@@ -230,6 +230,10 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
                     format!("\nError: A folder named '{updated_package_name}' already exists.")
                         .red()
                 );
+                println!("{}", "\nSuggestions:".yellow());
+                println!("  • Choose a different package name in Cargo.toml");
+                println!("  • Remove or rename the existing directory");
+                println!("  • Continue with the current folder name");
                 return Ok(project_path.to_path_buf());
             }
 
@@ -345,6 +349,62 @@ pub fn install_cli() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Run cargo fmt in the current directory
+pub fn run_cargo_fmt() -> Result<()> {
+    use colored::*;
+
+    println!("{}", "Running cargo fmt...".cyan());
+
+    let status = Command::new("cargo")
+        .args(["fmt"])
+        .status()
+        .context("Failed to run cargo fmt")?;
+
+    if status.success() {
+        println!("{}", "✅ Code formatted successfully!".green());
+    } else {
+        println!("{}", "⚠️  cargo fmt encountered issues".yellow());
+    }
+
+    Ok(())
+}
+
+/// Find WASM output file for a project
+pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
+    let cargo_toml = find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
+    let project_dir = cargo_toml.parent().unwrap();
+    let project_name = project_dir.file_name().unwrap().to_str().unwrap();
+
+    // Try release first, then debug
+    let candidates = vec![
+        project_dir
+            .join("target/wasm32-unknown-unknown/release")
+            .join(format!("{}.wasm", project_name)),
+        project_dir
+            .join("target/wasm32-unknown-unknown/release")
+            .join(format!("lib{}.wasm", project_name)),
+        project_dir
+            .join("target/wasm32-unknown-unknown/debug")
+            .join(format!("{}.wasm", project_name)),
+        project_dir
+            .join("target/wasm32-unknown-unknown/debug")
+            .join(format!("lib{}.wasm", project_name)),
+    ];
+
+    for candidate in candidates {
+        if candidate.exists() {
+            return Ok(candidate);
+        }
+    }
+
+    Err(anyhow::anyhow!(
+        "No WASM output found for project '{}'.\n\n{}\n  • Run: craft build {}\n  • Make sure the project has a [lib] section in Cargo.toml\n  • Check if the build target is set to wasm32-unknown-unknown\n  • Look for .wasm files in target/wasm32-unknown-unknown/",
+        project_name,
+        "Suggestions:",
+        project_name
+    ))
 }
 
 pub mod wasm_fingerprint;

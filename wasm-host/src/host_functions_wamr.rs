@@ -434,7 +434,7 @@ pub fn float_from_int(
     env: wasm_exec_env_t,
     in_int: i64,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let a = BigDecimal::from(in_int);
     // println!("float_from_int {a}");
@@ -445,7 +445,7 @@ pub fn float_from_uint(
     env: wasm_exec_env_t,
     in_uint_ptr: *const u8,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let v: u64 = unsafe {
         let inst = wasm_runtime_get_module_inst(env);
@@ -467,7 +467,7 @@ pub fn float_set(
     exponent: i32,
     mantissa: i64,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let value = BigDecimal::from_bigint(BigInt::from(mantissa), -exponent as i64);
     // warn!("float_set {value}");
@@ -498,7 +498,7 @@ pub fn float_add(
     in_buf1: *const u8,
     in_buf2: *const u8,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -517,7 +517,7 @@ pub fn float_subtract(
     in_buf1: *const u8,
     in_buf2: *const u8,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -536,7 +536,7 @@ pub fn float_multiply(
     in_buf1: *const u8,
     in_buf2: *const u8,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -555,7 +555,7 @@ pub fn float_divide(
     in_buf1: *const u8,
     in_buf2: *const u8,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buf1) {
         Ok(val) => val,
@@ -574,7 +574,7 @@ pub fn float_root(
     in_buf: *const u8,
     in_int: i32,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let f = match unpack_in_float(env, in_buf) {
         Ok(val) => match val.to_f64() {
@@ -601,7 +601,7 @@ pub fn float_log(
     env: wasm_exec_env_t,
     in_buf: *const u8,
     out_buf: *mut u8,
-    rounding_modes: i32,
+    rounting_mode: i32,
 ) -> i32 {
     let f = match unpack_in_float(env, in_buf) {
         Ok(val) => match val.to_f64() {

@@ -1,6 +1,5 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
-#![allow(dead_code)]
 #![cfg_attr(target_arch = "wasm32", no_std)]
 
 #[cfg(not(target_arch = "wasm32"))]

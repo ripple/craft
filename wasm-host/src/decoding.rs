@@ -382,7 +382,7 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
         // Try to parse as XRP amount in drops
         if let Ok(drops) = amount_str.parse::<i64>() {
             let encoded = if drops >= 0 {
-                // Positive XRP: value | cPositive flag
+                // Positive XRP: value | XRP_POSITIVE_FLAG
                 (drops as u64) | XRP_POSITIVE_FLAG
             } else {
                 // Negative XRP: set the not-XRP bit and clear the sign bit

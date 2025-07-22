@@ -1,12 +1,22 @@
 #![allow(unused)]
 use crate::data_provider::{
-    DataProvider, HostError, XRPL_CONTRACT_DATA_SIZE, error_code_to_string, unpack_locator,
+    DataProvider, HostError, RippledRoundingMode, XRPL_CONTRACT_DATA_SIZE, error_code_to_string,
+    unpack_locator,
 };
-use crate::decoding::ACCOUNT_ID_LEN;
+use crate::decoding::{
+    _deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN,
+};
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
-use log::debug;
-use wamr_rust_sdk::sys::{wasm_exec_env_t, wasm_runtime_get_function_attachment};
+use bigdecimal::num_bigint::{BigInt, ToBigInt};
+use bigdecimal::num_traits::real::Real;
+use bigdecimal::{BigDecimal, ToPrimitive};
+use log::{debug, warn};
+use num_traits::FromPrimitive;
+use wamr_rust_sdk::sys::{
+    wasm_exec_env_t, wasm_runtime_get_function_attachment, wasm_runtime_get_module_inst,
+    wasm_runtime_validate_native_addr,
+};
 
 const MAX_WASM_PARAM_LENGTH: usize = 1024;
 
@@ -340,7 +350,7 @@ pub fn escrow_keylet(
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = sequence.to_le_bytes();
+    let sqn_data = sequence.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Escrow, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
@@ -361,7 +371,7 @@ pub fn oracle_keylet(
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = document_id.to_le_bytes();
+    let sqn_data = document_id.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
@@ -390,6 +400,227 @@ pub fn get_nft(
     set_data(dp_res.0, out_buf_ptr, dp_res.1);
     dp_res.0
 }
+
+fn unpack_in_float(env: wasm_exec_env_t, in_buf: *const u8) -> Result<BigDecimal, HostError> {
+    let bytes: [u8; 8] = unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(inst, in_buf as *mut ::core::ffi::c_void, 8) {
+            return Err(HostError::PointerOutOfBound);
+        }
+        match std::slice::from_raw_parts(in_buf, 8).try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return Err(HostError::FloatInputMalformed),
+        }
+    };
+    _deserialize_issued_currency_amount(bytes).map_err(|_| HostError::FloatInputMalformed)
+}
+
+fn pack_out_float(decimal: BigDecimal, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
+    let bytes: [u8; 8] = match _serialize_issued_currency_value(decimal) {
+        Ok(bytes) => bytes,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+
+    unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(inst, out_buf as *mut ::core::ffi::c_void, 8) {
+            return HostError::PointerOutOfBound as i32;
+        }
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), out_buf, 8);
+    }
+    8
+}
+
+pub fn float_from_int(
+    env: wasm_exec_env_t,
+    in_int: i64,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let a = BigDecimal::from(in_int);
+    // println!("float_from_int {a}");
+    pack_out_float(a, env, out_buf)
+}
+
+pub fn float_from_uint(
+    env: wasm_exec_env_t,
+    in_uint_ptr: *const u8,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let v: u64 = unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(inst, in_uint_ptr as *mut ::core::ffi::c_void, 8) {
+            return HostError::PointerOutOfBound as i32;
+        }
+        let bytes: [u8; 8] = match std::slice::from_raw_parts(in_uint_ptr, 8).try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return HostError::FloatInputMalformed as i32,
+        };
+        u64::from_le_bytes(bytes)
+    };
+    let a = BigDecimal::from(v);
+    pack_out_float(a, env, out_buf)
+}
+
+pub fn float_set(
+    env: wasm_exec_env_t,
+    exponent: i32,
+    mantissa: i64,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let value = BigDecimal::from_bigint(BigInt::from(mantissa), -exponent as i64);
+    // warn!("float_set {value}");
+    pack_out_float(value, env, out_buf)
+}
+
+pub fn float_compare(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    // warn!("float_compare {f1} {f2}");
+    if f1 == f2 {
+        0
+    } else if f1 > f2 {
+        1
+    } else {
+        2
+    }
+}
+
+pub fn float_add(
+    env: wasm_exec_env_t,
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1 + f2;
+    pack_out_float(r, env, out_buf)
+}
+
+pub fn float_subtract(
+    env: wasm_exec_env_t,
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1 - f2;
+    pack_out_float(r, env, out_buf)
+}
+
+pub fn float_multiply(
+    env: wasm_exec_env_t,
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1 * f2;
+    pack_out_float(r, env, out_buf)
+}
+
+pub fn float_divide(
+    env: wasm_exec_env_t,
+    in_buf1: *const u8,
+    in_buf2: *const u8,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f1 = match unpack_in_float(env, in_buf1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let f2 = match unpack_in_float(env, in_buf2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    let r = f1 / f2;
+    pack_out_float(r, env, out_buf)
+}
+
+pub fn float_root(
+    env: wasm_exec_env_t,
+    in_buf: *const u8,
+    in_int: i32,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f = match unpack_in_float(env, in_buf) {
+        Ok(val) => match val.to_f64() {
+            Some(f) => f,
+            None => return HostError::FloatComputationError as i32,
+        },
+        Err(e) => return e as i32,
+    };
+
+    if in_int <= 0 {
+        return HostError::InvalidParams as i32;
+    }
+
+    let f = f.powf(1.0 / in_int as f64);
+    let r = match BigDecimal::try_from(f) {
+        Ok(val) => val,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    // warn!("float_root {r}");
+    pack_out_float(r, env, out_buf)
+}
+
+pub fn float_log(
+    env: wasm_exec_env_t,
+    in_buf: *const u8,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f = match unpack_in_float(env, in_buf) {
+        Ok(val) => match val.to_f64() {
+            Some(f) => f,
+            None => return HostError::FloatComputationError as i32,
+        },
+        Err(e) => return e as i32,
+    };
+
+    let f = f.log10();
+    let r = match BigDecimal::try_from(f) {
+        Ok(val) => val,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+
+    pack_out_float(r, env, out_buf)
+}
+///////////////////////////////////////////////////////////////////////////////
 
 fn read_utf8_from_wasm(msg_read_ptr: *mut u8, msg_read_len: usize) -> Option<String> {
     String::from_utf8(get_data(msg_read_ptr, msg_read_len)).ok()
@@ -494,25 +725,20 @@ pub fn trace_opaque_float(
     _env: wasm_exec_env_t,
     msg_read_ptr: *mut u8,
     msg_read_len: usize,
-    opaque_float_ptr: *mut u8,
-    opaque_float_len: usize,
+    op_float: *const u8,
 ) -> i32 {
+    let f = match unpack_in_float(_env, op_float) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
     debug!(
-        "trace() params: msg_read_ptr={:#?} msg_read_len={:#?} _opaque_float_ptr={:#?} _opaque_float_len={:#?}",
-        msg_read_ptr, msg_read_len, opaque_float_ptr, opaque_float_len
+        "trace() params: msg_read_ptr={:?} msg_read_len={} float={} ",
+        msg_read_ptr, msg_read_len, f
     );
     let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
         return HostError::DecodingError as i32;
     };
 
-    let data = get_data(opaque_float_ptr, opaque_float_len);
-    let array: [u8; 8] = data
-        .try_into()
-        .map_err(|v: Vec<u8>| format!("Expected 8 bytes, got {}", v.len()))
-        .unwrap();
-    let opaque_float: u64 = u64::from_be_bytes(array);
-
-    // TODO: call trace_num when it supports u64?
-    println!("WASM TRACE: {message} {opaque_float}");
+    println!("WASM TRACE: {message} {f}");
     0
 }

@@ -1,6 +1,7 @@
 #![allow(unused)]
-use crate::data_provider::{error_code_to_string, 
-    DataProvider, HostError, RippledRoundingMode, XRPL_CONTRACT_DATA_SIZE, unpack_locator,
+use crate::data_provider::{
+    DataProvider, HostError, RippledRoundingMode, XRPL_CONTRACT_DATA_SIZE, error_code_to_string,
+    unpack_locator,
 };
 use crate::decoding::{
     _deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN,

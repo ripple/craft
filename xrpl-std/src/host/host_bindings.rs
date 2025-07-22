@@ -433,7 +433,7 @@ unsafe extern "C" {
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
     ) -> i32;
-    
+
     /// Generates a keylet for a credential.
     ///
     /// # Parameters
@@ -533,7 +533,7 @@ unsafe extern "C" {
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
     ) -> i32;
-    
+
     /// Computes the Keylet for an escrow entry in a ledger.
     ///
     /// # Parameters
@@ -768,7 +768,7 @@ unsafe extern "C" {
     pub fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
 
     /// Converts an unsigned integer to an opaque float representation
-    /// # Parameters 
+    /// # Parameters
     /// * `in_uint_ptr` - Pointer to the input unsigned integer
     /// * `out_buf` - Pointer to output buffer where the float will be written
     /// * `rounding_modes` - Rounding mode to use for the conversion
@@ -802,7 +802,12 @@ unsafe extern "C" {
     /// * `rounding_modes` - Rounding mode to use for the addition
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_add(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_add(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
 
     /// Subtracts two opaque float values
     /// # Parameters
@@ -812,7 +817,12 @@ unsafe extern "C" {
     /// * `rounding_modes` - Rounding mode to use for the subtraction
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_subtract(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_subtract(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
 
     /// Multiplies two opaque float values
     /// # Parameters
@@ -822,7 +832,12 @@ unsafe extern "C" {
     /// * `rounding_modes` - Rounding mode to use for the multiplication
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_multiply(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_multiply(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
 
     /// Divides two opaque float values
     /// # Parameters
@@ -832,7 +847,12 @@ unsafe extern "C" {
     /// * `rounding_modes` - Rounding mode to use for the division
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_divide(in_buf1: *const u8, in_buf2: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_divide(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
 
     /// Calculates the nth root of an opaque float value
     /// # Parameters
@@ -842,7 +862,8 @@ unsafe extern "C" {
     /// * `rounding_modes` - Rounding mode to use for the operation
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32)
+    -> i32;
 
     /// Calculates the natural logarithm of an opaque float value
     /// # Arguments

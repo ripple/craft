@@ -427,8 +427,18 @@ pub async fn configure() -> Result<Config> {
 pub async fn test(wasm_path: &Path, function: Option<String>) -> Result<()> {
     println!("{}", "Testing WASM contract...".cyan());
 
+    // Extract project name from wasm path
+    let project_name = wasm_path
+        .parent()
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown");
+
     // Use the new TestRunner for a better interface
-    let runner = TestRunner::new(wasm_path).verbose(false);
+    let runner = TestRunner::new(wasm_path, project_name).verbose(false);
 
     // Interactive test case selection
     let test_cases = vec![
@@ -441,16 +451,6 @@ pub async fn test(wasm_path: &Path, function: Option<String>) -> Result<()> {
 
     match selection {
         "Run all test cases" => {
-            // Extract project name from wasm path
-            let project_name = wasm_path
-                .parent()
-                .and_then(|p| p.parent())
-                .and_then(|p| p.parent())
-                .and_then(|p| p.parent())
-                .and_then(|p| p.file_name())
-                .and_then(|n| n.to_str())
-                .unwrap_or("unknown");
-
             let runner = runner.verbose(true);
             let results = runner.run_all_tests(project_name)?;
 
@@ -517,21 +517,34 @@ pub fn list_projects() -> Result<()> {
     Ok(())
 }
 
-pub fn list_test_cases(project: Option<&str>) -> Result<()> {
-    let fixtures_dir = std::env::current_dir()?.join("wasm-host").join("fixtures");
+fn list_all_projects() -> Result<Vec<String>> {
+    let mut projects = Vec::new();
+    let projects_dir = std::env::current_dir()?.join("projects");
 
+    if projects_dir.exists() {
+        for entry in fs::read_dir(projects_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                if let Some(name) = path.file_name() {
+                    projects.push(name.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+
+    Ok(projects)
+}
+
+pub fn list_test_cases(project: Option<&str>) -> Result<()> {
     if let Some(proj) = project {
         // List test cases for specific project
-        let project_fixtures = fixtures_dir.join(proj);
-        if project_fixtures.exists() {
+        let test_cases = discover_test_cases(proj)?;
+
+        if !test_cases.is_empty() {
             println!("{}", format!("Test cases for {}:", proj).cyan());
-            for entry in fs::read_dir(project_fixtures)? {
-                let entry = entry?;
-                if entry.path().is_dir() {
-                    if let Some(name) = entry.path().file_name() {
-                        println!("  • {}", name.to_string_lossy());
-                    }
-                }
+            for test_case in test_cases {
+                println!("  • {}", test_case);
             }
         } else {
             println!(
@@ -542,20 +555,16 @@ pub fn list_test_cases(project: Option<&str>) -> Result<()> {
     } else {
         // List all test cases
         println!("{}", "Available test cases by project:".cyan());
-        for entry in fs::read_dir(fixtures_dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() && !path.file_name().unwrap().to_str().unwrap().starts_with('.') {
-                if let Some(project_name) = path.file_name() {
-                    println!("\n{}:", project_name.to_string_lossy().bold());
-                    for test_entry in fs::read_dir(&path)? {
-                        let test_entry = test_entry?;
-                        if test_entry.path().is_dir() {
-                            if let Some(test_name) = test_entry.path().file_name() {
-                                println!("  • {}", test_name.to_string_lossy());
-                            }
-                        }
-                    }
+
+        // Get all projects
+        let projects = list_all_projects()?;
+
+        for project in projects {
+            let test_cases = discover_test_cases(&project)?;
+            if !test_cases.is_empty() {
+                println!("\n{}:", project.bold());
+                for test_case in test_cases {
+                    println!("  • {}", test_case);
                 }
             }
         }
@@ -568,9 +577,9 @@ pub fn list_all_tests() -> Result<()> {
 }
 
 pub fn list_fixtures() -> Result<()> {
-    let fixtures_dir = std::env::current_dir()?.join("wasm-host").join("fixtures");
-
     println!("{}", "Test fixtures structure:".cyan());
+    println!("{}", "Convention: fixtures should be in projects/<project>/fixtures/<project>/<test_case>/".italic());
+
     fn print_tree(dir: &Path, prefix: &str) -> Result<()> {
         for (i, entry) in fs::read_dir(dir)?.enumerate() {
             let entry = entry?;
@@ -590,17 +599,48 @@ pub fn list_fixtures() -> Result<()> {
         Ok(())
     }
 
-    print_tree(&fixtures_dir, "")?;
+    // Show fixtures in wasm-host directory (only for backward compatibility with escrow)
+    let wasm_host_fixtures = std::env::current_dir()?.join("wasm-host").join("fixtures");
+    if wasm_host_fixtures.exists() {
+        println!("\n{}", "wasm-host/fixtures/ (legacy location for escrow):".bold());
+        print_tree(&wasm_host_fixtures, "  ")?;
+    }
+
+    // Show fixtures in project directories
+    let projects_dir = std::env::current_dir()?.join("projects");
+    if projects_dir.exists() {
+        for entry in fs::read_dir(projects_dir)? {
+            let entry = entry?;
+            let project_path = entry.path();
+            if project_path.is_dir() {
+                let fixtures_path = project_path.join("fixtures");
+                if fixtures_path.exists() {
+                    if let Some(project_name) = project_path.file_name() {
+                        println!(
+                            "\n{}",
+                            format!("projects/{}/fixtures/:", project_name.to_string_lossy())
+                                .bold()
+                        );
+                        print_tree(&fixtures_path, "  ")?;
+                    }
+                }
+            }
+        }
+    }
+
     Ok(())
 }
 
 pub fn discover_test_cases(project: &str) -> Result<Vec<String>> {
+    // Convention: fixtures must be in projects/<project>/fixtures/<project>/<test_case>/
     let fixtures_dir = std::env::current_dir()?
-        .join("wasm-host")
+        .join("projects")
+        .join(project)
         .join("fixtures")
         .join(project);
 
     let mut test_cases = Vec::new();
+
     if fixtures_dir.exists() {
         for entry in fs::read_dir(fixtures_dir)? {
             let entry = entry?;
@@ -698,8 +738,18 @@ pub fn run_test(
     function: Option<&str>,
     verbose: bool,
 ) -> Result<()> {
+    // Extract project name from wasm path
+    let project_name = wasm_path
+        .parent()
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown");
+    
     // Use the new TestRunner for consistent interface
-    let runner = TestRunner::new(wasm_path).verbose(verbose);
+    let runner = TestRunner::new(wasm_path, project_name).verbose(verbose);
     let result = runner.run_test(test_case, function)?;
 
     // Print output

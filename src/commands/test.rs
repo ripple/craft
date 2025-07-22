@@ -6,13 +6,15 @@ use std::process::Command;
 /// A unified test runner that simplifies wasm-host testing
 pub struct TestRunner {
     wasm_path: std::path::PathBuf,
+    project: String,
     verbose: bool,
 }
 
 impl TestRunner {
-    pub fn new(wasm_path: &Path) -> Self {
+    pub fn new(wasm_path: &Path, project: &str) -> Self {
         Self {
             wasm_path: wasm_path.to_path_buf(),
+            project: project.to_string(),
             verbose: false,
         }
     }
@@ -36,6 +38,8 @@ impl TestRunner {
             self.wasm_path.to_str().unwrap(),
             "--test-case",
             test_case,
+            "--project",
+            &self.project,
         ];
 
         if let Some(func) = function {
@@ -174,7 +178,6 @@ pub struct TestResult {
 }
 
 #[allow(dead_code)]
-
 impl TestResult {
     /// Get a human-readable description of the error
     pub fn error_description(&self) -> Option<String> {
@@ -210,7 +213,7 @@ pub async fn quick_test(project: &str, test_case: Option<&str>, verbose: bool) -
     let project_path = std::env::current_dir()?.join("projects").join(project);
     let wasm_path = crate::utils::find_wasm_output(&project_path)?;
 
-    let runner = TestRunner::new(&wasm_path).verbose(verbose);
+    let runner = TestRunner::new(&wasm_path, project).verbose(verbose);
 
     if let Some(case) = test_case {
         // Run single test

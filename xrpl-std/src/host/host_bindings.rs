@@ -1,3 +1,22 @@
+//TODO add docs after discussing the interface
+//Note that Craft currently does not honor the rounding modes
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TO_NEAREST: i32 = 0;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_TOWARDS_ZERO: i32 = 1;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_DOWNWARD: i32 = 2;
+#[allow(unused)]
+pub const FLOAT_ROUNDING_MODES_UPWARD: i32 = 3;
+
+// pub enum RippledRoundingModes{
+//     ToNearest = 0,
+//     TowardsZero = 1,
+//     DOWNWARD = 2,
+//     UPWARD = 3
+// }
+
+#[allow(unused)]
 #[link(wasm_import_module = "host_lib")]
 unsafe extern "C" {
     // ###############################
@@ -11,7 +30,7 @@ unsafe extern "C" {
     /// # Arguments
     ///
     /// - `out_buff_ptr`: A mutable raw pointer to the buffer where the ledger sequence
-    ///                   number will be written.
+    ///   number will be written.
     /// - `out_buff_len`: Specifies the size of the buffer pointed to by `out_buff_ptr`.
     ///
     /// # Returns
@@ -28,10 +47,9 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to the output buffer where the parent ledger time will
-    ///                   be stored. The buffer should be pre-allocated with enough space to hold
-    ///                   the data.
+    ///   be stored. The buffer should be pre-allocated with enough space to hold the data.
     /// - `out_buff_len`: The length of the output buffer. This value must be at least as large as
-    ///                   the data intended to be written to avoid memory issues.
+    ///   the data intended to be written to avoid memory issues.
     ///
     /// # Returns
     ///
@@ -48,10 +66,9 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to a buffer where the parent ledger hash will be written.
-    ///                   The buffer must be allocated and managed by the caller.
+    ///   The buffer must be allocated and managed by the caller.
     /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///                   buffer and ensures that the function does not write beyond the allowed
-    ///                   length.
+    ///   buffer and ensures that the function does not write beyond the allowed length.
     ///
     /// # Returns
     ///
@@ -70,10 +87,10 @@ unsafe extern "C" {
     /// # Parameters
     ///
     /// - `keylet_ptr`: A raw pointer to the keylet, which is a unique identifier used to
-    ///                 locate or store data in the ledger.
+    ///   locate or store data in the ledger.
     /// - `keylet_len`: The length of the keylet specified by `keylet_ptr`.
     /// - `cache_num`: The cache number to which the keylet will be placed in.
-    ///                If 0, the host will assign a new cache space.
+    ///   If 0, the host will assign a new cache space.
     ///
     /// # Returns
     ///
@@ -95,6 +112,46 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
     pub fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field2(
+        field: i32,
+        field2: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field3(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field4(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        field4: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field5(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        field4: i32,
+        field5: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+    pub fn get_tx_field6(
+        field: i32,
+        field2: i32,
+        field3: i32,
+        field4: i32,
+        field5: i32,
+        field6: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
 
     /// Retrieves a specific field from the current ledger object and writes it into the provided buffer.
     ///
@@ -186,7 +243,7 @@ unsafe extern "C" {
     /// # Parameters
     /// - `cache_num`: The cache index of the ledger object to access.
     /// - `locator_ptr`: A pointer to the memory location containing the locator string data
-    ///                  (used to identify the nested field in the ledger object).
+    ///   (used to identify the nested field in the ledger object).
     /// - `locator_len`: The length of the locator string.
     /// - `out_buff_ptr`: A pointer to the buffer where the retrieved nested field value will be written.
     /// - `out_buff_len`: The size of the output buffer in bytes.
@@ -213,7 +270,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_tx_array_len(field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided field value.
@@ -225,7 +282,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_current_ledger_obj_array_len(field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided cache number and field value.
@@ -238,7 +295,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_ledger_obj_array_len(cache_num: i32, field: i32) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
@@ -251,7 +308,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_tx_nested_array_len(locator_ptr: *const u8, locator_len: usize) -> i32;
 
     /// Retrieves the length of an array based on the provided locator.
@@ -264,7 +321,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_current_ledger_obj_nested_array_len(
         locator_ptr: *const u8,
         locator_len: usize,
@@ -281,7 +338,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of array length on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn get_ledger_obj_nested_array_len(
         cache_num: i32,
         locator_ptr: *const u8,
@@ -321,7 +378,7 @@ unsafe extern "C" {
     ///
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   `../core/error_codes.rs`
+    ///   ../core/error_codes.rs
     pub fn compute_sha512_half(
         data_ptr: *const u8,
         data_len: usize,
@@ -366,7 +423,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn check_keylet(
@@ -419,7 +476,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn delegate_keylet(
@@ -444,7 +501,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn deposit_preauth_keylet(
@@ -467,7 +524,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn did_keylet(
@@ -515,7 +572,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn line_keylet(
@@ -541,7 +598,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn nft_offer_keylet(
@@ -564,7 +621,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn offer_keylet(
@@ -613,7 +670,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn paychan_keylet(
@@ -637,7 +694,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn signers_keylet(
@@ -659,7 +716,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn ticket_keylet(
@@ -697,18 +754,139 @@ unsafe extern "C" {
     ) -> i32;
 
     // #############################
+    // Host Function Category: FLOAT
+    // #############################
+    //Note that Craft currently does not honor the rounding mode
+
+    /// Converts a signed 64-bit integer to an opaque float representation
+    /// # Parameters
+    /// * `in_int` - The input integer to convert
+    /// * `out_buf` - Pointer to output buffer where the float will be written
+    /// * `rounding_modes` - Rounding mode to use for the conversion
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
+
+    /// Converts an unsigned integer to an opaque float representation
+    /// # Parameters
+    /// * `in_uint_ptr` - Pointer to the input unsigned integer
+    /// * `out_buf` - Pointer to output buffer where the float will be written
+    /// * `rounding_modes` - Rounding mode to use for the conversion
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+
+    /// Creates a float from explicit exponent and mantissa values
+    /// # Parameters
+    /// * `exponent` - The exponent value
+    /// * `mantissa` - The mantissa value
+    /// * `out_buf` - Pointer to output buffer where the float will be written
+    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
+
+    /// Compares two opaque float values
+    /// # Parameters
+    /// * `in_buf1` - Pointer to first float value
+    /// * `in_buf2` - Pointer to second float value
+    /// # Returns
+    /// 0 if equal, 1 if first > second, 2 if first < second,
+    pub fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32;
+
+    /// Adds two opaque float values
+    /// # Parameters
+    /// * `in_buf1` - Pointer to first float value
+    /// * `in_buf2` - Pointer to second float value
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the addition
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_add(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
+
+    /// Subtracts two opaque float values
+    /// # Parameters
+    /// * `in_buf1` - Pointer to first float value
+    /// * `in_buf2` - Pointer to second float value
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the subtraction
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_subtract(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
+
+    /// Multiplies two opaque float values
+    /// # Parameters
+    /// * `in_buf1` - Pointer to first float value
+    /// * `in_buf2` - Pointer to second float value
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the multiplication
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_multiply(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
+
+    /// Divides two opaque float values
+    /// # Parameters
+    /// * `in_buf1` - Pointer to dividend float value
+    /// * `in_buf2` - Pointer to divisor float value
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the division
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_divide(
+        in_buf1: *const u8,
+        in_buf2: *const u8,
+        out_buf: *mut u8,
+        rounding_modes: i32,
+    ) -> i32;
+
+    /// Calculates the nth root of an opaque float value
+    /// # Parameters
+    /// * `in_buf` - Pointer to input float value
+    /// * `in_int` - The root to calculate (e.g., 2 for square root)
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32)
+    -> i32;
+
+    /// Calculates the natural logarithm of an opaque float value
+    /// # Arguments
+    /// * `in_buf` - Pointer to input float value
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_log(in_buf: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+
+    // #############################
     // Host Function Category: TRACE
     // #############################
 
     /// Print to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will see this.
     ///
     /// # Parameters
-    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
-    /// * `msg_read_len`: The byte length of the text to send to the trace log.
-    /// * `data_read_ptr`: A pointer to an array of bytes containing arbitrary data.
-    /// * `data_read_len`: The byte length of the data to send to the trace log.
-    /// * `as_hex`: If 0 treat the data_read_ptr as pointing at a string of text, otherwise treat it
-    ///      as data and print hex.
+    /// - `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// - `msg_read_len`: The byte length of the text to send to the trace log.
+    /// - `data_read_ptr`: A pointer to an array of bytes containing arbitrary data.
+    /// - `data_read_len`: The byte length of the data to send to the trace log.
+    /// - `as_hex`: If 0 treat the data_read_ptr as pointing at a string of text, otherwise treat it
+    ///   as data and print hex.
     ///
     /// # Returns
     ///
@@ -747,7 +925,6 @@ unsafe extern "C" {
     /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
     /// * `msg_read_len`: The byte length of the text to send to the trace log.
     /// * `opaque_float_ptr`: A pointer to an array of 8 bytes containing the u64 opaque pointer value.
-    /// * `opaque_float_len`: The byte length of the text to send to the trace log.
     ///
     /// # Returns
     ///
@@ -759,6 +936,5 @@ unsafe extern "C" {
         _msg_read_ptr: *const u8,
         _msg_read_len: usize,
         _opaque_float_ptr: *const u8,
-        _opaque_float_len: usize,
     ) -> i32;
 }

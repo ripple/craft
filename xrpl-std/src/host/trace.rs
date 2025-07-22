@@ -89,7 +89,7 @@ pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
             host::trace_num(msg.as_ptr(), msg.len(), *num_drops)
         },
         TokenAmount::IOU { amount, .. } => unsafe {
-            host::trace_opaque_float(msg.as_ptr(), msg.len(), amount.0.as_ptr(), 8)
+            host::trace_opaque_float(msg.as_ptr(), msg.len(), amount.0.as_ptr())
         },
         TokenAmount::MPT { num_units, .. } => unsafe {
             // TODO: Consider trace_amount?
@@ -97,5 +97,12 @@ pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
         },
     };
 
+    match_result_code(result_code, || result_code)
+}
+
+/// Write a float to the XRPLD trace log
+#[inline(always)]
+pub fn trace_float(msg: &str, f: &[u8; 8]) -> Result<i32> {
+    let result_code = unsafe { host::trace_opaque_float(msg.as_ptr(), msg.len(), f.as_ptr()) };
     match_result_code(result_code, || result_code)
 }

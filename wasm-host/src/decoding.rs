@@ -10,7 +10,7 @@ use xrpl::core::binarycodec::exceptions::XRPLBinaryCodecException;
 use xrpl::core::binarycodec::types::{Amount, Currency, Issue};
 use xrpl::core::exceptions::{XRPLCoreException, XRPLCoreResult};
 use xrpl::utils::exceptions::XRPRangeException;
-use xrpl::utils::{MAX_IOU_EXPONENT, MIN_IOU_EXPONENT, verify_valid_ic_value};
+use xrpl::utils::{MAX_IOU_EXPONENT, MAX_IOU_PRECISION, MIN_IOU_EXPONENT, verify_valid_ic_value};
 
 pub const ACCOUNT_ID_LEN: usize = 20;
 pub type AccountId = Vec<u8>;
@@ -251,7 +251,8 @@ pub fn decode_vl_other(s: &str) -> Option<Vec<u8>> {
     decode_hex(s)
 }
 
-// the following consts and _serialize_issued_currency_value function are copied
+// the following consts, _serialize_issued_currency_value and
+// _deserialize_issued_currency_amount functions are copied
 // from https://github.com/sephynox/xrpl-rust
 const _MIN_MANTISSA: u128 = u128::pow(10, 15);
 const _MAX_MANTISSA: u128 = u128::pow(10, 16) - 1;
@@ -259,7 +260,8 @@ const _POS_SIGN_BIT_MASK: i64 = 0x4000000000000000;
 const _ZERO_CURRENCY_AMOUNT_HEX: u64 = 0x8000000000000000;
 /// Serializes the value field of an issued currency amount
 /// to its bytes representation.
-fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 8]> {
+pub fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 8]> {
+    let decimal = decimal.with_prec(MAX_IOU_PRECISION as u64);
     verify_valid_ic_value(&decimal.to_scientific_notation())
         .map_err(|e| XRPLCoreException::XRPLUtilsError(e.to_string()))?;
 
@@ -317,8 +319,41 @@ fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[u8; 
         // last 54 bits are mantissa
         serial |= mantissa as i128;
 
-        Ok((serial as u64).to_le_bytes())
+        Ok((serial as u64).to_be_bytes())
     }
+}
+
+//TODO we will use rippled Number class for computation
+pub fn _deserialize_issued_currency_amount(bytes: [u8; 8]) -> XRPLCoreResult<BigDecimal> {
+    let mut value: BigDecimal;
+
+    // Some wizardry by Amie Corso
+    let exp = ((bytes[0] as i32 & 0x3F) << 2) + ((bytes[1] as i32 & 0xFF) >> 6) - 97;
+
+    if exp < MIN_IOU_EXPONENT {
+        value = BigDecimal::from(0);
+    } else {
+        let hex_mantissa = hex::encode([&[bytes[1] & 0x3F], &bytes[2..]].concat());
+        let int_mantissa = i128::from_str_radix(&hex_mantissa, 16)
+            .map_err(XRPLBinaryCodecException::ParseIntError)?;
+
+        // Adjust scale using the exponent
+        let scale = exp.unsigned_abs();
+        value = BigDecimal::new(int_mantissa.into(), scale as i64);
+
+        // Handle the sign
+        if bytes[0] & 0x40 > 0 {
+            // Set the value to positive (BigDecimal assumes positive by default)
+            value = value.abs();
+        } else {
+            // Set the value to negative
+            value = -value.abs();
+        }
+    }
+    verify_valid_ic_value(&value.to_string())
+        .map_err(|e| XRPLCoreException::XRPLUtilsError(e.to_string()))?;
+
+    Ok(value)
 }
 
 pub fn decode_number(s: &str) -> Option<Vec<u8>> {

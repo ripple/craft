@@ -319,7 +319,7 @@ pub fn _serialize_issued_currency_value(decimal: BigDecimal) -> XRPLCoreResult<[
         // last 54 bits are mantissa
         serial |= mantissa as i128;
 
-        Ok((serial as u64).to_le_bytes())
+        Ok((serial as u64).to_be_bytes())
     }
 }
 

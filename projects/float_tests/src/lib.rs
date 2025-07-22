@@ -98,6 +98,8 @@ fn test_float_compare() {
     let mut f1: [u8; 8] = [0u8; 8];
     if 8 != unsafe { float_from_int(1, f1.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) } {
         let _ = trace("  float from 1: failed");
+    } else {
+        let _ = trace_float("  float from 1:", &f1);
     }
 
     if 0 == unsafe { float_compare(f1.as_ptr(), FLOAT_ONE.as_ptr()) } {

@@ -27,6 +27,8 @@ pub enum HostError {
     InvalidAccount = -16,
     InvalidField = -17,
     IndexOutOfBounds = -18,
+    FloatInputMalformed = -19,
+    FloatComputationError = -20,
 }
 
 impl From<i64> for HostError {
@@ -90,6 +92,8 @@ pub fn error_code_to_string(code: i64) -> &'static str {
         HostError::InvalidAccount => "INVALID_ACCOUNT (-16)",
         HostError::InvalidField => "INVALID_FIELD (-17)",
         HostError::IndexOutOfBounds => "INDEX_OUT_OF_BOUNDS (-18)",
+        HostError::FloatInputMalformed => "FLOAT_INPUT_MALFORMED (-19)",
+        HostError::FloatComputationError => "FLOAT_COMPUTATION_ERROR (-20)",
     }
 }
 
@@ -132,10 +136,20 @@ pub fn unpack_locator(buffer: Vec<u8>) -> Result<Vec<i32>, HostError> {
     Ok(result)
 }
 
+use num_derive::FromPrimitive;
+#[derive(FromPrimitive, Debug)]
+pub enum RippledRoundingMode {
+    ToNearest = 0,
+    TowardsZero = 1,
+    DOWNWARD = 2,
+    UPWARD = 3,
+}
+
 pub struct DataProvider {
     data_source: MockData,
     next_slot: usize,
     slots: [Keylet; NUM_SLOTS],
+    pub _rounding_mode: RippledRoundingMode,
 }
 
 impl DataProvider {
@@ -145,6 +159,7 @@ impl DataProvider {
             data_source,
             next_slot: 1,
             slots,
+            _rounding_mode: RippledRoundingMode::ToNearest,
         }
     }
 

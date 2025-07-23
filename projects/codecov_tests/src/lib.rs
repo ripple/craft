@@ -10,7 +10,7 @@ use xrpl_std::core::error_codes;
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;
-use xrpl_std::host::trace::{trace, trace_num};
+use xrpl_std::host::trace::{trace, trace_num as trace_number};
 use xrpl_std::sfield;
 
 mod host_bindings_loose;
@@ -19,15 +19,15 @@ include!("host_bindings_loose.rs");
 fn check_error(result: i32, expected: i32, test_name: &'static str) -> () {
     match result {
         code if code == expected => {
-            let _ = trace_num(test_name, code.into());
+            let _ = trace_number(test_name, code.into());
             return;
         }
         code if code >= 0 => {
-            let _ = trace_num("TEST FAILED", code.into());
+            let _ = trace_number("TEST FAILED", code.into());
             panic!("Unexpected success code: {}", code);
         }
         code => {
-            let _ = trace_num("TEST FAILED", code.into());
+            let _ = trace_number("TEST FAILED", code.into());
             panic!("Error code: {}", code);
         }
     }
@@ -136,19 +136,19 @@ pub extern "C" fn finish() -> bool {
         "get_ledger_obj_array_len",
     );
     check_error(
-        unsafe { host::get_nested_tx_array_len(locator.as_ptr(), locator.len()) },
+        unsafe { host::get_tx_nested_array_len(locator.as_ptr(), locator.len()) },
         32,
-        "get_nested_tx_array_len",
+        "get_tx_nested_array_len",
     );
     check_error(
-        unsafe { host::get_nested_current_ledger_obj_array_len(locator.as_ptr(), locator.len()) },
+        unsafe { host::get_current_ledger_obj_nested_array_len(locator.as_ptr(), locator.len()) },
         32,
-        "get_nested_current_ledger_obj_array_len",
+        "get_current_ledger_obj_nested_array_len",
     );
     check_error(
-        unsafe { host::get_nested_ledger_obj_array_len(1, locator.as_ptr(), locator.len()) },
+        unsafe { host::get_ledger_obj_nested_array_len(1, locator.as_ptr(), locator.len()) },
         32,
-        "get_nested_ledger_obj_array_len",
+        "get_ledger_obj_nested_array_len",
     );
 
     // ########################################
@@ -180,6 +180,152 @@ pub extern "C" fn finish() -> bool {
             "get_ledger_sqn_len_too_long",
         )
     });
+
+    // ########################################
+    // Step #3: Test getData[Type] edge cases
+    // ########################################
+
+    // SField
+    check_error(
+        unsafe { host::get_tx_array_len(2) }, // not a valid SField value
+        error_codes::INVALID_FIELD,
+        "get_tx_array_len_invalid_sfield",
+    );
+
+    // Slice
+    check_error(
+        unsafe { host_bindings_loose::get_tx_nested_array_len(-1, locator.len() as i32) },
+        error_codes::INVALID_PARAMS,
+        "get_tx_nested_array_len_neg_ptr",
+    );
+    check_error(
+        unsafe { host_bindings_loose::get_tx_nested_array_len(locator.as_ptr() as i32, -1) },
+        error_codes::INVALID_PARAMS,
+        "get_tx_nested_array_len_neg_len",
+    );
+    let long_len = 4 * 1024 + 5;
+    check_error(
+        unsafe {
+            host_bindings_loose::get_tx_nested_array_len(locator.as_ptr() as i32, long_len as i32)
+        },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "get_tx_nested_array_len_too_long",
+    );
+    check_error(
+        unsafe {
+            host_bindings_loose::get_tx_nested_array_len(
+                locator.as_ptr() as i32 + 1_000_000_000,
+                locator.len() as i32,
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "get_tx_nested_array_len_ptr_oob",
+    );
+
+    // uint256
+    check_error(
+        unsafe {
+            host_bindings_loose::cache_ledger_obj(
+                locator.as_ptr() as i32 + 1_000_000_000,
+                locator.len() as i32,
+                1,
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "cache_ledger_obj_ptr_oob",
+    );
+    check_error(
+        unsafe {
+            host_bindings_loose::cache_ledger_obj(locator.as_ptr() as i32, locator.len() as i32, 1)
+        },
+        error_codes::INVALID_PARAMS,
+        "cache_ledger_obj_wrong_len",
+    );
+
+    // AccountID
+    let _ = with_buffer::<32, _, _>(|ptr, len| {
+        check_error(
+            unsafe {
+                host_bindings_loose::account_keylet(
+                    locator.as_ptr() as i32 + 1_000_000_000,
+                    locator.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::POINTER_OUT_OF_BOUNDS,
+            "account_keylet_len_too_long",
+        )
+    });
+    let _ = with_buffer::<32, _, _>(|ptr, len| {
+        check_error(
+            unsafe {
+                host_bindings_loose::account_keylet(
+                    locator.as_ptr() as i32,
+                    locator.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "account_keylet_wrong_len",
+        )
+    });
+
+    // Currency
+    let _ = with_buffer::<32, _, _>(|ptr, len| {
+        check_error(
+            unsafe {
+                host_bindings_loose::line_keylet(
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    locator.as_ptr() as i32 + 1_000_000_000,
+                    locator.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::POINTER_OUT_OF_BOUNDS,
+            "line_keylet_len_too_long_currency",
+        )
+    });
+    let _ = with_buffer::<32, _, _>(|ptr, len| {
+        check_error(
+            unsafe {
+                host_bindings_loose::line_keylet(
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    locator.as_ptr() as i32,
+                    locator.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "line_keylet_wrong_len_currency",
+        )
+    });
+
+    // string
+    check_error(
+        unsafe {
+            host_bindings_loose::trace_num(
+                locator.as_ptr() as i32 + 1_000_000_000,
+                locator.len() as i32,
+                42,
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "trace_num_wrong_len_str",
+    );
+
+    // ########################################
+    // Step #4: Test other host function edge cases
+    // ########################################
 
     true // <-- If we get here, finish the escrow.
 }

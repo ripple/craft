@@ -203,8 +203,8 @@ pub extern "C" fn finish() -> bool {
         Err(_error) => return false,
     };
 
-    let offer_keylet = keylets::offer_keylet(&destination, seq);
-    match object_exists(offer_keylet, "Offer", sfield::Owner) {
+    let offer_keylet = keylets::offer_keylet(&account, seq);
+    match object_exists(offer_keylet, "Offer", sfield::Account) {
         Ok(exists) => {
             if exists {
                 let _ = trace("  Offer object exists, proceeding with escrow finish.");

@@ -149,12 +149,12 @@ pub extern "C" fn finish() -> bool {
     seq += 1;
 
     let deposit_preauth_keylet = keylets::deposit_preauth_keylet(&account, &destination);
-    match object_exists(deposit_preauth_keylet, "Delegate", sfield::Account) {
+    match object_exists(deposit_preauth_keylet, "DepositPreauth", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Delegate object exists, proceeding with escrow finish.");
+                let _ = trace("  DepositPreauth object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Delegate object does not exist, aborting escrow finish.");
+                let _ = trace("  DepositPreauth object does not exist, aborting escrow finish.");
                 return false;
             }
         }
@@ -202,6 +202,20 @@ pub extern "C" fn finish() -> bool {
         }
         Err(_error) => return false,
     };
+
+    let offer_keylet = keylets::offer_keylet(&destination, seq);
+    match object_exists(offer_keylet, "Offer", sfield::Owner) {
+        Ok(exists) => {
+            if exists {
+                let _ = trace("  Offer object exists, proceeding with escrow finish.");
+            } else {
+                let _ = trace("  Offer object does not exist, aborting escrow finish.");
+                return false;
+            }
+        }
+        Err(_error) => return false,
+    };
+    seq += 1;
 
     let paychan_keylet = keylets::paychan_keylet(&account, &destination, seq);
     match object_exists(paychan_keylet, "PayChannel", sfield::Account) {

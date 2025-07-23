@@ -66,7 +66,15 @@ impl Locator {
         self.buffer.as_ptr()
     }
 
+    pub fn as_ptr(&self) -> *const u8 {
+        self.buffer.as_ptr()
+    }
+
     pub fn num_packed_bytes(&self) -> usize {
+        self.cur_buffer_index
+    }
+
+    pub fn len(&self) -> usize {
         self.cur_buffer_index
     }
 

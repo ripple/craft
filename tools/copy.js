@@ -1,0 +1,40 @@
+const path = require('path')
+const fs = require('fs')
+var execSync = require('child_process').execSync
+
+if (process.argv.length < 4) {
+    console.error('Usage: node tools/copy.js <project_name> <fixture_name>')
+    process.exit(1)
+}
+
+function main() {
+    const projectName = process.argv[2]
+    const projectPath = path.resolve(__dirname, `../projects/${projectName}`)
+    execSync(`(cd ${projectPath} && cargo build --target wasm32-unknown-unknown --release && wasm-opt target/wasm32-unknown-unknown/release/${projectName}.wasm -Oz -o target/wasm32-unknown-unknown/release/${projectName}.wasm)`,
+        function (error, stdout, stderr) {
+            if (stderr) {
+                console.error(`stderr: ${stderr}`)
+            }
+            console.log(`stdout: ${stdout}`)
+            if (error) {
+                console.error(`exec error: ${error}`)
+                process.exit(1)
+            }
+            console.log(`WASM file for ${projectName} has been built and optimized.`)
+        }
+    )
+
+    const srcPath = path.resolve(__dirname, `../projects/${projectName}/target/wasm32-unknown-unknown/release/${projectName}.wasm`)
+    const data = fs.readFileSync(srcPath)
+    const wasm = data.toString('hex')
+    
+    const fixtureName = process.argv[3]
+    console.log(`Updating fixture: ${fixtureName}`)
+    const dstPath = path.resolve(__dirname, '../../rippled-all/smart-escrows/src/test/app/wasm_fixtures/fixtures.cpp')
+    const dstContent = fs.readFileSync(dstPath, 'utf8')
+    const re = new RegExp(String.raw`extern std::string const ${fixtureName} =[ \n]+"[^;]*;`, "g")
+    const updatedContent = dstContent.replace(re, `extern std::string const ${fixtureName} = "${wasm}";`)
+    fs.writeFileSync(dstPath, updatedContent)
+}
+
+main()

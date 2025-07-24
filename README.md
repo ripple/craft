@@ -142,7 +142,7 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-Test fixtures follow a directory convention. Place fixtures in `projects/<project>/fixtures/<test_case>/`
+Test fixtures must be placed in `projects/<project>/fixtures/<test_case>/`
 
 This convention co-locates each project's test data with its source code, making projects self-contained.
 
@@ -245,14 +245,15 @@ cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
 From any workspace directory:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success
+cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --project <project_name>
 ```
 
 ### Command Line Options
 
 - `--wasm-file <PATH>`: Path to the WebAssembly module to test
 - `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
-- `--test-case <CASE>`: Test case to run (success/failure)
+- `--test-case <CASE>`: Test case to run (defaults to `success`)
+- `--project <NAME>`: Project name (required)
 - `--verbose`: Enable detailed logging
 - `-h, --help`: Show help information
 

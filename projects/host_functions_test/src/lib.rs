@@ -33,11 +33,7 @@ use xrpl_std::sfield;
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     let _ = trace_data("=== HOST FUNCTIONS TEST ===", &[], DataRepr::AsHex);
-    let _ = trace_data(
-        "Testing 26 host functions",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace_data("Testing 26 host functions", &[], DataRepr::AsHex);
 
     // Category 1: Ledger Header Data Functions (3 functions)
     // Error range: -100 to -199

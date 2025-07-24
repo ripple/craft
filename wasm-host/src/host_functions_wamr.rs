@@ -485,12 +485,10 @@ pub fn float_compare(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u
         Err(e) => return e as i32,
     };
     // warn!("float_compare {f1} {f2}");
-    if f1 == f2 {
-        0
-    } else if f1 > f2 {
-        1
-    } else {
-        2
+    match f1.cmp(&f2) {
+        std::cmp::Ordering::Equal => 0,
+        std::cmp::Ordering::Greater => 1,
+        std::cmp::Ordering::Less => 2,
     }
 }
 

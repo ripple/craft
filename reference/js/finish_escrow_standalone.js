@@ -11,13 +11,12 @@ if (process.argv.length != 6) {
   process.exit(1)
 }
 
-const url = "ws://localhost:6006"
+const url = "ws://127.0.0.1:6006"
 const client = new xrpl.Client(url)
 
 const [, , account, accountSecret, owner, offerSequence] = process.argv
 
 async function submit(tx, wallet, debug = true) {
-  tx.Fee = "10000"
   const result = await client.submitAndWait(tx, {autofill: true, wallet})
   console.log("SUBMITTED " + tx.TransactionType)
   if (debug)
@@ -54,7 +53,7 @@ async function finishEscrow() {
       Account: account,
       Owner: owner,
       OfferSequence: parseInt(offerSequence),
-      ComputationAllowance: "1000000",
+      ComputationAllowance: 1000000,
     }
 
     console.log("Submitting EscrowFinish transaction...")

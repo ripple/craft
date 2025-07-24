@@ -17,7 +17,6 @@ const client = new xrpl.Client(url)
 const [, , account, accountSecret, owner, offerSequence] = process.argv
 
 async function submit(tx, wallet, debug = true) {
-  tx.Fee = "10000"
   const result = await client.submitAndWait(tx, {autofill: true, wallet})
   console.log("SUBMITTED " + tx.TransactionType)
   if (debug)
@@ -45,12 +44,21 @@ async function finishEscrow() {
     console.log(`Owner (Created Escrow): ${owner}`)
     console.log(`Offer Sequence: ${offerSequence}\n`)
 
+    try {
+      await client.request({
+        command: 'account_info',
+        account,
+      })
+    } catch (error) {
+      await client.fundWallet(wallet)
+    }
+
     const tx = {
       TransactionType: 'EscrowFinish',
       Account: account,
       Owner: owner,
       OfferSequence: parseInt(offerSequence),
-      ComputationAllowance: "1000000",
+      ComputationAllowance: 1000000,
     }
 
     console.log("Submitting EscrowFinish transaction...")

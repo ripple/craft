@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -6,7 +7,6 @@ pub struct Config {
     pub wasm_target: WasmTarget,
     pub build_mode: BuildMode,
     pub optimization_level: OptimizationLevel,
-    pub use_wee_alloc: bool,
     pub project_path: PathBuf,
 }
 
@@ -25,7 +25,7 @@ impl std::fmt::Display for WasmTarget {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, ValueEnum)]
 pub enum BuildMode {
     Debug,
     Release,
@@ -40,7 +40,7 @@ impl std::fmt::Display for BuildMode {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, ValueEnum)]
 pub enum OptimizationLevel {
     None,
     Small,
@@ -63,8 +63,7 @@ impl Default for Config {
             wasm_target: WasmTarget::UnknownUnknown,
             build_mode: BuildMode::Release,
             optimization_level: OptimizationLevel::Small,
-            use_wee_alloc: false,
             project_path: std::env::current_dir().unwrap_or_default(),
         }
     }
-} 
+}

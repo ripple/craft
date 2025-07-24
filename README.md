@@ -142,17 +142,31 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project. The intent is to generalize or reuse for future projects.
+Test fixtures follow a directory convention. Place fixtures in `projects/<project>/fixtures/<test_case>/`
 
-### Success Case (`fixtures/escrow/success/`)
+This convention co-locates each project's test data with its source code, making projects self-contained.
 
-- `tx.json`: Transaction with the correct notary account
-- `ledger_object.json`: Corresponding escrow object
+### Fixture Structure
 
-### Failure Case (`fixtures/escrow/failure/`)
+Each test case directory can contain:
+- `tx.json`: Transaction data
+- `ledger_object.json`: Current ledger object being tested
+- `ledger_header.json`: Ledger header information
+- `ledger.json`: Full ledger data
+- `nfts.json`: NFT data (if applicable)
 
-- `tx.json`: Transaction with an incorrect notary account
-- `ledger_object.json`: Corresponding escrow object
+### Example Projects with Test Fixtures
+
+#### Notary Project
+The notary project includes test fixtures for validating escrow finish conditions:
+
+- **Success Case** (`projects/notary/fixtures/success/`): Tests when the escrow finish condition is met (transaction with the correct notary account)
+- **Failure Case** (`projects/notary/fixtures/failure/`): Tests when the escrow finish condition is not met (transaction with an incorrect notary account)
+
+#### Host Functions Test Project
+The host_functions_test project includes fixtures for testing various host function capabilities:
+
+- **Success Case** (`projects/host_functions_test/fixtures/success/`): Tests successful execution of 26 host functions
 
 ### Cloning the Repository
 
@@ -301,11 +315,16 @@ This data is used to test the module's `finish` function implementation.
 
 ### Adding New Test Cases
 
-To add new test cases:
+To add new test cases to a project:
 
-1. Create a new directory under `fixtures/escrow/`
-2. Add `tx.json` and `ledger_object.json` files
-3. Update the test case selection in the craft tool
+1. Create a new directory under `projects/<project>/fixtures/<test_case>/`
+2. Add desired JSON files:
+   - `tx.json`: Transaction data
+   - `ledger_object.json`: Ledger object being tested
+   - `ledger_header.json`: Ledger header information
+   - `ledger.json`: Full ledger data
+   - `nfts.json`: NFT data (if applicable)
+3. Run the test using: `craft test <project> --case <test_case>`
 
 ## Error Handling
 

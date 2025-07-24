@@ -580,8 +580,7 @@ pub fn list_fixtures() -> Result<()> {
     println!("{}", "Test fixtures structure:".cyan());
     println!(
         "{}",
-        "Convention: fixtures should be in projects/<project>/fixtures/<test_case>/"
-            .italic()
+        "Convention: fixtures should be in projects/<project>/fixtures/<test_case>/".italic()
     );
 
     fn print_tree(dir: &Path, prefix: &str) -> Result<()> {
@@ -743,7 +742,7 @@ pub fn run_test(
     test_case: &str,
     function: Option<&str>,
     verbose: bool,
-    non_interactive: bool,
+    _non_interactive: bool,
 ) -> Result<()> {
     // Extract project name from wasm path
     let project_name = wasm_path
@@ -756,9 +755,7 @@ pub fn run_test(
         .unwrap_or("unknown");
 
     // Use the new TestRunner for consistent interface
-    let runner = TestRunner::new(wasm_path, project_name)
-        .verbose(verbose)
-        .non_interactive(non_interactive);
+    let runner = TestRunner::new(wasm_path, project_name).verbose(verbose);
     let result = runner.run_test(test_case, function)?;
 
     // Print output

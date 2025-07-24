@@ -448,7 +448,13 @@ async fn main() -> Result<()> {
 
                 // Run tests
                 for test_case in test_cases {
-                    commands::run_test(&wasm_path, &test_case, function.as_deref(), verbose)?;
+                    commands::run_test(
+                        &wasm_path,
+                        &test_case,
+                        function.as_deref(),
+                        verbose,
+                        false,
+                    )?;
                 }
             }
             Commands::StartRippled { foreground } => {

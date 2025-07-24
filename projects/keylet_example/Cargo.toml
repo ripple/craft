@@ -16,3 +16,6 @@ panic = "abort"
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
+
+[profile.dev]
+panic = "abort"

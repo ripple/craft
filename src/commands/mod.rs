@@ -217,10 +217,10 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
 
     println!("{}", "Dependencies installed successfully!".green());
 
-    // Run deploy_sample.js with Node.js, passing the hex file
+    // Run deploy_sample.js with Node.js, passing the wasm file (not hex)
     let output = Command::new("node")
         .arg("reference/js/deploy_sample.js")
-        .arg(&hex_file)
+        .arg(wasm_file)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()

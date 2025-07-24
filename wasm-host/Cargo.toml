@@ -14,3 +14,9 @@ hex = "0.4.3"
 lazy_static = "1.5.0"
 wamr-rust-sdk = { git = "https://github.com/ripple/wamr-rust-sdk.git"}
 bigdecimal = {version = "0.4.8", features = ["serde-json"]}
+# bls12_381 = "=0.8.0"
+# group = "0.13.0"
+ark-bn254 = { version = "0.5" }
+ark-serialize = "0.5.0"
+ark-ec = "0.5"
+ark-ff = "0.5"

@@ -696,6 +696,126 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
+     // ###############################################################
+    // Host Function Category: Elliptic Curve Operations for BLS12-381
+    // ###############################################################
+    /// Computes the addition of two elliptic curve points
+    ///
+    /// # Parameters
+    ///
+    /// - `p1_ptr`: A pointer to the first point.
+    /// - `p1_len`: The length of the first point.
+    /// - `p2_ptr`: A pointer to the second point.
+    /// - `p2_len`: The length of the second point.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the addition result will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success: 48 bytes
+    // pub fn ec_add_helper(
+    //     p1_ptr: *const u8,
+    //     p1_len: usize,
+    //     p2_ptr: *const u8,
+    //     p2_len: usize,
+    //     out_buff_ptr: *mut u8,
+    //     out_buff_len: usize,
+    // ) -> i32;
+
+    pub fn ec_add_helper_bn254(
+        p1_ptr: *const u8,
+        p1_len: usize,
+        p2_ptr: *const u8,
+        p2_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the scalar multiplication of an elliptic curve point
+    ///
+    /// # Parameters
+    ///
+    /// - `p1_ptr`: A pointer to the first point.
+    /// - `p1_len`: The length of the first point.
+    /// - `scalar_ptr`: A pointer to the scalar.
+    /// - `scalar_len`: The length of the scalar.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the multiplication result will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success: 48 bytes
+    // pub fn ec_mul_helper(
+    //     p1_ptr: *const u8,
+    //     p1_len: usize,
+    //     scalar_ptr: *const u8,
+    //     scalar_len: usize,
+    //     out_buff_ptr: *mut u8,
+    //     out_buff_len: usize,
+    // ) -> i32;
+
+    pub fn ec_mul_helper_bn254(
+        p1_ptr: *const u8,
+        p1_len: usize,
+        scalar_ptr: *const u8,
+        scalar_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the pairing of two elliptic points, combined with ec_pairing_check() for Groth16 check
+    /// ec_pairing_helper + ec_pairing_check
+    ///
+    /// # Parameters
+    ///
+    /// - `p1_ptr`: A pointer to the first point.
+    /// - `p1_len`: The length of the first point.
+    /// - `p2_ptr`: A pointer to the second point.
+    /// - `p2_len`: The length of the second point.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the addition result will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success: 48 bytes
+    // pub fn ec_pairing_helper(
+    //     p1_ptr: *const u8,
+    //     p1_len: usize,
+    //     p2_ptr: *const u8,
+    //     p2_len: usize,
+    //     out_buff_ptr: *mut u8,
+    //     out_buff_len: usize,
+    // ) -> i32;
+
+    /// Performs the pairing check with Gt::identity(), used for general purpose pairing check
+    ///
+    /// # Parameters
+    ///
+    /// - `affine_ptr`: A pointer to multiple elliptic curve points.
+    /// - `gt_len`: The length of multiple elliptic curve points.
+    ///
+    /// # Returns
+    ///
+    /// - Returns 1 if passes the check
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    // pub fn ec_pairing_check_helper (
+    //     affine_ptr: *const u8,
+    //     affine_len: usize,
+    // ) -> i32;
+
+    pub fn ec_pairing_check_helper_bn254 (
+        affine_ptr: *const u8,
+        affine_len: usize,
+    ) -> i32;
+
+    pub fn ec_negation_helper_bn254 (
+        p_ptr: *const u8,
+        p_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize, 
+    ) -> i32;
+
     // #############################
     // Host Function Category: TRACE
     // #############################

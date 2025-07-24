@@ -814,6 +814,16 @@ unsafe extern "C" {
         rounding_modes: i32,
     ) -> i32;
 
+    /// Calculates the nth power of an opaque float value
+    /// # Parameters
+    /// * `in_buf` - Pointer to input float value
+    /// * `in_int` - The power to calculate (e.g., 2 for square)
+    /// * `out_buf` - Pointer to output buffer where result will be written
+    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// # Returns
+    /// 8 on success, error code otherwise
+    pub fn float_pow(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32) -> i32;
+
     /// Calculates the nth root of an opaque float value
     /// # Parameters
     /// * `in_buf` - Pointer to input float value

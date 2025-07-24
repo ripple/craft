@@ -12,8 +12,8 @@ use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_float, trace_num}
 use xrpl_std::host::{
     FLOAT_NEGATIVE_ONE, FLOAT_ONE, FLOAT_ROUNDING_MODES_TO_NEAREST, cache_ledger_obj, float_add,
     float_compare, float_divide, float_from_int, float_from_uint, float_log, float_multiply,
-    float_root, float_set, float_subtract, get_ledger_obj_array_len, get_ledger_obj_field,
-    get_ledger_obj_nested_field, trace_opaque_float,
+    float_pow, float_root, float_set, float_subtract, get_ledger_obj_array_len,
+    get_ledger_obj_field, get_ledger_obj_nested_field, trace_opaque_float,
 };
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
@@ -214,6 +214,78 @@ fn test_float_multiply_divide() {
     }
 }
 
+fn test_float_pow() {
+    let _ = trace("\n$$$ test_float_pow $$$");
+
+    let mut f_compute: [u8; 8] = [0u8; 8];
+    unsafe {
+        float_pow(
+            FLOAT_ONE.as_ptr(),
+            3,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    let _ = trace_float("  float cube of 1:", &f_compute);
+
+    unsafe {
+        float_pow(
+            FLOAT_NEGATIVE_ONE.as_ptr(),
+            6,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    let _ = trace_float("  float 6th power of -1:", &f_compute);
+
+    let mut f9: [u8; 8] = [0u8; 8];
+    unsafe { float_from_int(9, f9.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_pow(
+            f9.as_ptr(),
+            2,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    let _ = trace_float("  float square of 9:", &f_compute);
+
+    unsafe {
+        float_pow(
+            f9.as_ptr(),
+            0,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    let _ = trace_float("  float 0th power of 9:", &f_compute);
+
+    let mut f0: [u8; 8] = [0u8; 8];
+    unsafe { float_from_int(0, f0.as_mut_ptr(), FLOAT_ROUNDING_MODES_TO_NEAREST) };
+    unsafe {
+        float_pow(
+            f0.as_ptr(),
+            2,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    let _ = trace_float("  float square of 0:", &f_compute);
+
+    let r = unsafe {
+        float_pow(
+            f0.as_ptr(),
+            0,
+            f_compute.as_mut_ptr(),
+            FLOAT_ROUNDING_MODES_TO_NEAREST,
+        )
+    };
+    let _ = trace_num(
+        "  float 0th power of 0 (expecting INVALID_PARAMS error):",
+        r as i64,
+    );
+}
+
 fn test_float_root() {
     let _ = trace("\n$$$ test_float_root $$$");
 
@@ -364,6 +436,7 @@ pub extern "C" fn finish() -> i32 {
     test_float_compare();
     test_float_add_subtract();
     test_float_multiply_divide();
+    test_float_pow();
     test_float_root();
     test_float_log();
     test_float_negate();

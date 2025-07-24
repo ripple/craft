@@ -445,6 +445,17 @@ pub unsafe fn float_divide(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_pow(
+    in_buf: *const u8,
+    in_int: i32,
+    out_buf: *mut u8,
+    rounding_modes: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_root(
     in_buf: *const u8,
     in_int: i32,

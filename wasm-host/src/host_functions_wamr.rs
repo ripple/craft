@@ -568,6 +568,39 @@ pub fn float_divide(
     pack_out_float(r, env, out_buf)
 }
 
+pub fn float_pow(
+    env: wasm_exec_env_t,
+    in_buf: *const u8,
+    in_int: i32,
+    out_buf: *mut u8,
+    rounting_mode: i32,
+) -> i32 {
+    let f = match unpack_in_float(env, in_buf) {
+        Ok(val) => match val.to_f64() {
+            Some(f) => {
+                if f == 0.0 && in_int == 0 {
+                    return HostError::InvalidParams as i32;
+                }
+                f
+            }
+            None => return HostError::FloatComputationError as i32,
+        },
+        Err(e) => return e as i32,
+    };
+
+    if in_int < 0 {
+        return HostError::InvalidParams as i32;
+    }
+
+    let f = f.powf(in_int as f64);
+    let r = match BigDecimal::try_from(f) {
+        Ok(val) => val,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    // warn!("float_pow {r}");
+    pack_out_float(r, env, out_buf)
+}
+
 pub fn float_root(
     env: wasm_exec_env_t,
     in_buf: *const u8,

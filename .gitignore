@@ -25,3 +25,4 @@ target/
 
 reference/build-rippled-*/
 /.idea
+reference/explorer/

@@ -51,17 +51,17 @@ impl DockerManager {
         println!("{}", "\nDiagnosing Docker issue...".yellow());
 
         // Check Docker context
-        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output() {
-            if let Ok(contexts) = String::from_utf8(output.stdout) {
-                for line in contexts.lines() {
-                    if line.contains("*") {
-                        println!("{}", format!("Active Docker context: {line}").cyan());
-                        if line.contains("colima") && line.contains("/Users") {
-                            println!(
-                                "{}",
-                                "Colima context is active but connection failed.".yellow()
-                            );
-                        }
+        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output()
+            && let Ok(contexts) = String::from_utf8(output.stdout)
+        {
+            for line in contexts.lines() {
+                if line.contains("*") {
+                    println!("{}", format!("Active Docker context: {line}").cyan());
+                    if line.contains("colima") && line.contains("/Users") {
+                        println!(
+                            "{}",
+                            "Colima context is active but connection failed.".yellow()
+                        );
                     }
                 }
             }
@@ -109,7 +109,11 @@ impl DockerManager {
                         ))
                     }
                 } else {
-                    Err(anyhow::anyhow!("Failed to connect to Docker: {}", e))
+                    Err(anyhow::anyhow!(
+                        "Failed to connect to Docker: {}\n\n{}",
+                        e,
+                        "Suggestions:\n  • Make sure Docker Desktop or Colima is installed\n  • Start Docker with: docker run hello-world\n  • On macOS: Install Docker Desktop from docker.com\n  • Or use Colima: brew install colima && colima start"
+                    ))
                 }
             }
         }
@@ -204,7 +208,10 @@ impl DockerManager {
                             "Docker failed to start properly after restart. Please check Colima logs with 'colima status -v'"
                         ));
                     } else {
-                        return Err(anyhow::anyhow!("Failed to restart Colima"));
+                        return Err(anyhow::anyhow!(
+                            "Failed to restart Colima.\n\n{}",
+                            "Suggestions:\n  • Try stopping and starting manually: colima stop && colima start\n  • Check Colima status: colima status -v\n  • Look for errors in logs: colima status --log-level debug"
+                        ));
                     }
                 } else {
                     return Err(anyhow::anyhow!(
@@ -248,7 +255,10 @@ impl DockerManager {
                             "Docker failed to start properly. Please try running 'colima start' manually."
                         ));
                     } else {
-                        return Err(anyhow::anyhow!("Failed to start Colima"));
+                        return Err(anyhow::anyhow!(
+                            "Failed to start Colima.\n\n{}",
+                            "Suggestions:\n  • Check if another Docker runtime is already running\n  • Try: colima delete && colima start\n  • Check system resources (disk space, memory)\n  • View logs: colima status --log-level debug"
+                        ));
                     }
                 }
             }
@@ -275,7 +285,10 @@ impl DockerManager {
                     .status()?;
 
                 if !install_status.success() {
-                    return Err(anyhow::anyhow!("Failed to install Colima"));
+                    return Err(anyhow::anyhow!(
+                        "Failed to install Colima.\n\n{}",
+                        "Suggestions:\n  • Make sure Homebrew is installed: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"\n  • Try manual installation: brew install colima\n  • Check for errors: brew doctor"
+                    ));
                 }
 
                 println!("{}", "Colima installed successfully!".green());

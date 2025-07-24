@@ -16,7 +16,7 @@ use xrpl_std::sfield;
 mod host_bindings_loose;
 include!("host_bindings_loose.rs");
 
-fn check_error(result: i32, expected: i32, test_name: &'static str) -> () {
+fn check_result(result: i32, expected: i32, test_name: &'static str) -> () {
     match result {
         code if code == expected => {
             let _ = trace_number(test_name, code.into());
@@ -51,21 +51,21 @@ pub extern "C" fn finish() -> bool {
     // that's in a separate test file.
     // ########################################
     let _ = with_buffer::<4, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_ledger_sqn(ptr, len) },
             4,
             "get_ledger_sqn",
         )
     });
     let _ = with_buffer::<4, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_parent_ledger_time(ptr, len) },
             4,
             "get_parent_ledger_time",
         );
     });
     let _ = with_buffer::<32, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_parent_ledger_hash(ptr, len) },
             32,
             "get_parent_ledger_hash",
@@ -74,20 +74,20 @@ pub extern "C" fn finish() -> bool {
     let tx: EscrowFinish = get_current_escrow_finish();
     let account = tx.get_account().unwrap_or_panic(); // get_tx_field under the hood
     let keylet = keylets::account_keylet(&account).unwrap_or_panic(); // account_keylet under the hood
-    check_error(
+    check_result(
         unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) },
         1,
         "cache_ledger_obj",
     );
     let _ = with_buffer::<20, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_current_ledger_obj_field(sfield::Account, ptr, len) },
             20,
             "get_current_ledger_obj_field",
         );
     });
     let _ = with_buffer::<20, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_ledger_obj_field(1, sfield::Account, ptr, len) },
             20,
             "get_ledger_obj_field",
@@ -96,14 +96,14 @@ pub extern "C" fn finish() -> bool {
     let mut locator = Locator::new();
     locator.pack(sfield::Account);
     let _ = with_buffer::<20, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_tx_nested_field(locator.as_ptr(), locator.len(), ptr, len) },
             20,
             "get_tx_nested_field",
         );
     });
     let _ = with_buffer::<20, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::get_current_ledger_obj_nested_field(locator.as_ptr(), locator.len(), ptr, len)
             },
@@ -112,7 +112,7 @@ pub extern "C" fn finish() -> bool {
         );
     });
     let _ = with_buffer::<20, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::get_ledger_obj_nested_field(1, locator.as_ptr(), locator.len(), ptr, len)
             },
@@ -120,43 +120,43 @@ pub extern "C" fn finish() -> bool {
             "get_ledger_obj_nested_field",
         );
     });
-    check_error(
+    check_result(
         unsafe { host::get_tx_array_len(sfield::Memos) },
         32,
         "get_tx_array_len",
     );
-    check_error(
+    check_result(
         unsafe { host::get_current_ledger_obj_array_len(sfield::Memos) },
         32,
         "get_current_ledger_obj_array_len",
     );
-    check_error(
+    check_result(
         unsafe { host::get_ledger_obj_array_len(1, sfield::Memos) },
         32,
         "get_ledger_obj_array_len",
     );
-    check_error(
+    check_result(
         unsafe { host::get_tx_nested_array_len(locator.as_ptr(), locator.len()) },
         32,
         "get_tx_nested_array_len",
     );
-    check_error(
+    check_result(
         unsafe { host::get_current_ledger_obj_nested_array_len(locator.as_ptr(), locator.len()) },
         32,
         "get_current_ledger_obj_nested_array_len",
     );
-    check_error(
+    check_result(
         unsafe { host::get_ledger_obj_nested_array_len(1, locator.as_ptr(), locator.len()) },
         32,
         "get_ledger_obj_nested_array_len",
     );
-    check_error(
+    check_result(
         unsafe { host::update_data(account.0.as_ptr(), account.0.len()) },
         0,
         "update_data",
     );
     let _ = with_buffer::<32, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::compute_sha512_half(locator.as_ptr(), locator.len(), ptr, len) },
             32,
             "compute_sha512_half",
@@ -166,27 +166,27 @@ pub extern "C" fn finish() -> bool {
     // ########################################
     // Step #2: Test set_data edge cases
     // ########################################
-    check_error(
+    check_result(
         unsafe { host_bindings_loose::get_ledger_sqn(-1 as i32, 4) },
         error_codes::INVALID_PARAMS,
         "get_ledger_sqn_neg_ptr",
     );
     let _ = with_buffer::<4, _, _>(|ptr, _len| {
-        check_error(
+        check_result(
             unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, -1) },
             error_codes::INVALID_PARAMS,
             "get_ledger_sqn_neg_len",
         )
     });
     let _ = with_buffer::<3, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, len as i32) },
             error_codes::BUFFER_TOO_SMALL,
             "get_ledger_sqn_buf_too_small",
         )
     });
     let _ = with_buffer::<4, _, _>(|ptr, _len| {
-        check_error(
+        check_result(
             unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, 1_000_000_000) },
             error_codes::POINTER_OUT_OF_BOUNDS,
             "get_ledger_sqn_len_too_long",
@@ -198,32 +198,32 @@ pub extern "C" fn finish() -> bool {
     // ########################################
 
     // SField
-    check_error(
+    check_result(
         unsafe { host::get_tx_array_len(2) }, // not a valid SField value
         error_codes::INVALID_FIELD,
         "get_tx_array_len_invalid_sfield",
     );
 
     // Slice
-    check_error(
+    check_result(
         unsafe { host_bindings_loose::get_tx_nested_array_len(-1, locator.len() as i32) },
         error_codes::INVALID_PARAMS,
         "get_tx_nested_array_len_neg_ptr",
     );
-    check_error(
+    check_result(
         unsafe { host_bindings_loose::get_tx_nested_array_len(locator.as_ptr() as i32, -1) },
         error_codes::INVALID_PARAMS,
         "get_tx_nested_array_len_neg_len",
     );
-    let long_len = 4 * 1024 + 5;
-    check_error(
+    let long_len = 4 * 1024 + 1;
+    check_result(
         unsafe {
             host_bindings_loose::get_tx_nested_array_len(locator.as_ptr() as i32, long_len as i32)
         },
         error_codes::DATA_FIELD_TOO_LARGE,
         "get_tx_nested_array_len_too_long",
     );
-    check_error(
+    check_result(
         unsafe {
             host_bindings_loose::get_tx_nested_array_len(
                 locator.as_ptr() as i32 + 1_000_000_000,
@@ -235,7 +235,7 @@ pub extern "C" fn finish() -> bool {
     );
 
     // uint256
-    check_error(
+    check_result(
         unsafe {
             host_bindings_loose::cache_ledger_obj(
                 locator.as_ptr() as i32 + 1_000_000_000,
@@ -246,7 +246,7 @@ pub extern "C" fn finish() -> bool {
         error_codes::POINTER_OUT_OF_BOUNDS,
         "cache_ledger_obj_ptr_oob",
     );
-    check_error(
+    check_result(
         unsafe {
             host_bindings_loose::cache_ledger_obj(locator.as_ptr() as i32, locator.len() as i32, 1)
         },
@@ -256,7 +256,7 @@ pub extern "C" fn finish() -> bool {
 
     // AccountID
     let _ = with_buffer::<32, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host_bindings_loose::account_keylet(
                     locator.as_ptr() as i32 + 1_000_000_000,
@@ -270,7 +270,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<32, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host_bindings_loose::account_keylet(
                     locator.as_ptr() as i32,
@@ -286,7 +286,7 @@ pub extern "C" fn finish() -> bool {
 
     // Currency
     let _ = with_buffer::<32, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host_bindings_loose::line_keylet(
                     account.0.as_ptr(),
@@ -304,7 +304,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<32, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host_bindings_loose::line_keylet(
                     account.0.as_ptr(),
@@ -323,7 +323,7 @@ pub extern "C" fn finish() -> bool {
     });
 
     // string
-    check_error(
+    check_result(
         unsafe {
             host_bindings_loose::trace_num(
                 locator.as_ptr() as i32 + 1_000_000_000,
@@ -342,37 +342,37 @@ pub extern "C" fn finish() -> bool {
     // invalid SFields
 
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_tx_field(2, ptr, len) },
             error_codes::INVALID_FIELD,
             "get_tx_field_invalid_sfield",
         );
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_current_ledger_obj_field(2, ptr, len) },
             error_codes::INVALID_FIELD,
             "get_current_ledger_obj_field_invalid_sfield",
         );
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_ledger_obj_field(1, 2, ptr, len) },
             error_codes::INVALID_FIELD,
             "get_ledger_obj_field_invalid_sfield",
         );
     });
-    check_error(
+    check_result(
         unsafe { host::get_tx_array_len(2) },
         error_codes::INVALID_FIELD,
         "get_tx_array_len_invalid_sfield",
     );
-    check_error(
+    check_result(
         unsafe { host::get_current_ledger_obj_array_len(2) },
         error_codes::INVALID_FIELD,
         "get_current_ledger_obj_array_len_invalid_sfield",
     );
-    check_error(
+    check_result(
         unsafe { host::get_ledger_obj_array_len(1, 2) },
         error_codes::INVALID_FIELD,
         "get_ledger_obj_array_len_invalid_sfield",
@@ -381,14 +381,14 @@ pub extern "C" fn finish() -> bool {
     // invalid Slice
 
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_tx_nested_field(locator.as_ptr(), long_len, ptr, len) },
             error_codes::DATA_FIELD_TOO_LARGE,
             "get_tx_nested_field_too_big_slice",
         );
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::get_current_ledger_obj_nested_field(locator.as_ptr(), long_len, ptr, len)
             },
@@ -397,41 +397,41 @@ pub extern "C" fn finish() -> bool {
         );
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::get_ledger_obj_nested_field(1, locator.as_ptr(), long_len, ptr, len) },
             error_codes::DATA_FIELD_TOO_LARGE,
             "get_ledger_obj_nested_field_too_big_slice",
         );
     });
-    check_error(
+    check_result(
         unsafe { host::get_tx_nested_array_len(locator.as_ptr(), long_len) },
         error_codes::DATA_FIELD_TOO_LARGE,
         "get_tx_nested_array_len_too_big_slice",
     );
-    check_error(
+    check_result(
         unsafe { host::get_current_ledger_obj_nested_array_len(locator.as_ptr(), long_len) },
         error_codes::DATA_FIELD_TOO_LARGE,
         "get_current_ledger_obj_nested_array_len_too_big_slice",
     );
-    check_error(
+    check_result(
         unsafe { host::get_ledger_obj_nested_array_len(1, locator.as_ptr(), long_len) },
         error_codes::DATA_FIELD_TOO_LARGE,
         "get_ledger_obj_nested_array_len_too_big_slice",
     );
-    check_error(
+    check_result(
         unsafe { host::update_data(locator.as_ptr(), long_len) },
         error_codes::DATA_FIELD_TOO_LARGE,
         "update_data_too_big_slice",
     );
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::compute_sha512_half(locator.as_ptr(), long_len, ptr, len) },
             error_codes::DATA_FIELD_TOO_LARGE,
             "compute_sha512_half_too_big_slice",
         );
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::credential_keylet(
                     account.0.as_ptr(),
@@ -448,7 +448,7 @@ pub extern "C" fn finish() -> bool {
             "credential_keylet_too_big_slice",
         )
     });
-    check_error(
+    check_result(
         unsafe {
             host::trace(
                 locator.as_ptr(),
@@ -464,13 +464,13 @@ pub extern "C" fn finish() -> bool {
 
     // invalid UInt256
 
-    check_error(
+    check_result(
         unsafe { host::cache_ledger_obj(locator.as_ptr(), locator.len(), 0) },
         error_codes::INVALID_PARAMS,
         "cache_ledger_obj_wrong_size_uint256",
     );
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::get_nft(
                     account.0.as_ptr(),
@@ -489,21 +489,21 @@ pub extern "C" fn finish() -> bool {
     // invalid AccountID
 
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::account_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "account_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::check_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "check_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::credential_keylet(
                     locator.as_ptr(), // invalid AccountID size
@@ -521,7 +521,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::credential_keylet(
                     account.0.as_ptr(),
@@ -539,7 +539,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::delegate_keylet(
                     locator.as_ptr(), // invalid AccountID size
@@ -555,7 +555,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::delegate_keylet(
                     account.0.as_ptr(),
@@ -571,7 +571,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::deposit_preauth_keylet(
                     locator.as_ptr(), // invalid AccountID size
@@ -587,7 +587,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::deposit_preauth_keylet(
                     account.0.as_ptr(),
@@ -603,14 +603,14 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::did_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "did_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::escrow_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "escrow_keylet_wrong_size_accountid",
@@ -618,7 +618,7 @@ pub extern "C" fn finish() -> bool {
     });
     let currency: &[u8] = b"USD00000000000000000"; // 20 bytes
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::line_keylet(
                     locator.as_ptr(), // invalid AccountID size
@@ -636,7 +636,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::line_keylet(
                     account.0.as_ptr(),
@@ -654,28 +654,28 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::nft_offer_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "nft_offer_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::offer_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "offer_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::oracle_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "oracle_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::paychan_keylet(
                     locator.as_ptr(), // invalid AccountID size
@@ -692,7 +692,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::paychan_keylet(
                     account.0.as_ptr(),
@@ -709,14 +709,14 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::signers_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "signers_keylet_wrong_size_accountid",
         )
     });
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe { host::ticket_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "ticket_keylet_wrong_size_accountid",
@@ -724,7 +724,7 @@ pub extern "C" fn finish() -> bool {
     });
     let uint256: &[u8] = b"00000000000000000000000000000001";
     let _ = with_buffer::<2, _, _>(|ptr, len| {
-        check_error(
+        check_result(
             unsafe {
                 host::get_nft(
                     locator.as_ptr(),
@@ -743,7 +743,7 @@ pub extern "C" fn finish() -> bool {
     // invalid Currency was already tested above
     // invalid string
 
-    check_error(
+    check_result(
         unsafe {
             host::trace(
                 locator.as_ptr().wrapping_add(1_000_000_000),
@@ -759,7 +759,7 @@ pub extern "C" fn finish() -> bool {
 
     // trace too large
 
-    check_error(
+    check_result(
         unsafe {
             host::trace(
                 locator.as_ptr(),
@@ -772,7 +772,7 @@ pub extern "C" fn finish() -> bool {
         error_codes::DATA_FIELD_TOO_LARGE,
         "trace_too_long",
     );
-    check_error(
+    check_result(
         unsafe { host::trace_num(locator.as_ptr(), long_len, 1) },
         error_codes::DATA_FIELD_TOO_LARGE,
         "trace_num_too_long",

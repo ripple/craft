@@ -580,7 +580,7 @@ pub fn list_fixtures() -> Result<()> {
     println!("{}", "Test fixtures structure:".cyan());
     println!(
         "{}",
-        "Convention: fixtures should be in projects/<project>/fixtures/<project>/<test_case>/"
+        "Convention: fixtures should be in projects/<project>/fixtures/<test_case>/"
             .italic()
     );
 
@@ -639,12 +639,11 @@ pub fn list_fixtures() -> Result<()> {
 }
 
 pub fn discover_test_cases(project: &str) -> Result<Vec<String>> {
-    // Convention: fixtures must be in projects/<project>/fixtures/<project>/<test_case>/
+    // Convention: fixtures must be in projects/<project>/fixtures/<test_case>/
     let fixtures_dir = std::env::current_dir()?
         .join("projects")
         .join(project)
-        .join("fixtures")
-        .join(project);
+        .join("fixtures");
 
     let mut test_cases = Vec::new();
 
@@ -744,6 +743,7 @@ pub fn run_test(
     test_case: &str,
     function: Option<&str>,
     verbose: bool,
+    non_interactive: bool,
 ) -> Result<()> {
     // Extract project name from wasm path
     let project_name = wasm_path
@@ -756,7 +756,9 @@ pub fn run_test(
         .unwrap_or("unknown");
 
     // Use the new TestRunner for consistent interface
-    let runner = TestRunner::new(wasm_path, project_name).verbose(verbose);
+    let runner = TestRunner::new(wasm_path, project_name)
+        .verbose(verbose)
+        .non_interactive(non_interactive);
     let result = runner.run_test(test_case, function)?;
 
     // Print output

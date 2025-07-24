@@ -51,14 +51,13 @@ fn load_test_data(
     project: &str,
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
-    // Convention: fixtures must be in projects/<project>/fixtures/<project>/<test_case>/
+    // Convention: fixtures must be in projects/<project>/fixtures/<test_case>/
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .unwrap()
         .join("projects")
         .join(project)
         .join("fixtures")
-        .join(project)
         .join(test_case);
 
     if !base_path.exists() {

@@ -27,6 +27,9 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
@@ -40,7 +43,7 @@ jobs:
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Clippy in $dir"
-              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features) || exit 1
             fi
           done
 

@@ -1,11 +1,15 @@
 use anyhow::{Context, Result};
 use colored::*;
 use inquire::{Confirm, Select};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
 use crate::config::{BuildMode, Config, OptimizationLevel, WasmTarget};
 use crate::utils;
+
+mod test;
+pub use test::TestRunner;
 
 fn handle_build_output(output: &Output, config: &Config, project_dir: &Path) -> Result<()> {
     let _stdout = String::from_utf8_lossy(&output.stdout);
@@ -102,7 +106,27 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     handle_build_output(&output, config, project_dir)?;
 
     if !output.status.success() {
-        anyhow::bail!("Build failed");
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
+        // Check for common build errors and provide helpful suggestions
+        if stderr.contains("could not find `Cargo.toml`") {
+            anyhow::bail!(
+                "Build failed: No Cargo.toml found.\n\n{}",
+                "Suggestions:\n  • Make sure you're in a Rust project directory\n  • Run 'craft build' from the workspace root\n  • Check if Cargo.toml exists in the project directory"
+            );
+        } else if stderr.contains("no targets specified") {
+            anyhow::bail!(
+                "Build failed: No build targets specified.\n\n{}",
+                "Suggestions:\n  • Add a [lib] or [[bin]] section to Cargo.toml\n  • For WASM contracts, you typically need a [lib] section\n  • Example:\n    [lib]\n    crate-type = [\"cdylib\"]"
+            );
+        } else if stderr.contains("failed to select a version") {
+            anyhow::bail!(
+                "Build failed: Dependency resolution error.\n\n{}",
+                "Suggestions:\n  • Run 'cargo update' to update dependencies\n  • Check for version conflicts in Cargo.toml\n  • Try 'cargo clean' then rebuild"
+            );
+        } else {
+            anyhow::bail!("Build failed. Run with RUST_LOG=debug for more details");
+        }
     }
 
     let target_dir = project_dir.join("target");
@@ -159,9 +183,10 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
         }
 
         anyhow::bail!(
-            "WASM file not found at expected location: {:?}\nAlternate location checked: {:?}",
+            "WASM file not found at expected locations:\n  • {:?}\n  • {:?}\n\n{}",
             wasm_file,
-            alt_wasm_file
+            alt_wasm_file,
+            "Suggestions:\n  • Make sure the build completed successfully\n  • Check if the crate type is set to 'cdylib' in Cargo.toml\n  • Verify the project name matches the package name\n  • Try running 'craft build' again with --debug flag"
         );
     }
 
@@ -190,6 +215,34 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
 pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     println!("{}", "Deploying to WASM Devnet...".cyan());
 
+    // Check if rippled is running before attempting deployment
+    if let Ok(docker_manager) = crate::docker::DockerManager::new() {
+        match docker_manager.is_rippled_running().await {
+            Ok(false) => {
+                println!("{}", "\n⚠️  rippled is not currently running.".yellow());
+                println!(
+                    "{}",
+                    "Deployment requires a running rippled instance.".yellow()
+                );
+                println!();
+                println!("{}", "To start rippled:".cyan());
+                println!("{}", "  craft start-rippled".blue());
+                println!();
+                anyhow::bail!("rippled is not running. Start it with 'craft start-rippled'");
+            }
+            Ok(true) => {
+                // rippled is running, continue
+            }
+            Err(_) => {
+                // Couldn't check status, try to proceed anyway
+                println!(
+                    "{}",
+                    "\n⚠️  Could not verify rippled status. Proceeding anyway...".yellow()
+                );
+            }
+        }
+    }
+
     // Convert WASM to hex and save to file
     let hex = utils::wasm_to_hex(wasm_file)?;
     let hex_file = wasm_file.with_extension("hex");
@@ -211,7 +264,10 @@ pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
         .context("Failed to install Node.js dependencies")?;
 
     if !install_status.success() {
-        anyhow::bail!("Failed to install Node.js dependencies");
+        anyhow::bail!(
+            "Failed to install Node.js dependencies.\n\n{}",
+            "Suggestions:\n  • Make sure Node.js and npm are installed\n  • Check your internet connection\n  • Try running 'npm install' manually in reference/js/\n  • Install Node.js from https://nodejs.org/"
+        );
     }
 
     println!("{}", "Dependencies installed successfully!".green());
@@ -368,69 +424,64 @@ pub async fn configure() -> Result<Config> {
     })
 }
 
-pub async fn test(wasm_path: &Path, _function: Option<String>) -> Result<()> {
+pub async fn test(wasm_path: &Path, function: Option<String>) -> Result<()> {
     println!("{}", "Testing WASM contract...".cyan());
 
-    // Build wasm-host first
-    println!("Building wasm-host...");
-    let status = Command::new("cargo")
-        .args(["build", "--release", "-p", "wasm-host"])
-        .status()
-        .context("Failed to build wasm-host")?;
+    // Extract project name from wasm path
+    let project_name = wasm_path
+        .parent()
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown");
 
-    if !status.success() {
-        anyhow::bail!("Failed to build wasm-host");
-    }
+    // Use the new TestRunner for a better interface
+    let runner = TestRunner::new(wasm_path, project_name).verbose(false);
 
-    // Get the path to the wasm-host binary
-    let wasm_host_path = std::env::current_dir()?
-        .join("target")
-        .join("release")
-        .join("wasm-host");
-
-    // Select test case
+    // Interactive test case selection
     let test_cases = vec![
         "success (notary account matches)",
         "failure (wrong notary account)",
+        "Run all test cases",
     ];
 
-    let test_case = Select::new("Select test case:", test_cases).prompt()?;
-    let test_case = match test_case {
-        "success (notary account matches)" => "success",
-        "failure (wrong notary account)" => "failure",
-        _ => "success",
-    };
+    let selection = Select::new("Select test case:", test_cases).prompt()?;
 
-    println!("Testing escrow finish condition...");
+    match selection {
+        "Run all test cases" => {
+            let runner = runner.verbose(true);
+            let results = runner.run_all_tests(project_name)?;
 
-    // Check if we're running in verbose mode
-    let verbose = std::env::var("RUST_LOG")
-        .map(|v| v.to_lowercase().contains("debug"))
-        .unwrap_or(false);
+            if results.iter().any(|r| !r.success) {
+                anyhow::bail!("Some tests failed");
+            }
+        }
+        _ => {
+            let test_case = match selection {
+                "success (notary account matches)" => "success",
+                "failure (wrong notary account)" => "failure",
+                _ => "success",
+            };
 
-    let mut args = vec![
-        "--wasm-file",
-        wasm_path.to_str().unwrap(),
-        "--test-case",
-        test_case,
-    ];
+            let result = runner.run_test(test_case, function.as_deref())?;
 
-    if verbose {
-        args.push("--verbose");
+            println!("{}", result.stdout);
+
+            if !result.success {
+                println!("{}", result.stderr.red());
+
+                if let Some(desc) = result.error_description() {
+                    println!();
+                    println!("{}: {}", "Error".red().bold(), desc);
+                }
+
+                anyhow::bail!("Test failed");
+            }
+        }
     }
 
-    let output = Command::new(&wasm_host_path)
-        .args(&args)
-        .output()
-        .context("Failed to run wasm-host")?;
-
-    // Print the output
-    if !output.status.success() {
-        println!("{}", String::from_utf8_lossy(&output.stderr).red());
-        anyhow::bail!("Test failed");
-    }
-
-    println!("{}", String::from_utf8_lossy(&output.stdout));
     Ok(())
 }
 
@@ -440,6 +491,295 @@ pub async fn open_explorer() -> Result<()> {
         "{}",
         "The Explorer should be available at: https://custom.xrpl.org/localhost:6006".blue()
     );
+
+    Ok(())
+}
+
+// New helper functions for improved craft commands
+
+pub fn list_projects() -> Result<()> {
+    let projects_dir = std::env::current_dir()?.join("projects");
+    if !projects_dir.exists() {
+        println!("{}", "No projects directory found.".yellow());
+        return Ok(());
+    }
+
+    println!("{}", "Available projects:".cyan());
+    for entry in fs::read_dir(projects_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir()
+            && let Some(name) = path.file_name()
+        {
+            println!("  • {}", name.to_string_lossy());
+        }
+    }
+    Ok(())
+}
+
+fn list_all_projects() -> Result<Vec<String>> {
+    let mut projects = Vec::new();
+    let projects_dir = std::env::current_dir()?.join("projects");
+
+    if projects_dir.exists() {
+        for entry in fs::read_dir(projects_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir()
+                && let Some(name) = path.file_name()
+            {
+                projects.push(name.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    Ok(projects)
+}
+
+pub fn list_test_cases(project: Option<&str>) -> Result<()> {
+    if let Some(proj) = project {
+        // List test cases for specific project
+        let test_cases = discover_test_cases(proj)?;
+
+        if !test_cases.is_empty() {
+            println!("{}", format!("Test cases for {proj}:").cyan());
+            for test_case in test_cases {
+                println!("  • {test_case}");
+            }
+        } else {
+            println!(
+                "{}",
+                format!("No test cases found for project: {proj}").yellow()
+            );
+        }
+    } else {
+        // List all test cases
+        println!("{}", "Available test cases by project:".cyan());
+
+        // Get all projects
+        let projects = list_all_projects()?;
+
+        for project in projects {
+            let test_cases = discover_test_cases(&project)?;
+            if !test_cases.is_empty() {
+                println!("\n{}:", project.bold());
+                for test_case in test_cases {
+                    println!("  • {test_case}");
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn list_all_tests() -> Result<()> {
+    list_test_cases(None)
+}
+
+pub fn list_fixtures() -> Result<()> {
+    println!("{}", "Test fixtures structure:".cyan());
+    println!(
+        "{}",
+        "Convention: fixtures should be in projects/<project>/fixtures/<test_case>/".italic()
+    );
+
+    fn print_tree(dir: &Path, prefix: &str) -> Result<()> {
+        for (i, entry) in fs::read_dir(dir)?.enumerate() {
+            let entry = entry?;
+            let path = entry.path();
+            let name = entry.file_name();
+
+            let is_last = fs::read_dir(dir)?.count() == i + 1;
+            let connector = if is_last { "└── " } else { "├── " };
+
+            println!("{}{}{}", prefix, connector, name.to_string_lossy());
+
+            if path.is_dir() && !name.to_str().unwrap().starts_with('.') {
+                let new_prefix = format!("{}{}", prefix, if is_last { "    " } else { "│   " });
+                print_tree(&path, &new_prefix)?;
+            }
+        }
+        Ok(())
+    }
+
+    // Show fixtures in wasm-host directory (only for backward compatibility with escrow)
+    let wasm_host_fixtures = std::env::current_dir()?.join("wasm-host").join("fixtures");
+    if wasm_host_fixtures.exists() {
+        println!(
+            "\n{}",
+            "wasm-host/fixtures/ (legacy location for escrow):".bold()
+        );
+        print_tree(&wasm_host_fixtures, "  ")?;
+    }
+
+    // Show fixtures in project directories
+    let projects_dir = std::env::current_dir()?.join("projects");
+    if projects_dir.exists() {
+        for entry in fs::read_dir(projects_dir)? {
+            let entry = entry?;
+            let project_path = entry.path();
+            if project_path.is_dir() {
+                let fixtures_path = project_path.join("fixtures");
+                if fixtures_path.exists()
+                    && let Some(project_name) = project_path.file_name()
+                {
+                    println!(
+                        "\n{}",
+                        format!("projects/{}/fixtures/:", project_name.to_string_lossy()).bold()
+                    );
+                    print_tree(&fixtures_path, "  ")?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn discover_test_cases(project: &str) -> Result<Vec<String>> {
+    // Convention: fixtures must be in projects/<project>/fixtures/<test_case>/
+    let fixtures_dir = std::env::current_dir()?
+        .join("projects")
+        .join(project)
+        .join("fixtures");
+
+    let mut test_cases = Vec::new();
+
+    if fixtures_dir.exists() {
+        for entry in fs::read_dir(fixtures_dir)? {
+            let entry = entry?;
+            if entry.path().is_dir()
+                && let Some(name) = entry.path().file_name()
+            {
+                test_cases.push(name.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    if test_cases.is_empty() {
+        // Fall back to standard test cases
+        test_cases.push("success".to_string());
+    }
+
+    Ok(test_cases)
+}
+
+pub async fn build_with_args(config: &Config, cargo_args: &[String]) -> Result<PathBuf> {
+    println!("{}", "Building WASM module...".cyan());
+
+    // Check if the WASM target is installed
+    let target_str = config.wasm_target.to_string();
+    if !utils::check_wasm_target_installed(&target_str) {
+        println!(
+            "{}",
+            format!("WASM target {target_str} not found. Installing...").yellow()
+        );
+        utils::install_wasm_target(&target_str)?;
+        println!("{}", format!("Successfully installed {target_str}").green());
+    }
+
+    let cargo_toml = utils::find_cargo_toml(&config.project_path)
+        .context("Could not find Cargo.toml in the current directory or its parents")?;
+    let project_dir = cargo_toml.parent().unwrap();
+
+    let mut args = vec!["build", "--target", &target_str];
+    if matches!(config.build_mode, BuildMode::Release) {
+        args.push("--release");
+    }
+
+    // Add any additional cargo args
+    for arg in cargo_args {
+        args.push(arg);
+    }
+
+    println!("{}", "Running cargo build...".cyan());
+    println!("args: {args:?}");
+
+    let output = Command::new("cargo")
+        .current_dir(project_dir)
+        .args(&args)
+        .output()
+        .context("Failed to execute cargo build")?;
+
+    handle_build_output(&output, config, project_dir)?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
+        // Check for common build errors and provide helpful suggestions
+        if stderr.contains("could not find `Cargo.toml`") {
+            anyhow::bail!(
+                "Build failed: No Cargo.toml found.\n\n{}",
+                "Suggestions:\n  • Make sure you're in a Rust project directory\n  • Run 'craft build' from the workspace root\n  • Check if Cargo.toml exists in the project directory"
+            );
+        } else if stderr.contains("no targets specified") {
+            anyhow::bail!(
+                "Build failed: No build targets specified.\n\n{}",
+                "Suggestions:\n  • Add a [lib] or [[bin]] section to Cargo.toml\n  • For WASM contracts, you typically need a [lib] section\n  • Example:\n    [lib]\n    crate-type = [\"cdylib\"]"
+            );
+        } else if stderr.contains("failed to select a version") {
+            anyhow::bail!(
+                "Build failed: Dependency resolution error.\n\n{}",
+                "Suggestions:\n  • Run 'cargo update' to update dependencies\n  • Check for version conflicts in Cargo.toml\n  • Try 'cargo clean' then rebuild"
+            );
+        } else {
+            anyhow::bail!("Build failed. Run with RUST_LOG=debug for more details");
+        }
+    }
+
+    let wasm_path = utils::find_wasm_output(&config.project_path)?;
+    println!(
+        "{}",
+        format!("Build successful! Output: {}", wasm_path.display()).green()
+    );
+
+    Ok(wasm_path)
+}
+
+pub fn run_test(
+    wasm_path: &Path,
+    test_case: &str,
+    function: Option<&str>,
+    verbose: bool,
+    _non_interactive: bool,
+) -> Result<()> {
+    // Extract project name from wasm path
+    let project_name = wasm_path
+        .parent()
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.parent())
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown");
+
+    // Use the new TestRunner for consistent interface
+    let runner = TestRunner::new(wasm_path, project_name).verbose(verbose);
+    let result = runner.run_test(test_case, function)?;
+
+    // Print output
+    println!("{}", result.stdout);
+
+    if !result.success {
+        println!("{}", result.stderr.red());
+
+        // Special handling for "failure" test cases - they're expected to fail
+        if test_case == "failure" {
+            return Ok(());
+        }
+
+        if let Some(desc) = result.error_description() {
+            println!();
+            println!("{}: {}", "Error".red().bold(), desc);
+            println!();
+            println!("{}", "Debug tips:".yellow());
+            println!("  • Run with --verbose to see detailed trace output");
+            println!("  • Check test fixtures in wasm-host/fixtures/<project>/{test_case}/");
+            println!("  • Verify your WASM module exports 'allocate' and 'finish' functions");
+        }
+
+        anyhow::bail!("Test '{}' failed", test_case);
+    }
 
     Ok(())
 }

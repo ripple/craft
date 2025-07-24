@@ -1,6 +1,18 @@
 # `craft`
 
-An interactive CLI tool for building and testing WASM modules.
+An interactive CLI tool for building and testing WASM modules for the XRP Ledger.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Command-Line Options](#command-line-options)
+- [Project Structure](#project-structure)
+- [WASM Host Testing Tool](#wasm-host-testing-tool)
+- [Reference Submodules](#reference-submodules)
+- [Managing rippled](#managing-rippled)
+- [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
 ## Installation
 
@@ -15,6 +27,31 @@ To update the tool, use the same command.
 - Rust
 - Cargo (with rustup)
 - WasmEdge
+- Docker (required for running rippled)
+
+### Installing Docker
+
+Docker is required to run the rippled server. You have two options:
+
+#### Option 1: Colima (for macOS)
+
+Colima is a lightweight, open-source Docker runtime that craft can install automatically:
+
+```bash
+craft docker install  # Installs Colima via Homebrew
+```
+
+Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use, requires no login, and has no licensing restrictions.
+
+#### Option 2: Docker Desktop
+
+Traditional option with GUI:
+
+- **macOS**: https://docs.docker.com/desktop/install/mac-install/
+- **Windows**: https://docs.docker.com/desktop/install/windows-install/
+- **Linux**: https://docs.docker.com/engine/install/
+
+After installation, ensure Docker is running before using rippled-related commands.
 
 ### Installing WasmEdge
 
@@ -50,25 +87,45 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
 
 ## Usage
 
-Run the tool without any arguments for an interactive experience:
+Use specific commands:
 
 ```bash
 craft
 ```
 
-Or use specific commands:
+Or, run the tool without any arguments for an interactive experience:
 
 ```bash
-craft build           # Build a WASM module
-craft test            # Test a WASM module
-craft start-rippled   # Check if rippled is running and start it if needed
-craft list-rippled    # List and manage running rippled processes
+craft
+craft start-rippled   # Start rippled in Docker container
+craft list-rippled    # List rippled Docker containers
+craft stop-rippled    # Stop the rippled container
+craft advance-ledger  # Advance the ledger in stand-alone mode
+craft docker          # Manage Docker runtime (install/start/stop/status)
 craft open-explorer   # Open the XRPL Explorer
 ```
 
 ### Command-Line Options
 
 Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+
+- **Build**: Non-interactive build with options:
+
+  ```bash
+  craft build [project-name] [--mode <debug|release>] [--opt <none|small|aggressive>]
+  ```
+
+  Options:
+
+  - `project-name` Name of the project subfolder under `projects/` (positional argument).
+  - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
+  - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
+
+  Example:
+
+  ```bash
+  craft build notary --mode debug --opt aggressive
+  ```
 
 The `test` command supports direct command-line options:
 
@@ -131,26 +188,82 @@ The tool includes a set of test fixtures in the `fixtures/escrow` directory. Cur
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
+## Reference Submodules
+
+See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
+
+### 1. rippled
+
+Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
+
+### 2. XRPL Explorer
+
+Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
+
+### Cloning the Repository with Submodules
+
+To clone this repository including all submodules, use:
+
+```bash
+git clone --recurse-submodules git@github.com:ripple/craft.git
+```
+
+Or if you've already cloned the repository without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+### Updating Submodules
+
+To update all submodules to their latest versions:
+
+```bash
+git submodule update --remote
+```
+
 ## Managing rippled
 
-The `craft` tool includes commands to manage a local `rippled` instance:
+The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install Colima (a lightweight Docker runtime) for you:
 
 ```bash
-# Check if rippled is running and start it if not (background mode)
-craft start-rippled
+# Check Docker status and install if needed
+craft docker          # Shows status
+craft docker install  # Installs Colima (lightweight Docker)
+craft docker start    # Starts Colima
+craft docker stop     # Stops Colima
 
-# Start rippled with visible console output (can be terminated with Ctrl+C)
-craft start-rippled --foreground
-
-# List running rippled processes and show how to terminate them
-craft list-rippled
+# Once Docker is running, manage rippled:
+craft start-rippled   # Start rippled container (background mode)
+craft start-rippled --foreground  # With visible console output
+craft list-rippled    # List running rippled containers
+craft stop-rippled    # Stop the rippled container
 ```
 
-To terminate `rippled`:
+The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which includes support for smart escrows.
+
+**Note**: If Docker is not installed when you run `craft start-rippled`, it will offer to install Colima automatically.
+
+### Docker Commands
+
+You can also manage the container directly with Docker:
 
 ```bash
-killall rippled
+# View logs
+docker logs -f craft-rippled
+
+# Stop container
+docker stop craft-rippled
+
+# Remove container
+docker rm craft-rippled
 ```
+
+### Ports
+
+- API/WebSocket: `http://localhost:6006`
+- Peer Protocol: `localhost:51235`
+- Admin API: `localhost:5005`
 
 ## Running the XRPL Explorer
 
@@ -161,7 +274,7 @@ The `craft` tool includes commands to open the XRPL Explorer:
 craft open-explorer
 ```
 
-## Usage
+## WASM Host
 
 ### Direct Usage
 

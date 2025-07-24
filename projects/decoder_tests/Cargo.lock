@@ -3,8 +3,8 @@
 version = 4
 
 [[package]]
-name = "ledger_sqn"
-version = "0.1.0"
+name = "decoder_tests"
+version = "0.0.1"
 dependencies = [
  "xrpl-std",
 ]

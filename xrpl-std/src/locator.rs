@@ -5,6 +5,12 @@ pub struct LocatorPacker {
     cur_buffer_index: usize,
 }
 
+impl Default for LocatorPacker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LocatorPacker {
     pub fn new() -> LocatorPacker {
         Self {
@@ -19,9 +25,9 @@ impl LocatorPacker {
         }
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for i in 0..value_bytes.len() {
+        for &byte in &value_bytes {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = value_bytes[i],
+                Some(b) => *b = byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
@@ -41,9 +47,9 @@ impl LocatorPacker {
         self.cur_buffer_index -= 4;
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for i in 0..value_bytes.len() {
+        for &byte in &value_bytes {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = value_bytes[i],
+                Some(b) => *b = byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;

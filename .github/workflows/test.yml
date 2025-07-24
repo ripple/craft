@@ -40,7 +40,7 @@ jobs:
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Clippy in $dir"
-              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features) || exit 1
             fi
           done
 

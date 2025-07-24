@@ -35,9 +35,18 @@ jobs:
           cd xrpl-std 
           cargo clippy --all-targets --all-features
 
-      - name: Run Clippy (All Contracts)
+      - name: Run Clippy (All Example Contracts)
         run: |
           for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Clippy in $dir"
+              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+            fi
+          done
+
+      - name: Run Clippy (All Test Contracts)
+        run: |
+          for dir in ./rippled-tests/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Clippy in $dir"
               (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
@@ -76,9 +85,18 @@ jobs:
           cd xrpl-std 
           cargo fmt --all -- --check
 
-      - name: Run fmt (All Contracts)
+      - name: Run fmt (All Example Contracts)
         run: |
           for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Fmt in $dir"
+              (cd "$dir" && cargo fmt --all -- --check) || exit 1
+            fi
+          done
+
+      - name: Run fmt (All Test Contracts)
+        run: |
+          for dir in ./rippled-tests/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Fmt in $dir"
               (cd "$dir" && cargo fmt --all -- --check) || exit 1
@@ -128,6 +146,15 @@ jobs:
       - name: Build all example contracts
         run: |
           for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Building in $dir"
+              (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
+            fi
+          done
+
+      - name: Build all test contracts
+        run: |
+          for dir in ./rippled-tests/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Building in $dir"
               (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1

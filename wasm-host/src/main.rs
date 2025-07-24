@@ -33,8 +33,8 @@ struct Args {
     #[arg(short, long, default_value = "success")]
     test_case: String,
 
-    /// Project name (defaults to 'escrow' for backward compatibility)
-    #[arg(short, long, default_value = "escrow")]
+    /// Project name
+    #[arg(short, long)]
     project: String,
 
     /// Verbose logging
@@ -51,33 +51,23 @@ fn load_test_data(
     project: &str,
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
-    // Convention: fixtures should be in projects/<project>/fixtures/<project>/<test_case>/
-    // BUT for backward compatibility, escrow fixtures remain in wasm-host/fixtures/escrow/<test_case>/
-    
-    let base_path = if project == "escrow" {
-        // Special case for escrow - keep in wasm-host for backward compatibility
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("fixtures")
-            .join("escrow")
-            .join(test_case)
-    } else {
-        // All other projects use the new convention
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .join("projects")
-            .join(project)
-            .join("fixtures")
-            .join(project)
-            .join(test_case)
-    };
+    // Convention: fixtures must be in projects/<project>/fixtures/<project>/<test_case>/
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("projects")
+        .join(project)
+        .join("fixtures")
+        .join(project)
+        .join(test_case);
 
     if !base_path.exists() {
         return Err(format!(
             "Test case '{}' not found at expected location: {}",
             test_case,
             base_path.display()
-        ).into());
+        )
+        .into());
     }
 
     let tx_path = base_path.join("tx.json");
@@ -134,16 +124,17 @@ fn main() {
     info!("Using test case: {}", args.test_case);
     info!("Project: {}", args.project);
     info!("Loading test data from fixtures");
-    let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_test_data(&args.project, &args.test_case) {
-        Ok((tx, lo, lh, l, nft)) => {
-            debug!("Test data loaded successfully");
-            (tx, lo, lh, l, nft)
-        }
-        Err(e) => {
-            error!("Failed to load test data: {}", e);
-            return;
-        }
-    };
+    let (tx_json, lo_json, lh_json, l_json, nft_json) =
+        match load_test_data(&args.project, &args.test_case) {
+            Ok((tx, lo, lh, l, nft)) => {
+                debug!("Test data loaded successfully");
+                (tx, lo, lh, l, nft)
+            }
+            Err(e) => {
+                error!("Failed to load test data: {}", e);
+                return;
+            }
+        };
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);

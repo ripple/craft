@@ -578,7 +578,11 @@ pub fn list_all_tests() -> Result<()> {
 
 pub fn list_fixtures() -> Result<()> {
     println!("{}", "Test fixtures structure:".cyan());
-    println!("{}", "Convention: fixtures should be in projects/<project>/fixtures/<project>/<test_case>/".italic());
+    println!(
+        "{}",
+        "Convention: fixtures should be in projects/<project>/fixtures/<project>/<test_case>/"
+            .italic()
+    );
 
     fn print_tree(dir: &Path, prefix: &str) -> Result<()> {
         for (i, entry) in fs::read_dir(dir)?.enumerate() {
@@ -602,7 +606,10 @@ pub fn list_fixtures() -> Result<()> {
     // Show fixtures in wasm-host directory (only for backward compatibility with escrow)
     let wasm_host_fixtures = std::env::current_dir()?.join("wasm-host").join("fixtures");
     if wasm_host_fixtures.exists() {
-        println!("\n{}", "wasm-host/fixtures/ (legacy location for escrow):".bold());
+        println!(
+            "\n{}",
+            "wasm-host/fixtures/ (legacy location for escrow):".bold()
+        );
         print_tree(&wasm_host_fixtures, "  ")?;
     }
 
@@ -747,7 +754,7 @@ pub fn run_test(
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str())
         .unwrap_or("unknown");
-    
+
     // Use the new TestRunner for consistent interface
     let runner = TestRunner::new(wasm_path, project_name).verbose(verbose);
     let result = runner.run_test(test_case, function)?;

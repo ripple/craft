@@ -381,16 +381,16 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     let candidates = vec![
         project_dir
             .join("target/wasm32-unknown-unknown/release")
-            .join(format!("{}.wasm", project_name)),
+            .join(format!("{project_name}.wasm")),
         project_dir
             .join("target/wasm32-unknown-unknown/release")
-            .join(format!("lib{}.wasm", project_name)),
+            .join(format!("lib{project_name}.wasm")),
         project_dir
             .join("target/wasm32-unknown-unknown/debug")
-            .join(format!("{}.wasm", project_name)),
+            .join(format!("{project_name}.wasm")),
         project_dir
             .join("target/wasm32-unknown-unknown/debug")
-            .join(format!("lib{}.wasm", project_name)),
+            .join(format!("lib{project_name}.wasm")),
     ];
 
     for candidate in candidates {

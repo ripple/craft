@@ -26,7 +26,7 @@ impl TestRunner {
 
     /// Run a single test case
     pub fn run_test(&self, test_case: &str, function: Option<&str>) -> Result<TestResult> {
-        println!("{}", format!("Running test case: {}", test_case).cyan());
+        println!("{}", format!("Running test case: {test_case}").cyan());
 
         // Ensure wasm-host is built
         self.ensure_wasm_host_built()?;
@@ -99,10 +99,11 @@ impl TestRunner {
                 }
             );
 
-            if !result.success && self.verbose {
-                if let Some(code) = &result.error_code {
-                    println!("  Error code: {}", code.yellow());
-                }
+            if !result.success
+                && self.verbose
+                && let Some(code) = &result.error_code
+            {
+                println!("  Error code: {}", code.yellow());
             }
 
             results.push(result);
@@ -201,7 +202,7 @@ impl TestResult {
             _ if code.starts_with("-50") => "Condition access error".to_string(),
             _ if code.starts_with("-60") => "Amount access error".to_string(),
             _ if code.starts_with("-70") => "Ledger iteration error".to_string(),
-            _ => format!("Unknown error code: {}", code),
+            _ => format!("Unknown error code: {code}"),
         })
     }
 }

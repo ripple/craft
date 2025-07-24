@@ -16,11 +16,10 @@ use xrpl_std::sfield;
 mod host_bindings_loose;
 include!("host_bindings_loose.rs");
 
-fn check_result(result: i32, expected: i32, test_name: &'static str) -> () {
+fn check_result(result: i32, expected: i32, test_name: &'static str) {
     match result {
         code if code == expected => {
             let _ = trace_number(test_name, code.into());
-            return;
         }
         code if code >= 0 => {
             let _ = trace_number("TEST FAILED", code.into());
@@ -50,21 +49,21 @@ pub extern "C" fn finish() -> bool {
     // Note: not testing all the keylet functions,
     // that's in a separate test file.
     // ########################################
-    let _ = with_buffer::<4, _, _>(|ptr, len| {
+    with_buffer::<4, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_ledger_sqn(ptr, len) },
             4,
             "get_ledger_sqn",
         )
     });
-    let _ = with_buffer::<4, _, _>(|ptr, len| {
+    with_buffer::<4, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_parent_ledger_time(ptr, len) },
             4,
             "get_parent_ledger_time",
         );
     });
-    let _ = with_buffer::<32, _, _>(|ptr, len| {
+    with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_parent_ledger_hash(ptr, len) },
             32,
@@ -79,14 +78,14 @@ pub extern "C" fn finish() -> bool {
         1,
         "cache_ledger_obj",
     );
-    let _ = with_buffer::<20, _, _>(|ptr, len| {
+    with_buffer::<20, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_current_ledger_obj_field(sfield::Account, ptr, len) },
             20,
             "get_current_ledger_obj_field",
         );
     });
-    let _ = with_buffer::<20, _, _>(|ptr, len| {
+    with_buffer::<20, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_ledger_obj_field(1, sfield::Account, ptr, len) },
             20,
@@ -95,14 +94,14 @@ pub extern "C" fn finish() -> bool {
     });
     let mut locator = Locator::new();
     locator.pack(sfield::Account);
-    let _ = with_buffer::<20, _, _>(|ptr, len| {
+    with_buffer::<20, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_tx_nested_field(locator.as_ptr(), locator.len(), ptr, len) },
             20,
             "get_tx_nested_field",
         );
     });
-    let _ = with_buffer::<20, _, _>(|ptr, len| {
+    with_buffer::<20, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::get_current_ledger_obj_nested_field(locator.as_ptr(), locator.len(), ptr, len)
@@ -111,7 +110,7 @@ pub extern "C" fn finish() -> bool {
             "get_current_ledger_obj_nested_field",
         );
     });
-    let _ = with_buffer::<20, _, _>(|ptr, len| {
+    with_buffer::<20, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::get_ledger_obj_nested_field(1, locator.as_ptr(), locator.len(), ptr, len)
@@ -155,7 +154,7 @@ pub extern "C" fn finish() -> bool {
         0,
         "update_data",
     );
-    let _ = with_buffer::<32, _, _>(|ptr, len| {
+    with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe { host::compute_sha512_half(locator.as_ptr(), locator.len(), ptr, len) },
             32,
@@ -167,25 +166,25 @@ pub extern "C" fn finish() -> bool {
     // Step #2: Test set_data edge cases
     // ########################################
     check_result(
-        unsafe { host_bindings_loose::get_ledger_sqn(-1 as i32, 4) },
+        unsafe { host_bindings_loose::get_ledger_sqn(-1, 4) },
         error_codes::INVALID_PARAMS,
         "get_ledger_sqn_neg_ptr",
     );
-    let _ = with_buffer::<4, _, _>(|ptr, _len| {
+    with_buffer::<4, _, _>(|ptr, _len| {
         check_result(
             unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, -1) },
             error_codes::INVALID_PARAMS,
             "get_ledger_sqn_neg_len",
         )
     });
-    let _ = with_buffer::<3, _, _>(|ptr, len| {
+    with_buffer::<3, _, _>(|ptr, len| {
         check_result(
             unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, len as i32) },
             error_codes::BUFFER_TOO_SMALL,
             "get_ledger_sqn_buf_too_small",
         )
     });
-    let _ = with_buffer::<4, _, _>(|ptr, _len| {
+    with_buffer::<4, _, _>(|ptr, _len| {
         check_result(
             unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, 1_000_000_000) },
             error_codes::POINTER_OUT_OF_BOUNDS,
@@ -255,7 +254,7 @@ pub extern "C" fn finish() -> bool {
     );
 
     // AccountID
-    let _ = with_buffer::<32, _, _>(|ptr, len| {
+    with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host_bindings_loose::account_keylet(
@@ -269,7 +268,7 @@ pub extern "C" fn finish() -> bool {
             "account_keylet_len_too_long",
         )
     });
-    let _ = with_buffer::<32, _, _>(|ptr, len| {
+    with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host_bindings_loose::account_keylet(
@@ -285,7 +284,7 @@ pub extern "C" fn finish() -> bool {
     });
 
     // Currency
-    let _ = with_buffer::<32, _, _>(|ptr, len| {
+    with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host_bindings_loose::line_keylet(
@@ -303,7 +302,7 @@ pub extern "C" fn finish() -> bool {
             "line_keylet_len_too_long_currency",
         )
     });
-    let _ = with_buffer::<32, _, _>(|ptr, len| {
+    with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host_bindings_loose::line_keylet(
@@ -341,21 +340,21 @@ pub extern "C" fn finish() -> bool {
 
     // invalid SFields
 
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_tx_field(2, ptr, len) },
             error_codes::INVALID_FIELD,
             "get_tx_field_invalid_sfield",
         );
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_current_ledger_obj_field(2, ptr, len) },
             error_codes::INVALID_FIELD,
             "get_current_ledger_obj_field_invalid_sfield",
         );
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_ledger_obj_field(1, 2, ptr, len) },
             error_codes::INVALID_FIELD,
@@ -380,14 +379,14 @@ pub extern "C" fn finish() -> bool {
 
     // invalid Slice
 
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_tx_nested_field(locator.as_ptr(), long_len, ptr, len) },
             error_codes::DATA_FIELD_TOO_LARGE,
             "get_tx_nested_field_too_big_slice",
         );
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::get_current_ledger_obj_nested_field(locator.as_ptr(), long_len, ptr, len)
@@ -396,7 +395,7 @@ pub extern "C" fn finish() -> bool {
             "get_current_ledger_obj_nested_field_too_big_slice",
         );
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_ledger_obj_nested_field(1, locator.as_ptr(), long_len, ptr, len) },
             error_codes::DATA_FIELD_TOO_LARGE,
@@ -423,14 +422,14 @@ pub extern "C" fn finish() -> bool {
         error_codes::DATA_FIELD_TOO_LARGE,
         "update_data_too_big_slice",
     );
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::compute_sha512_half(locator.as_ptr(), long_len, ptr, len) },
             error_codes::DATA_FIELD_TOO_LARGE,
             "compute_sha512_half_too_big_slice",
         );
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::credential_keylet(
@@ -469,7 +468,7 @@ pub extern "C" fn finish() -> bool {
         error_codes::INVALID_PARAMS,
         "cache_ledger_obj_wrong_size_uint256",
     );
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::get_nft(
@@ -488,21 +487,21 @@ pub extern "C" fn finish() -> bool {
 
     // invalid AccountID
 
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::account_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "account_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::check_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "check_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::credential_keylet(
@@ -520,7 +519,7 @@ pub extern "C" fn finish() -> bool {
             "credential_keylet_wrong_size_accountid1",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::credential_keylet(
@@ -538,7 +537,7 @@ pub extern "C" fn finish() -> bool {
             "credential_keylet_wrong_size_accountid2",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::delegate_keylet(
@@ -554,7 +553,7 @@ pub extern "C" fn finish() -> bool {
             "delegate_keylet_wrong_size_accountid1",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::delegate_keylet(
@@ -570,7 +569,7 @@ pub extern "C" fn finish() -> bool {
             "delegate_keylet_wrong_size_accountid2",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::deposit_preauth_keylet(
@@ -586,7 +585,7 @@ pub extern "C" fn finish() -> bool {
             "deposit_preauth_keylet_wrong_size_accountid1",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::deposit_preauth_keylet(
@@ -602,14 +601,14 @@ pub extern "C" fn finish() -> bool {
             "deposit_preauth_keylet_wrong_size_accountid2",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::did_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "did_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::escrow_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
@@ -617,7 +616,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let currency: &[u8] = b"USD00000000000000000"; // 20 bytes
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::line_keylet(
@@ -635,7 +634,7 @@ pub extern "C" fn finish() -> bool {
             "line_keylet_wrong_size_accountid1",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::line_keylet(
@@ -653,28 +652,28 @@ pub extern "C" fn finish() -> bool {
             "line_keylet_wrong_size_accountid2",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::nft_offer_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "nft_offer_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::offer_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "offer_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::oracle_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "oracle_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::paychan_keylet(
@@ -691,7 +690,7 @@ pub extern "C" fn finish() -> bool {
             "paychan_keylet_wrong_size_accountid1",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::paychan_keylet(
@@ -708,14 +707,14 @@ pub extern "C" fn finish() -> bool {
             "paychan_keylet_wrong_size_accountid2",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::signers_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "signers_keylet_wrong_size_accountid",
         )
     });
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::ticket_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
@@ -723,7 +722,7 @@ pub extern "C" fn finish() -> bool {
         )
     });
     let uint256: &[u8] = b"00000000000000000000000000000001";
-    let _ = with_buffer::<2, _, _>(|ptr, len| {
+    with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
                 host::get_nft(

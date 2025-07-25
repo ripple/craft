@@ -141,8 +141,8 @@ use num_derive::FromPrimitive;
 pub enum RippledRoundingMode {
     ToNearest = 0,
     TowardsZero = 1,
-    DOWNWARD = 2,
-    UPWARD = 3,
+    Downward = 2,
+    Upward = 3,
 }
 
 pub struct DataProvider {

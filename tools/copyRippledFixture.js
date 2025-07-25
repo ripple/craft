@@ -3,7 +3,7 @@ const fs = require('fs')
 var execSync = require('child_process').execSync
 
 if (process.argv.length < 4) {
-    console.error('Usage: node tools/copy.js <project_name> <fixture_name>')
+    console.error('Usage: node tools/copy.js <project_name> <fixture_name> <rippled_path>')
     process.exit(1)
 }
 
@@ -30,7 +30,8 @@ function main() {
     
     const fixtureName = process.argv[3]
     console.log(`Updating fixture: ${fixtureName}`)
-    const dstPath = path.resolve(__dirname, '../../rippled-all/smart-escrows/src/test/app/wasm_fixtures/fixtures.cpp')
+    const rippledPath = process.argv[4]
+    const dstPath = path.resolve(rippledPath, 'src/test/app/wasm_fixtures/fixtures.cpp')
     const dstContent = fs.readFileSync(dstPath, 'utf8')
     const re = new RegExp(String.raw`extern std::string const ${fixtureName} =[ \n]+"[^;]*;`, "g")
     const updatedContent = dstContent.replace(re, `extern std::string const ${fixtureName} = "${wasm}";`)

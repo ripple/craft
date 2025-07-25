@@ -721,128 +721,181 @@ unsafe extern "C" {
     /// Converts a signed 64-bit integer to an opaque float representation
     /// # Parameters
     /// * `in_int` - The input integer to convert
-    /// * `out_buf` - Pointer to output buffer where the float will be written
-    /// * `rounding_modes` - Rounding mode to use for the conversion
+    /// * `out_buff` - Pointer to output buffer where the float will be written
+    /// * `rounding_mode` - Rounding mode to use for the conversion
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_from_int(
+        in_int: i64,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
+    ) -> i32;
 
     /// Converts an unsigned integer to an opaque float representation
     /// # Parameters
     /// * `in_uint_ptr` - Pointer to the input unsigned integer
-    /// * `out_buf` - Pointer to output buffer where the float will be written
-    /// * `rounding_modes` - Rounding mode to use for the conversion
+    /// * `out_buff` - Pointer to output buffer where the float will be written
+    /// * `rounding_mode` - Rounding mode to use for the conversion
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_from_uint(in_uint_ptr: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_from_uint(
+        in_uint_ptr: *const u8,
+        in_uint_len: usize,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
+    ) -> i32;
 
     /// Creates a float from explicit exponent and mantissa values
     /// # Parameters
     /// * `exponent` - The exponent value
     /// * `mantissa` - The mantissa value
-    /// * `out_buf` - Pointer to output buffer where the float will be written
-    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// * `out_buff` - Pointer to output buffer where the float will be written
+    /// * `rounding_mode` - Rounding mode to use for the operation
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_set(exponent: i32, mantissa: i64, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_set(
+        exponent: i32,
+        mantissa: i64,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
+    ) -> i32;
 
     /// Compares two opaque float values
     /// # Parameters
-    /// * `in_buf1` - Pointer to first float value
-    /// * `in_buf2` - Pointer to second float value
+    /// * `in_buff1` - Pointer to first float value
+    /// * `in_buff2` - Pointer to second float value
     /// # Returns
     /// 0 if equal, 1 if first > second, 2 if first < second,
-    pub fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32;
+    pub fn float_compare(
+        in_buff1: *const u8,
+        in_buff1_len: usize,
+        in_buff2: *const u8,
+        in_buff2_len: usize,
+    ) -> i32;
 
     /// Adds two opaque float values
     /// # Parameters
-    /// * `in_buf1` - Pointer to first float value
-    /// * `in_buf2` - Pointer to second float value
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the addition
+    /// * `in_buff1` - Pointer to first float value
+    /// * `in_buff2` - Pointer to second float value
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the addition
     /// # Returns
     /// 8 on success, error code otherwise
     pub fn float_add(
-        in_buf1: *const u8,
-        in_buf2: *const u8,
-        out_buf: *mut u8,
-        rounding_modes: i32,
+        in_buff1: *const u8,
+        in_buff1_len: usize,
+        in_buff2: *const u8,
+        in_buff2_len: usize,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
     ) -> i32;
 
     /// Subtracts two opaque float values
     /// # Parameters
-    /// * `in_buf1` - Pointer to first float value
-    /// * `in_buf2` - Pointer to second float value
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the subtraction
+    /// * `in_buff1` - Pointer to first float value
+    /// * `in_buff2` - Pointer to second float value
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the subtraction
     /// # Returns
     /// 8 on success, error code otherwise
     pub fn float_subtract(
-        in_buf1: *const u8,
-        in_buf2: *const u8,
-        out_buf: *mut u8,
-        rounding_modes: i32,
+        in_buff1: *const u8,
+        in_buff1_len: usize,
+        in_buff2: *const u8,
+        in_buff2_len: usize,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
     ) -> i32;
 
     /// Multiplies two opaque float values
     /// # Parameters
-    /// * `in_buf1` - Pointer to first float value
-    /// * `in_buf2` - Pointer to second float value
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the multiplication
+    /// * `in_buff1` - Pointer to first float value
+    /// * `in_buff2` - Pointer to second float value
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the multiplication
     /// # Returns
     /// 8 on success, error code otherwise
     pub fn float_multiply(
-        in_buf1: *const u8,
-        in_buf2: *const u8,
-        out_buf: *mut u8,
-        rounding_modes: i32,
+        in_buff1: *const u8,
+        in_buff1_len: usize,
+        in_buff2: *const u8,
+        in_buff2_len: usize,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
     ) -> i32;
 
     /// Divides two opaque float values
     /// # Parameters
-    /// * `in_buf1` - Pointer to dividend float value
-    /// * `in_buf2` - Pointer to divisor float value
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the division
+    /// * `in_buff1` - Pointer to dividend float value
+    /// * `in_buff2` - Pointer to divisor float value
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the division
     /// # Returns
     /// 8 on success, error code otherwise
     pub fn float_divide(
-        in_buf1: *const u8,
-        in_buf2: *const u8,
-        out_buf: *mut u8,
-        rounding_modes: i32,
+        in_buff1: *const u8,
+        in_buff1_len: usize,
+        in_buff2: *const u8,
+        in_buff2_len: usize,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
     ) -> i32;
 
     /// Calculates the nth power of an opaque float value
     /// # Parameters
-    /// * `in_buf` - Pointer to input float value
+    /// * `in_buff` - Pointer to input float value
     /// * `in_int` - The power to calculate (e.g., 2 for square)
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the operation
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_pow(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_pow(
+        in_buff: *const u8,
+        in_buff_len: usize,
+        in_int: i32,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
+    ) -> i32;
 
     /// Calculates the nth root of an opaque float value
     /// # Parameters
-    /// * `in_buf` - Pointer to input float value
+    /// * `in_buff` - Pointer to input float value
     /// * `in_int` - The root to calculate (e.g., 2 for square root)
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the operation
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_root(in_buf: *const u8, in_int: i32, out_buf: *mut u8, rounding_modes: i32)
-    -> i32;
+    pub fn float_root(
+        in_buff: *const u8,
+        in_buff_len: usize,
+        in_int: i32,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
+    ) -> i32;
 
     /// Calculates the natural logarithm of an opaque float value
     /// # Arguments
-    /// * `in_buf` - Pointer to input float value
-    /// * `out_buf` - Pointer to output buffer where result will be written
-    /// * `rounding_modes` - Rounding mode to use for the operation
+    /// * `in_buff` - Pointer to input float value
+    /// * `out_buff` - Pointer to output buffer where result will be written
+    /// * `rounding_mode` - Rounding mode to use for the operation
     /// # Returns
     /// 8 on success, error code otherwise
-    pub fn float_log(in_buf: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32;
+    pub fn float_log(
+        in_buff: *const u8,
+        in_buff_len: usize,
+        out_buff: *mut u8,
+        out_buff_len: usize,
+        rounding_mode: i32,
+    ) -> i32;
 
     // #############################
     // Host Function Category: TRACE
@@ -903,8 +956,9 @@ unsafe extern "C" {
     /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
     /// sizes).
     pub fn trace_opaque_float(
-        _msg_read_ptr: *const u8,
-        _msg_read_len: usize,
-        _opaque_float_ptr: *const u8,
+        msg_read_ptr: *const u8,
+        msg_read_len: usize,
+        opaque_float_ptr: *const u8,
+        opaque_float_len: usize,
     ) -> i32;
 }

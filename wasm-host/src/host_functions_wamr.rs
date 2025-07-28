@@ -436,7 +436,7 @@ pub fn float_from_int(
     in_int: i64,
     out_buf: *mut u8,
     out_buff_len: usize,
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let a = BigDecimal::from(in_int);
     // println!("float_from_int {a}");
@@ -449,7 +449,7 @@ pub fn float_from_uint(
     in_uint_len: usize,
     out_buff: *mut u8,
     out_buff_len: usize,
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let v: u64 = unsafe {
         let inst = wasm_runtime_get_module_inst(env);
@@ -472,7 +472,7 @@ pub fn float_set(
     mantissa: i64,
     out_buff: *mut u8,
     out_buff_len: usize,
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let value = BigDecimal::from_bigint(BigInt::from(mantissa), -exponent as i64);
     // warn!("float_set {value}");
@@ -576,7 +576,7 @@ pub fn float_divide(
     in_buff2_len: usize,
     out_buff: *mut u8,
     out_buff_len: usize,
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let f1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
@@ -597,7 +597,7 @@ pub fn float_pow(
     in_int: i32,
     out_buff: *mut u8,
     out_buff_len: usize,
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let f = match unpack_in_float(env, in_buff) {
         Ok(val) => match val.to_f64() {
@@ -632,8 +632,7 @@ pub fn float_root(
     in_int: i32,
     out_buff: *mut u8,
     out_buff_len: usize,
-
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let f = match unpack_in_float(env, in_buff) {
         Ok(val) => match val.to_f64() {
@@ -662,7 +661,7 @@ pub fn float_log(
     in_buff_len: usize,
     out_buff: *mut u8,
     out_buff_len: usize,
-    rounting_mode: i32,
+    rounding_mode: i32,
 ) -> i32 {
     let f = match unpack_in_float(env, in_buff) {
         Ok(val) => match val.to_f64() {

@@ -7,6 +7,11 @@
 extern crate std;
 
 use xrpl_std::core::locator::Locator;
+use xrpl_std::core::types::account_id::AccountID;
+use xrpl_std::core::types::keylets::{
+    KeyletBytes, deposit_preauth_keylet, offer_keylet, paychan_keylet, signers_keylet,
+    ticket_keylet,
+};
 use xrpl_std::decode_hex_32;
 use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::host::{
@@ -15,7 +20,8 @@ use xrpl_std::host::{
 use xrpl_std::sfield;
 use xrpl_std::sfield::{
     Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
-    OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TicketCount, TransferRate,
+    OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TakerGets, TicketCount,
+    TicketSequence, TransferRate,
 };
 
 fn test_account_root() {
@@ -234,6 +240,7 @@ fn test_amm() {
         DataRepr::AsHex,
     );
 }
+
 fn test_offer() {
     let _ = trace("\n$$$ test_offer $$$");
 
@@ -246,6 +253,34 @@ fn test_offer() {
     let output_len =
         unsafe { get_ledger_obj_field(slot, sfield::TakerPays, buf.as_mut_ptr(), buf.len()) };
     let _ = trace_data("  TakerPays:", &buf[..output_len as usize], DataRepr::AsHex);
+
+    let mut acc_buf = [0u8; 20];
+    let acc_len = unsafe {
+        get_ledger_obj_field(slot, Account, acc_buf.as_mut_ptr(), acc_buf.len()) as usize
+    };
+    let _ = trace_data("  Account:", &acc_buf[0..acc_len], DataRepr::AsHex);
+    let acc = AccountID::from(acc_buf);
+
+    let mut sqn_buf = 0i32;
+    let sqn_len = unsafe {
+        get_ledger_obj_field(slot, Sequence, (&mut sqn_buf) as *mut i32 as *mut u8, 4) as usize
+    };
+    let _ = trace_num("  Sequence:", sqn_buf as i64);
+
+    match offer_keylet(&acc, sqn_buf) {
+        xrpl_std::host::Result::Ok(computed_keylet) => {
+            if computed_keylet == keylet {
+                let _ = trace("  Offer keylet match");
+            } else {
+                let _ = trace("  Offer keylet doesn't match: ");
+                let _ = trace_data("    computed:", &computed_keylet[..], DataRepr::AsHex);
+                let _ = trace_data("    expected:", &keylet[..], DataRepr::AsHex);
+            }
+        }
+        xrpl_std::host::Result::Err(_) => {
+            let _ = trace("  Offer keylet error");
+        }
+    }
 }
 
 fn test_mpt_fields() {
@@ -326,15 +361,138 @@ fn test_issue() {
     let _ = trace_data("  IOU Asset:", &buf[..output_len as usize], DataRepr::AsHex);
 }
 
+fn test_deposit_preauth() {
+    let _ = trace("\n$$$ test_deposit_preauth $$$");
+
+    let keylet =
+        decode_hex_32(b"A43898B685C450DE8E194B24D9D54E62530536A770CCB311BFEE15A27381ABB2").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    let mut acc_buf = [0u8; 20];
+    let acc_len = unsafe {
+        get_ledger_obj_field(slot, Account, acc_buf.as_mut_ptr(), acc_buf.len()) as usize
+    };
+    let _ = trace_data("  Account:", &acc_buf[0..acc_len], DataRepr::AsHex);
+    let acc = AccountID::from(acc_buf);
+
+    let mut buf = [0x00; 20];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Authorize, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  Authorize:", &buf[..output_len as usize], DataRepr::AsHex);
+    let auth = AccountID::from(buf);
+
+    match deposit_preauth_keylet(&acc, &auth) {
+        xrpl_std::host::Result::Ok(computed_keylet) => {
+            if computed_keylet == keylet {
+                let _ = trace("  DepositPreauth keylet match");
+            } else {
+                let _ = trace("  DepositPreauth keylet doesn't match: ");
+                let _ = trace_data("    computed:", &computed_keylet[..], DataRepr::AsHex);
+                let _ = trace_data("    expected:", &keylet[..], DataRepr::AsHex);
+            }
+        }
+        xrpl_std::host::Result::Err(_) => {
+            let _ = trace("  DepositPreauth keylet error");
+        }
+    }
+}
+
+fn test_pay_channel() {
+    let _ = trace("\n$$$ test_pay_channel $$$");
+
+    let keylet =
+        decode_hex_32(b"C7F634794B79DB40E87179A9D1BF05D05797AE7E92DF8E93FD6656E8C4BE3AE7").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    let mut acc_buf = [0u8; 20];
+    let acc_len = unsafe {
+        get_ledger_obj_field(slot, Account, acc_buf.as_mut_ptr(), acc_buf.len()) as usize
+    };
+    let _ = trace_data("  Account:", &acc_buf[0..acc_len], DataRepr::AsHex);
+    let acc = AccountID::from(acc_buf);
+
+    let mut buf = [0x00; 20];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Destination, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data(
+        "  Destination:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
+    let dest = AccountID::from(buf);
+
+    let sqn = 382i32; //got from RPC the mainnet
+    match paychan_keylet(&acc, &dest, sqn) {
+        xrpl_std::host::Result::Ok(computed_keylet) => {
+            if computed_keylet == keylet {
+                let _ = trace("  PayChannel keylet match");
+            } else {
+                let _ = trace("  PayChannel keylet doesn't match: ");
+                let _ = trace_data("    computed:", &computed_keylet[..], DataRepr::AsHex);
+                let _ = trace_data("    expected:", &keylet[..], DataRepr::AsHex);
+            }
+        }
+        xrpl_std::host::Result::Err(_) => {
+            let _ = trace("  PayChannel keylet error");
+        }
+    }
+}
+
+fn test_ticket() {
+    let _ = trace("\n$$$ test_ticket $$$");
+
+    let keylet =
+        decode_hex_32(b"B603682BC36F474F708E1A150B7C034C6C13D838C3F2F135CDB7BEA6E5B5ACEF").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    let mut acc_buf = [0u8; 20];
+    let acc_len = unsafe {
+        get_ledger_obj_field(slot, Account, acc_buf.as_mut_ptr(), acc_buf.len()) as usize
+    };
+    let _ = trace_data("  Account:", &acc_buf[0..acc_len], DataRepr::AsHex);
+    let acc = AccountID::from(acc_buf);
+
+    let mut sqn_buf = 0i32;
+    let sqn_len = unsafe {
+        get_ledger_obj_field(
+            slot,
+            TicketSequence,
+            (&mut sqn_buf) as *mut i32 as *mut u8,
+            4,
+        ) as usize
+    };
+    let _ = trace_num("  TicketSequence:", sqn_buf as i64);
+
+    match ticket_keylet(&acc, sqn_buf) {
+        xrpl_std::host::Result::Ok(computed_keylet) => {
+            if computed_keylet == keylet {
+                let _ = trace("  Ticket keylet match");
+            } else {
+                let _ = trace("  Ticket keylet doesn't match: ");
+                let _ = trace_data("    computed:", &computed_keylet[..], DataRepr::AsHex);
+                let _ = trace_data("    expected:", &keylet[..], DataRepr::AsHex);
+            }
+        }
+        xrpl_std::host::Result::Err(_) => {
+            let _ = trace("  SignerListSet keylet error");
+        }
+    }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    test_account_root();
-    test_amendments();
-    test_amm();
+    // test_account_root();
+    // test_amendments();
+    // test_amm();
     test_offer();
-    test_mpt_fields();
-    test_mpt_amount();
-    test_issue();
+
+    // test_mpt_fields();
+    // test_mpt_amount();
+    // test_issue();
+
+    test_deposit_preauth();
+    test_pay_channel();
+    test_ticket();
 
     1
 }

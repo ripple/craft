@@ -1,14 +1,16 @@
 use crate::data_provider::DataProvider;
 use crate::host_functions_wamr::{
-    account_keylet, cache_ledger_obj, compute_sha512_half, credential_keylet, escrow_keylet,
-    float_add, float_compare, float_divide, float_from_int, float_from_uint, float_log,
-    float_multiply, float_pow, float_root, float_set, float_subtract,
-    get_current_ledger_obj_array_len, get_current_ledger_obj_field,
-    get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
-    get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
-    get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
-    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len,
-    get_tx_nested_field, oracle_keylet, trace, trace_num, trace_opaque_float, update_data,
+    account_keylet, cache_ledger_obj, check_keylet, compute_sha512_half, credential_keylet,
+    delegate_keylet, deposit_preauth_keylet, did_preauth_keylet, escrow_keylet, float_add,
+    float_compare, float_divide, float_from_int, float_from_uint, float_log, float_multiply,
+    float_pow, float_root, float_set, float_subtract, get_current_ledger_obj_array_len,
+    get_current_ledger_obj_field, get_current_ledger_obj_nested_array_len,
+    get_current_ledger_obj_nested_field, get_ledger_obj_array_len, get_ledger_obj_field,
+    get_ledger_obj_nested_array_len, get_ledger_obj_nested_field, get_ledger_sqn, get_nft,
+    get_parent_ledger_hash, get_parent_ledger_time, get_tx_array_len, get_tx_field,
+    get_tx_nested_array_len, get_tx_nested_field, line_keylet, nft_offer_keylet, offer_keylet,
+    oracle_keylet, paychan_keylet, signers_keylet, ticket_keylet, trace, trace_num,
+    trace_opaque_float, update_data,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};
@@ -65,6 +67,16 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("float_root", float_root as *mut c_void, "(*~i*~i)i", 100, data_provider.as_ptr())
         .register_host_function("float_log", float_log as *mut c_void, "(*~*~i)i", 100, data_provider.as_ptr())
         .register_host_function("trace_opaque_float", trace_opaque_float as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
+        .register_host_function("check_keylet", check_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
+        .register_host_function("delegate_keylet", delegate_keylet as *mut c_void, "(*~*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("deposit_preauth_keylet", deposit_preauth_keylet as *mut c_void, "(*~*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("did_preauth_keylet", did_preauth_keylet as *mut c_void, "(*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("line_keylet", line_keylet as *mut c_void, "(*~*~*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("nft_offer_keylet", nft_offer_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
+        .register_host_function("offer_keylet", offer_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
+        .register_host_function("paychan_keylet", paychan_keylet as *mut c_void, "(*~*~i*~)i", 350, data_provider.as_ptr())
+        .register_host_function("signers_keylet", signers_keylet as *mut c_void, "(*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("ticket_keylet", ticket_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
         .build()?;
 
     debug!("Loading WASM module from file: {}", wasm_file);

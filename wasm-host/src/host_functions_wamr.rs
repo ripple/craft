@@ -288,21 +288,43 @@ pub fn compute_sha512_half(
 
 pub fn account_keylet(
     _env: wasm_exec_env_t,
-    in_buf_ptr: *mut u8,
-    in_buf_len: usize,
+    account_buf_ptr: *mut u8,
+    account_buf_len: usize,
     out_buf_ptr: *mut u8,
     out_buf_cap: usize,
 ) -> i32 {
     if HASH256_LEN > out_buf_cap {
         return HostError::BufferTooSmall as i32;
     }
-    let data = get_data(in_buf_ptr, in_buf_len);
+    let data = get_data(account_buf_ptr, account_buf_len);
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
     // let hex_str = hex::encode(&keylet_hash);
     // println!("Data (keylet_hash): {:?}", hex_str);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn check_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *mut u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::Check, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
@@ -335,6 +357,72 @@ pub fn credential_keylet(
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
+
+pub fn delegate_keylet(
+    _env: wasm_exec_env_t,
+    account_ptr: *mut u8,
+    account_len: usize,
+    authorize_ptr: *mut u8,
+    authorize_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_ptr, account_len);
+    let mut authorized = get_data(authorize_ptr, authorize_len);
+    if ACCOUNT_ID_LEN != data.len() || ACCOUNT_ID_LEN != authorized.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    data.append(&mut authorized);
+    let keylet_hash = index_hash(LedgerNameSpace::Delegate, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn deposit_preauth_keylet(
+    _env: wasm_exec_env_t,
+    account_ptr: *mut u8,
+    account_len: usize,
+    authorize_ptr: *mut u8,
+    authorize_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_ptr, account_len);
+    let mut authorized = get_data(authorize_ptr, authorize_len);
+    if ACCOUNT_ID_LEN != data.len() || ACCOUNT_ID_LEN != authorized.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    data.append(&mut authorized);
+    let keylet_hash = index_hash(LedgerNameSpace::DepositPreauth, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn did_preauth_keylet(
+    _env: wasm_exec_env_t,
+    account_ptr: *mut u8,
+    account_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_ptr, account_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let keylet_hash = index_hash(LedgerNameSpace::Did, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn escrow_keylet(
     _env: wasm_exec_env_t,
     account_ptr: *mut u8,
@@ -356,6 +444,83 @@ pub fn escrow_keylet(
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
+
+#[allow(clippy::too_many_arguments)]
+pub fn line_keylet(
+    _env: wasm_exec_env_t,
+    account1_ptr: *mut u8,
+    account1_len: usize,
+    account2_ptr: *mut u8,
+    account2_len: usize,
+    currency_ptr: *mut u8,
+    currency_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut account1 = get_data(account1_ptr, account1_len);
+    let mut account2 = get_data(account2_ptr, account2_len);
+    let mut currency = get_data(currency_ptr, currency_len);
+    if ACCOUNT_ID_LEN != account1.len() || ACCOUNT_ID_LEN != account2.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    if ACCOUNT_ID_LEN != currency.len() {
+        return HostError::InvalidParams as i32;
+    }
+    let mut data = account1;
+    data.append(&mut account2);
+    data.append(&mut currency);
+    let keylet_hash = index_hash(LedgerNameSpace::TrustLine, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn nft_offer_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *mut u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::NftokenOffer, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn offer_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *mut u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::Offer, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn oracle_keylet(
     _env: wasm_exec_env_t,
     account_ptr: *mut u8,
@@ -374,6 +539,74 @@ pub fn oracle_keylet(
     let sqn_data = document_id.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Oracle, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn paychan_keylet(
+    _env: wasm_exec_env_t,
+    account_ptr: *mut u8,
+    account_len: usize,
+    destination_ptr: *mut u8,
+    destination_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_ptr, account_len);
+    let mut destination = get_data(destination_ptr, destination_len);
+    if ACCOUNT_ID_LEN != data.len() || ACCOUNT_ID_LEN != destination.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.append(&mut destination);
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::XrpPaymentChannel, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn signers_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *mut u8,
+    account_buf_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let keylet_hash = index_hash(LedgerNameSpace::SignerList, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn ticket_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *mut u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::Ticket, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }

@@ -70,6 +70,33 @@ pub extern "C" fn finish() -> bool {
             "get_parent_ledger_hash",
         );
     });
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_ledger_account_hash(ptr, len) },
+            32,
+            "get_ledger_account_hash",
+        );
+    });
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_ledger_tx_hash(ptr, len) },
+            32,
+            "get_ledger_tx_hash",
+        );
+    });
+    check_result(unsafe { host::get_base_fee() }, 10, "get_base_fee");
+    let amendment_name: &[u8] = b"test_amendment";
+    let amendment_id: &[u8] = b"\xAE\x6A\xB9\x02\x8E\xEB\x72\x99\\xEB\xB0\x3C\x7C\xBC\xC3\xF2\xA4\\xF5\xFB\xE0\x0E\xA2\x8B\x82\x23\\xAA\x31\x18\xA0\xB4\x36\xC1\xC5";
+    check_result(
+        unsafe { host::amendment_enabled(amendment_name.as_ptr(), amendment_name.len()) },
+        1,
+        "amendment_enabled",
+    );
+    check_result(
+        unsafe { host::amendment_enabled(amendment_id.as_ptr(), amendment_id.len()) },
+        1,
+        "amendment_enabled",
+    );
     let tx: EscrowFinish = get_current_escrow_finish();
     let account = tx.get_account().unwrap_or_panic(); // get_tx_field under the hood
     let keylet = keylets::account_keylet(&account).unwrap_or_panic(); // account_keylet under the hood
@@ -160,6 +187,29 @@ pub extern "C" fn finish() -> bool {
             32,
             "compute_sha512_half",
         );
+    });
+    // check_result(
+    //     unsafe { host::check_sig(locator.as_ptr(), locator.len(), ptr, len) },
+    //     32,
+    //     "check_sig",
+    // );
+
+    let nft_id: &[u8] = amendment_id;
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::get_nft(
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    nft_id.as_ptr(),
+                    nft_id.len(),
+                    ptr,
+                    len,
+                )
+            },
+            32,
+            "get_nft",
+        )
     });
 
     // ########################################

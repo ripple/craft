@@ -1,5 +1,7 @@
-#![no_std]
-#![allow(unused_imports)]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 //
 // Host Functions Test
@@ -24,7 +26,6 @@
 
 use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-use xrpl_std::core::field_codes::*;
 use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 use xrpl_std::host::*;
 use xrpl_std::sfield;

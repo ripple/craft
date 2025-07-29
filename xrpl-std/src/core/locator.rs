@@ -66,8 +66,20 @@ impl Locator {
         self.buffer.as_ptr()
     }
 
+    pub fn as_ptr(&self) -> *const u8 {
+        self.buffer.as_ptr()
+    }
+
     pub fn num_packed_bytes(&self) -> usize {
         self.cur_buffer_index
+    }
+
+    pub fn len(&self) -> usize {
+        self.cur_buffer_index
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cur_buffer_index == 0
     }
 
     pub fn repack_last(&mut self, sfield_or_index: i32) -> bool {

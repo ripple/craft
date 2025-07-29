@@ -38,11 +38,11 @@ async function finishEscrow() {
     await client.connect()
     console.log(`Connected to ${url}`)
     await client.request({command: 'ledger_accept'})
-    
+
     interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},2000)
 
     const wallet = xrpl.Wallet.fromSeed(accountSecret)
-    
+
     // Verify the account matches the wallet
     if (wallet.address !== account) {
       console.error("Error: Provided account doesn't match the wallet derived from the secret")
@@ -66,7 +66,7 @@ async function finishEscrow() {
 
     console.log("Submitting EscrowFinish transaction... (this should fail)")
     const responseFail = await submit(txFail, wallet)
-    
+
     if (responseFail.result.meta.TransactionResult === "tesSUCCESS") {
       console.log("\nEscrow finished successfully!")
     } else {
@@ -85,7 +85,7 @@ async function finishEscrow() {
 
     console.log("Submitting CredentialCreate transaction...")
     const credResponse = await submit(credTx, wallet)
-    
+
     if (credResponse.result.meta.TransactionResult === "tesSUCCESS") {
       console.log("Credential created successfully!")
     } else {
@@ -104,7 +104,7 @@ async function finishEscrow() {
 
     console.log("Submitting EscrowFinish transaction...")
     const response = await submit(tx, wallet)
-    
+
     if (response.result.meta.TransactionResult === "tesSUCCESS") {
       console.log("\nEscrow finished successfully!")
     } else {
@@ -120,4 +120,4 @@ async function finishEscrow() {
   }
 }
 
-finishEscrow() 
+finishEscrow()

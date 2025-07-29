@@ -30,5 +30,6 @@ repos:
       - id: fix-byte-order-marker
       - id: forbid-submodules
       - id: mixed-line-ending
-      - id: pretty-format-json
+      # - id: pretty-format-json
+      #   args: ["--autofix"]
       - id: trailing-whitespace

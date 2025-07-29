@@ -111,7 +111,7 @@ unsafe extern "C" {
     /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
-    pub fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
+    pub fn get_tx_field(field: i32, out_buff_ptr: *mut u8, out_buff_len: usize) -> i32; 
 
     /// Retrieves a specific field from the current ledger object and writes it into the provided buffer.
     ///

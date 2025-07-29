@@ -435,7 +435,8 @@ pub fn float_from_int(
     env: wasm_exec_env_t,
     in_int: i64,
     out_buf: *mut u8,
-    rounting_mode: i32,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     let a = BigDecimal::from(in_int);
     // println!("float_from_int {a}");
@@ -445,8 +446,10 @@ pub fn float_from_int(
 pub fn float_from_uint(
     env: wasm_exec_env_t,
     in_uint_ptr: *const u8,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    in_uint_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     let v: u64 = unsafe {
         let inst = wasm_runtime_get_module_inst(env);
@@ -460,27 +463,34 @@ pub fn float_from_uint(
         u64::from_le_bytes(bytes)
     };
     let a = BigDecimal::from(v);
-    pack_out_float(a, env, out_buf)
+    pack_out_float(a, env, out_buff)
 }
 
 pub fn float_set(
     env: wasm_exec_env_t,
     exponent: i32,
     mantissa: i64,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     let value = BigDecimal::from_bigint(BigInt::from(mantissa), -exponent as i64);
     // warn!("float_set {value}");
-    pack_out_float(value, env, out_buf)
+    pack_out_float(value, env, out_buff)
 }
 
-pub fn float_compare(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u8) -> i32 {
-    let f1 = match unpack_in_float(env, in_buf1) {
+pub fn float_compare(
+    env: wasm_exec_env_t,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+) -> i32 {
+    let f1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let f2 = match unpack_in_float(env, in_buf2) {
+    let f2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -494,88 +504,137 @@ pub fn float_compare(env: wasm_exec_env_t, in_buf1: *const u8, in_buf2: *const u
 
 pub fn float_add(
     env: wasm_exec_env_t,
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
-    let f1 = match unpack_in_float(env, in_buf1) {
+    let f1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let f2 = match unpack_in_float(env, in_buf2) {
+    let f2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
     let r = f1 + f2;
-    pack_out_float(r, env, out_buf)
+    pack_out_float(r, env, out_buff)
 }
 
 pub fn float_subtract(
     env: wasm_exec_env_t,
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
-    let f1 = match unpack_in_float(env, in_buf1) {
+    let f1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let f2 = match unpack_in_float(env, in_buf2) {
+    let f2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
     let r = f1 - f2;
-    pack_out_float(r, env, out_buf)
+    pack_out_float(r, env, out_buff)
 }
 
 pub fn float_multiply(
     env: wasm_exec_env_t,
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
-    let f1 = match unpack_in_float(env, in_buf1) {
+    let f1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let f2 = match unpack_in_float(env, in_buf2) {
+    let f2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
     let r = f1 * f2;
-    pack_out_float(r, env, out_buf)
+    pack_out_float(r, env, out_buff)
 }
 
 pub fn float_divide(
     env: wasm_exec_env_t,
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
-    let f1 = match unpack_in_float(env, in_buf1) {
+    let f1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let f2 = match unpack_in_float(env, in_buf2) {
+    let f2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
     let r = f1 / f2;
-    pack_out_float(r, env, out_buf)
+    pack_out_float(r, env, out_buff)
+}
+
+pub fn float_pow(
+    env: wasm_exec_env_t,
+    in_buff: *const u8,
+    in_buff_len: usize,
+    in_int: i32,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
+) -> i32 {
+    let f = match unpack_in_float(env, in_buff) {
+        Ok(val) => match val.to_f64() {
+            Some(f) => {
+                if f == 0.0 && in_int == 0 {
+                    return HostError::InvalidParams as i32;
+                }
+                f
+            }
+            None => return HostError::FloatComputationError as i32,
+        },
+        Err(e) => return e as i32,
+    };
+
+    if in_int < 0 {
+        return HostError::InvalidParams as i32;
+    }
+
+    let f = f.powf(in_int as f64);
+    let r = match BigDecimal::try_from(f) {
+        Ok(val) => val,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    // warn!("float_pow {r}");
+    pack_out_float(r, env, out_buff)
 }
 
 pub fn float_root(
     env: wasm_exec_env_t,
-    in_buf: *const u8,
+    in_buff: *const u8,
+    in_buff_len: usize,
     in_int: i32,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
-    let f = match unpack_in_float(env, in_buf) {
+    let f = match unpack_in_float(env, in_buff) {
         Ok(val) => match val.to_f64() {
             Some(f) => f,
             None => return HostError::FloatComputationError as i32,
@@ -593,16 +652,18 @@ pub fn float_root(
         Err(_) => return HostError::FloatComputationError as i32,
     };
     // warn!("float_root {r}");
-    pack_out_float(r, env, out_buf)
+    pack_out_float(r, env, out_buff)
 }
 
 pub fn float_log(
     env: wasm_exec_env_t,
-    in_buf: *const u8,
-    out_buf: *mut u8,
-    rounting_mode: i32,
+    in_buff: *const u8,
+    in_buff_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
-    let f = match unpack_in_float(env, in_buf) {
+    let f = match unpack_in_float(env, in_buff) {
         Ok(val) => match val.to_f64() {
             Some(f) => f,
             None => return HostError::FloatComputationError as i32,
@@ -616,7 +677,7 @@ pub fn float_log(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_float(r, env, out_buf)
+    pack_out_float(r, env, out_buff)
 }
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -724,6 +785,7 @@ pub fn trace_opaque_float(
     msg_read_ptr: *mut u8,
     msg_read_len: usize,
     op_float: *const u8,
+    float_len: usize,
 ) -> i32 {
     let f = match unpack_in_float(_env, op_float) {
         Ok(val) => val,

@@ -215,7 +215,7 @@ fn test_transaction_data_functions() -> i32 {
     }
     let _ = trace_data("Transaction Sequence:", &seq_buffer, DataRepr::AsHex);
 
-    // NOTE: The deprecated get_tx_field[n] functions (get_tx_field2 through get_tx_field6) 
+    // NOTE: The deprecated get_tx_field[n] functions (get_tx_field2 through get_tx_field6)
     // have been removed. Use get_tx_field() for transaction field access.
 
     // Test 2.2: get_tx_nested_field() - Nested field access with locator
@@ -806,10 +806,16 @@ fn test_utility_functions() -> i32 {
     };
 
     if trace_float_result < 0 {
-        let _ = trace_num("ERROR: trace_opaque_float() failed:", trace_float_result as i64);
+        let _ = trace_num(
+            "ERROR: trace_opaque_float() failed:",
+            trace_float_result as i64,
+        );
         return -605; // Trace opaque float function failed
     }
-    let _ = trace_num("Trace_opaque_float function bytes written:", trace_float_result as i64);
+    let _ = trace_num(
+        "Trace_opaque_float function bytes written:",
+        trace_float_result as i64,
+    );
 
     let _ = trace_data("SUCCESS: Utility functions", &[], DataRepr::AsHex);
     0

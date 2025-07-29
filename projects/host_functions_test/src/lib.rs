@@ -3,7 +3,6 @@
 
 //
 // Host Functions Test
-// Tests 26 host functions (across 7 categories)
 //
 // With craft you can run this test with:
 //   craft test --project host_functions_test --test-case host_functions_test
@@ -19,7 +18,7 @@
 // -300 to -399: Current Ledger Object Functions (4 functions)
 // -400 to -499: Any Ledger Object Functions (5 functions)
 // -500 to -599: Keylet Generation Functions (4 functions)
-// -600 to -699: Utility Functions (4 functions)
+// -600 to -699: Utility Functions (5 functions)
 // -700 to -799: Data Update Functions (1 function)
 //
 
@@ -33,7 +32,7 @@ use xrpl_std::sfield;
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     let _ = trace_data("=== HOST FUNCTIONS TEST ===", &[], DataRepr::AsHex);
-    let _ = trace_data("Testing 26 host functions", &[], DataRepr::AsHex);
+    let _ = trace_data("Testing host functions", &[], DataRepr::AsHex);
 
     // Category 1: Ledger Header Data Functions (3 functions)
     // Error range: -100 to -199
@@ -215,8 +214,8 @@ fn test_transaction_data_functions() -> i32 {
     }
     let _ = trace_data("Transaction Sequence:", &seq_buffer, DataRepr::AsHex);
 
-    // NOTE: get_tx_field2() through get_tx_field6() have been deprecated.
-    // Use get_tx_field() with appropriate parameters for all transaction field access.
+    // NOTE: The deprecated get_tx_field[n] functions (get_tx_field2 through get_tx_field6) 
+    // have been removed. Use get_tx_field() for transaction field access.
 
     // Test 2.2: get_tx_nested_field() - Nested field access with locator
     let locator = [0x01, 0x00]; // Simple locator for first element
@@ -701,7 +700,7 @@ fn test_keylet_generation_functions() -> i32 {
     0
 }
 
-/// Test Category 6: Utility Functions (4 functions)
+/// Test Category 6: Utility Functions (5 functions)
 /// Tests utility functions for hashing, NFT access, and tracing
 fn test_utility_functions() -> i32 {
     let _ = trace_data(
@@ -793,6 +792,23 @@ fn test_utility_functions() -> i32 {
             return -604; // Trace number function failed
         }
     }
+
+    // Test 6.5: trace_opaque_float() - Debug logging with opaque float
+    let opaque_float_value: [u8; 8] = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // Zero float encoding
+    let trace_float_result = unsafe {
+        trace_opaque_float(
+            b"Test opaque float trace".as_ptr(),
+            23, // length of "Test opaque float trace"
+            opaque_float_value.as_ptr(),
+            opaque_float_value.len(),
+        )
+    };
+
+    if trace_float_result < 0 {
+        let _ = trace_num("ERROR: trace_opaque_float() failed:", trace_float_result as i64);
+        return -605; // Trace opaque float function failed
+    }
+    let _ = trace_num("Trace_opaque_float function bytes written:", trace_float_result as i64);
 
     let _ = trace_data("SUCCESS: Utility functions", &[], DataRepr::AsHex);
     0

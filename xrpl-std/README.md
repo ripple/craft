@@ -72,10 +72,11 @@ All fallible operations return `Result<T>` with specific error codes:
 
 ```rust
 pub enum Error {
-    OutOfBounds = -1,      // Memory access violation
-    FieldNotFound = -2,    // Requested field doesn't exist
-    InternalError = -3,    // Internal invariant violation
-    NoFreeSlots = -7,      // No cache slots available
+    InternalError = -1,        // Internal invariant violation
+    FieldNotFound = -2,        // Requested field doesn't exist
+    BufferTooSmall = -3,       // Buffer too small for data
+    NoFreeSlots = -8,          // No cache slots available
+    PointerOutOfBound = -13,   // Memory access violation
 }
 ```
 
@@ -86,10 +87,10 @@ pub enum Error {
 Access fields from the current transaction being processed:
 
 ```rust
-use xrpl_std::core::current_tx::escrow_finish::get_current_escrow_finish;
+use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 
-// Get the current EscrowFinish transaction
-let tx = get_current_escrow_finish();
+// Create an instance to access the current EscrowFinish transaction
+let tx = EscrowFinish;
 
 // Access common transaction fields
 let account = tx.get_account()?;                   // Transaction sender
@@ -175,19 +176,19 @@ let len = get_tx_field(sfield::Account, 0, &mut buffer)?;
 Access fields within complex objects using locators:
 
 ```rust
-use xrpl_std::locator::LocatorPacker;
+use xrpl_std::core::locator::Locator;
 use xrpl_std::host::get_tx_nested_field;
 use xrpl_std::sfield;
 
 // Build a locator for Memos[0].MemoType
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 locator.pack(sfield::Memos);      // Array field
 locator.pack(0);                   // Array index
 locator.pack(sfield::MemoType);    // Field within object
 
 // Get the nested field
 let mut buffer = [0u8; 256];
-let len = get_tx_nested_field(&locator.data, &mut buffer)?;
+let len = get_tx_nested_field(&locator.buffer, &mut buffer)?;
 ```
 
 **Important**: For STArray navigation, omit the intermediate object wrapper:
@@ -262,8 +263,6 @@ Every WASM module must export these functions:
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
-
 /// Memory allocation function for host
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut u8 {
@@ -283,12 +282,6 @@ pub extern "C" fn finish() -> bool {
     // Your conditional logic here
     true  // or false
 }
-
-/// Panic handler for no_std
-#[panic_handler]
-fn panic(_: &PanicInfo) -> ! {
-    core::arch::wasm32::unreachable()
-}
 ```
 
 ## Usage Examples
@@ -302,7 +295,7 @@ use xrpl_std::core::ledger_objects::account::get_account_balance;
 #[no_mangle]
 pub extern "C" fn finish() -> bool {
     // Get transaction sender
-    let tx = get_current_escrow_finish();
+    let tx = EscrowFinish;
     let account = match tx.get_account() {
         Ok(acc) => acc,
         Err(_) => return false,
@@ -350,7 +343,7 @@ use xrpl_std::host::cache_ledger_obj;
 
 #[no_mangle]
 pub extern "C" fn finish() -> bool {
-    let tx = get_current_escrow_finish();
+    let tx = EscrowFinish;
     let account = tx.get_account().unwrap_or_default();
     
     // Generate credential keylet

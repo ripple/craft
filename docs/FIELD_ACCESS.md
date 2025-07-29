@@ -41,7 +41,7 @@ const FIELD_CODE: i32 = (TYPE_ID << 16) | FIELD_ID;
 
 // Examples
 const SFIELD_ACCOUNT: i32 = 524289;      // (8 << 16) | 1
-const SFIELD_BALANCE: i32 = 393222;      // (6 << 16) | 6
+const SFIELD_BALANCE: i32 = 393218;      // (6 << 16) | 6
 const SFIELD_MEMOS: i32 = 983049;        // (15 << 16) | 9
 ```
 
@@ -97,9 +97,9 @@ Complex objects require locators to navigate to nested fields.
 ### Building Locators
 
 ```rust
-use xrpl_std::locator::LocatorPacker;
+use xrpl_std::locator::Locator;
 
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 
 // Add fields to the path
 locator.pack(field1);
@@ -107,7 +107,7 @@ locator.pack(field2);
 locator.pack(field3);
 
 // Use the packed locator
-let result = get_tx_nested_field(&locator.data, &mut buffer)?;
+let result = get_tx_nested_field(&locator.buffer, &mut buffer)?;
 ```
 
 ### Locator Encoding Rules
@@ -119,9 +119,9 @@ let result = get_tx_nested_field(&locator.data, &mut buffer)?;
 
 ```rust
 // Internal structure
-pub struct LocatorPacker {
-    pub data: [u8; 64],  // Packed locator data
-    pub len: usize,      // Current length
+pub struct Locator {
+    buffer: [u8; 64],    // Packed locator data
+    cur_buffer_index: usize,  // Current buffer index
 }
 ```
 
@@ -154,13 +154,13 @@ When building locators, use the **internal path**, not the JSON path:
 
 ```rust
 // CORRECT: Internal representation
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 locator.pack(sfield::Memos);     // Array field
 locator.pack(0);                  // Array index
 locator.pack(sfield::MemoType);   // Target field
 
 // WRONG: Attempting to follow JSON structure
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 locator.pack(sfield::Memos);     // Array field
 locator.pack(0);                  // Array index
 locator.pack(sfield::Memo);       // INCORRECT: wrapper
@@ -183,33 +183,33 @@ However, internally, once you index into an array, you're already at the object 
 
 ```rust
 // Access first memo's type
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 locator.pack(sfield::Memos);
 locator.pack(0);
 locator.pack(sfield::MemoType);
 
 let mut buffer = [0u8; 256];
-let len = get_tx_nested_field(&locator.data, &mut buffer)?;
+let len = get_tx_nested_field(&locator.buffer, &mut buffer)?;
 ```
 
 ### Accessing Signer Fields
 
 ```rust
 // Access second signer's account
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 locator.pack(sfield::Signers);
 locator.pack(1);  // Second signer (0-indexed)
 locator.pack(sfield::Account);
 
 let mut account = [0u8; 20];
-let len = get_tx_nested_field(&locator.data, &mut account)?;
+let len = get_tx_nested_field(&locator.buffer, &mut account)?;
 ```
 
 ### Accessing Oracle Data
 
 ```rust
 // Access price from oracle document
-let mut locator = LocatorPacker::new();
+let mut locator = Locator::new();
 locator.pack(sfield::PriceDataSeries);
 locator.pack(0);
 locator.pack(sfield::AssetPrice);
@@ -217,7 +217,7 @@ locator.pack(sfield::AssetPrice);
 let mut price_buf = [0u8; 8];
 let len = get_ledger_obj_nested_field(
     oracle_slot,
-    &locator.data,
+    &locator.buffer,
     &mut price_buf
 )?;
 ```
@@ -253,23 +253,23 @@ for i in 0..memo_count {
 | Field | Code | Type | Size |
 |-------|------|------|------|
 | Account | 524289 | AccountID | 20 |
-| TransactionType | 131074 | UInt16 | 2 |
-| Fee | 524296 | Amount | 8 |
-| Sequence | 262148 | UInt32 | 4 |
-| Flags | 131076 | UInt32 | 4 |
-| SourceTag | 196611 | UInt32 | 4 |
-| DestinationTag | 917508 | UInt32 | 4 |
-| SigningPubKey | 196627 | Blob | 33 |
-| TxnSignature | 262148 | Blob | Variable |
+| TransactionType | 65538 | UInt16 | 2 |
+| Fee | 393224 | Amount | 8 |
+| Sequence | 131076 | UInt32 | 4 |
+| Flags | 131074 | UInt32 | 4 |
+| SourceTag | 131075 | UInt32 | 4 |
+| DestinationTag | 131086 | UInt32 | 4 |
+| SigningPubKey | 458755 | Blob | 33 |
+| TxnSignature | 458756 | Blob | Variable |
 
 ### Escrow Fields
 
 | Field | Code | Type | Size |
 |-------|------|------|------|
-| Owner | 524289 | AccountID | 20 |
+| Owner | 524290 | AccountID | 20 |
 | Destination | 524291 | AccountID | 20 |
-| Amount | 393222 | Amount | 8 |
-| Condition | 851975 | Blob | 32 |
+| Amount | 393217 | Amount | 8 |
+| Condition | 458769 | Blob | 32 |
 | CancelAfter | 262156 | UInt32 | 4 |
 | FinishAfter | 262157 | UInt32 | 4 |
 | SourceTag | 196624 | UInt32 | 4 |
@@ -280,7 +280,7 @@ for i in 0..memo_count {
 | Field | Code | Type |
 |-------|------|------|
 | Memos | 983049 | Array of Memo |
-| Signers | 720899 | Array of Signer |
+| Signers | 983043 | Array of Signer |
 | SignerEntries | 720900 | Array of SignerEntry |
 | Paths | 65537 | Array of Path |
 
@@ -397,7 +397,7 @@ fn process_memos() -> Result<()> {
 ```rust
 fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
     // Build locator for first price entry
-    let mut locator = LocatorPacker::new();
+    let mut locator = Locator::new();
     locator.pack(sfield::PriceDataSeries);
     locator.pack(0);
     locator.pack(sfield::AssetPrice);
@@ -406,7 +406,7 @@ fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
     let mut price_buf = [0u8; 8];
     let len = get_ledger_obj_nested_field(
         oracle_slot,
-        &locator.data,
+        &locator.buffer,
         0,  // field_slot
         &mut price_buf
     )?;

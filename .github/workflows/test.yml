@@ -11,6 +11,17 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # This runs the pre-commit hooks defined in .pre-commit-config.yaml
+      - uses: pre-commit-ci/lite-action@v1.1.0
+        if: always()
+        with:
+          msg: apply code formatting
+
   clippy_linting:
     runs-on: ubuntu-latest
     steps:
@@ -26,10 +37,6 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: check all the pre-commit hooks
-        # This runs the pre-commit hooks defined in .pre-commit-config.yaml
-        uses: pre-commit-ci/lite-action@v1.1.0
 
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown

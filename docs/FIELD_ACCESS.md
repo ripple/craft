@@ -57,19 +57,23 @@ use xrpl_std::sfield;
 
 // Get account from transaction
 let mut account_buf = [0u8; 20];
-let len = get_tx_field(
-    sfield::Account,
-    0,  // slot (always 0)
-    &mut account_buf
-)?;
+let len = unsafe {
+    get_tx_field(
+        sfield::Account,
+        account_buf.as_mut_ptr(),
+        account_buf.len()
+    )
+};
 
 // Get fee amount
 let mut fee_buf = [0u8; 8];
-let len = get_tx_field(
-    sfield::Fee,
-    0,
-    &mut fee_buf
-)?;
+let len = unsafe {
+    get_tx_field(
+        sfield::Fee,
+        fee_buf.as_mut_ptr(),
+        fee_buf.len()
+    )
+};
 ```
 
 ### Ledger Object Fields
@@ -78,16 +82,24 @@ let len = get_tx_field(
 use xrpl_std::host::get_ledger_obj_field;
 
 // First load object into cache
-let slot = cache_ledger_obj(&keylet)?;
+let slot = unsafe { 
+    cache_ledger_obj(
+        keylet.as_ptr(),
+        keylet.len(),
+        0  // cache_num
+    )
+};
 
 // Then access fields
 let mut balance_buf = [0u8; 8];
-let len = get_ledger_obj_field(
-    slot,
-    sfield::Balance,
-    0,  // field_slot (always 0)
-    &mut balance_buf
-)?;
+let len = unsafe {
+    get_ledger_obj_field(
+        slot,
+        sfield::Balance,
+        balance_buf.as_mut_ptr(),
+        balance_buf.len()
+    )
+};
 ```
 
 ## Nested Field Access
@@ -107,7 +119,12 @@ locator.pack(field2);
 locator.pack(field3);
 
 // Use the packed locator
-let result = get_tx_nested_field(&locator.buffer, &mut buffer)?;
+let result = get_tx_nested_field(
+    locator.buffer.as_ptr(),
+    locator.cur_buffer_index,
+    buffer.as_mut_ptr(),
+    buffer.len()
+)?;
 ```
 
 ### Locator Encoding Rules
@@ -189,7 +206,12 @@ locator.pack(0);
 locator.pack(sfield::MemoType);
 
 let mut buffer = [0u8; 256];
-let len = get_tx_nested_field(&locator.buffer, &mut buffer)?;
+let len = get_tx_nested_field(
+    locator.buffer.as_ptr(),
+    locator.cur_buffer_index,
+    buffer.as_mut_ptr(),
+    buffer.len()
+)?;
 ```
 
 ### Accessing Signer Fields
@@ -202,7 +224,12 @@ locator.pack(1);  // Second signer (0-indexed)
 locator.pack(sfield::Account);
 
 let mut account = [0u8; 20];
-let len = get_tx_nested_field(&locator.buffer, &mut account)?;
+let len = get_tx_nested_field(
+    locator.buffer.as_ptr(),
+    locator.cur_buffer_index,
+    account.as_mut_ptr(),
+    account.len()
+)?;
 ```
 
 ### Accessing Oracle Data
@@ -217,8 +244,10 @@ locator.pack(sfield::AssetPrice);
 let mut price_buf = [0u8; 8];
 let len = get_ledger_obj_nested_field(
     oracle_slot,
-    &locator.buffer,
-    &mut price_buf
+    locator.buffer.as_ptr(),
+    locator.cur_buffer_index,
+    price_buf.as_mut_ptr(),
+    price_buf.len()
 )?;
 ```
 
@@ -231,13 +260,13 @@ let memo_count = get_tx_array_len(sfield::Memos)?;
 // Process each memo
 for i in 0..memo_count {
     // Access MemoType
-    let mut type_locator = LocatorPacker::new();
+    let mut type_locator = Locator::new();
     type_locator.pack(sfield::Memos);
     type_locator.pack(i as i32);
     type_locator.pack(sfield::MemoType);
     
     // Access MemoData
-    let mut data_locator = LocatorPacker::new();
+    let mut data_locator = Locator::new();
     data_locator.pack(sfield::Memos);
     data_locator.pack(i as i32);
     data_locator.pack(sfield::MemoData);
@@ -346,7 +375,7 @@ for i in 0..memo_count {
 ### Complete Memo Processing
 
 ```rust
-use xrpl_std::locator::LocatorPacker;
+use xrpl_std::locator::Locator;
 use xrpl_std::host::{get_tx_array_len, get_tx_nested_field};
 use xrpl_std::sfield;
 
@@ -356,7 +385,7 @@ fn process_memos() -> Result<()> {
     
     for i in 0..count {
         // Build locator for MemoType
-        let mut type_loc = LocatorPacker::new();
+        let mut type_loc = Locator::new();
         type_loc.pack(sfield::Memos);
         type_loc.pack(i);
         type_loc.pack(sfield::MemoType);
@@ -364,12 +393,14 @@ fn process_memos() -> Result<()> {
         // Read MemoType
         let mut type_buf = [0u8; 256];
         let type_len = get_tx_nested_field(
-            &type_loc.data,
-            &mut type_buf
+            type_loc.buffer.as_ptr(),
+            type_loc.cur_buffer_index,
+            type_buf.as_mut_ptr(),
+            type_buf.len()
         )?;
         
         // Build locator for MemoData
-        let mut data_loc = LocatorPacker::new();
+        let mut data_loc = Locator::new();
         data_loc.pack(sfield::Memos);
         data_loc.pack(i);
         data_loc.pack(sfield::MemoData);
@@ -377,8 +408,10 @@ fn process_memos() -> Result<()> {
         // Read MemoData
         let mut data_buf = [0u8; 256];
         let data_len = get_tx_nested_field(
-            &data_loc.data,
-            &mut data_buf
+            data_loc.buffer.as_ptr(),
+            data_loc.cur_buffer_index,
+            data_buf.as_mut_ptr(),
+            data_buf.len()
         )?;
         
         // Process memo
@@ -406,9 +439,10 @@ fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
     let mut price_buf = [0u8; 8];
     let len = get_ledger_obj_nested_field(
         oracle_slot,
-        &locator.buffer,
-        0,  // field_slot
-        &mut price_buf
+        locator.buffer.as_ptr(),
+        locator.cur_buffer_index,
+        price_buf.as_mut_ptr(),
+        price_buf.len()
     )?;
     
     // Convert to u64

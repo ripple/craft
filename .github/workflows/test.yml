@@ -31,19 +31,19 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -Dclippy::all
 
       - name: Run Clippy (xrpl-std)
         run: |
           cd xrpl-std 
-          cargo clippy --all-targets --all-features
+          cargo clippy --all-targets --all-features -- -Dclippy::all
 
       - name: Run Clippy (All Example Contracts)
         run: |
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Clippy in $dir"
-              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features) || exit 1
+              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
             fi
           done
 

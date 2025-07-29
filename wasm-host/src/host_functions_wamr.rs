@@ -404,7 +404,7 @@ pub fn deposit_preauth_keylet(
     HASH256_LEN as i32
 }
 
-pub fn did_preauth_keylet(
+pub fn did_keylet(
     _env: wasm_exec_env_t,
     account_ptr: *mut u8,
     account_len: usize,

@@ -368,7 +368,12 @@ pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number:
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_from_int(
+    in_int: i64,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
+) -> i32 {
     -1
 }
 
@@ -376,8 +381,10 @@ pub unsafe fn float_from_int(in_int: i64, out_buf: *mut u8, rounding_modes: i32)
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_from_uint(
     in_uint_ptr: *const u8,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    in_uint_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
@@ -387,25 +394,34 @@ pub unsafe fn float_from_uint(
 pub unsafe fn float_set(
     exponent: i32,
     mantissa: i64,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_compare(in_buf1: *const u8, in_buf2: *const u8) -> i32 {
+pub unsafe fn float_compare(
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_add(
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
@@ -413,10 +429,13 @@ pub unsafe fn float_add(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_subtract(
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
@@ -424,10 +443,13 @@ pub unsafe fn float_subtract(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_multiply(
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
@@ -435,10 +457,26 @@ pub unsafe fn float_multiply(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_divide(
-    in_buf1: *const u8,
-    in_buf2: *const u8,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_pow(
+    in_buff: *const u8,
+    in_buff_len: usize,
+    in_int: i32,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
@@ -446,26 +484,35 @@ pub unsafe fn float_divide(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn float_root(
-    in_buf: *const u8,
+    in_buff: *const u8,
+    in_buff_len: usize,
     in_int: i32,
-    out_buf: *mut u8,
-    rounding_modes: i32,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
 ) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_log(in_buf: *const u8, out_buf: *mut u8, rounding_modes: i32) -> i32 {
+pub unsafe fn float_log(
+    in_buff: *const u8,
+    in_buff_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
+) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace_opaque_float(
-    _msg_read_ptr: *const u8,
-    _msg_read_len: usize,
-    _opaque_float_ptr: *const u8,
+    msg_read_ptr: *const u8,
+    msg_read_len: usize,
+    opaque_float_ptr: *const u8,
+    opaque_float_len: usize,
 ) -> i32 {
     -1
 }

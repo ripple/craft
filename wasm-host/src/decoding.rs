@@ -372,6 +372,7 @@ pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
 
 const POSITIVE_MPT: u8 = 0b_0110_0000;
 const NEGATIVE_MPT: u8 = 0b_0010_0000;
+
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
     // try to decode an MPT
     if let Some(mpt_issuance_id) = value.get("mpt_issuance_id") {
@@ -401,11 +402,51 @@ pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
         }
         return None;
     }
-    // if not an MPT, try to decode an XRP or IOU amount using the library
-    match Amount::try_from(value) {
+
+    // Helper function to normalize amount values - convert numbers to strings
+    // This handles cases where JSON amounts are numbers instead of strings
+    let normalized_value = normalize_amount_value(value.clone());
+
+    // Use the library to decode both XRP and IOU amounts
+    match Amount::try_from(normalized_value) {
         Ok(amount) => Some(amount.as_ref().to_vec()),
-        Err(_) => None,
+        Err(_) => {
+            // Fallback: try the original value in case normalization changed something important
+            match Amount::try_from(value) {
+                Ok(amount) => Some(amount.as_ref().to_vec()),
+                Err(_) => None,
+            }
+        }
     }
+}
+
+/// Normalize amount values by converting numbers to strings
+/// This handles both simple amounts (XRP) and complex amounts (IOU) with numeric values
+fn normalize_amount_value(mut value: Value) -> Value {
+    // Handle simple numeric amounts (XRP)
+    if value.is_number() {
+        if let Some(num) = value.as_i64() {
+            return Value::String(num.to_string());
+        }
+        if let Some(num) = value.as_f64() {
+            return Value::String(num.to_string());
+        }
+    }
+
+    // Handle IOU amounts with numeric value field
+    if let Some(obj) = value.as_object_mut() {
+        if let Some(amount_value) = obj.get("value") {
+            if amount_value.is_number() {
+                if let Some(num) = amount_value.as_i64() {
+                    obj.insert("value".to_string(), Value::String(num.to_string()));
+                } else if let Some(num) = amount_value.as_f64() {
+                    obj.insert("value".to_string(), Value::String(num.to_string()));
+                }
+            }
+        }
+    }
+
+    value
 }
 
 pub fn decode_amount(s: &str) -> Option<Vec<u8>> {

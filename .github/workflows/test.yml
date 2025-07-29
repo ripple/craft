@@ -17,16 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: precommit-${{ env.PRECOMMIT_VERSION }}
-          restore-keys: |
-            precommit-
-
       # This runs the pre-commit hooks defined in .pre-commit-config.yaml
-      # TODO: figureout how to update to use pre-commit.ci
+      # TODO: figure out how to update to use pre-commit.ci
       - uses: pre-commit/action@v3.0.1
 
   clippy_linting:

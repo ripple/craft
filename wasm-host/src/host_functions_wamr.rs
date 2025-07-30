@@ -580,10 +580,13 @@ pub fn signers_keylet(
     if HASH256_LEN > out_buf_cap {
         return HostError::BufferTooSmall as i32;
     }
-    let data = get_data(account_buf_ptr, account_buf_len);
+    let mut data = get_data(account_buf_ptr, account_buf_len);
     if ACCOUNT_ID_LEN != data.len() {
         return HostError::InvalidAccount as i32;
     }
+    let default_signer_list_id = 0u32;
+    let sid_data = default_signer_list_id.to_be_bytes();
+    data.extend_from_slice(&sid_data);
     let keylet_hash = index_hash(LedgerNameSpace::SignerList, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32

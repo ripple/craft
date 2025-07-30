@@ -409,7 +409,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
     pub fn credential_keylet(
@@ -506,7 +506,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
     pub fn escrow_keylet(
@@ -605,7 +605,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
     pub fn oracle_keylet(
@@ -701,7 +701,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
     pub fn get_nft(

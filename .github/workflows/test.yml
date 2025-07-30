@@ -11,6 +11,15 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # This runs the pre-commit hooks defined in .pre-commit-config.yaml
+      # TODO: figure out how to update to use pre-commit.ci
+      - uses: pre-commit/action@v3.0.1
+
   clippy_linting:
     runs-on: ubuntu-latest
     steps:
@@ -31,19 +40,19 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -Dclippy::all
 
       - name: Run Clippy (xrpl-std)
         run: |
-          cd xrpl-std 
-          cargo clippy --all-targets --all-features
+          cd xrpl-std
+          cargo clippy --all-targets --all-features -- -Dclippy::all
 
       - name: Run Clippy (All Example Contracts)
         run: |
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
               echo "🔧 Clippy in $dir"
-              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features) || exit 1
+              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
             fi
           done
 
@@ -85,7 +94,7 @@ jobs:
 
       - name: Run fmt (xrpl-std)
         run: |
-          cd xrpl-std 
+          cd xrpl-std
           cargo fmt --all -- --check
 
       - name: Run fmt (All Example Contracts)
@@ -137,10 +146,10 @@ jobs:
 
       - name: Build & Test `xrpl-std`
         run: |
-          cd xrpl-std 
-          cargo build 
+          cd xrpl-std
+          cargo build
           cargo test
-          cargo build --target wasm32-unknown-unknown 
+          cargo build --target wasm32-unknown-unknown
           cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
       - name: Build & Test `wasm-host`

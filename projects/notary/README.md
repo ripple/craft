@@ -81,4 +81,4 @@ To use a different notary account, modify the `NOTARY_ACCOUNT` constant in `src/
 const NOTARY_ACCOUNT: &str = "your_notary_account_here";
 ```
 
-Then rebuild the WASM file. 
+Then rebuild the WASM file.

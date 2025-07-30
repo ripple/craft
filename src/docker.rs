@@ -51,17 +51,17 @@ impl DockerManager {
         println!("{}", "\nDiagnosing Docker issue...".yellow());
 
         // Check Docker context
-        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output()
-            && let Ok(contexts) = String::from_utf8(output.stdout)
-        {
-            for line in contexts.lines() {
-                if line.contains("*") {
-                    println!("{}", format!("Active Docker context: {line}").cyan());
-                    if line.contains("colima") && line.contains("/Users") {
-                        println!(
-                            "{}",
-                            "Colima context is active but connection failed.".yellow()
-                        );
+        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output() {
+            if let Ok(contexts) = String::from_utf8(output.stdout) {
+                for line in contexts.lines() {
+                    if line.contains("*") {
+                        println!("{}", format!("Active Docker context: {line}").cyan());
+                        if line.contains("colima") && line.contains("/Users") {
+                            println!(
+                                "{}",
+                                "Colima context is active but connection failed.".yellow()
+                            );
+                        }
                     }
                 }
             }

@@ -508,10 +508,10 @@ pub fn list_projects() -> Result<()> {
     for entry in fs::read_dir(projects_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.is_dir()
-            && let Some(name) = path.file_name()
-        {
-            println!("  • {}", name.to_string_lossy());
+        if path.is_dir() {
+            if let Some(name) = path.file_name() {
+                println!("  • {}", name.to_string_lossy());
+            }
         }
     }
     Ok(())
@@ -525,10 +525,10 @@ fn list_all_projects() -> Result<Vec<String>> {
         for entry in fs::read_dir(projects_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.is_dir()
-                && let Some(name) = path.file_name()
-            {
-                projects.push(name.to_string_lossy().to_string());
+            if path.is_dir() {
+                if let Some(name) = path.file_name() {
+                    projects.push(name.to_string_lossy().to_string());
+                }
             }
         }
     }
@@ -620,14 +620,15 @@ pub fn list_fixtures() -> Result<()> {
             let project_path = entry.path();
             if project_path.is_dir() {
                 let fixtures_path = project_path.join("fixtures");
-                if fixtures_path.exists()
-                    && let Some(project_name) = project_path.file_name()
-                {
-                    println!(
-                        "\n{}",
-                        format!("projects/{}/fixtures/:", project_name.to_string_lossy()).bold()
-                    );
-                    print_tree(&fixtures_path, "  ")?;
+                if fixtures_path.exists() {
+                    if let Some(project_name) = project_path.file_name() {
+                        println!(
+                            "\n{}",
+                            format!("projects/{}/fixtures/:", project_name.to_string_lossy())
+                                .bold()
+                        );
+                        print_tree(&fixtures_path, "  ")?;
+                    }
                 }
             }
         }
@@ -648,10 +649,10 @@ pub fn discover_test_cases(project: &str) -> Result<Vec<String>> {
     if fixtures_dir.exists() {
         for entry in fs::read_dir(fixtures_dir)? {
             let entry = entry?;
-            if entry.path().is_dir()
-                && let Some(name) = entry.path().file_name()
-            {
-                test_cases.push(name.to_string_lossy().to_string());
+            if entry.path().is_dir() {
+                if let Some(name) = entry.path().file_name() {
+                    test_cases.push(name.to_string_lossy().to_string());
+                }
             }
         }
     }

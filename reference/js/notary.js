@@ -76,10 +76,10 @@ async function test() {
     console.log(JSON.stringify(response2.result, null, 4))
     if (response2.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1);
     // const sequence = response2.result.tx_json.Sequence // need tx_json here
-    
+
     // due to api_version, no tx_json here
     const sequence = response2.result.tx_json.Sequence
-    
+
 
     await sleep(5000)
     console.log("Ledger Accept")
@@ -114,7 +114,7 @@ async function test() {
     //     TxnSignature: 'E1B3DE9A6D3DB4E14233D5BBF60EF68A243A0F064C4EE2DAF2B3FB26DDF52E7656DD805FAA1F3FE5C4CFCFFEC807356292C73B66F3BEA7D38421DB11C01C090A'
     //   }
     // }
-    
+
 
     const response4 = await submit({
       TransactionType: 'EscrowFinish',
@@ -149,7 +149,7 @@ async function test() {
     console.log(e)
   }
 
-  
+
 
   await client.disconnect()
 }

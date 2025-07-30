@@ -27,7 +27,7 @@ function main() {
     const srcPath = path.resolve(__dirname, `../rippled-tests/${projectName}/target/wasm32-unknown-unknown/release/${projectName}.wasm`)
     const data = fs.readFileSync(srcPath)
     const wasm = data.toString('hex')
-    
+
     const fixtureName = process.argv[3]
     console.log(`Updating fixture: ${fixtureName}`)
     const rippledPath = process.argv[4]

@@ -16,3 +16,20 @@ repos:
         pass_filenames: false
         types: [file, rust]
         language: system
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: forbid-submodules
+      - id: mixed-line-ending
+      # - id: pretty-format-json
+      #   args: ["--autofix"]
+      - id: trailing-whitespace

@@ -10,7 +10,7 @@ if (process.argv.length < 3) {
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' (path/to/file.wasm OR project_name)' + 
+      ' (path/to/file.wasm OR project_name)' +
       '[Account1 Account1Seed [Account2 Account2Seed]]',
   )
   process.exit(1)
@@ -52,7 +52,7 @@ async function submit(tx, wallet, debug = true) {
 
 async function fundWallet(wallet = undefined) {
   const master = xrpl.Wallet.fromSeed("snoPBrXtMeMyMHUVTgbuqAfg1SUTb", { algorithm: xrpl.ECDSA.secp256k1 })
-  
+
   const walletToFund = wallet || xrpl.Wallet.generate()
   await submit({
     TransactionType: 'Payment',
@@ -69,7 +69,7 @@ async function deploy() {
   await client.request({command: 'ledger_accept'})
 
   const interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},1000)
-  
+
   let wallet, wallet2
   if (process.argv.length > 3) {
     const account = process.argv[3]

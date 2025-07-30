@@ -5,7 +5,7 @@
     "parameters": ["buffer_size: 8"]
   },
   {
-    "function": "get_parent_ledger_time", 
+    "function": "get_parent_ledger_time",
     "parameters": ["buffer_size: 8"]
   },
   {
@@ -45,7 +45,7 @@
     "parameters": ["field: Signers"]
   },
   {
-    "function": "get_tx_array_len", 
+    "function": "get_tx_array_len",
     "parameters": ["field: Memos"]
   },
   {

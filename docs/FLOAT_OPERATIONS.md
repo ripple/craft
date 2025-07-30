@@ -133,10 +133,13 @@ float_divide(a: *const u8, b: *const u8, out: *mut u8, rounding_mode: i32) -> i3
 ### Mathematical Functions
 
 ```rust
+// Nth power: out = aⁿ
+float_pow(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
+
 // Nth root: out = ⁿ√a
 float_root(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
 
-// Base-10 logarithm: out = log₁₀(a)
+// Natural logarithm: out = ln(a)
 float_log(a: *const u8, out: *mut u8, rounding_mode: i32) -> i32
 ```
 

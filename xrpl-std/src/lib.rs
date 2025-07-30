@@ -35,3 +35,15 @@ pub fn decode_hex_32(hex: &[u8; 64]) -> Option<[u8; 32]> {
     }
     Some(out)
 }
+
+pub fn decode_hex_20(hex: &[u8; 40]) -> Option<[u8; 20]> {
+    let mut out = [0u8; 20];
+    let mut i = 0;
+    while i < 20 {
+        let high = hex_char_to_nibble(hex[i * 2])?;
+        let low = hex_char_to_nibble(hex[i * 2 + 1])?;
+        out[i] = (high << 4) | low;
+        i += 1;
+    }
+    Some(out)
+}

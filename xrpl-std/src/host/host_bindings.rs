@@ -85,10 +85,10 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to a buffer where the account hash will be written.
-    ///                   The buffer must be allocated and managed by the caller.
+    ///   The buffer must be allocated and managed by the caller.
     /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///                   buffer and ensures that the function does not write beyond the allowed
-    ///                   length.
+    ///   buffer and ensures that the function does not write beyond the allowed
+    ///   length.
     ///
     /// # Returns
     ///
@@ -105,10 +105,10 @@ unsafe extern "C" {
     ///
     /// # Parameters
     /// - `out_buff_ptr`: A mutable pointer to a buffer where the transaction hash will be written.
-    ///                   The buffer must be allocated and managed by the caller.
+    ///   The buffer must be allocated and managed by the caller.
     /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///                   buffer and ensures that the function does not write beyond the allowed
-    ///                   length.
+    ///   buffer and ensures that the function does not write beyond the allowed
+    ///   length.
     ///
     /// # Returns
     ///
@@ -131,8 +131,8 @@ unsafe extern "C" {
     /// # Parameters
     ///
     /// - `amendment_ptr`: A raw pointer to the amendment. This can be either the uint256 that
-    ///                    represents the hash of an amendment, or the string name of the
-    ///                    amendment.
+    ///   represents the hash of an amendment, or the string name of the
+    ///   amendment.
     /// - `amendment_len`: The length of the amendment specified by `amendment_ptr`.
     ///
     /// # Returns
@@ -819,7 +819,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_nft_issuer(
@@ -841,7 +841,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_nft_taxon(
@@ -891,7 +891,7 @@ unsafe extern "C" {
     ///
     /// # Returns
     ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success    
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn get_nft_serial(

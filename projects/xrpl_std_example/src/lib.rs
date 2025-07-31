@@ -558,7 +558,7 @@ pub extern "C" fn finish() -> i32 {
     }
 
     let _ = trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
-    true // <-- Finish the escrow.
+    1 // <-- Finish the escrow.
 }
 
 /// The following are private constants used for testing purposes to enforce value checks in this

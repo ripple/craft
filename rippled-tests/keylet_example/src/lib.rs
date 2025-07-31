@@ -79,13 +79,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(account_keylet, "Account", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Check object exists, proceeding with escrow finish.");
+                let _ = trace("Check object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Check object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Check object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
 
     let mut seq = 5;
@@ -95,13 +95,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(line_keylet, "Trustline", sfield::Generic) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Trustline object exists, proceeding with escrow finish.");
+                let _ = trace("Trustline object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Trustline object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Trustline object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -109,13 +109,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(check_keylet, "Check", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Check object exists, proceeding with escrow finish.");
+                let _ = trace("Check object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Check object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Check object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -124,13 +124,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(credential_keylet, "Credential", sfield::Subject) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Credential object exists, proceeding with escrow finish.");
+                let _ = trace("Credential object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Credential object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Credential object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -138,13 +138,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(delegate_keylet, "Delegate", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Delegate object exists, proceeding with escrow finish.");
+                let _ = trace("Delegate object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Delegate object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Delegate object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -152,13 +152,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(deposit_preauth_keylet, "DepositPreauth", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  DepositPreauth object exists, proceeding with escrow finish.");
+                let _ = trace("DepositPreauth object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  DepositPreauth object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("DepositPreauth object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -166,13 +166,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(did_keylet, "Account", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Check object exists, proceeding with escrow finish.");
+                let _ = trace("Check object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Check object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Check object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -180,13 +180,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(escrow_keylet, "Escrow", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Escrow object exists, proceeding with escrow finish.");
+                let _ = trace("Escrow object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Escrow object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Escrow object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -194,26 +194,26 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(nft_offer_keylet, "NFTokenOffer", sfield::Owner) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  NFTokenOffer object exists, proceeding with escrow finish.");
+                let _ = trace("NFTokenOffer object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  NFTokenOffer object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("NFTokenOffer object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
 
     let offer_keylet = keylets::offer_keylet(&account, seq);
     match object_exists(offer_keylet, "Offer", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Offer object exists, proceeding with escrow finish.");
+                let _ = trace("Offer object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Offer object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Offer object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -221,13 +221,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(paychan_keylet, "PayChannel", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  PayChannel object exists, proceeding with escrow finish.");
+                let _ = trace("PayChannel object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  PayChannel object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("PayChannel object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -235,13 +235,13 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(signers_keylet, "SignerList", sfield::Generic) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  SignerList object exists, proceeding with escrow finish.");
+                let _ = trace("SignerList object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  SignerList object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("SignerList object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     seq += 1;
 
@@ -250,15 +250,15 @@ pub extern "C" fn finish() -> i32 {
     match object_exists(ticket_keylet, "Ticket", sfield::Account) {
         Ok(exists) => {
             if exists {
-                let _ = trace("  Ticket object exists, proceeding with escrow finish.");
+                let _ = trace("Ticket object exists, proceeding with escrow finish.");
             } else {
-                let _ = trace("  Ticket object does not exist, aborting escrow finish.");
-                return false;
+                let _ = trace("Ticket object does not exist, aborting escrow finish.");
+                return 0;
             }
         }
-        Err(_error) => return false,
+        Err(error) => return error.code(),
     };
     // seq += 1;
 
-    true // All keylets exist, finish the escrow.
+    1 // All keylets exist, finish the escrow.
 }

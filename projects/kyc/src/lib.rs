@@ -18,7 +18,7 @@ pub extern "C" fn finish() -> i32 {
         Ok(account_id) => account_id,
         Err(e) => {
             let _ = trace_num("Error getting account_id", e.code() as i64);
-            return false; // <-- Do not execute the escrow.
+            return e.code(); // <-- Do not execute the escrow.
         }
     };
 
@@ -31,13 +31,13 @@ pub extern "C" fn finish() -> i32 {
                 unsafe { xrpl_std::host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot < 0 {
                 let _ = trace_num("CACHE ERROR", i64::from(slot));
-                return false;
+                return 0;
             };
-            true
+            1
         }
         Err(e) => {
             let _ = trace_num("Error getting account_id", e.code() as i64);
-            false // <-- Do not execute the escrow.
+            e.code() // <-- Do not execute the escrow.
         }
     }
 }

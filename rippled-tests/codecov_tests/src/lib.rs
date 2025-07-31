@@ -22,6 +22,7 @@ fn check_result(result: i32, expected: i32, test_name: &'static str) {
             let _ = trace_number(test_name, code.into());
         }
         code if code >= 0 => {
+            let _ = trace(test_name);
             let _ = trace_number("TEST FAILED", code.into());
             panic!("Unexpected success code: {}", code);
         }
@@ -777,5 +778,5 @@ pub extern "C" fn finish() -> i32 {
         "trace_num_too_long",
     );
 
-    true // <-- If we get here, finish the escrow.
+    1 // <-- If we get here, finish the escrow.
 }

@@ -18,9 +18,9 @@ pub extern "C" fn finish() -> i32 {
         Ok(v) => v,
         Err(e) => {
             let _ = trace_num("Error in Notary contract", e.code() as i64);
-            return false; // Must return to short circuit.
+            return e.code(); // Must return to short circuit.
         }
     };
 
-    tx_account.0 == NOTARY_ACCOUNT
+    (tx_account.0 == NOTARY_ACCOUNT) as i32
 }

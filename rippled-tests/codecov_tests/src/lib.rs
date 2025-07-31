@@ -41,7 +41,7 @@ where
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
     // ########################################

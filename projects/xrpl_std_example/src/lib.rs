@@ -22,7 +22,7 @@ use xrpl_std::host::trace::{DataRepr, trace, trace_amount, trace_data, trace_num
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
     let _ = trace("");
 

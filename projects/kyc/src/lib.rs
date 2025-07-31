@@ -11,7 +11,7 @@ use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 use xrpl_std::host::{Result::Err, Result::Ok};
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let current_escrow: CurrentEscrow = current_escrow::get_current_escrow();
 
     let account_id = match current_escrow.get_destination() {

@@ -56,7 +56,7 @@ pub fn get_price_from_oracle(slot: i32) -> Option<u64> {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let oracle_keylet = oracle_keylet_safe(&ORACLE_OWNER, ORACLE_DOCUMENT_ID);
 
     let slot: i32;

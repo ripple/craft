@@ -8,7 +8,7 @@ use xrpl_std::host;
 use xrpl_std::host::trace::trace_num;
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     unsafe {
         let mut buffer = [0u8; 4]; // Enough to hold an u32
 

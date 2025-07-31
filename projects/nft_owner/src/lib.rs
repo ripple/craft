@@ -40,7 +40,7 @@ pub fn get_first_memo() -> Result<Option<ContractData>> {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let memo: ContractData = match get_first_memo() {
         Ok(v) => {
             match v {

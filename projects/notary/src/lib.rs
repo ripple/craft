@@ -12,7 +12,7 @@ use xrpl_std::host::{Result::Err, Result::Ok};
 const NOTARY_ACCOUNT: &[u8] = b"rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 2 (example)
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let escrow_finish = escrow_finish::get_current_escrow_finish();
     let tx_account = match escrow_finish.get_account() {
         Ok(v) => v,

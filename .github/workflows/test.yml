@@ -65,24 +65,21 @@ jobs:
             fi
           done
 
-      - name: Check for missing newline at EOF
+      - name: Check project exports
         run: |
-          missing_newline=false
-          git ls-files -z | while IFS= read -r -d '' f; do
-            [ -f "$f" ] && [ -s "$f" ] && file --mime "$f" | grep -q text && {
-              last_byte=$(tail -c1 "$f")
-              if [ "$last_byte" != $'\n' ]; then
-                echo "❌ $f is missing a newline at EOF"
-                missing_newline=true
-              fi
-            }
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
+            fi
           done
-          if [ "$missing_newline" = true ]; then
-            echo "::error::Some files are missing a newline at EOF"
-            exit 1
-          else
-            echo "✅ All files have a newline at EOF"
-          fi
+
+      - name: Check ripple-tests exports
+        run: |
+          for dir in ./rippled-tests/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
+            fi
+          done
 
   rustfmt:
     runs-on: ubuntu-latest

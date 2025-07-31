@@ -33,6 +33,30 @@ pub unsafe fn get_parent_ledger_hash(_out_buff_ptr: *mut u8, _out_buff_len: usiz
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_ledger_account_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_ledger_tx_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_base_fee() -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn amendment_enabled(_amendment_ptr: *const u8, _amendment_len: usize) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn cache_ledger_obj(_keylet_ptr: *const u8, _keylet_len: usize, _cache_num: i32) -> i32 {
     -1
 }
@@ -154,6 +178,19 @@ pub unsafe fn compute_sha512_half(
     _data_len: usize,
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn check_sig(
+    _message_ptr: *const u8,
+    _message_len: usize,
+    _signature_ptr: *const u8,
+    _signature_len: usize,
+    _pubkey_ptr: *const u8,
+    _pubkey_len: usize,
 ) -> i32 {
     -1
 }
@@ -340,6 +377,51 @@ pub unsafe fn ticket_keylet(
 pub unsafe fn get_nft(
     _account_ptr: *const u8,
     _account_len: usize,
+    _nft_id_ptr: *const u8,
+    _nft_id_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_nft_issuer(
+    _nft_id_ptr: *const u8,
+    _nft_id_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_nft_taxon(
+    _nft_id_ptr: *const u8,
+    _nft_id_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_nft_flags(_nft_id_ptr: *const u8, _nft_id_len: usize) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_nft_transfer_fee(_nft_id_ptr: *const u8, _nft_id_len: usize) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn get_nft_serial(
     _nft_id_ptr: *const u8,
     _nft_id_len: usize,
     _out_buff_ptr: *mut u8,

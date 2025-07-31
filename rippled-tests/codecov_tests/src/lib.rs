@@ -70,6 +70,33 @@ pub extern "C" fn finish() -> bool {
             "get_parent_ledger_hash",
         );
     });
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_ledger_account_hash(ptr, len) },
+            32,
+            "get_ledger_account_hash",
+        );
+    });
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_ledger_tx_hash(ptr, len) },
+            32,
+            "get_ledger_tx_hash",
+        );
+    });
+    check_result(unsafe { host::get_base_fee() }, 10, "get_base_fee");
+    let amendment_name: &[u8] = b"test_amendment";
+    let amendment_id: [u8; 32] = [1; 32];
+    check_result(
+        unsafe { host::amendment_enabled(amendment_name.as_ptr(), amendment_name.len()) },
+        1,
+        "amendment_enabled",
+    );
+    check_result(
+        unsafe { host::amendment_enabled(amendment_id.as_ptr(), amendment_id.len()) },
+        1,
+        "amendment_enabled",
+    );
     let tx: EscrowFinish = get_current_escrow_finish();
     let account = tx.get_account().unwrap_or_panic(); // get_tx_field under the hood
     let keylet = keylets::account_keylet(&account).unwrap_or_panic(); // account_keylet under the hood
@@ -160,6 +187,72 @@ pub extern "C" fn finish() -> bool {
             32,
             "compute_sha512_half",
         );
+    });
+    let message: &[u8] = b"test message";
+    let pubkey: &[u8] = b"test pubkey"; //tx.get_public_key().unwrap_or_panic();
+    let signature: &[u8] = b"test signature";
+    check_result(
+        unsafe {
+            host::check_sig(
+                message.as_ptr(),
+                message.len(),
+                pubkey.as_ptr(),
+                pubkey.len(),
+                signature.as_ptr(),
+                signature.len(),
+            )
+        },
+        1,
+        "check_sig",
+    );
+
+    let nft_id: [u8; 32] = amendment_id;
+    with_buffer::<18, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::get_nft(
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    nft_id.as_ptr(),
+                    nft_id.len(),
+                    ptr,
+                    len,
+                )
+            },
+            18,
+            "get_nft",
+        )
+    });
+    with_buffer::<20, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_nft_issuer(nft_id.as_ptr(), nft_id.len(), ptr, len) },
+            20,
+            "get_nft_issuer",
+        )
+    });
+    with_buffer::<4, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_nft_taxon(nft_id.as_ptr(), nft_id.len(), ptr, len) },
+            4,
+            "get_nft_taxon",
+        )
+    });
+    check_result(
+        unsafe { host::get_nft_flags(nft_id.as_ptr(), nft_id.len()) },
+        8,
+        "get_nft_flags",
+    );
+    check_result(
+        unsafe { host::get_nft_transfer_fee(nft_id.as_ptr(), nft_id.len()) },
+        10,
+        "get_nft_transfer_fee",
+    );
+    with_buffer::<4, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_nft_serial(nft_id.as_ptr(), nft_id.len(), ptr, len) },
+            4,
+            "get_nft_serial",
+        )
     });
 
     // ########################################
@@ -379,6 +472,11 @@ pub extern "C" fn finish() -> bool {
 
     // invalid Slice
 
+    check_result(
+        unsafe { host::amendment_enabled(amendment_name.as_ptr(), long_len) },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "amendment_enabled",
+    );
     with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_tx_nested_field(locator.as_ptr(), long_len, ptr, len) },
@@ -421,6 +519,48 @@ pub extern "C" fn finish() -> bool {
         unsafe { host::update_data(locator.as_ptr(), long_len) },
         error_codes::DATA_FIELD_TOO_LARGE,
         "update_data_too_big_slice",
+    );
+    check_result(
+        unsafe {
+            host::check_sig(
+                message.as_ptr(),
+                long_len,
+                pubkey.as_ptr(),
+                pubkey.len(),
+                signature.as_ptr(),
+                signature.len(),
+            )
+        },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "check_sig",
+    );
+    check_result(
+        unsafe {
+            host::check_sig(
+                message.as_ptr(),
+                message.len(),
+                pubkey.as_ptr(),
+                long_len,
+                signature.as_ptr(),
+                signature.len(),
+            )
+        },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "check_sig",
+    );
+    check_result(
+        unsafe {
+            host::check_sig(
+                message.as_ptr(),
+                message.len(),
+                pubkey.as_ptr(),
+                pubkey.len(),
+                signature.as_ptr(),
+                long_len,
+            )
+        },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "check_sig",
     );
     with_buffer::<2, _, _>(|ptr, len| {
         check_result(
@@ -482,6 +622,37 @@ pub extern "C" fn finish() -> bool {
             },
             error_codes::INVALID_PARAMS,
             "get_nft_wrong_size_uint256",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_nft_issuer(locator.as_ptr(), locator.len(), ptr, len) },
+            error_codes::INVALID_PARAMS,
+            "get_nft_issuer_wrong_size_uint256",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_nft_taxon(locator.as_ptr(), locator.len(), ptr, len) },
+            error_codes::INVALID_PARAMS,
+            "get_nft_taxon_wrong_size_uint256",
+        )
+    });
+    check_result(
+        unsafe { host::get_nft_flags(locator.as_ptr(), locator.len()) },
+        error_codes::INVALID_PARAMS,
+        "get_nft_flags_wrong_size_uint256",
+    );
+    check_result(
+        unsafe { host::get_nft_transfer_fee(locator.as_ptr(), locator.len()) },
+        error_codes::INVALID_PARAMS,
+        "get_nft_transfer_fee_wrong_size_uint256",
+    );
+    with_buffer::<4, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::get_nft_serial(locator.as_ptr(), locator.len(), ptr, len) },
+            error_codes::INVALID_PARAMS,
+            "get_nft_serial_wrong_size_uint256",
         )
     });
 

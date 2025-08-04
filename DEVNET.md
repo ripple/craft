@@ -2,11 +2,50 @@
 
 ## Devnet5 - 2025-08-04 Release
 
+The WASM Devnet (Smart Escrows) has been updated to its fifth monthly release.
+
 The `rippled` code can be found in this branch: https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 
 Commit: 58741d2
 
-## Devnet4 - 2025-07-03 Release
+We are nearing feature-complete / code freeze. Please [open an issue](https://github.com/ripple/craft/issues) to communicate any requests to the development team.
+
+Devnet details:
+
+- URL: wasm.devnet.rippletest.net (port 51234 for HTTP, 51233 for WS)
+- Explorer: https://custom.xrpl.org/wasm.devnet.rippletest.net
+- Faucet: https://wasmfaucet.devnet.rippletest.net/accounts
+
+`rippled` Changelog:
+
+- Charge appropriate gas costs for host functions
+- Change the return type of the `finish` function from a `bool` to an `int` (any value greater than 0 releases the escrow)
+  - The return value is displayed in the metadata, making debugging easier: developers can use different return codes to mean different things (such as different kinds of errors)
+- Add more host functions
+  - More keylets
+  - NFT utils (e.g. getting the issuer from the NFT ID)
+  - Check whether an amendment is enabled
+  - Check a public key signature
+  - Fetch additional ledger header info
+  - A series of functions to perform operations on floats (e.g. XRP/IOU/MPT numbers)
+- Better error handling (e.g. `ComputationAllowance` of 0)
+- Various bugfixes
+
+Craft Changelog:
+
+- Support the new `rippled` features mentioned above
+- Lots of additional documentation
+
+Tooling:
+
+- Writing Rust WASM extensions: https://github.com/ripple/craft
+- Python: xrpl-py v4.4.0b0
+- JS: `xrpl@4.5.0-smartescrow.0`, `ripple-binary-codec@2.6.0-smartescrow.0` (you can also use the `@smartescrow` or `@smart-escrow` tags)
+
+
+## Historical WASM Devnets
+
+### Devnet4 - 2025-07-03 Release
 
 The Programmability Devnet has been updated to its fourth monthly release.
 
@@ -36,9 +75,6 @@ Tooling:
 - JS: xrpl@4.4.0-smartescrow.0, ripple-binary-codec@2.5.0-smartescrow.0 (you can also use the @smartescrow or @smart-escrow tags)
 
 The rippled commit hash is: 65b0b976d98e54226136fad8e733d17b7fbb511e
-
-
-## Historical WASM Devnets
 
 ### Devnet3 - 2025-06-04 Release
 

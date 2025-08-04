@@ -10,7 +10,7 @@ if (process.argv.length != 3) {
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' (path/to/file.wasm OR project_name)',
+      ' (path/to/file.wasm OR path/to/file.hex OR project_name)',
   )
   process.exit(1)
 }
@@ -24,13 +24,18 @@ function getFinishFunctionFromFile(filePath) {
   }
 
   let absolutePath = ""
-  if (filePath.endsWith('.wasm')) {
+  if (filePath.endsWith('.wasm') || filePath.endsWith('.hex')) {
     absolutePath = path.resolve(filePath)
   } else {
     absolutePath = path.resolve(__dirname, `../../projects/${filePath}/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
   }
   try {
       const data = fs.readFileSync(absolutePath)
+      // If it's a .hex file, it's already in hex format
+      if (filePath.endsWith('.hex')) {
+        return data.toString('utf8').trim()
+      }
+      // If it's a .wasm file, convert to hex
       return data.toString('hex')
   } catch (err) {
     console.error(`Error reading file at ${absolutePath}:`, err.message)

@@ -1,5 +1,11 @@
 # WASM Devnet Details
 
+## Devnet5 - 2025-08-04 Release
+
+The `rippled` code can be found in this branch: https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
+
+Commit: 58741d2
+
 ## Devnet4 - 2025-07-03 Release
 
 The Programmability Devnet has been updated to its fourth monthly release.
@@ -34,7 +40,7 @@ The rippled commit hash is: 65b0b976d98e54226136fad8e733d17b7fbb511e
 
 ## Historical WASM Devnets
 
-## Devnet3 - 2025-06-04 Release
+### Devnet3 - 2025-06-04 Release
 
 The Programmability Devnet has been updated to its third monthly release.
 

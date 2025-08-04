@@ -13,15 +13,28 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-The tool includes a set of test fixtures in the `fixtures/escrow` directory:
+Test fixtures must be placed in `projects/<project>/fixtures/<test_case>/`
 
-### Success Case (`fixtures/escrow/success/`)
+This convention co-locates each project's test data with its source code, making projects self-contained.
 
+### Fixture Structure
+
+Each test case directory can contain:
+- `tx.json`: Transaction data
+- `ledger_object.json`: Current ledger object being tested
+- `ledger_header.json`: Ledger header information
+- `ledger.json`: Full ledger data
+- `nfts.json`: NFT data (if applicable)
+
+### Example: Notary Project
+
+The notary project includes test fixtures for validating escrow finish conditions:
+
+#### Success Case (`projects/notary/fixtures/success/`)
 - `tx.json`: Transaction with the correct notary account
 - `ledger_object.json`: Corresponding escrow object
 
-### Failure Case (`fixtures/escrow/failure/`)
-
+#### Failure Case (`projects/notary/fixtures/failure/`)
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
@@ -33,26 +46,27 @@ From the `wasm-host` directory:
 
 ```bash
 # Run with success test case
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success --project <project_name>
 
 # Run with a specific function
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success --function your_function_name
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success --project <project_name> --function your_function_name
 
 # Run with failure test case, specify function name "finish"
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure --function finish
+cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure --project <project_name> --function finish
 ```
 
 From any workspace directory:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --function finish
+cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --project <project_name> --function finish
 ```
 
 ### Command Line Options
 
 - `--wasm-file <PATH>`: Path to the WebAssembly module to test
 - `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
-- `--test-case <CASE>`: Test case to run (success/failure), defaults to `success`
+- `--test-case <CASE>`: Test case to run (defaults to `success`)
+- `--project <NAME>`: Project name (required)
 - `--function <NAME>`: The name of the function to execute in the WASM module, defaults to `finish`
 - `--verbose`: Enable detailed logging
 - `-h, --help`: Show help information
@@ -75,7 +89,7 @@ The verbose output includes:
 Example verbose output:
 
 ```
-[INFO wasm_host] Starting WasmEdge host application
+[INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
 [INFO wasm_host] Using test case: success
@@ -116,11 +130,16 @@ This data is used to test the module's `finish` function implementation.
 
 ### Adding New Test Cases
 
-To add new test cases:
+To add new test cases to a project:
 
-1. Create a new directory under `fixtures/escrow/`
-2. Add `tx.json` and `ledger_object.json` files
-3. Update the test case selection in the craft tool
+1. Create a new directory under `projects/<project>/fixtures/<test_case>/`
+2. Add desired JSON files:
+   - `tx.json`: Transaction data
+   - `ledger_object.json`: Ledger object being tested
+   - `ledger_header.json`: Ledger header information
+   - `ledger.json`: Full ledger data
+   - `nfts.json`: NFT data (if applicable)
+3. Run the test using: `craft test <project> --case <test_case>`
 
 ## Error Handling
 

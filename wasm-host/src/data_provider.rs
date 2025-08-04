@@ -1,4 +1,4 @@
-use crate::decoding::{AccountId, Decodable, decode};
+use crate::decoding::{AccountId, Decodable, decode, decode_amount_json, decode_issue_json};
 use crate::hashing::Hash256;
 use crate::mock_data::{DataSource, Keylet, MockData};
 use std::ffi::c_void;
@@ -16,7 +16,7 @@ pub enum HostError {
     NotLeafField = -5,
     LocatorMalformed = -6,
     SlotOutRange = -7,
-    SlotsFull = -8,
+    NoFreeSlots = -8,
     EmptySlot = -9,
     LedgerObjNotFound = -10,
     DecodingError = -11,
@@ -27,6 +27,74 @@ pub enum HostError {
     InvalidAccount = -16,
     InvalidField = -17,
     IndexOutOfBounds = -18,
+    FloatInputMalformed = -19,
+    FloatComputationError = -20,
+}
+
+impl From<i64> for HostError {
+    fn from(value: i64) -> Self {
+        match value {
+            -1 => HostError::InternalError,
+            -2 => HostError::FieldNotFound,
+            -3 => HostError::BufferTooSmall,
+            -4 => HostError::NoArray,
+            -5 => HostError::NotLeafField,
+            -6 => HostError::LocatorMalformed,
+            -7 => HostError::SlotOutRange,
+            -8 => HostError::NoFreeSlots,
+            -9 => HostError::EmptySlot,
+            -10 => HostError::LedgerObjNotFound,
+            -11 => HostError::DecodingError,
+            -12 => HostError::DataFieldTooLarge,
+            -13 => HostError::PointerOutOfBound,
+            -14 => HostError::NoMemoryExported,
+            -15 => HostError::InvalidParams,
+            -16 => HostError::InvalidAccount,
+            -17 => HostError::InvalidField,
+            -18 => HostError::IndexOutOfBounds,
+            _ => HostError::InternalError, // Default to InternalError for unknown error codes
+        }
+    }
+}
+
+/// Converts an error code to its string representation.
+///
+/// # Arguments
+///
+/// * `code` - An integer representing the error code
+///
+/// # Returns
+///
+/// Returns a string slice representing the name of the error code constant and its integer value.
+/// Returns "UNKNOWN_ERROR (code)" if the error code is not recognized.
+/// ```
+pub fn error_code_to_string(code: i64) -> &'static str {
+    // Convert the code to a HostError
+    let host_error: HostError = code.into();
+
+    // Match on the HostError
+    match host_error {
+        HostError::InternalError => "INTERNAL_ERROR (-1)",
+        HostError::FieldNotFound => "FIELD_NOT_FOUND (-2)",
+        HostError::BufferTooSmall => "BUFFER_TOO_SMALL (-3)",
+        HostError::NoArray => "NO_ARRAY (-4)",
+        HostError::NotLeafField => "NOT_LEAF_FIELD (-5)",
+        HostError::LocatorMalformed => "LOCATOR_MALFORMED (-6)",
+        HostError::SlotOutRange => "SLOT_OUT_RANGE (-7)",
+        HostError::NoFreeSlots => "SLOTS_FULL (-8)",
+        HostError::EmptySlot => "EMPTY_SLOT (-9)",
+        HostError::LedgerObjNotFound => "LEDGER_OBJ_NOT_FOUND (-10)",
+        HostError::DecodingError => "DECODING_ERROR (-11)",
+        HostError::DataFieldTooLarge => "DATA_FIELD_TOO_LARGE (-12)",
+        HostError::PointerOutOfBound => "POINTER_OUT_OF_BOUND (-13)",
+        HostError::NoMemoryExported => "NO_MEMORY_EXPORTED (-14)",
+        HostError::InvalidParams => "INVALID_PARAMS (-15)",
+        HostError::InvalidAccount => "INVALID_ACCOUNT (-16)",
+        HostError::InvalidField => "INVALID_FIELD (-17)",
+        HostError::IndexOutOfBounds => "INDEX_OUT_OF_BOUNDS (-18)",
+        HostError::FloatInputMalformed => "FLOAT_INPUT_MALFORMED (-19)",
+        HostError::FloatComputationError => "FLOAT_COMPUTATION_ERROR (-20)",
+    }
 }
 
 pub struct LocatorUnpacker {
@@ -68,10 +136,20 @@ pub fn unpack_locator(buffer: Vec<u8>) -> Result<Vec<i32>, HostError> {
     Ok(result)
 }
 
+use num_derive::FromPrimitive;
+#[derive(FromPrimitive, Debug)]
+pub enum RippledRoundingMode {
+    ToNearest = 0,
+    TowardsZero = 1,
+    Downward = 2,
+    Upward = 3,
+}
+
 pub struct DataProvider {
     data_source: MockData,
     next_slot: usize,
     slots: [Keylet; NUM_SLOTS],
+    pub _rounding_mode: RippledRoundingMode,
 }
 
 impl DataProvider {
@@ -81,13 +159,14 @@ impl DataProvider {
             data_source,
             next_slot: 1,
             slots,
+            _rounding_mode: RippledRoundingMode::ToNearest,
         }
     }
 
     pub fn slot_set(&mut self, keylet: Keylet, mut slot: usize) -> i32 {
         if slot == 0 {
             if self.next_slot >= NUM_SLOTS {
-                return HostError::SlotsFull as i32;
+                return HostError::NoFreeSlots as i32;
             }
             slot = self.next_slot;
             self.next_slot += 1;
@@ -117,7 +196,7 @@ impl DataProvider {
         idx_fields: Vec<i32>,
         buf_cap: usize,
     ) -> (i32, Vec<u8>) {
-        assert!(idx_fields.len() > 0);
+        assert!(!idx_fields.is_empty());
         let (last_sfield, field_result) = match self.data_source.get_field_value(source, idx_fields)
         {
             Ok(v) => v,
@@ -180,77 +259,101 @@ impl DataProvider {
         let mut buf = vec![0u8; buf_cap];
         match field_result {
             Some(value) => {
-                match value {
-                    serde_json::Value::Number(n) => {
-                        if n.is_i64() {
-                            let num = n.as_i64().unwrap();
-                            if buf_cap == 4 {
-                                // Safe cast to i32
-                                if num > u32::MAX as i64 || num < u32::MIN as i64 {
-                                    return (HostError::BufferTooSmall as i32, buf);
-                                }
-                                let bytes = (num as u32).to_le_bytes();
-                                buf[..4].copy_from_slice(&bytes);
-                                (4, buf)
-                            } else {
-                                let bytes = num.to_le_bytes();
-                                if bytes.len() > buf_cap {
-                                    return (HostError::BufferTooSmall as i32, buf);
-                                }
-                                buf[..bytes.len()].copy_from_slice(&bytes);
-                                (bytes.len() as i32, buf)
-                            }
-                        } else if n.is_u64() {
-                            let num = n.as_u64().unwrap();
-                            if buf_cap == 4 {
-                                // Safe cast to u32
-                                if num > u32::MAX as u64 {
-                                    return (HostError::BufferTooSmall as i32, buf);
-                                }
-                                let bytes = (num as u32).to_le_bytes();
-                                buf[..4].copy_from_slice(&bytes);
-                                (4, buf)
-                            } else {
-                                let bytes = num.to_le_bytes();
-                                if bytes.len() > buf_cap {
-                                    return (HostError::BufferTooSmall as i32, buf);
-                                }
-                                buf[..bytes.len()].copy_from_slice(&bytes);
-                                (bytes.len() as i32, buf)
-                            }
-                        } else if n.is_f64() {
-                            let s = n.as_f64().unwrap().to_string();
-                            let bytes = s.as_bytes();
-                            if bytes.len() > buf_cap {
-                                return (HostError::BufferTooSmall as i32, buf);
-                            }
-                            buf[..bytes.len()].copy_from_slice(bytes);
-                            return (bytes.len() as i32, buf);
-                        } else {
-                            return (HostError::InternalError as i32, buf);
-                        }
-                    }
-                    serde_json::Value::String(s) => match decode(s, decodable) {
+                if decodable == Decodable::AMOUNT {
+                    match decode_amount_json(value.clone()) {
                         None => (HostError::DecodingError as i32, buf),
                         Some(bytes) => {
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
                             }
-                            buf[..bytes.len()].copy_from_slice(&*bytes);
+                            buf[..bytes.len()].copy_from_slice(&bytes);
                             (bytes.len() as i32, buf)
                         }
-                    },
-                    serde_json::Value::Bool(b) => {
-                        if buf_cap == 0 {
-                            return (HostError::BufferTooSmall as i32, buf);
-                        }
-                        buf[0] = if *b { 1 } else { 0 };
-                        (1, buf)
                     }
-                    // be explicit about the cases we don't support
-                    serde_json::Value::Null => (HostError::NotLeafField as i32, buf),
-                    serde_json::Value::Array(_) => (HostError::NotLeafField as i32, buf),
-                    serde_json::Value::Object(_) => (HostError::NotLeafField as i32, buf),
+                } else if decodable == Decodable::ISSUE {
+                    match decode_issue_json(value.clone()) {
+                        None => (HostError::DecodingError as i32, buf),
+                        Some(bytes) => {
+                            if bytes.len() > buf_cap {
+                                return (HostError::BufferTooSmall as i32, buf);
+                            }
+                            buf[..bytes.len()].copy_from_slice(&bytes);
+                            (bytes.len() as i32, buf)
+                        }
+                    }
+                } else {
+                    match value {
+                        serde_json::Value::Number(n) => {
+                            if n.is_i64() {
+                                let num = n.as_i64().unwrap();
+                                if buf_cap == 4 {
+                                    // Safe cast to i32
+                                    if num > u32::MAX as i64 || num < u32::MIN as i64 {
+                                        return (HostError::BufferTooSmall as i32, buf);
+                                    }
+                                    let bytes = (num as u32).to_le_bytes();
+                                    buf[..4].copy_from_slice(&bytes);
+                                    (4, buf)
+                                } else {
+                                    let bytes = num.to_le_bytes();
+                                    if bytes.len() > buf_cap {
+                                        return (HostError::BufferTooSmall as i32, buf);
+                                    }
+                                    buf[..bytes.len()].copy_from_slice(&bytes);
+                                    (bytes.len() as i32, buf)
+                                }
+                            } else if n.is_u64() {
+                                let num = n.as_u64().unwrap();
+                                if buf_cap == 4 {
+                                    // Safe cast to u32
+                                    if num > u32::MAX as u64 {
+                                        return (HostError::BufferTooSmall as i32, buf);
+                                    }
+                                    let bytes = (num as u32).to_le_bytes();
+                                    buf[..4].copy_from_slice(&bytes);
+                                    (4, buf)
+                                } else {
+                                    let bytes = num.to_le_bytes();
+                                    if bytes.len() > buf_cap {
+                                        return (HostError::BufferTooSmall as i32, buf);
+                                    }
+                                    buf[..bytes.len()].copy_from_slice(&bytes);
+                                    (bytes.len() as i32, buf)
+                                }
+                            } else if n.is_f64() {
+                                let s = n.as_f64().unwrap().to_string();
+                                let bytes = s.as_bytes();
+                                if bytes.len() > buf_cap {
+                                    return (HostError::BufferTooSmall as i32, buf);
+                                }
+                                buf[..bytes.len()].copy_from_slice(bytes);
+                                return (bytes.len() as i32, buf);
+                            } else {
+                                return (HostError::InternalError as i32, buf);
+                            }
+                        }
+                        serde_json::Value::String(s) => match decode(s, decodable) {
+                            None => (HostError::DecodingError as i32, buf),
+                            Some(bytes) => {
+                                if bytes.len() > buf_cap {
+                                    return (HostError::BufferTooSmall as i32, buf);
+                                }
+                                buf[..bytes.len()].copy_from_slice(&bytes);
+                                (bytes.len() as i32, buf)
+                            }
+                        },
+                        serde_json::Value::Bool(b) => {
+                            if buf_cap == 0 {
+                                return (HostError::BufferTooSmall as i32, buf);
+                            }
+                            buf[0] = if *b { 1 } else { 0 };
+                            (1, buf)
+                        }
+                        // be explicit about the cases we don't support
+                        serde_json::Value::Null => (HostError::NotLeafField as i32, buf),
+                        serde_json::Value::Array(_) => (HostError::NotLeafField as i32, buf),
+                        serde_json::Value::Object(_) => (HostError::NotLeafField as i32, buf),
+                    }
                 }
             }
             None => (HostError::FieldNotFound as i32, buf),

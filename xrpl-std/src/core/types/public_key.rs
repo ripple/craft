@@ -7,6 +7,23 @@ impl From<[u8; 33]> for PublicKey {
     }
 }
 
+impl From<[u8; 64]> for PublicKey {
+    fn from(bytes: [u8; 64]) -> Self {
+        // Take the first 33 bytes from the 64-byte array
+        let mut key_bytes = [0u8; 33];
+        key_bytes.copy_from_slice(&bytes[..33]);
+        PublicKey(key_bytes)
+    }
+}
+
+impl From<&[u8]> for PublicKey {
+    fn from(bytes: &[u8]) -> Self {
+        let mut key_bytes = [0u8; 33];
+        key_bytes[..bytes.len().min(33)].copy_from_slice(&bytes[..bytes.len().min(33)]);
+        PublicKey(key_bytes)
+    }
+}
+
 #[cfg(test)]
 mod test_public_key {
     // secp256k1

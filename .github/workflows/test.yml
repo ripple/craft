@@ -11,6 +11,15 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # This runs the pre-commit hooks defined in .pre-commit-config.yaml
+      # TODO: figure out how to update to use pre-commit.ci
+      - uses: pre-commit/action@v3.0.1
+
   clippy_linting:
     runs-on: ubuntu-latest
     steps:
@@ -27,16 +36,94 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -Dclippy::all
+
+      - name: Run Clippy (xrpl-std)
+        run: |
+          cd xrpl-std
+          cargo clippy --all-targets --all-features -- -Dclippy::all
+
+      - name: Run Clippy (All Example Contracts)
+        run: |
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Clippy in $dir"
+              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
+            fi
+          done
+
+      - name: Run Clippy (All Test Contracts)
+        run: |
+          for dir in ./rippled-tests/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Clippy in $dir"
+              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+            fi
+          done
+
+      - name: Check for missing newline at EOF
+        run: |
+          missing_newline=false
+          git ls-files -z | while IFS= read -r -d '' f; do
+            [ -f "$f" ] && [ -s "$f" ] && file --mime "$f" | grep -q text && {
+              last_byte=$(tail -c1 "$f")
+              if [ "$last_byte" != $'\n' ]; then
+                echo "❌ $f is missing a newline at EOF"
+                missing_newline=true
+              fi
+            }
+          done
+          if [ "$missing_newline" = true ]; then
+            echo "::error::Some files are missing a newline at EOF"
+            exit 1
+          else
+            echo "✅ All files have a newline at EOF"
+          fi
 
   rustfmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run fmt
+      - name: Run fmt (Craft)
         run: cargo fmt --all -- --check
+
+      - name: Run fmt (xrpl-std)
+        run: |
+          cd xrpl-std
+          cargo fmt --all -- --check
+
+      - name: Run fmt (All Example Contracts)
+        run: |
+          for dir in ./projects/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Fmt in $dir"
+              (cd "$dir" && cargo fmt --all -- --check) || exit 1
+            fi
+          done
+
+      - name: Run fmt (All Test Contracts)
+        run: |
+          for dir in ./rippled-tests/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Fmt in $dir"
+              (cd "$dir" && cargo fmt --all -- --check) || exit 1
+            fi
+          done
+
+  # Note: This job should not be "required" for PRs, as during development there may be temporary
+  # discrepancies between craft and rippled
+  host_function_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit host functions to ensure they match the XRPLd host functions
+        run: node tools/compareHostFunctions.js https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
 
   build_and_test:
     runs-on: ubuntu-latest
@@ -57,14 +144,18 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build xrpl-std
+      - name: Build & Test `xrpl-std`
         run: |
-          (cd xrpl-std && cargo build && cargo build --target wasm32-unknown-unknown && cargo rustc --target wasm32-unknown-unknown -- -D warnings)
+          cd xrpl-std
+          cargo build
+          cargo test
+          cargo build --target wasm32-unknown-unknown
+          cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build wasm-host
-        run: (cd wasm-host && cargo build)
+      - name: Build & Test `wasm-host`
+        run: (cd wasm-host && cargo build && cargo test)
 
-      - name: Build all examples
+      - name: Build all example contracts
         run: |
           for dir in ./projects/*/; do
             if [ -f "$dir/Cargo.toml" ]; then
@@ -73,7 +164,16 @@ jobs:
             fi
           done
 
-      - name: Build and test
+      - name: Build all test contracts
+        run: |
+          for dir in ./rippled-tests/*/; do
+            if [ -f "$dir/Cargo.toml" ]; then
+              echo "🔧 Building in $dir"
+              (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
+            fi
+          done
+
+      - name: Build and Test `craft`
         run: |
           cargo build
           cargo test

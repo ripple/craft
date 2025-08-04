@@ -10,7 +10,6 @@ An interactive CLI tool for building and testing WASM modules for the XRP Ledger
 - [Command-Line Options](#command-line-options)
 - [Project Structure](#project-structure)
 - [WASM Host Testing Tool](#wasm-host-testing-tool)
-- [Reference Submodules](#reference-submodules)
 - [Managing rippled](#managing-rippled)
 - [Running the XRPL Explorer](#running-the-xrpl-explorer)
 
@@ -26,7 +25,6 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
-- WasmEdge
 - Docker (required for running rippled)
 
 ### Installing Docker
@@ -52,38 +50,6 @@ Traditional option with GUI:
 - **Linux**: https://docs.docker.com/engine/install/
 
 After installation, ensure Docker is running before using rippled-related commands.
-
-### Installing WasmEdge
-
-If you don't already have WasmEdge, you can install it:
-
-```bash
-curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
-```
-
-After installation, source the updated environment variables:
-
-```bash
-source ~/.zshenv  # For zsh users
-# OR
-source ~/.bashrc  # For bash users
-```
-
-To verify the installation:
-
-```bash
-which wasmedge
-```
-
-If you encounter any dynamic library loading errors when running WASM tests, set the library path:
-
-```bash
-# For macOS
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.wasmedge/lib
-
-# For Linux
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.wasmedge/lib
-```
 
 ## Usage
 
@@ -176,50 +142,38 @@ The wasm-host tool:
 
 ## Test Fixtures
 
-The tool includes a set of test fixtures in the `fixtures/escrow` directory. Currently, these fixtures are specific to the `notary` project. The intent is to generalize or reuse for future projects.
+Test fixtures must be placed in `projects/<project>/fixtures/<test_case>/`
 
-### Success Case (`fixtures/escrow/success/`)
+This convention co-locates each project's test data with its source code, making projects self-contained.
 
-- `tx.json`: Transaction with the correct notary account
-- `ledger_object.json`: Corresponding escrow object
+### Fixture Structure
 
-### Failure Case (`fixtures/escrow/failure/`)
+Each test case directory can contain:
+- `tx.json`: Transaction data
+- `ledger_object.json`: Current ledger object being tested
+- `ledger_header.json`: Ledger header information
+- `ledger.json`: Full ledger data
+- `nfts.json`: NFT data (if applicable)
 
-- `tx.json`: Transaction with an incorrect notary account
-- `ledger_object.json`: Corresponding escrow object
+### Example Projects with Test Fixtures
 
-## Reference Submodules
+#### Notary Project
+The notary project includes test fixtures for validating escrow finish conditions:
 
-See [reference/README.md](reference/README.md) for details on using and updating the reference implementations.
+- **Success Case** (`projects/notary/fixtures/success/`): Tests when the escrow finish condition is met (transaction with the correct notary account)
+- **Failure Case** (`projects/notary/fixtures/failure/`): Tests when the escrow finish condition is not met (transaction with an incorrect notary account)
 
-### 1. rippled
+#### Host Functions Test Project
+The host_functions_test project includes fixtures for testing various host function capabilities:
 
-Located at `reference/rippled`, this provides the authoritative XRPL server implementation.
+- **Success Case** (`projects/host_functions_test/fixtures/success/`): Tests successful execution of 26 host functions
 
-### 2. XRPL Explorer
+### Cloning the Repository
 
-Located at `reference/explorer`, this provides a web interface for exploring XRPL transactions and data.
-
-### Cloning the Repository with Submodules
-
-To clone this repository including all submodules, use:
-
-```bash
-git clone --recurse-submodules git@github.com:ripple/craft.git
-```
-
-Or if you've already cloned the repository without submodules:
+To clone this repository, use:
 
 ```bash
-git submodule update --init --recursive
-```
-
-### Updating Submodules
-
-To update all submodules to their latest versions:
-
-```bash
-git submodule update --remote
+git clone git@github.com:ripple/craft.git
 ```
 
 ## Managing rippled
@@ -291,14 +245,15 @@ cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
 From any workspace directory:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success
+cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --project <project_name>
 ```
 
 ### Command Line Options
 
 - `--wasm-file <PATH>`: Path to the WebAssembly module to test
 - `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
-- `--test-case <CASE>`: Test case to run (success/failure)
+- `--test-case <CASE>`: Test case to run (defaults to `success`)
+- `--project <NAME>`: Project name (required)
 - `--verbose`: Enable detailed logging
 - `-h, --help`: Show help information
 
@@ -320,7 +275,7 @@ The verbose output may include:
 Example verbose output:
 
 ```
-[INFO wasm_host] Starting WasmEdge host application
+[INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
 [INFO wasm_host] Using test case: success
@@ -361,11 +316,16 @@ This data is used to test the module's `finish` function implementation.
 
 ### Adding New Test Cases
 
-To add new test cases:
+To add new test cases to a project:
 
-1. Create a new directory under `fixtures/escrow/`
-2. Add `tx.json` and `ledger_object.json` files
-3. Update the test case selection in the craft tool
+1. Create a new directory under `projects/<project>/fixtures/<test_case>/`
+2. Add desired JSON files:
+   - `tx.json`: Transaction data
+   - `ledger_object.json`: Ledger object being tested
+   - `ledger_header.json`: Ledger header information
+   - `ledger.json`: Full ledger data
+   - `nfts.json`: NFT data (if applicable)
+3. Run the test using: `craft test <project> --case <test_case>`
 
 ## Error Handling
 

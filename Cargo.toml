@@ -1,14 +1,18 @@
 [workspace]
-members = [".", "wasm-host"]
+members = [
+    ".",
+    "wasm-host"
+]
 
 [package]
 name = "craft"
-version = "0.5.0-devnet4"
+version = "0.5.0-devnet5"
 edition = "2024"
 description = "An interactive CLI tool for building and testing WASM smart contracts"
 
 [dependencies]
 anyhow = "1.0"
+atty = "0.2"
 bs58 = "0.5"
 clap = { version = "4.4", features = ["derive"] }
 colored = "2.2.0"

@@ -32,4 +32,4 @@ cargo run -- --wasm-file ../projects/xrpl_std_example/target/wasm32-unknown-unkn
 ### Note
 
 Please note that the wasm-host only has mock host functions. Please use the devnet (or a standalone rippled node) to
-test with real data.  
+test with real data.

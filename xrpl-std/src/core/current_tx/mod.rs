@@ -51,6 +51,7 @@ use crate::core::error_codes::{
     match_result_code_with_expected_bytes_optional,
 };
 use crate::core::types::account_id::{ACCOUNT_ID_SIZE, AccountID};
+use crate::core::types::amount::token_amount::{TOKEN_AMOUNT_SIZE, TokenAmount};
 use crate::core::types::blob::Blob;
 use crate::core::types::hash_256::{HASH256_SIZE, Hash256};
 use crate::core::types::public_key::PublicKey;
@@ -58,8 +59,6 @@ use crate::host::{Result, get_tx_field, to_non_optional};
 
 pub mod escrow_finish;
 pub mod traits;
-
-// TODO: Create get_amount_field from mod.rs once Amounts are properly supported.
 
 /// Retrieves an AccountID field from the current transaction.
 ///
@@ -69,15 +68,15 @@ pub mod traits;
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which AccountID field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which AccountID field to retrieve. This corresponds
+///   to the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
 /// Returns a `Result<AccountID>` where:
 /// * `Ok(AccountID)` - The 20-byte account identifier for the specified field
-/// * `Err(Error)` - If the field cannot be retrieved, is missing (for required fields),
-///                  or has an unexpected size
+/// * `Err(Error)` - If the field cannot be retrieved, is missing (for required fields), or has an
+///   unexpected size
 ///
 /// # Errors
 ///
@@ -94,7 +93,27 @@ fn get_account_id_field(field_code: i32) -> Result<AccountID> {
     match_result_code_with_expected_bytes(result_code, ACCOUNT_ID_SIZE, || buffer.into())
 }
 
-/// Retrieves a u32 field from the current transaction.
+/// Retrieves a `TokenAmount` field from the current ledger object.
+///
+/// # Arguments
+///
+/// * `field_code` - The field code identifying which field to retrieve
+///
+/// # Returns
+///
+/// Returns a `Result<TokenAmount>` where:
+/// * `Ok(AccountID)` - The account identifier for the specified field
+/// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size.
+#[inline]
+fn get_amount_field(field_code: i32) -> Result<TokenAmount> {
+    let mut buffer = [0u8; TOKEN_AMOUNT_SIZE]; // Enough to hold an Amount
+
+    let result_code = unsafe { get_tx_field(field_code, buffer.as_mut_ptr(), buffer.len()) };
+
+    match_result_code(result_code, || TokenAmount::from(buffer))
+}
+
+/// Retrieves a `u32` field from the current transaction.
 ///
 /// This function extracts a 32-bit unsigned integer from the current XRPL transaction.
 /// u32 fields are commonly used for sequence numbers, flags, timestamps, and other
@@ -102,8 +121,8 @@ fn get_account_id_field(field_code: i32) -> Result<AccountID> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which u32 field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which u32 field to retrieve. This corresponds to
+///   the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -126,7 +145,7 @@ fn get_u32_field(field_code: i32) -> Result<u32> {
     to_non_optional(get_u32_field_optional(field_code))
 }
 
-/// Retrieves an optional u32 field from the current transaction.
+/// Retrieves an optional `u32` field from the current transaction.
 ///
 /// This function extracts a 32-bit unsigned integer from the current XRPL transaction,
 /// returning `None` if the field is not present. This is useful for optional transaction
@@ -134,8 +153,8 @@ fn get_u32_field(field_code: i32) -> Result<u32> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which u32 field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which u32 field to retrieve. This corresponds to
+///   the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -160,11 +179,11 @@ fn get_u32_field_optional(field_code: i32) -> Result<Option<u32>> {
     let result_code = unsafe { get_tx_field(field_code, buffer.as_mut_ptr(), buffer.len()) };
 
     match_result_code_with_expected_bytes_optional(result_code, 4, || {
-        Some(u32::from_le_bytes(buffer)) // <-- Move the buffer into an AccountID
+        Some(u32::from_le_bytes(buffer)) // <-- Move the buffer into a u32
     })
 }
 
-/// Retrieves a Hash256 field from the current transaction.
+/// Retrieves a `Hash256` field from the current transaction.
 ///
 /// This function extracts a 256-bit cryptographic hash from the current XRPL transaction.
 /// Hash256 fields are used for transaction hashes, previous transaction references,
@@ -172,8 +191,8 @@ fn get_u32_field_optional(field_code: i32) -> Result<Option<u32>> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which Hash256 field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which Hash256 field to retrieve. This corresponds
+///   to the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -196,7 +215,7 @@ fn get_hash_256_field(field_code: i32) -> Result<Hash256> {
     to_non_optional(get_hash_256_field_optional(field_code))
 }
 
-/// Retrieves an optional Hash256 field from the current transaction.
+/// Retrieves an optional `Hash256` field from the current transaction.
 ///
 /// This function extracts a 256-bit cryptographic hash from the current XRPL transaction,
 /// returning `None` if the field is not present. This is useful for optional hash fields
@@ -204,8 +223,8 @@ fn get_hash_256_field(field_code: i32) -> Result<Hash256> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which Hash256 field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which Hash256 field to retrieve. This corresponds
+///   to the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -234,7 +253,7 @@ fn get_hash_256_field_optional(field_code: i32) -> Result<Option<Hash256>> {
     })
 }
 
-/// Retrieves a PublicKey field from the current transaction.
+/// Retrieves a `PublicKey` field from the current transaction.
 ///
 /// This function extracts a 33-byte compressed public key from the current XRPL transaction.
 /// Public key fields are used for cryptographic operations, signature verification,
@@ -242,8 +261,8 @@ fn get_hash_256_field_optional(field_code: i32) -> Result<Option<Hash256>> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which PublicKey field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which PublicKey field to retrieve. This corresponds
+///   to the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -266,7 +285,7 @@ fn get_public_key_field(field_code: i32) -> Result<PublicKey> {
     to_non_optional(get_optional_public_key_field(field_code))
 }
 
-/// Retrieves an optional PublicKey field from the current transaction.
+/// Retrieves an optional `PublicKey` field from the current transaction.
 ///
 /// This function extracts a 33-byte compressed public key from the current XRPL transaction,
 /// returning `None` if the field is not present. This is useful for optional public key fields
@@ -274,8 +293,8 @@ fn get_public_key_field(field_code: i32) -> Result<PublicKey> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which PublicKey field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which PublicKey field to retrieve. This corresponds
+///   to the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -302,16 +321,16 @@ fn get_optional_public_key_field(field_code: i32) -> Result<Option<PublicKey>> {
     match_result_code_with_expected_bytes_optional(result_code, 33, || Some(buffer.into()))
 }
 
-/// Retrieves a variable-length blob field from the current transaction.
+/// Retrieves a variable-length `Blob` field from the current transaction.
 ///
 /// This function extracts variable-length binary data from the current XRPL transaction.
-/// Blob fields are used for memos, arbitrary data, encoded objects, and other
-/// variable-length information that doesn't fit into fixed-size field types.
+/// Blob fields are used for memos, arbitrary data, encoded objects, and other variable-length
+/// information that doesn't fit into fixed-size field types.
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which blob field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which blob field to retrieve. This corresponds to
+///   the XRPL transaction field identifier.
 ///
 /// # Returns
 ///
@@ -328,7 +347,7 @@ fn get_optional_public_key_field(field_code: i32) -> Result<Option<PublicKey>> {
 ///
 /// # Errors
 ///
-/// This function will return an error if:
+/// This function returns an error if:
 /// - The specified field is not present in the transaction
 /// - The underlying host function call fails
 /// - The field data exceeds 1024 bytes (buffer overflow protection)
@@ -341,7 +360,7 @@ fn get_blob_field(field_code: i32) -> Result<Blob> {
     to_non_optional(get_blob_field_optional(field_code))
 }
 
-/// Retrieves an optional variable-length blob field from the current transaction.
+/// Retrieves an optional variable-length `Blob` field from the current transaction.
 ///
 /// This function extracts variable-length binary data from the current XRPL transaction,
 /// returning `None` if the field is not present. This is useful for optional blob fields
@@ -349,8 +368,8 @@ fn get_blob_field(field_code: i32) -> Result<Blob> {
 ///
 /// # Arguments
 ///
-/// * `field_code` - The field code identifying which blob field to retrieve.
-///                  This corresponds to the XRPL transaction field identifier.
+/// * `field_code` - The field code identifying which blob field to retrieve. This corresponds to
+///   the XRPL transaction field identifier.
 ///
 /// # Returns
 ///

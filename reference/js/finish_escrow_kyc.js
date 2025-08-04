@@ -15,7 +15,8 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const url = "ws://127.0.0.1:6006"
+const url = "wss://wasm.devnet.rippletest.net:51233"
+// const url = "ws://127.0.0.1:6006"
 const client = new xrpl.Client(url)
 
 const [, , account, accountSecret, owner, offerSequence] = process.argv
@@ -33,14 +34,15 @@ async function submit(tx, wallet, debug = true) {
 async function finishEscrow() {
   let interval
   try {
+    console.log("Connecting to the WASM Devnet...")
     await client.connect()
     console.log(`Connected to ${url}`)
-    await client.request({command: 'ledger_accept'})
-    
-    interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},1000)
+    // await client.request({command: 'ledger_accept'})
+
+    // interval = setInterval(() => {if (client.isConnected()) client.request({command: 'ledger_accept'})},2000)
 
     const wallet = xrpl.Wallet.fromSeed(accountSecret)
-    
+
     // Verify the account matches the wallet
     if (wallet.address !== account) {
       console.error("Error: Provided account doesn't match the wallet derived from the secret")
@@ -52,7 +54,7 @@ async function finishEscrow() {
     console.log(`Owner (Created Escrow): ${owner}`)
     console.log(`Offer Sequence: ${offerSequence}\n`)
 
-    await sleep(2000)
+    await sleep(5000)
 
     const txFail = {
       TransactionType: 'EscrowFinish',
@@ -64,14 +66,14 @@ async function finishEscrow() {
 
     console.log("Submitting EscrowFinish transaction... (this should fail)")
     const responseFail = await submit(txFail, wallet)
-    
+
     if (responseFail.result.meta.TransactionResult === "tesSUCCESS") {
       console.log("\nEscrow finished successfully!")
     } else {
       console.error("\nFailed to finish escrow:", responseFail.result.meta.TransactionResult)
     }
 
-    await sleep(2000)
+    await sleep(5000)
 
     const credTx = {
       TransactionType: 'CredentialCreate',
@@ -83,14 +85,14 @@ async function finishEscrow() {
 
     console.log("Submitting CredentialCreate transaction...")
     const credResponse = await submit(credTx, wallet)
-    
+
     if (credResponse.result.meta.TransactionResult === "tesSUCCESS") {
       console.log("Credential created successfully!")
     } else {
       console.error("\nFailed to create credential:", credResponse.result.meta.TransactionResult)
     }
 
-    await sleep(2000)
+    await sleep(5000)
 
     const tx = {
       TransactionType: 'EscrowFinish',
@@ -102,7 +104,7 @@ async function finishEscrow() {
 
     console.log("Submitting EscrowFinish transaction...")
     const response = await submit(tx, wallet)
-    
+
     if (response.result.meta.TransactionResult === "tesSUCCESS") {
       console.log("\nEscrow finished successfully!")
     } else {
@@ -118,4 +120,4 @@ async function finishEscrow() {
   }
 }
 
-finishEscrow() 
+finishEscrow()

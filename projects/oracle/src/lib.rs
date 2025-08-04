@@ -1,11 +1,14 @@
-#![no_std]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
 
 use xrpl_std::core::error_codes::match_result_code;
+use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::account_id::AccountID;
 use xrpl_std::core::types::keylets::oracle_keylet_safe;
 use xrpl_std::host::trace::trace_num;
 use xrpl_std::host::{Result::Err, Result::Ok};
-use xrpl_std::locator::LocatorPacker;
 use xrpl_std::{host, sfield};
 
 const ORACLE_OWNER: AccountID =
@@ -27,7 +30,7 @@ pub fn get_u64_from_buffer(bytes: &[u8]) -> u64 {
 }
 
 pub fn get_price_from_oracle(slot: i32) -> Option<u64> {
-    let mut locator = LocatorPacker::new();
+    let mut locator = Locator::new();
     locator.pack(sfield::PriceDataSeries);
     locator.pack(0);
     locator.pack(sfield::AssetPrice);

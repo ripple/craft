@@ -1,7 +1,8 @@
 /// The size of the buffer, in bytes, to use for any new locator
 const LOCATOR_BUFFER_SIZE: usize = 64;
 
-// A Locator may only pack this many levels deep in an object hierarchy (inclusive of first field)
+// /// A Locator may only pack this many levels deep in an object hierarchy (inclusive of the first
+// /// field)
 // const MAX_DEPTH: u8 = 12; // 1 byte for slot; 5 bytes for each packed object.
 
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by
@@ -10,7 +11,7 @@ const LOCATOR_BUFFER_SIZE: usize = 64;
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(C)]
 pub struct Locator {
-    // First packed value is 6 bytes; All nested/packed values are 5 bytes; so 64 bytes allows
+    // The first packed value is 6 bytes; All nested/packed values are 5 bytes; so 64 bytes allow
     // 12 nested levels of access.
     buffer: [u8; LOCATOR_BUFFER_SIZE],
 
@@ -49,13 +50,15 @@ impl Locator {
         }
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for &byte in &value_bytes {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = byte,
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 
@@ -63,21 +66,35 @@ impl Locator {
         self.buffer.as_ptr()
     }
 
+    pub fn as_ptr(&self) -> *const u8 {
+        self.buffer.as_ptr()
+    }
+
     pub fn num_packed_bytes(&self) -> usize {
         self.cur_buffer_index
+    }
+
+    pub fn len(&self) -> usize {
+        self.cur_buffer_index
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cur_buffer_index == 0
     }
 
     pub fn repack_last(&mut self, sfield_or_index: i32) -> bool {
         self.cur_buffer_index -= 4;
 
         let value_bytes: [u8; 4] = sfield_or_index.to_le_bytes();
-        for &byte in &value_bytes {
+
+        for byte in value_bytes.iter() {
             match self.buffer.get_mut(self.cur_buffer_index) {
-                Some(b) => *b = byte,
+                Some(b) => *b = *byte,
                 None => return false,
             }
             self.cur_buffer_index += 1;
         }
+
         true
     }
 }

@@ -23,7 +23,7 @@
 //!
 //! ## Field Categories
 //!
-//! ### Mandatory vs Optional Fields
+//! ### Mandatory vs. Optional Fields
 //!
 //! - **Mandatory fields** return `Result<T>` and will error if missing
 //! - **Optional fields** return `Result<Option<T>>` and return `None` if missing
@@ -38,12 +38,9 @@
 //! - **PublicKey**: 33-byte compressed public keys
 //! - **TransactionType**: Enumerated transaction type identifiers
 
-use crate::core::amount::Amount;
-use crate::core::amount::Amount::Xrp;
-use crate::core::amount::xrp_amount::XrpAmount;
 use crate::core::current_tx::{
-    get_account_id_field, get_blob_field, get_hash_256_field, get_hash_256_field_optional,
-    get_public_key_field, get_u32_field, get_u32_field_optional,
+    get_account_id_field, get_amount_field, get_blob_field, get_hash_256_field,
+    get_hash_256_field_optional, get_public_key_field, get_u32_field, get_u32_field_optional,
 };
 use crate::core::error_codes::{
     match_result_code_optional, match_result_code_with_expected_bytes,
@@ -55,6 +52,7 @@ use crate::core::field_codes::{
     SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
 };
 use crate::core::types::account_id::AccountID;
+use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::blob::Blob;
 use crate::core::types::crypto_condition::{Condition, Fulfillment};
 use crate::core::types::hash_256::Hash256;
@@ -87,14 +85,14 @@ pub trait TransactionCommonFields {
 
     /// Retrieves the transaction type from the current transaction.
     ///
-    /// This field specifies Required) The type of transaction. Valid transaction types include:
+    /// This field specifies the type of transaction. Valid transaction types include:
     /// Payment, OfferCreate, TrustSet, and many others.
     ///
     /// # Returns
     ///
     /// Returns a `Result<TransactionType>` where:
     /// * `Ok(TransactionType)` - An enumerated value representing the transaction type
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     fn get_transaction_type(&self) -> Result<TransactionType> {
         let mut buffer = [0u8; 2]; // Allocate memory to read into (this is an i32)
@@ -131,22 +129,14 @@ pub trait TransactionCommonFields {
     ///
     /// Returns a `Result<Amount>` where:
     /// * `Ok(Amount)` - The fee amount as an XRP amount in drops
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     /// # Note
     ///
-    /// Currently returns XRP amounts only. Future versions may support other token types
+    /// Returns XRP amounts only (for now). Future versions may support other token types
     /// when the underlying amount handling is enhanced.
-    fn get_fee(&self) -> Result<Amount> {
-        // TODO: Use get_amount_field from mod.rs
-        let mut buffer = [0u8; 8]; // Enough to hold a u64
-
-        let result_code = unsafe { get_tx_field(SF_FEE, buffer.as_mut_ptr(), buffer.len()) };
-
-        match_result_code_with_expected_bytes(result_code, 8, || {
-            let amount = i64::from_le_bytes(buffer);
-            Xrp(XrpAmount(amount as u64))
-        })
+    fn get_fee(&self) -> Result<TokenAmount> {
+        get_amount_field(SF_FEE)
     }
 
     /// Retrieves the sequence number from the current transaction.
@@ -160,7 +150,7 @@ pub trait TransactionCommonFields {
     ///
     /// Returns a `Result<u32>` where:
     /// * `Ok(u32)` - The transaction sequence number
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     /// # Note
     ///
@@ -186,7 +176,7 @@ pub trait TransactionCommonFields {
         get_hash_256_field_optional(SF_ACCOUNT_TXN_ID)
     }
 
-    /// Retrieves the flags field from the current transaction.
+    /// Retrieves the `flags` field from the current transaction.
     ///
     /// This optional field contains a bitfield of transaction-specific flags that modify
     /// the transaction's behavior.
@@ -259,13 +249,13 @@ pub trait TransactionCommonFields {
     ///
     /// Returns a `Result<PublicKey>` where:
     /// * `Ok(PublicKey)` - The 33-byte compressed public key used for signing
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     ///
     /// # Security Note
     ///
-    /// The presence of this field doesn't guarantee the signature is valid - it only
-    /// provides the key that was claimed to be used for signing. Signature validation
-    /// is performed by the XRPL network before transaction execution.
+    /// The presence of this field doesn't guarantee the signature is valid. Instead, this field
+    /// only provides the key claimed to be used for signing. The XRPL network performs signature
+    /// validation before transaction execution.
     fn get_signing_pub_key(&self) -> Result<PublicKey> {
         get_public_key_field(SF_SIGNING_PUB_KEY)
     }
@@ -323,7 +313,7 @@ pub trait TransactionCommonFields {
 /// Types implementing this trait should:
 /// - Also implement `TransactionCommonFields` for access to common transaction fields
 /// - Only be used in the context of processing EscrowFinish transactions
-/// - Ensure proper error handling when accessing conditional fieldsd
+/// - Ensure proper error handling when accessing conditional fields
 pub trait EscrowFinishFields: TransactionCommonFields {
     /// Retrieves the transaction ID (hash) from the current transaction.
     ///
@@ -350,7 +340,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     ///
     /// Returns a `Result<AccountID>` where:
     /// * `Ok(AccountID)` - The 20-byte account identifier of the escrow owner
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_owner(&self) -> Result<AccountID> {
         get_account_id_field(SF_OWNER)
     }
@@ -366,14 +356,14 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     ///
     /// Returns a `Result<u32>` where:
     /// * `Ok(u32)` - The sequence number of the EscrowCreate transaction
-    /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
+    /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_offer_sequence(&self) -> Result<u32> {
         get_u32_field(SF_OFFER_SEQUENCE)
     }
 
     /// Retrieves the cryptographic condition from the current EscrowFinish transaction.
     ///
-    /// This optional field contains the cryptographic condition that was specified in the
+    /// This optional field contains the cryptographic condition specified in the
     /// original EscrowCreate transaction. If present, a valid `Fulfillment` must be provided
     /// in the `Fulfillment` field for the escrow to be successfully finished. Conditions
     /// enable complex release criteria beyond simple time-based locks.
@@ -416,7 +406,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// # Size Limits
     ///
     /// Fulfillments are limited to 256 bytes in the current XRPL implementation.
-    /// This limit ensures network performance while supporting most practical
+    /// This limit ensures network performance while supporting the most practical
     /// cryptographic proof scenarios.
     fn get_fulfillment(&self) -> Result<Option<Fulfillment>> {
         // Fulfillment fields are limited in rippled to 256 bytes, so we don't use `get_blob_field`

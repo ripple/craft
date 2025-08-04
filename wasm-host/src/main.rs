@@ -1,12 +1,11 @@
+extern crate core;
+
 mod data_provider;
 mod decoding;
 mod hashing;
-mod host_function_utils;
-mod host_functions;
 mod host_functions_wamr;
 mod mock_data;
 mod sfield;
-mod vm;
 mod vm_wamr;
 
 use crate::mock_data::MockData;
@@ -18,7 +17,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-/// WasmEdge WASM testing utility
+/// Wasm WASM testing utility
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -34,6 +33,10 @@ struct Args {
     #[arg(short, long, default_value = "success")]
     test_case: String,
 
+    /// Project name
+    #[arg(short, long)]
+    project: String,
+
     /// Verbose logging
     #[arg(short, long)]
     verbose: bool,
@@ -43,13 +46,28 @@ struct Args {
     function: String,
 }
 
+#[allow(clippy::type_complexity)]
 fn load_test_data(
+    project: &str,
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
+    // Convention: fixtures must be in projects/<project>/fixtures/<test_case>/
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("projects")
+        .join(project)
         .join("fixtures")
-        .join("escrow")
         .join(test_case);
+
+    if !base_path.exists() {
+        return Err(format!(
+            "Test case '{}' not found at expected location: {}",
+            test_case,
+            base_path.display()
+        )
+        .into());
+    }
 
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");
@@ -99,26 +117,27 @@ fn main() {
         .filter(None, log_level)
         .init();
 
-    info!("Starting WasmEdge host application {:?}", args);
+    info!("Starting Wasm host application {:?}", args);
     info!("Loading WASM module from: {}", wasm_file);
     info!("Target function: {} (default is 'finish')", args.function);
     info!("Using test case: {}", args.test_case);
+    info!("Project: {}", args.project);
     info!("Loading test data from fixtures");
-    let (tx_json, lo_json, lh_json, l_json, nft_json) = match load_test_data(&args.test_case) {
-        Ok((tx, lo, lh, l, nft)) => {
-            debug!("Test data loaded successfully");
-            (tx, lo, lh, l, nft)
-        }
-        Err(e) => {
-            error!("Failed to load test data: {}", e);
-            return;
-        }
-    };
+    let (tx_json, lo_json, lh_json, l_json, nft_json) =
+        match load_test_data(&args.project, &args.test_case) {
+            Ok((tx, lo, lh, l, nft)) => {
+                debug!("Test data loaded successfully");
+                (tx, lo, lh, l, nft)
+            }
+            Err(e) => {
+                error!("Failed to load test data: {}", e);
+                return;
+            }
+        };
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
     match vm_wamr::run_func(wasm_file, &args.function, Some(100000), data_source) {
-        // match vm::run_func(wasm_file, &args.function, data_source) {
         Ok(result) => {
             println!("-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");
@@ -141,5 +160,5 @@ fn main() {
         }
     }
 
-    info!("WasmEdge host application execution completed");
+    info!("Wasm host application execution completed");
 }

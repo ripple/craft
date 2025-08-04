@@ -77,6 +77,71 @@ unsafe extern "C" {
     ///   `../core/error_codes.rs`
     pub fn get_parent_ledger_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
+    /// Retrieves the account hash of the current ledger.
+    ///
+    /// This function fetches the account hash of the current ledger and stores it in the buffer
+    /// provided. The hash is expected to be written to the memory location pointed by
+    /// `out_buff_ptr`, and its length should not exceed the `out_buff_len`.
+    ///
+    /// # Parameters
+    /// - `out_buff_ptr`: A mutable pointer to a buffer where the account hash will be written.
+    ///   The buffer must be allocated and managed by the caller.
+    /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
+    ///   buffer and ensures that the function does not write beyond the allowed
+    ///   length.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_ledger_account_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
+
+    /// Retrieves the transaction hash of the current ledger.
+    ///
+    /// This function fetches the transaction hash of the current ledger and stores it in the buffer
+    /// provided. The hash is expected to be written to the memory location pointed by
+    /// `out_buff_ptr`, and its length should not exceed the `out_buff_len`.
+    ///
+    /// # Parameters
+    /// - `out_buff_ptr`: A mutable pointer to a buffer where the transaction hash will be written.
+    ///   The buffer must be allocated and managed by the caller.
+    /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
+    ///   buffer and ensures that the function does not write beyond the allowed
+    ///   length.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_ledger_tx_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
+
+    /// Retrieves the current transaction base fee.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive transaction base fee on success.
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_base_fee() -> i32;
+
+    /// Retrieves the state of an amendment and whether it's enabled or not.
+    ///
+    /// # Parameters
+    ///
+    /// - `amendment_ptr`: A raw pointer to the amendment. This can be either the uint256 that
+    ///   represents the hash of an amendment, or the string name of the
+    ///   amendment.
+    /// - `amendment_len`: The length of the amendment specified by `amendment_ptr`.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a boolean 0 or 1 (whether the amendment is enabled or not) on success.
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn amendment_enabled(amendment_ptr: *const u8, amendment_len: usize) -> i32;
+
     /// Fetch a ledger entry pointed by the given keylet.
     ///
     /// This function uses the keylet to locate a ledger entry. If found, add it to the
@@ -344,6 +409,31 @@ unsafe extern "C" {
         data_len: usize,
         out_buff_ptr: *mut u8,
         out_buff_len: usize,
+    ) -> i32;
+
+    /// Checks a key signature when provided the message and public key.
+    ///
+    /// # Parameters
+    /// - `message_ptr`: A pointer to the message data to be verified.
+    /// - `message_len`: The length, in bytes, of the message data.
+    /// - `signature_ptr`: A pointer to the signature data.
+    /// - `signature_len`: The length, in bytes, of the signature data.
+    /// - `pubkey_ptr`: A pointer to the public key data.
+    /// - `pubkey_len`: The length, in bytes, of the public key data.
+    ///
+    /// # Returns
+    ///
+    /// - Returns 1 if the signature is valid.
+    /// - Returns 0 if the signature is invalid.
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn check_sig(
+        message_ptr: *const u8,
+        message_len: usize,
+        signature_ptr: *const u8,
+        signature_len: usize,
+        pubkey_ptr: *const u8,
+        pubkey_len: usize,
     ) -> i32;
 
     /// Generates the keylet (key identifier) for a specific account.
@@ -687,7 +777,11 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
-    /// Retrieves the details of a specific NFT (Non-Fungible Token) associated with a given account.
+    // #############################
+    // Host Function Category: NFT
+    // #############################
+
+    /// Retrieves the URI details of a specific NFT (Non-Fungible Token) associated with a given account.
     ///
     /// # Parameters
     ///
@@ -695,7 +789,7 @@ unsafe extern "C" {
     /// - `account_len`: The length of the accountID.
     /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
     /// - `nft_id_len`: The length of the NFT identifier in bytes.
-    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved NFT uri
+    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved NFT URI
     ///   will be written.
     /// - `out_buff_len`: The maximum length of the output buffer.
     ///
@@ -713,10 +807,104 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
+    /// Retrieves the issuer of a specific NFT (Non-Fungible Token).
+    ///
+    /// # Parameters
+    ///
+    /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
+    /// - `nft_id_len`: The length of the NFT identifier in bytes.
+    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved issuer
+    ///   account will be written.
+    /// - `out_buff_len`: The maximum length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_nft_issuer(
+        nft_id_ptr: *const u8,
+        nft_id_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Retrieves the taxon of a specific NFT (Non-Fungible Token).
+    ///
+    /// # Parameters
+    ///
+    /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
+    /// - `nft_id_len`: The length of the NFT identifier in bytes.
+    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved taxon
+    ///   will be written.
+    /// - `out_buff_len`: The maximum length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_nft_taxon(
+        nft_id_ptr: *const u8,
+        nft_id_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Retrieves the flags of a specific NFT (Non-Fungible Token).
+    ///
+    /// # Parameters
+    ///
+    /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
+    /// - `nft_id_len`: The length of the NFT identifier in bytes.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive flags value on success, which is a bitmask representing the NFT's flags
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_nft_flags(nft_id_ptr: *const u8, nft_id_len: usize) -> i32;
+
+    /// Retrieves the transfer fee of a specific NFT (Non-Fungible Token).
+    ///
+    /// # Parameters
+    ///
+    /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
+    /// - `nft_id_len`: The length of the NFT identifier in bytes.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive transfer fee value on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_nft_transfer_fee(nft_id_ptr: *const u8, nft_id_len: usize) -> i32;
+
+    /// Retrieves the serial number of a specific NFT (Non-Fungible Token).
+    ///
+    /// # Parameters
+    ///
+    /// - `nft_id_ptr`: A pointer to the memory location containing the NFT identifier.
+    /// - `nft_id_len`: The length of the NFT identifier in bytes.
+    /// - `out_buff_ptr`: A mutable pointer to the memory location where the retrieved serial
+    ///   number will be written.
+    /// - `out_buff_len`: The maximum length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn get_nft_serial(
+        nft_id_ptr: *const u8,
+        nft_id_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
     // #############################
     // Host Function Category: FLOAT
     // #############################
-    //Note that Craft currently does not honor the rounding mode
+    // Note that Craft currently does not honor the rounding mode
 
     /// Converts a signed 64-bit integer to an opaque float representation
     /// # Parameters

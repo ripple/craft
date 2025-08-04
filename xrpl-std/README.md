@@ -257,24 +257,11 @@ trace_num("Balance", balance as i64)?;
 
 ## Required Module Exports
 
-Every WASM module must export these functions:
+Every WASM module must export the following function:
 
 ```rust
 #![no_std]
 #![no_main]
-
-/// Memory allocation function for host
-#[no_mangle]
-pub extern "C" fn allocate(size: usize) -> *mut u8 {
-    static mut MEMORY: [u8; 65536] = [0; 65536];
-    static mut OFFSET: usize = 0;
-    
-    unsafe {
-        let ptr = MEMORY.as_mut_ptr().add(OFFSET);
-        OFFSET += size;
-        ptr
-    }
-}
 
 /// Main entry point - returns true to release escrow
 #[no_mangle]
@@ -283,6 +270,8 @@ pub extern "C" fn finish() -> bool {
     true  // or false
 }
 ```
+
+Only `finish()` must be exported.
 
 ## Usage Examples
 

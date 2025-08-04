@@ -43,6 +43,9 @@ const FIELD_CODE: i32 = (TYPE_ID << 16) | FIELD_ID;
 const SFIELD_ACCOUNT: i32 = 524289;      // (8 << 16) | 1
 const SFIELD_BALANCE: i32 = 393218;      // (6 << 16) | 6
 const SFIELD_MEMOS: i32 = 983049;        // (15 << 16) | 9
+
+// Always use named constants from xrpl_std::sfield instead of raw integers
+use xrpl_std::sfield;  // Provides sfield::Account, sfield::Balance, etc.
 ```
 
 ## Simple Field Access
@@ -120,8 +123,8 @@ locator.pack(field3);
 
 // Use the packed locator
 let result = get_tx_nested_field(
-    locator.buffer.as_ptr(),
-    locator.cur_buffer_index,
+    locator.get_addr(),
+    locator.num_packed_bytes(),
     buffer.as_mut_ptr(),
     buffer.len()
 )?;
@@ -129,10 +132,10 @@ let result = get_tx_nested_field(
 
 ### Locator Encoding Rules
 
-1. **First field**: 6 bytes (2-byte type/field + 4-byte extended)
-2. **Subsequent fields**: 5 bytes each (1-byte marker + 4-byte data)
-3. **Maximum depth**: 12 levels
-4. **Maximum size**: 64 bytes
+1. **All fields**: 4 bytes each (stored as little-endian i32)
+2. **Maximum depth**: 16 levels (64 bytes / 4 bytes per field)
+3. **Maximum size**: 64 bytes
+4. **Encoding**: Each field ID or array index is packed as a 4-byte integer
 
 ```rust
 // Internal structure
@@ -207,8 +210,8 @@ locator.pack(sfield::MemoType);
 
 let mut buffer = [0u8; 256];
 let len = get_tx_nested_field(
-    locator.buffer.as_ptr(),
-    locator.cur_buffer_index,
+    locator.get_addr(),
+    locator.num_packed_bytes(),
     buffer.as_mut_ptr(),
     buffer.len()
 )?;
@@ -225,8 +228,8 @@ locator.pack(sfield::Account);
 
 let mut account = [0u8; 20];
 let len = get_tx_nested_field(
-    locator.buffer.as_ptr(),
-    locator.cur_buffer_index,
+    locator.get_addr(),
+    locator.num_packed_bytes(),
     account.as_mut_ptr(),
     account.len()
 )?;
@@ -244,8 +247,8 @@ locator.pack(sfield::AssetPrice);
 let mut price_buf = [0u8; 8];
 let len = get_ledger_obj_nested_field(
     oracle_slot,
-    locator.buffer.as_ptr(),
-    locator.cur_buffer_index,
+    locator.get_addr(),
+    locator.num_packed_bytes(),
     price_buf.as_mut_ptr(),
     price_buf.len()
 )?;
@@ -259,21 +262,34 @@ let memo_count = get_tx_array_len(sfield::Memos)?;
 
 // Process each memo
 for i in 0..memo_count {
-    // Access MemoType
-    let mut type_locator = Locator::new();
-    type_locator.pack(sfield::Memos);
-    type_locator.pack(i as i32);
-    type_locator.pack(sfield::MemoType);
+    // Build locator for memo fields
+    let mut locator = Locator::new();
+    locator.pack(sfield::Memos);
+    locator.pack(i as i32);
+    locator.pack(sfield::MemoType);
     
-    // Access MemoData
-    let mut data_locator = Locator::new();
-    data_locator.pack(sfield::Memos);
-    data_locator.pack(i as i32);
-    data_locator.pack(sfield::MemoData);
+    // Read MemoType
+    let type_len = get_tx_nested_field(
+        locator.get_addr(),
+        locator.num_packed_bytes(),
+        type_buf.as_mut_ptr(),
+        type_buf.len()
+    )?;
     
-    // Process memo...
+    // Reuse locator for MemoData (same path, different field)
+    locator.repack_last(sfield::MemoData);
+    
+    // Read MemoData
+    let data_len = get_tx_nested_field(
+        locator.get_addr(),
+        locator.num_packed_bytes(),
+        data_buf.as_mut_ptr(),
+        data_buf.len()
+    )?;
 }
 ```
+
+**Tip**: Use `repack_last()` to efficiently access different fields at the same nesting level without rebuilding the entire locator.
 
 ## Field Code Reference
 
@@ -354,6 +370,8 @@ for i in 0..memo_count {
 
 **Solution**: Verify field is actually an array type
 
+**Note**: This error code list is subject to expansion. Additional error codes may be added in future versions.
+
 ### Debugging Tips
 
 1. **Use trace functions** to output field values during development
@@ -393,8 +411,8 @@ fn process_memos() -> Result<()> {
         // Read MemoType
         let mut type_buf = [0u8; 256];
         let type_len = get_tx_nested_field(
-            type_loc.buffer.as_ptr(),
-            type_loc.cur_buffer_index,
+            type_loc.get_addr(),
+            type_loc.num_packed_bytes(),
             type_buf.as_mut_ptr(),
             type_buf.len()
         )?;
@@ -408,8 +426,8 @@ fn process_memos() -> Result<()> {
         // Read MemoData
         let mut data_buf = [0u8; 256];
         let data_len = get_tx_nested_field(
-            data_loc.buffer.as_ptr(),
-            data_loc.cur_buffer_index,
+            data_loc.get_addr(),
+            data_loc.num_packed_bytes(),
             data_buf.as_mut_ptr(),
             data_buf.len()
         )?;
@@ -439,8 +457,8 @@ fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
     let mut price_buf = [0u8; 8];
     let len = get_ledger_obj_nested_field(
         oracle_slot,
-        locator.buffer.as_ptr(),
-        locator.cur_buffer_index,
+        locator.get_addr(),
+        locator.num_packed_bytes(),
         price_buf.as_mut_ptr(),
         price_buf.len()
     )?;

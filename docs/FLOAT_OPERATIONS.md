@@ -139,7 +139,7 @@ float_pow(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
 // Nth root: out = ⁿ√a
 float_root(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
 
-// Natural logarithm: out = ln(a)
+// Base-10 logarithm: out = log₁₀(a)
 float_log(a: *const u8, out: *mut u8, rounding_mode: i32) -> i32
 ```
 

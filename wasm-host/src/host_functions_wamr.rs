@@ -301,8 +301,8 @@ pub fn account_keylet(
         return HostError::InvalidAccount as i32;
     }
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
-    // let hex_str = hex::encode(&keylet_hash);
-    // println!("Data (keylet_hash): {:?}", hex_str);
+    let hex_str = hex::encode(&keylet_hash);
+    println!("Data (keylet_hash): {:?}", hex_str);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
@@ -502,6 +502,7 @@ pub fn float_compare(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_add(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
@@ -524,6 +525,7 @@ pub fn float_add(
     pack_out_float(r, env, out_buff)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_subtract(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
@@ -546,6 +548,7 @@ pub fn float_subtract(
     pack_out_float(r, env, out_buff)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_multiply(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
@@ -568,6 +571,7 @@ pub fn float_multiply(
     pack_out_float(r, env, out_buff)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_divide(
     env: wasm_exec_env_t,
     in_buff1: *const u8,

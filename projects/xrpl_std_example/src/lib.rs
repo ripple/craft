@@ -7,22 +7,26 @@ use crate::host::{Result::Err, Result::Ok};
 use xrpl_std::core::constants::{ACCOUNT_ONE, ACCOUNT_ZERO};
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::{EscrowFinishFields, TransactionCommonFields};
+use xrpl_std::core::ledger_objects::account::{Account, get_account_balance};
 use xrpl_std::core::ledger_objects::current_escrow::{CurrentEscrow, get_current_escrow};
 use xrpl_std::core::ledger_objects::traits::{
-    CurrentEscrowFields, CurrentLedgerObjectCommonFields,
+    AccountFields, CurrentEscrowFields, CurrentLedgerObjectCommonFields, LedgerObjectCommonFields,
 };
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::account_id::AccountID;
+use xrpl_std::core::types::amount::token_amount::TokenAmount;
 use xrpl_std::core::types::blob::Blob;
 use xrpl_std::core::types::hash_256::Hash256;
 use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
+use xrpl_std::host::cache_ledger_obj;
 use xrpl_std::host::trace::{DataRepr, trace, trace_amount, trace_data, trace_num};
 use xrpl_std::sfield;
+use xrpl_std::{assert_eq, decode_hex_32};
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
     let _ = trace("");
 
@@ -197,9 +201,8 @@ pub extern "C" fn finish() -> bool {
                 )
             };
             if output_len < 0 {
-                //TODO rebase on to devnet3, there is an error code commit
                 let _ = trace_num("  cannot get Account, error:", output_len as i64);
-                break;
+                panic!()
             }
             let _ = trace_num("    Signer #:", i as i64);
             let _ = trace_data(
@@ -219,7 +222,7 @@ pub extern "C" fn finish() -> bool {
             };
             if output_len < 0 {
                 let _ = trace_num("  cannot get TxnSignature, error:", output_len as i64);
-                break;
+                panic!()
             }
             let _ = trace_data(
                 "     TxnSignature:",
@@ -254,12 +257,10 @@ pub extern "C" fn finish() -> bool {
         }
 
         let txn_signature: Blob = escrow_finish.get_txn_signature().unwrap();
-        assert_eq!(txn_signature.data[..71], EXPECTED_TXN_SIGNATURE);
-        let _ = trace_data(
-            "  TxnSignature:",
-            &txn_signature.data[..txn_signature.len],
-            DataRepr::AsHex,
-        );
+        let mut signature_bytes = [0u8; 71];
+        signature_bytes.copy_from_slice(&txn_signature.data[..71]);
+        assert_eq!(signature_bytes, EXPECTED_TXN_SIGNATURE);
+        let _ = trace_data("  TxnSignature:", &signature_bytes, DataRepr::AsHex);
 
         let _ = trace("  -- EscrowFinish Fields");
 
@@ -281,14 +282,14 @@ pub extern "C" fn finish() -> bool {
         // Trace Field: Condition
         let opt_condition = escrow_finish.get_condition().unwrap();
         if let Some(condition) = opt_condition {
-            debug_assert_eq!(condition.0, EXPECTED_ESCROW_FINISH_CONDITION);
+            assert_eq!(condition.0, EXPECTED_ESCROW_FINISH_CONDITION);
             let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
         }
 
         let opt_fulfillment = escrow_finish.get_fulfillment().unwrap();
         if let Some(fulfillment) = opt_fulfillment {
             assert_eq!(
-                fulfillment.data[..fulfillment.len],
+                &fulfillment.data[..fulfillment.len],
                 EXPECTED_ESCROW_FINISH_FULFILLMENT
             );
             let _ = trace_data(
@@ -314,6 +315,16 @@ pub extern "C" fn finish() -> bool {
                     buf.len(),
                 )
             };
+            if i == 0 {
+                assert_eq!(buf, EXPECTED_CURRENT_ESCROW_CREDENTIAL1);
+            } else if i == 1 {
+                assert_eq!(buf, EXPECTED_CURRENT_ESCROW_CREDENTIAL2);
+            } else if i == 2 {
+                assert_eq!(buf, EXPECTED_CURRENT_ESCROW_CREDENTIAL3);
+            } else {
+                panic!()
+            }
+
             let _ = trace_data(
                 "  CredentialID:",
                 &buf[..output_len as usize],
@@ -351,34 +362,44 @@ pub extern "C" fn finish() -> bool {
         // Trace Field: CancelAfter
         let opt_cancel_after = current_escrow.get_cancel_after().unwrap();
         if let Some(cancel_after) = opt_cancel_after {
+            assert_eq!(cancel_after, 545440232);
             let _ = trace_num("  CancelAfter:", cancel_after as i64);
         }
 
         // Trace Field: Condition
         let opt_condition = current_escrow.get_condition().unwrap();
         if let Some(condition) = opt_condition {
+            assert_eq!(condition.0, EXPECTED_ESCROW_CONDITION);
             let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
         }
 
         // Trace Field: Destination
         let destination = current_escrow.get_destination().unwrap();
+        const EXPECTED_DESTINATION: [u8; 20] = [
+            0x3E, 0x9D, 0x4A, 0x2B, 0x8A, 0xA0, 0x78, 0x0F, 0x68, 0x2D, 0x13, 0x6F, 0x7A, 0x56,
+            0xD6, 0x72, 0x4E, 0xF5, 0x37, 0x54,
+        ];
+        assert_eq!(destination.0, EXPECTED_DESTINATION);
         let _ = trace_data("  Destination:", &destination.0, DataRepr::AsHex);
 
         // Trace Field: DestinationTag
         let opt_destination_tag = current_escrow.get_destination_tag().unwrap();
         if let Some(destination_tag) = opt_destination_tag {
+            assert_eq!(destination_tag, 23480);
             let _ = trace_num("  DestinationTag:", destination_tag as i64);
         }
 
         // Trace Field: FinishAfter
         let opt_finish_after = current_escrow.get_finish_after().unwrap();
         if let Some(finish_after) = opt_finish_after {
+            assert_eq!(finish_after, 545354132);
             let _ = trace_num("  FinishAfter:", finish_after as i64);
         }
 
         // Trace Field: Flags
         let result = current_escrow.get_get_flags();
         if let Ok(flags) = result {
+            assert_eq!(flags, 0);
             let _ = trace_num("  Flags:", flags as i64);
         } else if let Err(error) = result {
             let _ = trace_num("  Error getting Flags. error_code = ", error.code() as i64);
@@ -387,6 +408,7 @@ pub extern "C" fn finish() -> bool {
         // Trace Field: FinishFunction
         let opt_finish_function = current_escrow.get_finish_function().unwrap();
         if let Some(finish_function) = opt_finish_function {
+            assert_eq!(finish_function.len, 172);
             let _ = trace_data(
                 "  FinishFunction:",
                 &finish_function.data[..finish_function.len],
@@ -396,30 +418,42 @@ pub extern "C" fn finish() -> bool {
 
         // Trace Field: OwnerNode
         let owner_node = current_escrow.get_owner_node().unwrap();
+        assert_eq!(owner_node, 0);
         let _ = trace_num("  OwnerNode:", owner_node as i64);
 
         // Trace Field: DestinationNode
         let opt_destination_node = current_escrow.get_destination_node().unwrap();
         if let Some(destination_node) = opt_destination_node {
+            assert_eq!(destination_node, 0);
             let _ = trace_num("  DestinationNode:", destination_node as i64);
         }
 
         // Trace Field: PreviousTxnID
         let previous_txn_id = current_escrow.get_previous_txn_id().unwrap();
+        assert_eq!(
+            previous_txn_id.0,
+            [
+                0xC4, 0x4F, 0x2E, 0xB8, 0x41, 0x96, 0xB9, 0xAD, 0x82, 0x03, 0x13, 0xDB, 0xEB, 0xA6,
+                0x31, 0x6A, 0x15, 0xC9, 0xA2, 0xD3, 0x57, 0x87, 0x57, 0x9E, 0xD1, 0x72, 0xB8, 0x7A,
+                0x30, 0x13, 0x1D, 0xA7,
+            ]
+        );
         let _ = trace_data("  PreviousTxnID:", &previous_txn_id.0, DataRepr::AsHex);
 
         // Trace Field: PreviousTxnLgrSeq
         let previous_txn_lgr_seq = current_escrow.get_previous_txn_lgr_seq().unwrap();
+        assert_eq!(previous_txn_lgr_seq, 28991004);
         let _ = trace_num("  PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
 
         // Trace Field: SourceTag
         let opt_source_tag = current_escrow.get_source_tag().unwrap();
         if let Some(source_tag) = opt_source_tag {
-            let _ = trace_num("  SourceTag:", source_tag as i64);
+            assert_eq!(source_tag, 11747);
+            let _ = trace_num("  SourceTag:", 11747);
         }
 
-        // TODO: Provide access?
-        // Trace Field: index
+        // Trace Field: `index` or `LedgerIndex`
+        // The current decision is that this field should not be accessible from the ledger object.
         // let ledger_index = current_escrow.get_ledger_index().unwrap();
         // let _ = trace_data("  index:", &ledger_index.0, DataRepr::AsHex);
 
@@ -431,134 +465,243 @@ pub extern "C" fn finish() -> bool {
     // Step #3 [EscrowFinish Account]: Trace Current Balance
     // ########################################
     {
-        let _ = trace("### Step #3: Trace EscrowFinish Account Balance");
+        let _ = trace("### Step #3: Trace Account Balance for Account Finishing the Escrow");
         let _ = trace("{ ");
-        let _ = trace("  -- TODO: Support multiple ledger objects in decoder!");
-        // let account: AccountID = escrow_finish.get_account().unwrap();
-        // let balance = account::get_account_balance(&account).unwrap();
-        // let _ = trace_num("  Balance of Account Finishing the Escrow:", balance as i64);
-        // if balance == 0 {
-        //     let _ = trace("  Balance of Account Finishing the Escrow was 0");
-        //     return false;
-        // }
+        let account: AccountID = escrow_finish.get_account().unwrap();
+        let balance = match get_account_balance(&account).unwrap() {
+            TokenAmount::XRP { num_drops } => num_drops,
+            TokenAmount::IOU { .. } => {
+                panic!("IOU Balance encountered, but should have been XRP.")
+            }
+            TokenAmount::MPT { .. } => {
+                panic!("MPT Balance encountered, but should have been XRP.")
+            }
+        };
+
+        assert_eq!(balance, 55426479402);
+        let _ = trace_num("  Balance of Account Finishing the Escrow:", balance);
         let _ = trace("}");
         let _ = trace("");
     }
 
     // ########################################
-    // Step #4 [Arbitrary Ledger Object]: Get arbitrary fields from an AccountRoot object.
+    // Step #4 [Arbitrary Ledger Object]: Trace AccountRoot Fields.
     // ########################################
     {
+        // Slot the account
+        // "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+        let account_keylet =
+            decode_hex_32(b"2B6AC232AA4C4BE41BF49D2459FA4A0347E1B543A4C92FCEE0821C0201E2E9A8")
+                .unwrap();
+
+        // Try to cache the ledger object inside rippled
+        let slot = unsafe { cache_ledger_obj(account_keylet.as_ptr(), 32, 0) };
+        if slot <= 0 {
+            let _ = trace_num("Error slotting Account object", slot as i64);
+            panic!()
+        } else {
+            let _ = trace_num("Account object slotted at", slot as i64);
+        }
+
+        // We use the trait-bound implementation so as not to duplicate accessor logic.
+        let account = Account;
+
         let _ = trace("### Step #4a: Trace AccountRoot Ledger Object");
         let _ = trace("{ ");
         let _ = trace("  -- Common Fields");
-        let _ = trace("    -- TODO: Finish tracing all fields");
-        let _ = trace("  -- Specific Fields");
-        let _ = trace("    -- TODO: Finish tracing all fields");
+
+        // Trace the `Flags`
+        let flags = account.get_flags(slot).unwrap();
+        assert_eq!(flags, 1703936);
+        let _ = trace_num("  Flags:", flags as i64);
+
+        // Trace the `LedgerEntryType`
+        let ledger_entry_type = account.ledger_entry_type(slot).unwrap();
+        assert_eq!(ledger_entry_type, 97); // 97 is the code for "AccountRoot"
+        let _ = trace_num("  LedgerEntryType (AccountRoot):", ledger_entry_type as i64);
+        let _ = trace("} ");
+
+        let _ = trace("{ ");
+        let _ = trace("  -- Account Specific Fields");
+
+        // Trace the `Account`
+        let account_id = account.get_account(slot).unwrap();
+        assert_eq!(
+            account_id.0,
+            [
+                0xB5, 0xF7, 0x62, 0x79, 0x8A, 0x53, 0xD5, 0x43, 0xA0, 0x14, 0xCA, 0xF8, 0xB2, 0x97,
+                0xCF, 0xF8, 0xF2, 0xF9, 0x37, 0xE8
+            ]
+        );
+        let _ = trace_data("  Account:", &account_id.0, DataRepr::AsHex);
+
+        // Trace the `AccountTxnID`
+        let account_txn_id = account.account_txn_id(slot).unwrap();
+        assert_eq!(
+            account_txn_id.0,
+            [
+                0xBC, 0x8E, 0x8B, 0x46, 0xD1, 0xC4, 0x03, 0xB1, 0x68, 0xEE, 0x64, 0x02, 0x76, 0x90,
+                0x65, 0xEB, 0xDA, 0xD7, 0x8E, 0x5E, 0xA3, 0xA0, 0x43, 0xD8, 0xE0, 0x41, 0x37, 0x2E,
+                0xDF, 0x14, 0xA1, 0x1E
+            ]
+        );
+        let _ = trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
+
+        // Trace `AMMID`
+        let amm_id = account.ammid(slot).unwrap();
+        assert_eq!(
+            amm_id.0,
+            [
+                0xBC, 0x8E, 0x8B, 0x46, 0xD1, 0xC4, 0x03, 0xB1, 0x68, 0xEE, 0x64, 0x02, 0x76, 0x90,
+                0x65, 0xEB, 0xDA, 0xD7, 0x8E, 0x5E, 0xA3, 0xA0, 0x43, 0xD8, 0xE0, 0x41, 0x37, 0x2E,
+                0xDF, 0x14, 0xA1, 0x1E
+            ]
+        );
+        let _ = trace_data("  AMMID:", &amm_id.0, DataRepr::AsHex);
+
+        // Trace the `Balance`
+        let balance = match account.balance(slot).unwrap() {
+            TokenAmount::XRP { num_drops } => num_drops,
+            TokenAmount::IOU { .. } => {
+                panic!("IOU Balance encountered, but should have been XRP.")
+            }
+            TokenAmount::MPT { .. } => {
+                panic!("MPT Balance encountered, but should have been XRP.")
+            }
+        };
+        assert_eq!(balance, 55426479402);
+        let _ = trace_num("  Balance of arbitrary Account:", balance);
+
+        // Trace the `BurnedNFTokens`
+        let burned_nf_tokens = account.burned_nf_tokens(slot).unwrap();
+        assert_eq!(burned_nf_tokens, 20);
+        let _ = trace_num("  BurnedNFTokens:", burned_nf_tokens as i64);
+
+        // Trace the `Domain`
+        let domain = account.domain(slot).unwrap();
+        assert_eq!(&domain.data[..domain.len], &[0xC8, 0xE8, 0xB4, 0x6E]);
+        let _ = trace_data("  Domain:", &domain.data[..domain.len], DataRepr::AsHex);
+
+        // Trace the `EmailHash`
+        let email_hash = account.email_hash(slot).unwrap();
+        assert_eq!(
+            email_hash.0,
+            [
+                0xBC, 0x8E, 0x8B, 0x46, 0xD1, 0xC4, 0x03, 0xB1, 0x68, 0xEE, 0x64, 0x02, 0x76, 0x90,
+                0x65, 0xEB
+            ]
+        );
+        let _ = trace_data("  EmailHash:", &email_hash.0, DataRepr::AsHex);
+
+        // Trace the `FirstNFTokenSequence`
+        let first_nf_token_sequence = account.first_nf_token_sequence(slot).unwrap();
+        assert_eq!(first_nf_token_sequence, 21);
+        let _ = trace_num("  FirstNFTokenSequence:", first_nf_token_sequence as i64);
+
+        // Trace the `MessageKey`
+        let message_key = account.message_key(slot).unwrap();
+        assert_eq!(
+            &message_key.data[..message_key.len],
+            &[0xC8, 0xE8, 0xB4, 0x6D]
+        );
+        let _ = trace_data(
+            "  MessageKey:",
+            &message_key.data[..message_key.len],
+            DataRepr::AsHex,
+        );
+
+        // Trace the `MintedNFTokens`
+        let minted_nf_tokens = account.minted_nf_tokens(slot).unwrap();
+        assert_eq!(minted_nf_tokens, 22);
+        let _ = trace_num("  MintedNFTokens:", minted_nf_tokens as i64);
+
+        // Trace the `NFTokenMinter`
+        let nf_token_minter = account.nf_token_minter(slot).unwrap();
+        assert_eq!(
+            nf_token_minter.0,
+            [
+                0xB5, 0xF7, 0x62, 0x79, 0x8A, 0x53, 0xD5, 0x43, 0xA0, 0x14, 0xCA, 0xF8, 0xB2, 0x97,
+                0xCF, 0xF8, 0xF2, 0xF9, 0x37, 0xE8
+            ]
+        );
+        let _ = trace_data("  NFTokenMinter:", &nf_token_minter.0, DataRepr::AsHex);
+
+        // Trace the `OwnerCount`
+        let owner_count = account.owner_count(slot).unwrap();
+        assert_eq!(owner_count, 1);
+        let _ = trace_num("  OwnerCount:", owner_count as i64);
+
+        // Trace the `PreviousTxnID`
+        let previous_txn_id = account.previous_txn_id(slot).unwrap();
+        assert_eq!(
+            previous_txn_id.0,
+            [
+                0xBC, 0x8E, 0x8B, 0x46, 0xD1, 0xC4, 0x03, 0xB1, 0x68, 0xEE, 0x64, 0x02, 0x76, 0x90,
+                0x65, 0xEB, 0xDA, 0xD7, 0x8E, 0x5E, 0xA3, 0xA0, 0x43, 0xD8, 0xE0, 0x41, 0x37, 0x2E,
+                0xDF, 0x14, 0xA1, 0x1F,
+            ]
+        );
+        let _ = trace_data("  PreviousTxnID:", &previous_txn_id.0, DataRepr::AsHex);
+
+        // Trace the `PreviousTxnLgrSeq`
+        let previous_txn_lgr_seq = account.previous_txn_lgr_seq(slot).unwrap();
+        assert_eq!(previous_txn_lgr_seq, 95945324);
+        let _ = trace_num("  PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
+
+        // Trace the `RegularKey`
+        let regular_key = account.regular_key(slot).unwrap();
+        assert_eq!(
+            regular_key.0,
+            [
+                0x76, 0x1B, 0x18, 0xF3, 0x46, 0x11, 0x2D, 0xFC, 0xD6, 0xA9, 0x95, 0x92, 0x94, 0xE9,
+                0xE9, 0x5D, 0x02, 0xDB, 0x7E, 0xE1
+            ]
+        );
+        let _ = trace_data("  RegularKey:", &regular_key.0, DataRepr::AsHex);
+
+        // Trace the `Sequence`
+        let sequence = account.sequence(slot).unwrap();
+        assert_eq!(sequence, 44196);
+        let _ = trace_num("  Sequence:", sequence as i64);
+
+        // Trace the `TicketCount`
+        let ticket_count = account.ticket_count(slot).unwrap();
+        assert_eq!(ticket_count, 23);
+        let _ = trace_num("  TicketCount:", ticket_count as i64);
+
+        // Trace the `TickSize`
+        let tick_size = account.tick_size(slot).unwrap();
+        assert_eq!(tick_size, 24);
+        let _ = trace_num("  TickSize:", tick_size as i64);
+
+        // Trace the `TransferRate`
+        let transfer_rate = account.transfer_rate(slot).unwrap();
+        assert_eq!(transfer_rate, 1220000000);
+        let _ = trace_num("  TransferRate:", transfer_rate as i64);
+
+        // Trace the `WalletLocator`
+        let wallet_locator = account.wallet_locator(slot).unwrap();
+        assert_eq!(
+            &wallet_locator.0,
+            &[
+                0xBC, 0x8E, 0x8B, 0x46, 0xD1, 0xC4, 0x03, 0xB1, 0x68, 0xEE, 0x64, 0x02, 0x76, 0x90,
+                0x65, 0xEB, 0xDA, 0xD7, 0x8E, 0x5E, 0xA3, 0xA0, 0x43, 0xD8, 0xE0, 0x41, 0x37, 0x2E,
+                0xDF, 0x14, 0xA1, 0x1D,
+            ]
+        );
+        let _ = trace_data("  WalletLocator:", &wallet_locator.0, DataRepr::AsHex);
+
+        // Trace the `WalletSize`
+        let wallet_size = account.wallet_size(slot).unwrap();
+        assert_eq!(wallet_size, 25);
+        let _ = trace_num("  WalletSize:", wallet_size as i64);
+
         let _ = trace("}");
         let _ = trace("");
-        // TODO: Implement these.
-        // let sender = get_tx_account_id();
-        // let dest_balance = get_account_balance(&dest);
-        // let escrow_data = get_current_escrow_data();
-        // let ed_str = String::from_utf8(escrow_data.clone()).unwrap();
-        // let threshold_balance = ed_str.parse::<u64>().unwrap();
-        // let pl_time = host::getParentLedgerTime();
-        // let e_time = get_current_current_transaction_after();
-
-        // ########################################
-        // Step #4 [NFT]: Trace all fields from an NFT
-        // ########################################
-        let _ = trace("### Step #4b: Trace Nft Ledger Object");
-        let _ = trace("{ ");
-        let _ = trace("  -- Common Fields");
-        let _ = trace("    -- TODO: Finish tracing all fields");
-        let _ = trace("  -- Specific Fields");
-        let _ = trace("    -- TODO: Finish tracing all fields");
-        let _ = trace("}");
-    }
-
-    // ########################################
-    // Step #5 [Ledger Headers]: Emit all ledger headers.
-    // ########################################
-    {
-        let _ = trace("### Step #5: Trace Ledger Headers");
-        let _ = trace("{ ");
-        // TODO: Implement this.
-        let _ = trace("    -- TODO: Finish tracing all fields");
-        let _ = trace("}");
-
-        // TODO: Remove these examples once the above TODOs are completed.
-        // Keep the commented out validation code from main branch
-        {
-            // let mut ledger_sqn = 0i32;
-            // if unsafe { xrpl_std::host_lib::get_ledger_sqn((&mut ledger_sqn) as *mut i32 as *mut u8, 4) }
-            //     <= 0
-            // {
-            //     return -10;
-            // }
-        }
-        {
-            // let keylet = [
-            //     52, 47, 158, 13, 36, 46, 219, 67, 160, 251, 252, 103, 43, 48, 44, 200, 187, 144, 73,
-            //     147, 23, 46, 87, 251, 255, 76, 93, 74, 30, 184, 90, 185,
-            // ];
-            // println!("wasm finish keylet {:?}", keylet);
-            //
-            // let slot = unsafe { host_lib::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-            //
-            // println!("wasm finish slot {:?}", slot);
-            //
-            // let mut locator = Locator::new();
-            // locator.pack(SignerEntries);
-            // let array_len = unsafe {
-            //     host_lib::get_ledger_obj_nested_array_len(slot, locator.get_addr(), locator.num_packed_bytes())
-            // };
-            // println!("wasm finish array_len {:?}", array_len);
-            //
-            // locator.pack(0);
-            // locator.pack(SignerEntry);
-            // locator.pack(SignerWeight);
-            //
-            // let mut weight = 0i32;
-            // let nfr = unsafe {
-            //     host_lib::get_ledger_obj_nested_field(
-            //         slot, locator.get_addr(), locator.num_packed_bytes(),
-            //         (&mut weight) as *mut i32 as *mut u8, 4
-            //     )
-            // };
-            //
-            // println!("wasm finish get_ledger_obj_nested_field {:?} {}", nfr, weight);
-        }
-        {
-            // let nft_id = [
-            //     0, 8, 39, 16, 104, 7, 191, 132, 143, 172, 217, 114, 242, 246, 23, 226, 112, 3, 215, 91,
-            //     44, 170, 201, 129, 108, 238, 20, 132, 5, 33, 209, 233,
-            // ];
-            // let owner = get_tx_account_id().unwrap();
-            // if owner.len() != 20 {
-            //     return -21;
-            // }
-            // let mut arr = [0u8; 256];
-            // let res = unsafe {
-            //     host_lib::get_NFT(
-            //         owner.as_ptr(),
-            //         owner.len(),
-            //         nft_id.as_ptr(),
-            //         nft_id.len(),
-            //         arr.as_mut_ptr(),
-            //         arr.len(),
-            //     )
-            // };
-            //
-            // if res != 106 {
-            //     return -22;
-            // }
-        }
     }
 
     let _ = trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
-    true // <-- Finish the escrow.
+    -1 // <-- Don't finish the escrow; this example merely traces.
 }
 
 /// The following are private constants used for testing purposes to enforce value checks in this
@@ -587,8 +730,28 @@ const EXPECTED_TXN_SIGNATURE: [u8; 71] = [
 const EXPECTED_ESCROW_FINISH_CONDITION: [u8; 32] = [0x33; 32];
 const EXPECTED_ESCROW_FINISH_FULFILLMENT: [u8; 32] = [0x21; 32];
 
+const EXPECTED_ESCROW_CONDITION: [u8; 32] = [
+    0xA0, 0x25, 0x80, 0x20, 0xA8, 0x2A, 0x88, 0xB2, 0xDF, 0x84, 0x3A, 0x54, 0xF5, 0x87, 0x72, 0xE4,
+    0xA3, 0x86, 0x18, 0x66, 0xEC, 0xDB, 0x41, 0x57, 0x64, 0x5D, 0xD9, 0xAE, 0x52, 0x8C, 0x1D, 0x3A,
+];
+
 /// Represents rf1BiGeXwwQoi8Z2ueFYTEXSwuJYfV2Jpn
 const EXPECTED_CURRENT_ESCROW_ACCOUNT_ID: [u8; 20] = [
     0x4B, 0x4E, 0x9C, 0x06, 0xF2, 0x42, 0x96, 0x07, 0x4F, 0x7B, 0xC4, 0x8F, 0x92, 0xA9, 0x79, 0x16,
     0xC6, 0xDC, 0x5E, 0xA9,
+];
+
+const EXPECTED_CURRENT_ESCROW_CREDENTIAL1: [u8; 32] = [
+    0x0A, 0xBA, 0x05, 0xA3, 0x49, 0x49, 0xF2, 0xCE, 0xD4, 0x10, 0x25, 0x91, 0x4F, 0xC4, 0xF2, 0x67,
+    0x88, 0x3F, 0x1D, 0x38, 0x8A, 0x65, 0x45, 0xAF, 0xB4, 0x86, 0x34, 0x66, 0xFA, 0xA6, 0xF2, 0x8C,
+];
+
+const EXPECTED_CURRENT_ESCROW_CREDENTIAL2: [u8; 32] = [
+    0xD0, 0xA0, 0x63, 0xDE, 0xE0, 0xB0, 0xEC, 0x95, 0x22, 0xCF, 0x35, 0xCD, 0x55, 0x77, 0x1B, 0x5D,
+    0xCA, 0xFA, 0x19, 0xA1, 0x33, 0xEE, 0x46, 0xA0, 0x29, 0x5E, 0x4D, 0x08, 0x9A, 0xF8, 0x64, 0x38,
+];
+
+const EXPECTED_CURRENT_ESCROW_CREDENTIAL3: [u8; 32] = [
+    0xD2, 0xEF, 0xD3, 0x85, 0x89, 0x60, 0x9A, 0xE5, 0x70, 0xD1, 0x7E, 0x99, 0x57, 0xCE, 0x60, 0x02,
+    0xE7, 0x64, 0xA6, 0x3E, 0xE6, 0x6F, 0xE8, 0xCA, 0xA2, 0x76, 0x89, 0x76, 0xAB, 0xD6, 0x0B, 0xFF,
 ];

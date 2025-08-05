@@ -2,6 +2,7 @@ use crate::core::error_codes;
 
 mod host_bindings;
 mod host_bindings_for_testing;
+pub mod assert;
 pub mod trace;
 //////////////////////////////////////
 // Host functions (defined by the host)

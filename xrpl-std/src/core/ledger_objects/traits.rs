@@ -14,6 +14,7 @@ use crate::core::types::blob::Blob;
 use crate::core::types::contract_data::{ContractData, XRPL_CONTRACT_DATA_SIZE};
 use crate::core::types::crypto_condition::Condition;
 use crate::core::types::hash_256::Hash256;
+use crate::core::types::uint_128::UInt128;
 use crate::host::{Error, get_current_ledger_obj_field, get_ledger_obj_field, update_data};
 use crate::host::{Result, Result::Err, Result::Ok};
 use crate::sfield;
@@ -376,5 +377,135 @@ pub trait EscrowFields: LedgerObjectCommonFields {
             }),
             code => Err(Error::from_code(code)),
         }
+    }
+}
+
+/// Trait providing access to fields specific to AccountRoot objects in any ledger.
+///
+/// This trait extends `LedgerObjectCommonFields` and provides methods to access
+/// fields that are specific to Escrow objects in any ledger, not just the current one.
+/// Each method requires a register number to identify which ledger object to access.
+pub trait AccountFields: LedgerObjectCommonFields {
+    /// The identifying address of the account.
+    fn get_account(&self, register_num: i32) -> Result<AccountID> {
+        ledger_object::get_account_id_field(register_num, sfield::Account)
+    }
+
+    /// AccountTxnID field for the account.
+    fn account_txn_id(&self, register_num: i32) -> Result<Hash256> {
+        ledger_object::get_hash_256_field(register_num, sfield::AccountTxnID)
+    }
+
+    /// The ledger entry ID of the corresponding AMM ledger entry. Set during account creation; cannot be modified.
+    /// If present, indicates that this is a special AMM AccountRoot; always omitted on non-AMM accounts.
+    /// (Added by the AMM amendment)
+    fn ammid(&self, register_num: i32) -> Result<Hash256> {
+        ledger_object::get_hash_256_field(register_num, sfield::AMMID)
+    }
+
+    /// The account's current XRP balance in drops.
+    fn balance(&self, register_num: i32) -> Result<TokenAmount> {
+        ledger_object::get_amount_field(register_num, sfield::Balance)
+    }
+
+    /// How many total of this account's issued non-fungible tokens have been burned.
+    /// This number is always equal or less than MintedNFTokens.
+    fn burned_nf_tokens(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::BurnedNFTokens)
+    }
+
+    /// A domain associated with this account. In JSON, this is the hexadecimal for the ASCII representation of the
+    /// domain. Cannot be more than 256 bytes in length.
+    fn domain(&self, register_num: i32) -> Result<Blob> {
+        ledger_object::get_blob_field(register_num, sfield::Domain)
+    }
+
+    /// The MD5 hash of an email address. Clients can use this to look up an avatar through services such as Gravatar.
+    fn email_hash(&self, register_num: i32) -> Result<UInt128> {
+        ledger_object::get_uint_128_field(register_num, sfield::EmailHash)
+    }
+
+    /// The account's Sequence Number at the time it minted its first non-fungible-token.
+    /// (Added by the fixNFTokenRemint amendment)
+    fn first_nf_token_sequence(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::FirstNFTokenSequence)
+    }
+
+    /// The value 0x0061, mapped to the string AccountRoot, indicates that this is an AccountRoot object.
+    fn ledger_entry_type(&self, register_num: i32) -> Result<u16> {
+        ledger_object::get_u16_field(register_num, sfield::LedgerEntryType)
+    }
+
+    /// A public key that may be used to send encrypted messages to this account. In JSON, uses hexadecimal.
+    /// Must be exactly 33 bytes, with the first byte indicating the key type: 0x02 or 0x03 for secp256k1 keys,
+    /// 0xED for Ed25519 keys.
+    fn message_key(&self, register_num: i32) -> Result<Blob> {
+        ledger_object::get_blob_field(register_num, sfield::MessageKey)
+    }
+
+    /// How many total non-fungible tokens have been minted by and on behalf of this account.
+    /// (Added by the NonFungibleTokensV1_1 amendment)
+    fn minted_nf_tokens(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::MintedNFTokens)
+    }
+
+    /// Another account that can mint non-fungible tokens on behalf of this account.
+    /// (Added by the NonFungibleTokensV1_1 amendment)
+    fn nf_token_minter(&self, register_num: i32) -> Result<AccountID> {
+        ledger_object::get_account_id_field(register_num, sfield::NFTokenMinter)
+    }
+
+    /// The number of objects this account owns in the ledger, which contributes to its owner reserve.
+    fn owner_count(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::OwnerCount)
+    }
+
+    /// The identifying hash of the transaction that most recently modified this object.
+    fn previous_txn_id(&self, register_num: i32) -> Result<Hash256> {
+        ledger_object::get_hash_256_field(register_num, sfield::PreviousTxnID)
+    }
+
+    /// The index of the ledger that contains the transaction that most recently modified this object.
+    fn previous_txn_lgr_seq(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::PreviousTxnLgrSeq)
+    }
+
+    /// The address of a key pair that can be used to sign transactions for this account instead of the master key.
+    /// Use a SetRegularKey transaction to change this value.
+    fn regular_key(&self, register_num: i32) -> Result<AccountID> {
+        ledger_object::get_account_id_field(register_num, sfield::RegularKey)
+    }
+
+    /// The sequence number of the next valid transaction for this account.
+    fn sequence(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::Sequence)
+    }
+
+    /// How many Tickets this account owns in the ledger. This is updated automatically to ensure that
+    /// the account stays within the hard limit of 250 Tickets at a time. This field is omitted if the account has zero
+    /// Tickets. (Added by the TicketBatch amendment.)
+    fn ticket_count(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::TicketCount)
+    }
+
+    /// How many significant digits to use for exchange rates of Offers involving currencies issued by this address.
+    /// Valid values are 3 to 15, inclusive. (Added by the TickSize amendment.)
+    fn tick_size(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::TickSize)
+    }
+
+    /// A transfer fee to charge other users for sending currency issued by this account to each other.
+    fn transfer_rate(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::TransferRate)
+    }
+
+    /// An arbitrary 256-bit value that users can set.
+    fn wallet_locator(&self, register_num: i32) -> Result<Hash256> {
+        ledger_object::get_hash_256_field(register_num, sfield::WalletLocator)
+    }
+
+    /// Unused. (The code supports this field but there is no way to set it.)
+    fn wallet_size(&self, register_num: i32) -> Result<u32> {
+        ledger_object::get_u32_field(register_num, sfield::WalletSize)
     }
 }

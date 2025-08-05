@@ -111,9 +111,7 @@ impl TokenAmount {
     ///
     /// Returns None if the byte array is not a valid TokenAmount.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, host::Error> {
-        // TODO: Move to trait!
-
-        if bytes.len() != 48 {
+        if bytes.is_empty() {
             return Err(InternalError);
         }
 
@@ -128,7 +126,11 @@ impl TokenAmount {
 
         if is_xrp_or_mpt {
             if is_xrp {
-                // If we get here, we'll have 8 bytes.
+                // XRP requires exactly 8 bytes
+                if bytes.len() != 8 {
+                    return Err(InternalError);
+                }
+
                 let mut amount_bytes = [0u8; 8];
                 amount_bytes.copy_from_slice(&bytes[0..8]);
 
@@ -147,7 +149,11 @@ impl TokenAmount {
             }
             // is_mpt
             else {
-                // If we get here, we'll have 33 bytes.
+                // MPT requires exactly 33 bytes
+                if bytes.len() != 33 {
+                    return Err(InternalError);
+                }
+
                 // MPT amount: [0/type][1/sign][1/is-mpt][5/reserved][64/value]
                 let mut num_units_bytes = [0u8; 8];
                 // Skip the first MPT byte, which is control bytes. Grab the next 8 for the u64
@@ -170,15 +176,14 @@ impl TokenAmount {
         }
         // is_iou
         else {
-            // If we get here, we'll have 48 bytes.
+            // IOU requires exactly 48 bytes
+            if bytes.len() != 48 {
+                return Err(InternalError);
+            }
 
             // IOU amount: [1/type][1/sign][8/exponent][54/mantissa]
             let opaque_float_amount_bytes: [u8; 8] = bytes[0..8].try_into().unwrap();
             let opaque_float: OpaqueFloat = opaque_float_amount_bytes.into();
-
-            // Parse the Amount::IOU from the first 9 bytes
-            // let mut amount_bytes = [0u8; 9];
-            // amount_bytes.copy_from_slice(&bytes[0..9]);
 
             // Parse the CurrencyCode from the next 20 bytes
             let mut currency_code_bytes = [0u8; 20];

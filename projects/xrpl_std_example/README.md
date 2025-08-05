@@ -1,8 +1,10 @@
 # XRPL Std Lib Example
 
-This WebAssembly module is an example using the XRPL std lib. The WASM program in this example attempts to execute every
-known host function, and then verify the results against expected values. This contract can be used as a type of canary
-that can indicate if anything in Craft is not operating according to expectations.
+This WebAssembly module demonstrates how to use the XRPL std lib to access every field in the current escrow ledger
+object, the escrow finish transaction, and arbitrary account root object in the ledger. The WASM program is meant to
+both execute every known host function, but also validate that object access is working correctly by asserting each
+value that craft makes available. In this way, this Smart Escrow can be used as a type of canary that can indicate if
+anything in Craft is not operating according to expectations.
 
 ## Building
 

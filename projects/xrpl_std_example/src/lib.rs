@@ -506,7 +506,7 @@ pub extern "C" fn finish() -> i32 {
         // We use the trait-bound implementation so as not to duplicate accessor logic.
         let account = Account;
 
-        let _ = trace("### Step #4a: Trace AccountRoot Ledger Object");
+        let _ = trace("### Step #4: Trace AccountRoot Ledger Object");
         let _ = trace("{ ");
         let _ = trace("  -- Common Fields");
 

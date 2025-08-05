@@ -11,14 +11,14 @@ use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 use xrpl_std::host::{Result::Err, Result::Ok};
 
 #[unsafe(no_mangle)]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let current_escrow: CurrentEscrow = current_escrow::get_current_escrow();
 
     let account_id = match current_escrow.get_destination() {
         Ok(account_id) => account_id,
         Err(e) => {
-            let _ = trace_num("Error getting account_id", e.code() as i64);
-            return false; // <-- Do not execute the escrow.
+            let _ = trace_num("Error getting destination", e.code() as i64);
+            return e.code(); // <-- Do not execute the escrow.
         }
     };
 
@@ -31,13 +31,13 @@ pub extern "C" fn finish() -> bool {
                 unsafe { xrpl_std::host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot < 0 {
                 let _ = trace_num("CACHE ERROR", i64::from(slot));
-                return false;
+                return 0;
             };
-            true
+            1
         }
         Err(e) => {
-            let _ = trace_num("Error getting account_id", e.code() as i64);
-            false // <-- Do not execute the escrow.
+            let _ = trace_num("Error getting credential keylet", e.code() as i64);
+            e.code() // <-- Do not execute the escrow.
         }
     }
 }

@@ -193,7 +193,12 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Generate Documentation
-        run: cargo doc --no-deps
+        run: |
+          cd xrpl-std
+          cargo doc --no-deps
+          ls
+          echo "-------"
+          ls target/doc
 
       - name: Upload documentation files as artifact
         id: docs-artifact

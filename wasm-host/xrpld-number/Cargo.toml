@@ -1,0 +1,28 @@
+[package]
+name = "xrpld-number"
+version = "0.1.0"
+edition = "2021"
+authors = ["XRPL Community"]
+description = "Rust bindings for xrpld Number library - high precision decimal arithmetic"
+license = "ISC"
+repository = "https://github.com/ripple/rippled"
+keywords = ["decimal", "arithmetic", "xrpl", "precision", "number"]
+categories = ["mathematics", "science"]
+
+[dependencies]
+
+[build-dependencies]
+cc = "1.0"
+bindgen = "0.69"
+
+[lib]
+name = "xrpld_number"
+crate-type = ["lib"]
+
+[features]
+default = []
+# Enable this feature to generate debug symbols in the C++ library
+debug = []
+
+[workspace]
+# Empty workspace table to prevent this package from being part of parent workspace

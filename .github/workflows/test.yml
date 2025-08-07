@@ -194,6 +194,7 @@ jobs:
 
       - name: Build documentation
         run: |
+          cd xrpl-std
           cargo doc --no-deps
           ls target/doc
           echo "------"

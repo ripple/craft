@@ -1,3 +1,5 @@
+mod xrpl_iou_value;
+
 // Include the generated bindings in a module to avoid naming conflicts
 mod ffi {
     #![allow(non_upper_case_globals)]

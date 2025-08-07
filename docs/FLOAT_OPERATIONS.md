@@ -133,6 +133,9 @@ float_divide(a: *const u8, b: *const u8, out: *mut u8, rounding_mode: i32) -> i3
 ### Mathematical Functions
 
 ```rust
+// Nth power: out = aⁿ
+float_pow(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
+
 // Nth root: out = ⁿ√a
 float_root(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
 
@@ -163,7 +166,7 @@ extern "C" {
         exponent: i32,
         out: *mut u8
     ) -> i32;
-
+    
     // Arithmetic with rounding
     fn rippled_number_add(
         a: *const u8,
@@ -171,7 +174,7 @@ extern "C" {
         out: *mut u8,
         rounding_mode: i32
     ) -> i32;
-
+    
     // Comparison
     fn rippled_number_compare(
         a: *const u8,
@@ -211,15 +214,15 @@ Option B is likely the best starting point. The other options can be considered 
 ### Current BigDecimal Flow
 
 ```rust
-fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8,
+fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8, 
              out: *mut u8, rounding_mode: i32) -> i32 {
     // 1. Deserialize XRPL format to BigDecimal
     let val_a = _deserialize_issued_currency_amount(read_bytes(a))?;
     let val_b = _deserialize_issued_currency_amount(read_bytes(b))?;
-
+    
     // 2. Perform operation (no rounding mode support)
     let result = val_a + val_b;
-
+    
     // 3. Serialize back to XRPL format
     let bytes = _serialize_issued_currency_value(result)?;
     write_bytes(out, bytes)
@@ -294,7 +297,7 @@ When working with full Amount objects in XRPL, you need to consider which type y
 fn get_amount_type(first_byte: u8) -> AmountType {
     let type_bit = (first_byte & 0x80) != 0;  // First bit
     let mpt_bit = (first_byte & 0x20) != 0;   // Third bit
-
+    
     if type_bit {
         AmountType::FungibleToken  // Uses float operations
     } else if mpt_bit {

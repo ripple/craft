@@ -11,10 +11,12 @@ include_directories(src)
 # Define the source files
 set(SOURCES
     src/Number.cpp
+    src/number_c.cpp
 )
 
 set(HEADERS
     src/Number.h
+    src/number_c.h
 )
 
 # Check for MSVC to add boost dependency conditionally

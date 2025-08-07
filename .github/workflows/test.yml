@@ -193,16 +193,13 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Generate Documentation
-        run: |
-          cd xrpl-std
-          cargo build
-          cargo doc
+        run: cargo doc --no-deps
 
       - name: Upload documentation files as artifact
         id: docs-artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: xrpl-std/target/doc
+          path: xrpl-std/target/doc/xrpl_std
           retention-days: 10
 
   deploy-docs-pages:

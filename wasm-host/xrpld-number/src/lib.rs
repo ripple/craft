@@ -1,6 +1,6 @@
 mod xrpl_iou_value;
 
-pub use xrpl_iou_value::XrplIouValue;
+pub use xrpl_iou_value::{XrplIouValue, FLOAT_ONE, FLOAT_NEGATIVE_ONE};
 
 // Include the generated bindings in a module to avoid naming conflicts
 mod ffi {
@@ -731,5 +731,70 @@ mod tests {
         let number = Number::from_xrpl_iou_value(bytes).expect("Failed to parse large mantissa");
         assert!(!number.is_zero());
         assert_eq!(number.signum(), 1);
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_float_one_constant() {
+        // Test the FLOAT_ONE constant represents 1.0
+        let number = Number::from_xrpl_iou_value(FLOAT_ONE).expect("Failed to parse FLOAT_ONE");
+        assert!(!number.is_zero());
+        assert_eq!(number.signum(), 1);
+        
+        // Should be exactly 1.0
+        let string_val = number.to_string();
+        assert_eq!(string_val, "1");
+        
+        // Should convert to integer 1
+        assert_eq!(number.to_i64().expect("Conversion failed"), 1);
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_float_negative_one_constant() {
+        // Test the FLOAT_NEGATIVE_ONE constant represents -1.0
+        let number = Number::from_xrpl_iou_value(FLOAT_NEGATIVE_ONE).expect("Failed to parse FLOAT_NEGATIVE_ONE");
+        assert!(!number.is_zero());
+        assert_eq!(number.signum(), -1);
+        
+        // Should be exactly -1.0
+        let string_val = number.to_string();
+        assert_eq!(string_val, "-1");
+        
+        // Should convert to integer -1
+        assert_eq!(number.to_i64().expect("Conversion failed"), -1);
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_constants_arithmetic() {
+        // Test arithmetic operations with the constants
+        let one = Number::from_xrpl_iou_value(FLOAT_ONE).expect("Failed to parse FLOAT_ONE");
+        let neg_one = Number::from_xrpl_iou_value(FLOAT_NEGATIVE_ONE).expect("Failed to parse FLOAT_NEGATIVE_ONE");
+        
+        // Test addition: 1 + (-1) = 0
+        let sum = (&one + &neg_one).expect("Addition failed");
+        assert!(sum.is_zero());
+        
+        // Test subtraction: 1 - (-1) = 2
+        let diff = (&one - &neg_one).expect("Subtraction failed");
+        assert_eq!(diff.to_i64().expect("Conversion failed"), 2);
+        
+        // Test multiplication: 1 * (-1) = -1
+        let prod = (&one * &neg_one).expect("Multiplication failed");
+        assert_eq!(prod.signum(), -1);
+        assert_eq!(prod.to_i64().expect("Conversion failed"), -1);
+        
+        // Test that neg_one is the negation of one
+        let negated_one = (-&one).expect("Negation failed");
+        assert_eq!(negated_one.signum(), -1);
+        assert_eq!(negated_one, neg_one);
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_constants_try_from() {
+        // Test TryFrom with the constants
+        let one: Number = FLOAT_ONE.try_into().expect("TryFrom FLOAT_ONE failed");
+        let neg_one: Number = FLOAT_NEGATIVE_ONE.try_into().expect("TryFrom FLOAT_NEGATIVE_ONE failed");
+        
+        assert_eq!(one.to_i64().expect("Conversion failed"), 1);
+        assert_eq!(neg_one.to_i64().expect("Conversion failed"), -1);
     }
 }

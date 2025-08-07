@@ -1,4 +1,4 @@
-use xrpld_number::{Number, NumberError, RoundingMode};
+use xrpld_number::{Number, NumberError, RoundingMode, FLOAT_ONE, FLOAT_NEGATIVE_ONE};
 
 fn main() -> Result<(), NumberError> {
     println!("🔢 Welcome to XRPLD Number - High Precision Decimal Arithmetic!");
@@ -128,6 +128,17 @@ fn main() -> Result<(), NumberError> {
     let zero_xrpl: [u8; 8] = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
     let zero_from_xrpl = Number::from_xrpl_iou_value(zero_xrpl)?;
     println!("  XRPL Zero:           {}", zero_from_xrpl);
+    
+    // Using the predefined constants
+    println!("\n📋 Using XRPL Constants:");
+    let one_const = Number::from_xrpl_iou_value(FLOAT_ONE)?;
+    let neg_one_const = Number::from_xrpl_iou_value(FLOAT_NEGATIVE_ONE)?;
+    println!("  FLOAT_ONE:           {}", one_const);
+    println!("  FLOAT_NEGATIVE_ONE:  {}", neg_one_const);
+    
+    // Arithmetic with constants
+    let sum_constants = (&one_const + &neg_one_const)?;
+    println!("  1 + (-1) =           {}", sum_constants);
 
     println!("\n✨ That's a wrap! XRPLD Number provides high-precision");
     println!("   decimal arithmetic with full Rust safety guarantees.");

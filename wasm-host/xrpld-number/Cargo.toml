@@ -26,3 +26,7 @@ debug = []
 
 [workspace]
 # Empty workspace table to prevent this package from being part of parent workspace
+
+[[example]]
+name = "hello_number"
+# Comprehensive demonstration of xrpld-number features

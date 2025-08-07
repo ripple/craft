@@ -196,10 +196,6 @@ jobs:
         run: |
           cd xrpl-std
           cargo doc --no-deps
-          ls target/doc
-          echo "------"
-          ls target/doc/xrpl_std
-          mv target/doc/xrpl_std/* target/doc
 
       - name: Upload documentation files as artifact
         id: docs-artifact

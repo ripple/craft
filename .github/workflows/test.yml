@@ -195,7 +195,7 @@ jobs:
       - name: Build documentation
         run: |
           cd xrpl-std
-          RUSTDOCFLAGS="--html-in-header katex-header.html" cargo doc --no-deps
+          cargo doc --no-deps
         # uses: actions-rs/cargo@v1
         # with:
         #   command: doc

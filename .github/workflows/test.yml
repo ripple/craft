@@ -195,6 +195,9 @@ jobs:
       - name: Build documentation
         run: |
           cargo doc --no-deps
+          ls target/doc
+          echo "------"
+          ls target/doc/xrpl_std
           mv target/doc/xrpl_std/* target/doc
 
       - name: Upload documentation files as artifact

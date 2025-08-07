@@ -177,20 +177,10 @@ jobs:
 
   generate-documentation:
     runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build documentation
         run: |

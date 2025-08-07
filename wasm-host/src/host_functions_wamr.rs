@@ -17,6 +17,7 @@ use wamr_rust_sdk::sys::{
     wasm_exec_env_t, wasm_runtime_get_function_attachment, wasm_runtime_get_module_inst,
     wasm_runtime_validate_native_addr,
 };
+use xrpld_number::{Number, RoundingMode as NumberRoundingMode, XrplIouValue, FLOAT_ONE, FLOAT_NEGATIVE_ONE};
 
 const MAX_WASM_PARAM_LENGTH: usize = 1024;
 
@@ -431,6 +432,46 @@ fn pack_out_float(decimal: BigDecimal, env: wasm_exec_env_t, out_buf: *mut u8) -
     8
 }
 
+fn unpack_in_iou_value(env: wasm_exec_env_t, in_buf: *const u8) -> Result<Number, HostError> {
+    let bytes: [u8; 8] = unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(inst, in_buf as *mut ::core::ffi::c_void, 8) {
+            return Err(HostError::PointerOutOfBound);
+        }
+        match std::slice::from_raw_parts(in_buf, 8).try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return Err(HostError::FloatInputMalformed),
+        }
+    };
+    
+    Number::from_xrpl_iou_value(bytes).map_err(|_| HostError::FloatInputMalformed)
+}
+
+fn pack_out_iou_value(number: Number, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
+    // Convert Number back to XRPL IOU format via string representation as a workaround
+    // This is not optimal but works until we implement Number::to_xrpl_iou_value()
+    let decimal_str = number.to_string();
+    let decimal: BigDecimal = match decimal_str.parse() {
+        Ok(d) => d,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    
+    let bytes = match _serialize_issued_currency_value(decimal) {
+        Ok(bytes) => bytes,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    
+    unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(inst, out_buf as *mut ::core::ffi::c_void, 8) {
+            return HostError::PointerOutOfBound as i32;
+        }
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), out_buf, 8);
+    }
+    
+    8
+}
+
 pub fn float_from_int(
     env: wasm_exec_env_t,
     in_int: i64,
@@ -523,6 +564,59 @@ pub fn float_add(
     let r = f1 + f2;
     pack_out_float(r, env, out_buff)
 }
+
+pub fn iou_value_add(
+    env: wasm_exec_env_t,
+    in_buff1: *const u8,
+    in_buff1_len: usize,
+    in_buff2: *const u8,
+    in_buff2_len: usize,
+    out_buff: *mut u8,
+    out_buff_len: usize,
+    rounding_mode: i32,
+) -> i32 {
+    // Set rounding mode if provided
+    let _prev_mode = if rounding_mode >= 0 && rounding_mode <= 3 {
+        let mode = match rounding_mode {
+            0 => NumberRoundingMode::ToNearest,
+            1 => NumberRoundingMode::TowardsZero,
+            2 => NumberRoundingMode::Downward,
+            3 => NumberRoundingMode::Upward,
+            _ => NumberRoundingMode::ToNearest, // Default fallback
+        };
+        Some(Number::set_rounding_mode(mode))
+    } else {
+        None
+    };
+
+    // Unpack first IOU value
+    let n1 = match unpack_in_iou_value(env, in_buff1) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    
+    // Unpack second IOU value
+    let n2 = match unpack_in_iou_value(env, in_buff2) {
+        Ok(val) => val,
+        Err(e) => return e as i32,
+    };
+    
+    // Perform addition using Number library
+    let result = match (&n1 + &n2) {
+        Ok(r) => r,
+        Err(_) => return HostError::FloatComputationError as i32,
+    };
+    
+    // Restore previous rounding mode if we changed it
+    if let Some(prev_mode) = _prev_mode {
+        Number::set_rounding_mode(prev_mode);
+    }
+    
+    // Pack result back to XRPL IOU format
+    pack_out_iou_value(result, env, out_buff)
+}
+
+
 
 pub fn float_subtract(
     env: wasm_exec_env_t,
@@ -802,3 +896,4 @@ pub fn trace_opaque_float(
     println!("WASM TRACE: {message} {f}");
     0
 }
+

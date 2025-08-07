@@ -24,8 +24,6 @@ default = []
 # Enable this feature to generate debug symbols in the C++ library
 debug = []
 
-[workspace]
-# Empty workspace table to prevent this package from being part of parent workspace
 
 [[example]]
 name = "hello_number"

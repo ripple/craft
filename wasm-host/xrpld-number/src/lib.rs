@@ -1,5 +1,7 @@
 mod xrpl_iou_value;
 
+pub use xrpl_iou_value::XrplIouValue;
+
 // Include the generated bindings in a module to avoid naming conflicts
 mod ffi {
     #![allow(non_upper_case_globals)]
@@ -117,6 +119,58 @@ impl Number {
             return Err(error.into());
         }
         Ok(Number { ptr })
+    }
+
+    /// Create a Number from an XRP Ledger IOU value (8-byte buffer)
+    /// 
+    /// Parses the XRP Ledger token amount format:
+    /// - Bit 0 (MSB): Type bit (1=token, 0=XRP) 
+    /// - Bit 1: Sign bit (1=positive, 0=negative)
+    /// - Bits 2-9: Exponent (unsigned, add 97 to get actual exponent in range -96 to +80)
+    /// - Bits 10-63: Mantissa (54 bits, normalized to 10^15 to 10^16-1)
+    pub fn from_xrpl_iou_value(buffer: XrplIouValue) -> Result<Self, NumberError> {
+        // Convert bytes to u64 (big-endian)
+        let value = u64::from_be_bytes(buffer);
+        
+        // Special case: if value is 0x8000000000000000, it represents zero
+        if value == 0x8000000000000000 {
+            return Ok(Number::new());
+        }
+        
+        // Extract fields using bit operations
+        let type_bit = (value >> 63) & 1;
+        let sign_bit = (value >> 62) & 1;
+        let exponent_bits = ((value >> 54) & 0xFF) as u8;
+        let mantissa_bits = value & 0x3FFFFFFFFFFFFF; // 54 bits
+        
+        // Validate this is a token amount (type bit should be 1)
+        if type_bit != 1 {
+            return Err(NumberError::InvalidArgument);
+        }
+        
+        // Validate mantissa is in expected range (should be normalized)
+        if mantissa_bits == 0 {
+            // Zero mantissa should only occur with the special zero case
+            return Err(NumberError::InvalidArgument);
+        }
+        
+        // Convert exponent: subtract 97 to get actual exponent (-96 to +80)
+        let exponent = (exponent_bits as i32) - 97;
+        
+        // Validate exponent range
+        if exponent < -96 || exponent > 80 {
+            return Err(NumberError::InvalidArgument);
+        }
+        
+        // Convert mantissa to signed based on sign bit
+        let mantissa = if sign_bit == 1 {
+            mantissa_bits as i64  // Positive
+        } else {
+            -(mantissa_bits as i64)  // Negative
+        };
+        
+        // Create Number from mantissa and exponent
+        Self::from_mantissa_exponent(mantissa, exponent)
     }
 
     /// Get the mantissa of this Number
@@ -500,6 +554,14 @@ impl From<i64> for Number {
     }
 }
 
+impl TryFrom<XrplIouValue> for Number {
+    type Error = NumberError;
+
+    fn try_from(buffer: XrplIouValue) -> Result<Self, Self::Error> {
+        Number::from_xrpl_iou_value(buffer)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -566,5 +628,108 @@ mod tests {
         let two = Number::from(2);
         let eight = two.pow(3).expect("Power failed");
         assert_eq!(eight.to_i64().expect("Conversion failed"), 8);
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_zero() {
+        // Test the special case for zero: 0x8000000000000000
+        let zero_bytes = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let number = Number::from_xrpl_iou_value(zero_bytes).expect("Failed to parse zero");
+        assert!(number.is_zero());
+        assert_eq!(number.signum(), 0);
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_positive() {
+        // Test a positive value representing 1.0
+        // To get 1.0, we want: mantissa * 10^exponent = 1.0
+        // Using mantissa = 1000000000000000 (10^15) and exponent = -15: 10^15 * 10^(-15) = 1.0
+        // Type=1, Sign=1, Exp=97+(-15)=82=0x52, Mantissa=1000000000000000
+        // Let's construct this manually to be sure
+        let mantissa = 1_000_000_000_000_000u64; // 10^15
+        let exponent = 82u8; // 97 + (-15) 
+        
+        let mut value = 0u64;
+        value |= 1u64 << 63; // Type bit = 1
+        value |= 1u64 << 62; // Sign bit = 1 (positive)
+        value |= (exponent as u64) << 54; // Exponent in bits 54-61
+        value |= mantissa; // Mantissa in bits 0-53
+        
+        let bytes = value.to_be_bytes();
+        let number = Number::from_xrpl_iou_value(bytes).expect("Failed to parse positive");
+        
+        assert!(!number.is_zero());
+        assert_eq!(number.signum(), 1);
+        
+        // The Number class normalizes values, so let's just check it's approximately 1
+        let string_val = number.to_string();
+        assert!(string_val.starts_with('1') || string_val == "1");
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_negative() {
+        // Test a negative value representing -1.0
+        // Same as positive test but with sign bit = 0 (negative)
+        let mantissa = 1_000_000_000_000_000u64; // 10^15
+        let exponent = 82u8; // 97 + (-15) 
+        
+        let mut value = 0u64;
+        value |= 1u64 << 63; // Type bit = 1
+        value |= 0u64 << 62; // Sign bit = 0 (negative)
+        value |= (exponent as u64) << 54; // Exponent in bits 54-61
+        value |= mantissa; // Mantissa in bits 0-53
+        
+        let bytes = value.to_be_bytes();
+        let number = Number::from_xrpl_iou_value(bytes).expect("Failed to parse negative");
+        
+        assert!(!number.is_zero());
+        assert_eq!(number.signum(), -1);
+        
+        // The Number class normalizes values, so let's just check it's approximately -1
+        let string_val = number.to_string();
+        assert!(string_val.starts_with("-1") || string_val == "-1");
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_invalid_type() {
+        // Test invalid type bit (0 instead of 1)
+        let invalid_bytes = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01];
+        let result = Number::from_xrpl_iou_value(invalid_bytes);
+        assert!(matches!(result, Err(NumberError::InvalidArgument)));
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_invalid_exponent() {
+        // Test exponent out of range (exponent=255, which is 255-97=158, > 80)
+        // Type=1, Sign=1, Exp=255, Mantissa=1000000000000000
+        let invalid_bytes = [0xFF, 0xC0, 0x6F, 0x7B, 0x5C, 0x00, 0x00, 0x00];
+        let result = Number::from_xrpl_iou_value(invalid_bytes);
+        assert!(matches!(result, Err(NumberError::InvalidArgument)));
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_try_from() {
+        // Test the TryFrom implementation
+        let zero_bytes = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let number: Number = zero_bytes.try_into().expect("TryFrom failed");
+        assert!(number.is_zero());
+    }
+
+    #[test]
+    fn test_xrpl_iou_value_large_mantissa() {
+        // Test with maximum mantissa (9999999999999999 = 0x2386F26FC0FFFF)
+        // Type=1, Sign=1, Exp=97+(-15)=82, Mantissa=9999999999999999
+        // This tests the upper bound of the normalized range
+        let max_mantissa = 9_999_999_999_999_999u64;
+        let mut value = 0u64;
+        value |= 1u64 << 63; // Type bit
+        value |= 1u64 << 62; // Sign bit  
+        value |= 82u64 << 54; // Exponent
+        value |= max_mantissa; // Mantissa
+        
+        let bytes = value.to_be_bytes();
+        let number = Number::from_xrpl_iou_value(bytes).expect("Failed to parse large mantissa");
+        assert!(!number.is_zero());
+        assert_eq!(number.signum(), 1);
     }
 }

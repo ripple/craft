@@ -41,3 +41,7 @@
 //!   - Maximum: 10^16-1 (`9999999999999999`)
 //! - **Special case for zero**: When the value is 0, the sign bit, exponent, and significant digits
 //!   are all zeroes, so the 64-bit value is serialized as `0x8000000000000000`
+
+pub type XrplIouValue = [u8; 8];
+pub const FLOAT_ONE: [u8; 8] = [0xD4, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
+pub const FLOAT_NEGATIVE_ONE: [u8; 8] = [0x94, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];

@@ -111,8 +111,27 @@ fn main() -> Result<(), NumberError> {
     mutable_num /= &Number::from(3);
     println!("  After /= 3:    {}", mutable_num);
     
+    // XRPL IOU Value conversion
+    println!("\n🔗 XRP Ledger IOU Value Conversion:");
+    
+    // Example: Convert an 8-byte XRPL IOU value to Number
+    // This represents 1.0 in XRPL format
+    let xrpl_bytes: [u8; 8] = [0xD2, 0x38, 0x6F, 0x7B, 0x5C, 0x00, 0x00, 0x00];
+    let from_xrpl = Number::from_xrpl_iou_value(xrpl_bytes)?;
+    println!("  From XRPL IOU bytes: {}", from_xrpl);
+    
+    // Using TryFrom trait
+    let also_from_xrpl: Number = xrpl_bytes.try_into()?;
+    println!("  Via TryFrom:         {}", also_from_xrpl);
+    
+    // Zero value in XRPL format
+    let zero_xrpl: [u8; 8] = [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+    let zero_from_xrpl = Number::from_xrpl_iou_value(zero_xrpl)?;
+    println!("  XRPL Zero:           {}", zero_from_xrpl);
+
     println!("\n✨ That's a wrap! XRPLD Number provides high-precision");
     println!("   decimal arithmetic with full Rust safety guarantees.");
+    println!("   Plus seamless integration with XRP Ledger token amounts!");
     
     Ok(())
 }

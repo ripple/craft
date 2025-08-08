@@ -244,143 +244,6 @@ fn test_amm() {
     );
 }
 
-fn test_offer() {
-    let _ = trace("\n$$$ test_offer $$$");
-    let (slot, keylet) =
-        get_slot(b"D0A063DEE0B0EC9522CF35CD55771B5DCAFA19A133EE46A0295E4D089AF86438");
-
-    let mut buf = [0x00; 48];
-    let output_len =
-        unsafe { get_ledger_obj_field(slot, sfield::TakerPays, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data("  TakerPays:", &buf[..output_len as usize], DataRepr::AsHex);
-
-    let acc = get_account(slot, Account);
-
-    let mut sqn_buf = 0i32;
-    let sqn_len = unsafe {
-        get_ledger_obj_field(slot, Sequence, (&mut sqn_buf) as *mut i32 as *mut u8, 4) as usize
-    };
-    let _ = trace_num("  Sequence:", sqn_buf as i64);
-
-    process_keylet_result(offer_keylet(&acc, sqn_buf), keylet);
-}
-
-fn test_mpt_fields() {
-    let _ = trace("\n$$$ test_mpt_fields, access individual fields $$$");
-
-    let keylet =
-        decode_hex_32(b"22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13").unwrap();
-
-    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-
-    let mut buf = [0x00; 24];
-    let output_len = unsafe {
-        get_ledger_obj_field(slot, sfield::MPTokenIssuanceID, buf.as_mut_ptr(), buf.len())
-    };
-    let _ = trace_data(
-        "  MPTokenIssuanceID:",
-        &buf[..output_len as usize],
-        DataRepr::AsHex,
-    );
-
-    let mut value = 0u64;
-    let output_len = unsafe {
-        get_ledger_obj_field(
-            slot,
-            sfield::MPTAmount,
-            (&mut value) as *mut u64 as *mut u8,
-            8,
-        )
-    };
-    let _ = trace_num("  MPTAmount:", value as i64);
-}
-
-fn test_mpt_amount() {
-    let _ = trace("\n$$$ test_mpt_amount, access an MPT Amount $$$");
-
-    let keylet =
-        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap();
-
-    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-
-    let mut buf = [0x00; 48];
-    let output_len =
-        unsafe { get_ledger_obj_field(slot, sfield::Amount2, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data(
-        "  MPT Amount2:",
-        &buf[..output_len as usize],
-        DataRepr::AsHex,
-    );
-}
-
-fn test_issue() {
-    let _ = trace("\n$$$ test_issue $$$");
-
-    let keylet =
-        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap();
-    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-
-    // XRP
-    let mut buf = [0x00; 20];
-    let output_len =
-        unsafe { get_ledger_obj_field(slot, sfield::Asset, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data("  XRP Asset:", &buf[..output_len as usize], DataRepr::AsHex);
-
-    // MPT
-    let mut buf = [0x00; 24];
-    let output_len =
-        unsafe { get_ledger_obj_field(slot, sfield::Asset2, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data("  MPT Asset:", &buf[..output_len as usize], DataRepr::AsHex);
-
-    let keylet =
-        decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap();
-    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
-
-    //IOU
-    let mut buf = [0x00; 40];
-    let output_len =
-        unsafe { get_ledger_obj_field(slot, sfield::Asset2, buf.as_mut_ptr(), buf.len()) };
-    let _ = trace_data("  IOU Asset:", &buf[..output_len as usize], DataRepr::AsHex);
-}
-
-fn test_deposit_preauth() {
-    let _ = trace("\n$$$ test_deposit_preauth $$$");
-    let (slot, keylet) =
-        get_slot(b"A43898B685C450DE8E194B24D9D54E62530536A770CCB311BFEE15A27381ABB2");
-    let acc = get_account(slot, Account);
-    let auth = get_account(slot, sfield::Authorize);
-    process_keylet_result(deposit_preauth_keylet(&acc, &auth), keylet);
-}
-
-fn test_pay_channel() {
-    let _ = trace("\n$$$ test_pay_channel $$$");
-    let (slot, keylet) =
-        get_slot(b"C7F634794B79DB40E87179A9D1BF05D05797AE7E92DF8E93FD6656E8C4BE3AE7");
-    let acc = get_account(slot, Account);
-    let dest = get_account(slot, sfield::Destination);
-    let sqn = 382i32; //got from RPC the mainnet
-    process_keylet_result(paychan_keylet(&acc, &dest, sqn), keylet);
-}
-
-fn test_ticket() {
-    let _ = trace("\n$$$ test_ticket $$$");
-    let (slot, keylet) =
-        get_slot(b"B603682BC36F474F708E1A150B7C034C6C13D838C3F2F135CDB7BEA6E5B5ACEF");
-    let acc = get_account(slot, Account);
-
-    let mut sqn_buf = 0i32;
-    let sqn_len = unsafe {
-        get_ledger_obj_field(
-            slot,
-            TicketSequence,
-            (&mut sqn_buf) as *mut i32 as *mut u8,
-            4,
-        ) as usize
-    };
-    let _ = trace_num("  TicketSequence:", sqn_buf as i64);
-    process_keylet_result(ticket_keylet(&acc, sqn_buf), keylet);
-}
-
 fn test_check() {
     let _ = trace("\n$$$ test_check $$$");
     let (slot, keylet) =
@@ -429,6 +292,15 @@ fn test_delegate() {
     process_keylet_result(delegate_keylet(&acc, &auth), keylet);
 }
 
+fn test_deposit_preauth() {
+    let _ = trace("\n$$$ test_deposit_preauth $$$");
+    let (slot, keylet) =
+        get_slot(b"A43898B685C450DE8E194B24D9D54E62530536A770CCB311BFEE15A27381ABB2");
+    let acc = get_account(slot, Account);
+    let auth = get_account(slot, sfield::Authorize);
+    process_keylet_result(deposit_preauth_keylet(&acc, &auth), keylet);
+}
+
 fn test_did() {
     let _ = trace("\n$$$ test_did $$$");
     let (slot, keylet) =
@@ -444,6 +316,36 @@ fn test_escrow() {
     let acc = get_account(slot, Account);
     let sqn = 4882021i32;
     process_keylet_result(escrow_keylet(&acc, sqn), keylet);
+}
+
+fn test_issue() {
+    let _ = trace("\n$$$ test_issue $$$");
+
+    let keylet =
+        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    // XRP
+    let mut buf = [0x00; 20];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Asset, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  XRP Asset:", &buf[..output_len as usize], DataRepr::AsHex);
+
+    // MPT
+    let mut buf = [0x00; 24];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Asset2, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  MPT Asset:", &buf[..output_len as usize], DataRepr::AsHex);
+
+    let keylet =
+        decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap();
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    //IOU
+    let mut buf = [0x00; 40];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Asset2, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  IOU Asset:", &buf[..output_len as usize], DataRepr::AsHex);
 }
 
 fn test_line() {
@@ -473,6 +375,54 @@ fn test_line() {
     process_keylet_result(line_keylet(&acc1, &acc2, &currency), keylet);
 }
 
+fn test_mpt_amount() {
+    let _ = trace("\n$$$ test_mpt_amount, access an MPT Amount $$$");
+
+    let keylet =
+        decode_hex_32(b"4444444444444444444444444444444444444444444444444444444444444444").unwrap();
+
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    let mut buf = [0x00; 48];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::Amount2, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data(
+        "  MPT Amount2:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
+}
+
+fn test_mpt_fields() {
+    let _ = trace("\n$$$ test_mpt_fields, access individual fields $$$");
+
+    let keylet =
+        decode_hex_32(b"22F99DCD55BCCF3D68DC3E4D6CF12602006A7563A6BE93FC57FD63298BCCEB13").unwrap();
+
+    let slot = unsafe { cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
+
+    let mut buf = [0x00; 24];
+    let output_len = unsafe {
+        get_ledger_obj_field(slot, sfield::MPTokenIssuanceID, buf.as_mut_ptr(), buf.len())
+    };
+    let _ = trace_data(
+        "  MPTokenIssuanceID:",
+        &buf[..output_len as usize],
+        DataRepr::AsHex,
+    );
+
+    let mut value = 0u64;
+    let output_len = unsafe {
+        get_ledger_obj_field(
+            slot,
+            sfield::MPTAmount,
+            (&mut value) as *mut u64 as *mut u8,
+            8,
+        )
+    };
+    let _ = trace_num("  MPTAmount:", value as i64);
+}
+
 fn test_nft_offer() {
     let _ = trace("\n$$$ test_nft_offer $$$");
     let (slot, keylet) =
@@ -480,6 +430,27 @@ fn test_nft_offer() {
     let acc = get_account(slot, sfield::Owner);
     let sqn = 4882024i32;
     process_keylet_result(nft_offer_keylet(&acc, sqn), keylet);
+}
+
+fn test_offer() {
+    let _ = trace("\n$$$ test_offer $$$");
+    let (slot, keylet) =
+        get_slot(b"D0A063DEE0B0EC9522CF35CD55771B5DCAFA19A133EE46A0295E4D089AF86438");
+
+    let mut buf = [0x00; 48];
+    let output_len =
+        unsafe { get_ledger_obj_field(slot, sfield::TakerPays, buf.as_mut_ptr(), buf.len()) };
+    let _ = trace_data("  TakerPays:", &buf[..output_len as usize], DataRepr::AsHex);
+
+    let acc = get_account(slot, Account);
+
+    let mut sqn_buf = 0i32;
+    let sqn_len = unsafe {
+        get_ledger_obj_field(slot, Sequence, (&mut sqn_buf) as *mut i32 as *mut u8, 4) as usize
+    };
+    let _ = trace_num("  Sequence:", sqn_buf as i64);
+
+    process_keylet_result(offer_keylet(&acc, sqn_buf), keylet);
 }
 
 fn test_oracle() {
@@ -491,11 +462,40 @@ fn test_oracle() {
     process_keylet_result(oracle_keylet(&acc, sqn), keylet);
 }
 
+fn test_pay_channel() {
+    let _ = trace("\n$$$ test_pay_channel $$$");
+    let (slot, keylet) =
+        get_slot(b"C7F634794B79DB40E87179A9D1BF05D05797AE7E92DF8E93FD6656E8C4BE3AE7");
+    let acc = get_account(slot, Account);
+    let dest = get_account(slot, sfield::Destination);
+    let sqn = 382i32; //got from RPC the mainnet
+    process_keylet_result(paychan_keylet(&acc, &dest, sqn), keylet);
+}
+
 fn test_signers() {
     let _ = trace("\n$$$ test_signers $$$");
     let (_, keylet) = get_slot(b"A6D94867F6EA7D78BDD941DB2A57E4797288EAE5BB93423FA10F8602577B0504");
     let acc = AccountID::from(decode_hex_20(b"7AED8B5479456A3491033E9EC80879CDA5104AD6").unwrap());
     process_keylet_result(signers_keylet(&acc), keylet);
+}
+
+fn test_ticket() {
+    let _ = trace("\n$$$ test_ticket $$$");
+    let (slot, keylet) =
+        get_slot(b"B603682BC36F474F708E1A150B7C034C6C13D838C3F2F135CDB7BEA6E5B5ACEF");
+    let acc = get_account(slot, Account);
+
+    let mut sqn_buf = 0i32;
+    let sqn_len = unsafe {
+        get_ledger_obj_field(
+            slot,
+            TicketSequence,
+            (&mut sqn_buf) as *mut i32 as *mut u8,
+            4,
+        ) as usize
+    };
+    let _ = trace_num("  TicketSequence:", sqn_buf as i64);
+    process_keylet_result(ticket_keylet(&acc, sqn_buf), keylet);
 }
 
 fn get_slot(keylet_hex: &[u8; 64]) -> (i32, [u8; 32]) {
@@ -536,24 +536,22 @@ pub extern "C" fn finish() -> i32 {
     test_account_root();
     test_amendments();
     test_amm();
-    test_offer();
-
-    test_mpt_fields();
-    test_mpt_amount();
-    test_issue();
-
-    test_deposit_preauth();
-    test_pay_channel();
-    test_ticket();
     test_check();
     test_credential();
     test_delegate();
+    test_deposit_preauth();
     test_did();
     test_escrow();
+    test_issue();
     test_line();
+    test_mpt_amount();
+    test_mpt_fields();
     test_nft_offer();
+    test_offer();
     test_oracle();
+    test_pay_channel();
     test_signers();
+    test_ticket();
 
     1
 }

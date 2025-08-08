@@ -27,13 +27,13 @@ use xrpl_std::core::current_tx::traits::TransactionCommonFields;
 pub extern "C" fn finish() -> i32 {
     // Get the current escrow finish transaction
     let escrow_finish = escrow_finish::get_current_escrow_finish();
-    
+
     // Access transaction fields
     let account = match escrow_finish.get_account() {
         Ok(v) => v,
         Err(_) => return 0,  // Keep escrow locked on error
     };
-    
+
     // Make escrow release decision based on account
     if account.0 == b"rAuthorizedAccount..." {
         1  // Release escrow

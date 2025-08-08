@@ -412,5 +412,263 @@
       "Amount2_encoded": "600000000000002710000000045C488AAC5813270850685FFD89F4A4A8F4CD4C83",
       "LedgerEntryType": "NOT_REAL"
     }
+  },
+  {
+    "7AED8B5479456A3491033E9EC80879CDA5104AD6FFFFFFFFFFFFFFFFFFFFFFFF": {
+      "Flags": 0,
+      "LedgerEntryType": "NFTokenPage",
+      "NFTokens": [
+        {
+          "NFToken": {
+            "NFTokenID": "000000007AED8B5479456A3491033E9EC80879CDA5104AD6BD9F9F02004A7E67",
+            "URI": "68747470733A2F2F6578616D706C652E636F6D2F6E6674"
+          }
+        }
+      ],
+      "PreviousTxnID": "E0F3119573C2963D1BEEDD072FE294003F1B95F9A673E1C8510A95FA771B4644",
+      "PreviousTxnLgrSeq": 4882031,
+      "index": "7AED8B5479456A3491033E9EC80879CDA5104AD6FFFFFFFFFFFFFFFFFFFFFFFF"
+    }
+  },
+  {
+    "3C906971344148DDD853A4D2F734322410D88B263914390530FAE93F28A02E32": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "Authorize": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+      "Flags": 0,
+      "LedgerEntryType": "DepositPreauth",
+      "OwnerNode": "0",
+      "PreviousTxnID": "2E933E7BC6686594814B5CB470A96C62591EE32C5B1BDF812A290CCBC43F20F7",
+      "PreviousTxnLgrSeq": 4882025,
+      "index": "3C906971344148DDD853A4D2F734322410D88B263914390530FAE93F28A02E32",
+      "sequence": 4882020
+  }
+  },
+  {
+    "41CF1FD65F1A10642BB9ED3258B36B130D9C6EB12B2175A6F3137665AF12B9FD": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "Amount": "1000",
+      "Destination": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+      "DestinationNode": "0",
+      "FinishAfter": 807139188,
+      "Flags": 0,
+      "LedgerEntryType": "Escrow",
+      "OwnerNode": "0",
+      "PreviousTxnID": "0ED83FE89B83010FE29E35243079C2A5D5D802D423F53374BDDB2DA19FC15773",
+      "PreviousTxnLgrSeq": 4882027,
+      "index": "41CF1FD65F1A10642BB9ED3258B36B130D9C6EB12B2175A6F3137665AF12B9FD",
+      "sequence": 4882021
+    }
+  },
+  {
+    "572E861CF66227EC90CE789014531EE3336D28C411BA8E18F660B65F1BE68B49": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "Authorize": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+      "Flags": 0,
+      "LedgerEntryType": "Delegate",
+      "OwnerNode": "0",
+      "Permissions": [
+        {
+          "Permission": {
+            "PermissionValue": "Payment"
+          }
+        },
+        {
+          "Permission": {
+            "PermissionValue": "TrustSet"
+          }
+        }
+      ],
+      "PreviousTxnID": "F3D767350C1F57103E3C0F8677577D4E8DCE6B00C187D10105F462A318664558",
+      "PreviousTxnLgrSeq": 4882023,
+      "index": "572E861CF66227EC90CE789014531EE3336D28C411BA8E18F660B65F1BE68B49",
+      "sequence": 4882019
+    }
+  },
+  {
+    "87CB9E3AB9EC0DF799D00BF07D598B07CDDCEA843AF6707C3E76715FD3AA3CF5": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "Flags": 0,
+      "LedgerEntryType": "Ticket",
+      "OwnerNode": "0",
+      "PreviousTxnID": "FB74625E2B7E0F46ACEB2626E2AEC3F25457D9D5671046B38CAFC41D1C333F2A",
+      "PreviousTxnLgrSeq": 4882040,
+      "TicketSequence": 4882029,
+      "index": "87CB9E3AB9EC0DF799D00BF07D598B07CDDCEA843AF6707C3E76715FD3AA3CF5",
+      "sequence": 4882028
+    }
+  },
+  {
+    "A6D94867F6EA7D78BDD941DB2A57E4797288EAE5BB93423FA10F8602577B0504": {
+      "Flags": 65536,
+      "LedgerEntryType": "SignerList",
+      "OwnerNode": "0",
+      "PreviousTxnID": "B4920FC71F17AA5EB74F4920AD2DDA027C2938B58CF8040853B65B0E3E0306BC",
+      "PreviousTxnLgrSeq": 4882038,
+      "SignerEntries": [
+        {
+          "SignerEntry": {
+            "Account": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+            "SignerWeight": 1
+          }
+        }
+      ],
+      "SignerListID": 0,
+      "SignerQuorum": 1,
+      "index": "A6D94867F6EA7D78BDD941DB2A57E4797288EAE5BB93423FA10F8602577B0504",
+      "sequence": 4882027,
+      "account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25"
+    }
+  },
+  {
+    "BABCE03D9D67EDD8462C27B01BF24251FA8788CD7432A3BD41656E14F44AC3BC": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "BookDirectory": "E4C743D0824ECF073BEE6248EE53AA532C0FEF9A3CD4DEC252038D7EA4C68000",
+      "BookNode": "0",
+      "Flags": 0,
+      "LedgerEntryType": "Offer",
+      "OwnerNode": "0",
+      "PreviousTxnID": "E9ED60B53E97E468EAA3AC3C89695325156A25988CDB8FD6338AAE43B1DE27F0",
+      "PreviousTxnLgrSeq": 4882034,
+      "Sequence": 4882025,
+      "TakerGets": "1000",
+      "TakerPays": {
+        "currency": "USD",
+        "issuer": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+        "value": "1"
+      },
+      "index": "BABCE03D9D67EDD8462C27B01BF24251FA8788CD7432A3BD41656E14F44AC3BC",
+      "sequence": 4882025
+    }
+  },
+  {
+    "DC2FCCBB773244E981576CF509E2463B435F5B46F3EF4684E2ED2EC9C575A110": {
+      "CredentialType": "4B5943",
+      "Flags": 65536,
+      "Issuer": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "IssuerNode": "0",
+      "LedgerEntryType": "Credential",
+      "PreviousTxnID": "FD9CC0ADCE94D76C00298C31FA5778CFB7B99C991A1B0FDEB2CE75BC7D326307",
+      "PreviousTxnLgrSeq": 4882022,
+      "Subject": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "SubjectNode": "0",
+      "index": "DC2FCCBB773244E981576CF509E2463B435F5B46F3EF4684E2ED2EC9C575A110",
+      "sequence": 4882018
+    }
+  },
+  {
+    "E5B2858F0D15ECB4622E7C613285CA0E84BF7209466A5D1FAA6606B7E6DAAA72": {
+      "Balance": {
+        "currency": "USD",
+        "issuer": "rrrrrrrrrrrrrrrrrrrrBZbvji",
+        "value": "0"
+      },
+      "Flags": 1179648,
+      "HighLimit": {
+        "currency": "USD",
+        "issuer": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+        "value": "1000"
+      },
+      "HighNode": "0",
+      "LedgerEntryType": "RippleState",
+      "LowLimit": {
+        "currency": "USD",
+        "issuer": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+        "value": "0"
+      },
+      "LowNode": "0",
+      "PreviousTxnID": "86837AC13AEC7B2E7BB8932C8FEAA44506039DE6B12DDC56D465E37E8A39DAAD",
+      "PreviousTxnLgrSeq": 4882029,
+      "index": "E5B2858F0D15ECB4622E7C613285CA0E84BF7209466A5D1FAA6606B7E6DAAA72",
+      "sequence": 4882022
+    }
+  },
+  {
+    "E7DB3BE2E00EA4BFD61B43B96D96EF627823A0C093F14A95E3AD68708B63696B": {
+      "Amount": "1000",
+      "Flags": 1,
+      "LedgerEntryType": "NFTokenOffer",
+      "NFTokenID": "000000007AED8B5479456A3491033E9EC80879CDA5104AD6BD9F9F02004A7E67",
+      "NFTokenOfferNode": "0",
+      "Owner": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "OwnerNode": "0",
+      "PreviousTxnID": "ECD0F8A13946C97D4114A78715F8042016288C8780A1573E969F3984ECF910E9",
+      "PreviousTxnLgrSeq": 4882033,
+      "index": "E7DB3BE2E00EA4BFD61B43B96D96EF627823A0C093F14A95E3AD68708B63696B",
+      "sequence": 4882024
+    }
+  },
+  {
+    "F23D83EA49474537F7A15EF79DD140DEAE2CD0F4BF2D6383979C863100F9660F": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "Destination": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+      "DestinationNode": "0",
+      "Flags": 0,
+      "LedgerEntryType": "Check",
+      "OwnerNode": "0",
+      "PreviousTxnID": "5C4711FBEB40B601349C3DAF05E5CCF6EBB09B0D355BC3BD558A473BEB7C15A6",
+      "PreviousTxnLgrSeq": 4882020,
+      "SendMax": "1000",
+      "Sequence": 4882017,
+      "index": "F23D83EA49474537F7A15EF79DD140DEAE2CD0F4BF2D6383979C863100F9660F",
+      "sequence": 4882017
+    }
+  },
+  {
+    "FE3B909F52CA955A8C9F7B6474495DD80F0572556ADC2585D4BE8FF5EB9E10B6": {
+      "Account": "rUUzrGXVx7AowTMiYcjGqfdukoHv5YDf25",
+      "Amount": "1000",
+      "Balance": "0",
+      "Destination": "rBQvnaWxG9vD5aPuz9P6uqrfWUDjGEv2zp",
+      "DestinationNode": "0",
+      "Flags": 0,
+      "LedgerEntryType": "PayChannel",
+      "OwnerNode": "0",
+      "PreviousTxnID": "D1BFD9049D86DC782955E8C5F7E521DE51DDED543B0486D3CDD1A19152C3EB85",
+      "PreviousTxnLgrSeq": 4882036,
+      "PublicKey": "ED63D17A6BBD4004C39D5405F4770DC53A76A55CBB5821C28577C0D8037C9F5956",
+      "SettleDelay": 3600,
+      "index": "FE3B909F52CA955A8C9F7B6474495DD80F0572556ADC2585D4BE8FF5EB9E10B6",
+      "sequence": 4882026
+    }
+  },
+  {
+    "C3535E58FC564D3B4FBD67DDEA367ABA5C6A97901E7D14F1A316AA492E999D92": {
+      "Account": "rNkjngWRtWnSWK7SgPyLqfjCJ11FoVGPML",
+      "DIDDocument": "6469643A6578616D706C653A313233343536373839616263646566676869",
+      "Flags": 0,
+      "LedgerEntryType": "DID",
+      "OwnerNode": "0",
+      "PreviousTxnID": "B96E184D7AF7763FC45962F6D6982BDE80F23667C96DB1AD5552CC95EEB208ED",
+      "PreviousTxnLgrSeq": 4903696,
+      "index": "C3535E58FC564D3B4FBD67DDEA367ABA5C6A97901E7D14F1A316AA492E999D92",
+      "sequence": 4903693
+    }
+  },
+  {
+    "FB0D2E2B5C7240772C2D2A3E7B99BF44EA955C7C4977A368F704FE879F0E0612": {
+      "AssetClass": "63757272656E6379",
+      "Flags": 0,
+      "LastUpdateTime": 1753891432,
+      "LedgerEntryType": "Oracle",
+      "Owner": "rNkjngWRtWnSWK7SgPyLqfjCJ11FoVGPML",
+      "OwnerNode": "0",
+      "PreviousTxnID": "69118A4DE4826E168340E5C27525C4F704F447EE9950F9436BBCD70110AAAD5E",
+      "PreviousTxnLgrSeq": 4903703,
+      "PriceDataSeries": [
+        {
+          "PriceData": {
+            "AssetPrice": "2e4",
+            "BaseAsset": "XRP",
+            "QuoteAsset": "USD",
+            "Scale": 3
+          }
+        }
+      ],
+      "Provider": "636861696E6C696E6B",
+      "URI": "6469645F6578616D706C65",
+      "index": "FB0D2E2B5C7240772C2D2A3E7B99BF44EA955C7C4977A368F704FE879F0E0612",
+      "sequence": 4903699,
+      "oracle_document_ID" : 1234
+    }
   }
 ]

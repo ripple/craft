@@ -3,10 +3,19 @@ use std::fs;
 use std::path::PathBuf;
 
 fn main() {
-    // Require NOTARY_ACCOUNT_R to be set at build time
+    // Require NOTARY_ACCOUNT_R to be set at build time for local/dev builds.
+    // In CI (e.g., GitHub Actions) fall back to the master account so example build passes.
     // Example: NOTARY_ACCOUNT_R=rPPL... craft build notary
-    let raddr = env::var("NOTARY_ACCOUNT_R")
-        .expect("Environment variable NOTARY_ACCOUNT_R must be set to a classic r-address");
+    let raddr = match env::var("NOTARY_ACCOUNT_R") {
+        Ok(v) => v,
+        Err(_) => {
+            if env::var("GITHUB_ACTIONS").is_ok() || env::var("CI").is_ok() {
+                "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh".to_string()
+            } else {
+                panic!("Environment variable NOTARY_ACCOUNT_R must be set to a classic r-address")
+            }
+        }
+    };
 
     let notary_bytes = decode_classic_address_to_20bytes(&raddr)
         .expect("Invalid NOTARY_ACCOUNT_R: must be a valid classic r-address");

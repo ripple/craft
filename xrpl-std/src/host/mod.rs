@@ -1,5 +1,6 @@
 use crate::core::error_codes;
 
+pub mod assert;
 mod host_bindings;
 mod host_bindings_for_testing;
 pub mod trace;

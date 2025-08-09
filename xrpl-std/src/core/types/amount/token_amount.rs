@@ -79,10 +79,10 @@ pub enum TokenAmount {
         // amount: Amount::XRP,
         /// Design decision note: Per the pattern in `Amount`, we considered having this be an
         /// unsigned u64 and adding an `is_positve` boolean to this variant. However, we decided to
-        /// break that patter and instead use an i64 here for two reasonse. First, this allows
+        /// break that pattern and instead use an i64 here for two reasons. First, this allows
         /// simple math like `add`, `sub`, etc. to be performed in WASM without having to check for
-        /// negative values. Second, the total supply of XRP is capped at
-        /// 100B XRP (100B * 1M Drops), which fits just fine into an i64
+        /// negative values. Second, the total supply of XRP is capped at 100B XRP (100B * 1M Drops),
+        /// which fits just fine into an i64.
         num_drops: i64,
     },
     IOU {

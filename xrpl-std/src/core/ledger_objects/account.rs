@@ -1,9 +1,19 @@
+use crate::core::ledger_objects::traits::{AccountFields, LedgerObjectCommonFields};
 use crate::core::types::account_id::AccountID;
+use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::keylets::account_keylet;
-use crate::{host, sfield};
+use crate::host;
 use host::Error;
 
-pub fn get_account_balance(account_id: &AccountID) -> host::Result<u64> {
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[repr(C)]
+pub struct Account;
+
+impl LedgerObjectCommonFields for Account {}
+
+impl AccountFields for Account {}
+
+pub fn get_account_balance(account_id: &AccountID) -> host::Result<TokenAmount> {
     // Construct the account keylet. This calls a host function, so propagate the error via `?`
     let account_keylet = match account_keylet(account_id) {
         host::Result::Ok(keylet) => keylet,
@@ -13,23 +23,11 @@ pub fn get_account_balance(account_id: &AccountID) -> host::Result<u64> {
     // Try to cache the ledger object inside rippled
     let slot = unsafe { host::cache_ledger_obj(account_keylet.as_ptr(), account_keylet.len(), 0) };
     if slot <= 0 {
-        return host::Result::Err(Error::NoFreeSlots);
+        return host::Result::Err(Error::from_code(slot));
     }
 
     // Get the balance.
-    let mut balance = 0u64;
-    let result_code = unsafe {
-        host::get_ledger_obj_field(
-            slot,
-            sfield::Balance,
-            (&mut balance) as *mut u64 as *mut u8,
-            8,
-        )
-    };
-
-    match result_code {
-        8 => host::Result::Ok(balance), // <-- 8 bytes were written
-        code if code < 0 => host::Result::Err(Error::from_code(code)),
-        _ => host::Result::Err(Error::InternalError), // <-- Used for an unexpected result.
-    }
+    // We use the trait-bound implementation so as not to duplicate accessor logic.
+    let account = Account;
+    account.balance(slot)
 }

@@ -100,7 +100,6 @@ pub const ParentHash: i32 = 327682;
 pub const TransactionHash: i32 = 327683;
 pub const AccountHash: i32 = 327684;
 pub const PreviousTxnID: i32 = 327685;
-pub const LedgerIndex: i32 = 327686;
 pub const WalletLocator: i32 = 327687;
 pub const RootIndex: i32 = 327688;
 pub const AccountTxnID: i32 = 327689;

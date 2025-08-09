@@ -31,16 +31,8 @@ Please check relevant options, delete irrelevant ones.
 - [ ] Release
 
 <!--
-This part will be included after the first official release
-### Did you update HISTORY.md?
-
-- [ ] Yes
-- [ ] No, this change does not impact library users
--->
-
 ## Test Plan
 
-<!--
 Please describe the tests that you ran to verify your changes. Include as much
 detail as necessary so that others can repeat the same tests.
 -->

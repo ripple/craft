@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use colored::*;
-use inquire::{Confirm, Select};
+use inquire::{Confirm, Select, Text};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
@@ -201,47 +201,11 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
     println!("WASM Fingerprint: {fingerprint}");
 
-    // Ask if user wants to export as hex
-    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
-        .with_default(false)
-        .prompt()?
-    {
-        copy_wasm_hex_to_clipboard(&wasm_file).await?;
-    }
-
     Ok(wasm_file)
 }
 
 pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     println!("{}", "Deploying to WASM Devnet...".cyan());
-
-    // Check if rippled is running before attempting deployment
-    if let Ok(docker_manager) = crate::docker::DockerManager::new() {
-        match docker_manager.is_rippled_running().await {
-            Ok(false) => {
-                println!("{}", "\n⚠️  rippled is not currently running.".yellow());
-                println!(
-                    "{}",
-                    "Deployment requires a running rippled instance.".yellow()
-                );
-                println!();
-                println!("{}", "To start rippled:".cyan());
-                println!("{}", "  craft start-rippled".blue());
-                println!();
-                anyhow::bail!("rippled is not running. Start it with 'craft start-rippled'");
-            }
-            Ok(true) => {
-                // rippled is running, continue
-            }
-            Err(_) => {
-                // Couldn't check status, try to proceed anyway
-                println!(
-                    "{}",
-                    "\n⚠️  Could not verify rippled status. Proceeding anyway...".yellow()
-                );
-            }
-        }
-    }
 
     // Convert WASM to hex and save to file
     let hex = utils::wasm_to_hex(wasm_file)?;
@@ -314,9 +278,35 @@ pub async fn optimize(wasm_path: &Path, opt_level: &OptimizationLevel) -> Result
         }
     }
 
-    println!("{}", "Optimizing WASM module...".cyan());
+    use std::fs;
+    let before = fs::metadata(wasm_path).map(|m| m.len()).unwrap_or(0);
+
+    println!(
+        "{}",
+        format!("Optimizing WASM module (level {opt_level})...").cyan()
+    );
+
     utils::optimize_wasm(wasm_path, &opt_level.to_string())?;
-    println!("{}", "Optimization complete!".green());
+
+    let after = fs::metadata(wasm_path).map(|m| m.len()).unwrap_or(0);
+    let saved: i128 = before as i128 - after as i128;
+    let saved_pct: f64 = if before > 0 {
+        (saved as f64 / before as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    println!(
+        "{}",
+        format!(
+            "Optimization complete! Size: {} → {} bytes (saved {} bytes, {:.1}%)",
+            before,
+            after,
+            saved.max(0),
+            saved_pct.max(0.0)
+        )
+        .green()
+    );
     Ok(())
 }
 
@@ -508,10 +498,10 @@ pub fn list_projects() -> Result<()> {
     for entry in fs::read_dir(projects_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.is_dir() {
-            if let Some(name) = path.file_name() {
-                println!("  • {}", name.to_string_lossy());
-            }
+        if path.is_dir()
+            && let Some(name) = path.file_name()
+        {
+            println!("  • {}", name.to_string_lossy());
         }
     }
     Ok(())
@@ -525,10 +515,10 @@ fn list_all_projects() -> Result<Vec<String>> {
         for entry in fs::read_dir(projects_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.is_dir() {
-                if let Some(name) = path.file_name() {
-                    projects.push(name.to_string_lossy().to_string());
-                }
+            if path.is_dir()
+                && let Some(name) = path.file_name()
+            {
+                projects.push(name.to_string_lossy().to_string());
             }
         }
     }
@@ -620,15 +610,14 @@ pub fn list_fixtures() -> Result<()> {
             let project_path = entry.path();
             if project_path.is_dir() {
                 let fixtures_path = project_path.join("fixtures");
-                if fixtures_path.exists() {
-                    if let Some(project_name) = project_path.file_name() {
-                        println!(
-                            "\n{}",
-                            format!("projects/{}/fixtures/:", project_name.to_string_lossy())
-                                .bold()
-                        );
-                        print_tree(&fixtures_path, "  ")?;
-                    }
+                if fixtures_path.exists()
+                    && let Some(project_name) = project_path.file_name()
+                {
+                    println!(
+                        "\n{}",
+                        format!("projects/{}/fixtures/:", project_name.to_string_lossy()).bold()
+                    );
+                    print_tree(&fixtures_path, "  ")?;
                 }
             }
         }
@@ -649,10 +638,10 @@ pub fn discover_test_cases(project: &str) -> Result<Vec<String>> {
     if fixtures_dir.exists() {
         for entry in fs::read_dir(fixtures_dir)? {
             let entry = entry?;
-            if entry.path().is_dir() {
-                if let Some(name) = entry.path().file_name() {
-                    test_cases.push(name.to_string_lossy().to_string());
-                }
+            if entry.path().is_dir()
+                && let Some(name) = entry.path().file_name()
+            {
+                test_cases.push(name.to_string_lossy().to_string());
             }
         }
     }
@@ -781,6 +770,208 @@ pub fn run_test(
 
         anyhow::bail!("Test '{}' failed", test_case);
     }
+
+    Ok(())
+}
+
+// ==========================
+// Project scaffolding (init)
+// ==========================
+
+fn compute_xrpl_std_dependency(_project_dir: &Path) -> String {
+    // If running inside the craft monorepo where `xrpl-std/` exists at the repo root,
+    // prefer a path dependency. Otherwise, fall back to crates.io (0.5 series).
+    // Assumes projects are created under <cwd>/projects/<name> when using craft.
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let repo_root_has_xrpl_std = cwd.join("xrpl-std").exists();
+
+    if repo_root_has_xrpl_std {
+        // project_dir is <cwd>/projects/<name>; relative path to xrpl-std is ../../xrpl-std
+        // Use a simple relative path without extra computation to avoid pathdiff dependency
+        return "xrpl-std = { path = \"../../xrpl-std\" }".to_string();
+    }
+
+    // crates.io fallback (allow semver compatible with 0.5)
+    "xrpl-std = \"0.5\"".to_string()
+}
+
+fn generate_cargo_toml(crate_name: &str, use_path_dep: &str) -> String {
+    format!(
+        r#"[package]
+name = "{crate_name}"
+version = "0.0.1"
+edition = "2024"
+description = "XRPL WASM smart contract"
+license = "ISC"
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
+
+[dependencies]
+{use_path_dep}
+"#
+    )
+}
+
+fn generate_empty_lib_rs() -> String {
+    r#"#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
+
+use xrpl_std::host::trace;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn finish() -> i32 {
+    let _ = trace("Hello from craft! This is an empty template.");
+    1
+}
+"#
+    .to_string()
+}
+
+fn generate_sample_lib_rs() -> String {
+    r#"#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
+
+use xrpl_std::host::trace;
+use xrpl_std::core::types::transaction_type::TransactionType;
+use xrpl_std::core::current_tx::escrow_finish::{get_current_escrow_finish, EscrowFinish};
+
+#[unsafe(no_mangle)]
+pub extern "C" fn finish() -> i32 {
+    let _ = trace("Sample project: starting execution");
+
+    // Access the current transaction and assert it's an EscrowFinish
+    let tx: EscrowFinish = get_current_escrow_finish();
+    let tx_type = tx.get_transaction_type().unwrap();
+    if !matches!(tx_type, TransactionType::EscrowFinish) {
+        let _ = trace("Not an EscrowFinish transaction");
+        return -1;
+    }
+
+    let _ = trace("Sample project: done");
+    1
+}
+"#
+    .to_string()
+}
+
+fn generate_readme_md(project_name: &str, _crate_name: &str, used_crates_io: bool) -> String {
+    let dep_note = if used_crates_io {
+        "This project depends on `xrpl-std` from crates.io (0.5 series)."
+    } else {
+        "This project depends on the local `xrpl-std` via a path dependency (monorepo layout)."
+    };
+
+    format!(
+        r#"# {project_name}
+
+XRPL WASM smart contract scaffolded by `craft`.
+
+{dep_note}
+
+## Quickstart
+
+- Build: `craft build {project_name}`
+- Test (interactive): `craft test {project_name}`
+- Export hex: `craft export-hex` (via interactive flow)
+
+## Naming conventions (FYI)
+
+- Folder name may be `kebab-case`, but Rust crate names should be `snake_case`.
+- Keep folder and crate names aligned to avoid confusing build artifacts.
+- `craft` will suggest fixes if it detects mismatches.
+
+## Notes
+
+- Target: `wasm32-unknown-unknown`
+- Library crate with `[lib] crate-type = ["cdylib"]`
+- The entrypoint function is `finish()` and must return an `i32`.
+"#
+    )
+}
+
+fn write_file(path: &Path, contents: &str) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, contents)?;
+    Ok(())
+}
+
+pub async fn init() -> Result<()> {
+    println!("{}", "Create a new XRPL WASM project".cyan());
+
+    let project_name = Text::new("Project name (kebab-case)")
+        .with_help_message("Example: my-escrow-contract")
+        .with_placeholder("my-project")
+        .prompt()?;
+
+    // Basic validation
+    if project_name.trim().is_empty() {
+        anyhow::bail!("Project name cannot be empty");
+    }
+
+    let template_choice =
+        Select::new("Choose a template", vec!["Sample project", "Empty project"]).prompt()?;
+
+    // Determine locations
+    let cwd = std::env::current_dir()?;
+    let projects_dir = cwd.join("projects");
+    if !projects_dir.exists() {
+        fs::create_dir_all(&projects_dir)?;
+    }
+    let project_dir = projects_dir.join(&project_name);
+    if project_dir.exists() {
+        anyhow::bail!("Directory already exists: {}", project_dir.display());
+    }
+    fs::create_dir_all(project_dir.join("src"))?;
+
+    // Derive crate name (snake_case)
+    let crate_name = project_name.replace('-', "_");
+
+    // Dependency string and fallback detection
+    let dep_str = compute_xrpl_std_dependency(&project_dir);
+    let used_crates_io = dep_str.contains('"'); // crude check: contains version string quotes
+
+    // Generate files
+    let cargo_toml = generate_cargo_toml(&crate_name, &dep_str);
+    let lib_rs = match template_choice {
+        "Sample project" => generate_sample_lib_rs(),
+        _ => generate_empty_lib_rs(),
+    };
+    let readme_md = generate_readme_md(&project_name, &crate_name, used_crates_io);
+    let gitignore = "/target\n**/*.opt.wasm\n";
+
+    write_file(&project_dir.join("Cargo.toml"), &cargo_toml)?;
+    write_file(&project_dir.join("src/lib.rs"), &lib_rs)?;
+    write_file(&project_dir.join("README.md"), &readme_md)?;
+    write_file(&project_dir.join(".gitignore"), gitignore)?;
+
+    println!("{}", "\nProject created successfully!".green());
+    println!(
+        "{}",
+        format!("Location: {}", project_dir.display())
+            .white()
+            .bold()
+    );
+    println!("\nNext steps:");
+    println!("  - craft build {project_name}");
+    println!("  - craft test {project_name}");
 
     Ok(())
 }

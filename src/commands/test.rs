@@ -99,10 +99,11 @@ impl TestRunner {
                 }
             );
 
-            if !result.success && self.verbose {
-                if let Some(code) = &result.error_code {
-                    println!("  Error code: {}", code.yellow());
-                }
+            if !result.success
+                && self.verbose
+                && let Some(code) = &result.error_code
+            {
+                println!("  Error code: {}", code.yellow());
             }
 
             results.push(result);

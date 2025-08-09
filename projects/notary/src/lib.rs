@@ -8,8 +8,9 @@ use xrpl_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_std::host::trace::trace_num;
 use xrpl_std::host::{Result::Err, Result::Ok};
 
-// Notary account that is authorized to finish the escrow
-const NOTARY_ACCOUNT: &[u8] = b"rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3"; // Account 2 (example)
+// Generated at build time from the classic (r...) address provided via NOTARY_ACCOUNT_R
+// Fallback default is the XRPL master account if NOTARY_ACCOUNT_R is not set.
+include!(concat!(env!("OUT_DIR"), "/notary_generated.rs"));
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {

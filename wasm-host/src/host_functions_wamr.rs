@@ -301,8 +301,8 @@ pub fn account_keylet(
         return HostError::InvalidAccount as i32;
     }
     let keylet_hash = index_hash(LedgerNameSpace::Account, &data);
-    let hex_str = hex::encode(&keylet_hash);
-    println!("Data (keylet_hash): {:?}", hex_str);
+    // let hex_str = hex::encode(&keylet_hash);
+    // println!("Data (keylet_hash): {:?}", hex_str);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }

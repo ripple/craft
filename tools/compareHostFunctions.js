@@ -87,8 +87,6 @@ async function main() {
     const wrappers = wrapperHits.map((hit) => [hit[1], hit[2], hit[3].length == 0 ? [] :hit[3].split(',').map((s) => s.trim())]).sort((a, b) => a[0].localeCompare(b[0]))
     if (!areListsEqual(imports.map(f => f[0]), wrappers.map(f => f[0]))) {
         console.error('Imports and C++ Host Functions do not match!')
-        console.error('Imports:', imports.map(func => func[0]).sort().join(', '))
-        console.error('C++ Host Functions:', wrappers.map(func => func[0]).sort().join(', '))
         const importsMissing = wrappers.filter(f => !imports.some(func => func[0] === f[0]))
         const hfMissing = imports.filter(f => !wrappers.some(func => func[0] === f[0]))
         if (importsMissing.length > 0)

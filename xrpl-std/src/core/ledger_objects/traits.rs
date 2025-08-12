@@ -24,6 +24,14 @@ use crate::sfield;
 /// This trait defines methods to access standard fields that are common across
 /// different types of ledger objects in the XRP Ledger.
 pub trait LedgerObjectCommonFields {
+    /// Returns the slot number (register number) where the ledger object is stored.
+    ///
+    /// This number is used to identify and access the specific ledger object
+    /// when retrieving or modifying its fields.
+    ///
+    /// # Returns
+    ///
+    /// The slot number as an i32 value
     fn get_slot_num(&self) -> i32;
 
     /// Retrieves the ledger index (unique identifier) of the ledger object.

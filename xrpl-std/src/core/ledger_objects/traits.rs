@@ -406,7 +406,7 @@ pub trait AccountFields: LedgerObjectCommonFields {
     /// The ledger entry ID of the corresponding AMM ledger entry. Set during account creation; cannot be modified.
     /// If present, indicates that this is a special AMM AccountRoot; always omitted on non-AMM accounts.
     /// (Added by the AMM amendment)
-    fn ammid(&self) -> Result<Option<Hash256>> {
+    fn amm_id(&self) -> Result<Option<Hash256>> {
         ledger_object::get_hash_256_field_optional(self.get_slot_num(), sfield::AMMID)
     }
 

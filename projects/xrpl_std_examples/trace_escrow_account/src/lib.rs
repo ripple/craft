@@ -110,7 +110,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
 
         // Trace `AMMID`
-        let amm_id = account.ammid().unwrap().unwrap();
+        let amm_id = account.amm_id().unwrap().unwrap();
         assert_eq!(
             amm_id.0,
             [

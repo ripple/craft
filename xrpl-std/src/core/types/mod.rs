@@ -8,3 +8,4 @@ pub mod hash_256;
 pub mod keylets;
 pub mod public_key;
 pub mod transaction_type;
+pub mod uint_128;

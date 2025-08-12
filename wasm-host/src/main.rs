@@ -137,6 +137,7 @@ fn main() {
 
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
+    // TODO: Make Gas Cap optional via https://github.com/ripple/craft/issues/141
     match vm_wamr::run_func(wasm_file, &args.function, Some(1_000_000), data_source) {
         Ok(result) => {
             println!("-------------------------------------------------");

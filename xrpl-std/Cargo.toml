@@ -2,6 +2,13 @@
 name = "xrpl-std"
 version = "0.1.0"
 edition = "2024"
+description = "Standard library for XRPL WebAssembly smart contracts"
+license = "ISC"
+repository = "https://github.com/XRPLF/craft"
+homepage = "https://github.com/XRPLF/craft/tree/main/xrpl-std"
+readme = "README.md"
+keywords = ["xrpl", "wasm", "smart-contracts", "no-std"]
+categories = ["no-std", "embedded", "cryptography::cryptocurrencies"]
 
 # This empty workspace definition keeps this project independent of the parent workspace
 [workspace]

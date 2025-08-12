@@ -461,6 +461,35 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
+    /// Generates the keylet (key identifier) for a specific AMM.
+    ///
+    /// This function is used to calculate the AMM keylet in a cryptographic or
+    /// blockchain-based system. A keylet is typically used to identify an AMM or entity
+    /// in a secure and deterministic way.
+    ///
+    /// # Parameters
+    ///
+    /// - `issue1_ptr`: A pointer to the memory of the issue1 identifier.
+    /// - `issue1_len`: The size (in bytes) of the data pointed to by `issue1_ptr`.
+    /// - `issue2_ptr`: A pointer to the memory of the issue2 identifier.
+    /// - `issue2_len`: The size (in bytes) of the data pointed to by `issue2_ptr`.
+    /// - `out_buff_ptr`: A pointer to the memory where the generated keylet will be stored.
+    /// - `out_buff_len`: The length (in bytes) of the buffer pointed to by `out_buff_ptr`.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   `../core/error_codes.rs`
+    pub fn amm_keylet(
+        issue1_ptr: *const u8,
+        issue1_len: usize,
+        issue2_ptr: *const u8,
+        issue2_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
     /// Computes the Keylet for a check entry in a ledger.
     ///
     /// # Parameters
@@ -636,6 +665,54 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
+    /// Computes the Keylet for an MPT issuance entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `issuer_ptr`: A pointer to the memory location of the accountID.
+    /// - `issuer_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the MPT issuance entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   `../core/error_codes.rs`
+    pub fn mpt_issuance_keylet(
+        issuer_ptr: *const u8,
+        issuer_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for an MPToken entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `mptid_ptr`: A pointer to the memory location of the MPTID.
+    /// - `mptid_len`: The length of the MPTID.
+    /// - `holder_ptr`: A pointer to the memory location of the holder account.
+    /// - `holder_len`: The length of the holder account.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn mptoken_keylet(
+        mptid_ptr: *const u8,
+        mptid_len: usize,
+        holder_ptr: *const u8,
+        holder_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
     /// Computes the Keylet for an NFT offer entry in a ledger.
     ///
     /// # Parameters
@@ -733,6 +810,29 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
+    /// Computes the Keylet for a permissioned domain entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the permissioned domain entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn permissioned_domain_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
     /// Computes the Keylet for a signer entry in a ledger.
     ///
     /// # Parameters
@@ -770,6 +870,29 @@ unsafe extern "C" {
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   ../core/error_codes.rs
     pub fn ticket_keylet(
+        account_ptr: *const u8,
+        account_len: usize,
+        sequence: i32,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// Computes the Keylet for a vault entry in a ledger.
+    ///
+    /// # Parameters
+    ///
+    /// - `account_ptr`: A pointer to the memory location of the accountID.
+    /// - `account_len`: The length of the accountID.
+    /// - `sequence`: The account sequence number associated with the vault entry.
+    /// - `out_buff_ptr`: A pointer to the output buffer where the derived keylet will be stored.
+    /// - `out_buff_len`: The length of the output buffer.
+    ///
+    /// # Returns
+    ///
+    /// - Returns a positive number of bytes wrote to an output buffer on success
+    /// - Returns a negative error code on failure. The list of error codes is defined in
+    ///   ../core/error_codes.rs
+    pub fn vault_keylet(
         account_ptr: *const u8,
         account_len: usize,
         sequence: i32,
@@ -1129,6 +1252,28 @@ unsafe extern "C" {
     /// sizes).
     pub fn trace_num(msg_read_ptr: *const u8, msg_read_len: usize, number: i64) -> i32;
 
+    /// Print an account to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will
+    /// see this.
+    ///
+    /// # Parameters
+    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// * `msg_read_len`: The byte length of the text to send to the trace log.
+    /// * `account_ptr`: A pointer to an account.
+    /// * `account_len`: The byte length of the account.
+    ///
+    /// # Returns
+    ///
+    /// Returns an integer representing the result of the operation. A value of `0` or higher
+    /// signifies the number of message bytes that were written to the trace function. Non-zero
+    /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
+    /// sizes).
+    pub fn trace_account(
+        msg_read_ptr: *const u8,
+        msg_read_len: usize,
+        account_ptr: *const u8,
+        account_len: usize,
+    ) -> i32;
+
     /// Print an OpaqueFloat number to the trace log on XRPLd. Any XRPLd instance set to \"trace\"
     /// log level will see this.
     ///
@@ -1148,5 +1293,27 @@ unsafe extern "C" {
         msg_read_len: usize,
         opaque_float_ptr: *const u8,
         opaque_float_len: usize,
+    ) -> i32;
+
+    /// Print an amount to the trace log on XRPLd. Any XRPLd instance set to \"trace\" log level will
+    /// see this.
+    ///
+    /// # Parameters
+    /// * `msg_read_ptr`: A pointer to an array containing text characters (in either utf8).
+    /// * `msg_read_len`: The byte length of the text to send to the trace log.
+    /// * `amount_ptr`: A pointer to an amount.
+    /// * `amount_len`: The byte length of the amount.
+    ///
+    /// # Returns
+    ///
+    /// Returns an integer representing the result of the operation. A value of `0` or higher
+    /// signifies the number of message bytes that were written to the trace function. Non-zero
+    /// values indicate an error that corresponds to a known error code (e.g., incorrect buffer
+    /// sizes).
+    pub fn trace_amount(
+        msg_read_ptr: *const u8,
+        msg_read_len: usize,
+        amount_ptr: *const u8,
+        amount_len: usize,
     ) -> i32;
 }

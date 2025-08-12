@@ -3,7 +3,7 @@ name = "ledger_sqn"
 version = "0.1.0"
 edition = "2024"
 description = ""
-license = "MIT"
+license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace
 [workspace]

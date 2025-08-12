@@ -1,4 +1,4 @@
-pub mod account;
+pub mod account_root;
 pub mod current_escrow;
 pub mod escrow;
 pub mod nft;

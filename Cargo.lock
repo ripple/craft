@@ -449,7 +449,7 @@ dependencies = [
 
 [[package]]
 name = "craft"
-version = "0.5.1"
+version = "0.5.1-devnet5"
 dependencies = [
  "anyhow",
  "atty",
@@ -2860,7 +2860,7 @@ dependencies = [
 
 [[package]]
 name = "wasm-host"
-version = "0.1.0"
+version = "0.5.1-devnet5"
 dependencies = [
  "bigdecimal",
  "clap",

@@ -738,6 +738,7 @@ pub fn float_compare(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_add(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
@@ -760,6 +761,7 @@ pub fn float_add(
     pack_out_float(r, env, out_buff)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_subtract(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
@@ -782,6 +784,7 @@ pub fn float_subtract(
     pack_out_float(r, env, out_buff)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_multiply(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
@@ -804,6 +807,7 @@ pub fn float_multiply(
     pack_out_float(r, env, out_buff)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn float_divide(
     env: wasm_exec_env_t,
     in_buff1: *const u8,

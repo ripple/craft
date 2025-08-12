@@ -3,8 +3,8 @@
 version = 4
 
 [[package]]
-name = "notary"
-version = "0.1.0"
+name = "trace_escrow_ledger_object"
+version = "0.0.1"
 dependencies = [
  "xrpl-std",
 ]

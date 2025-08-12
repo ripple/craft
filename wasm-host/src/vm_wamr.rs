@@ -82,7 +82,8 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
     debug!("Loading WASM module from file: {}", wasm_file);
     let wasm_path = PathBuf::from(wasm_file);
     let module = Module::from_file(&runtime, wasm_path.as_path())?;
-    let instance = Instance::new(&runtime, &module, 1024 * 64)?;
+    // rippled currently allows 128kb for each VM instance, so we use the same here in Craft.
+    let instance = Instance::new(&runtime, &module, 1024 * 128)?;
 
     debug!("Executing WASM function: {}", func_name);
     let func = Function::find_export_func(&instance, "finish")?;

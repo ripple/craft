@@ -49,36 +49,32 @@ jobs:
 
       - name: Run Clippy (All Example Contracts)
         run: |
-          for dir in ./projects/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "🔧 Clippy in $dir"
-              (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
-            fi
+          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            echo "🔧 Clippy in $dir"
+            (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
           done
 
       - name: Run Clippy (All Test Contracts)
         run: |
-          for dir in ./rippled-tests/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "🔧 Clippy in $dir"
-              (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
-            fi
+          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            echo "🔧 Clippy in $dir"
+            (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
           done
 
       - name: Check project exports
         run: |
-          for dir in ./projects/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
-            fi
+          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
           done
 
       - name: Check ripple-tests exports
         run: |
-          for dir in ./rippled-tests/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
-            fi
+          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
           done
 
   rustfmt:
@@ -96,20 +92,18 @@ jobs:
 
       - name: Run fmt (All Example Contracts)
         run: |
-          for dir in ./projects/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "🔧 Fmt in $dir"
-              (cd "$dir" && cargo fmt --all -- --check) || exit 1
-            fi
+          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            echo "🔧 Fmt in $dir"
+            (cd "$dir" && cargo fmt --all -- --check) || exit 1
           done
 
       - name: Run fmt (All Test Contracts)
         run: |
-          for dir in ./rippled-tests/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "🔧 Fmt in $dir"
-              (cd "$dir" && cargo fmt --all -- --check) || exit 1
-            fi
+          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            echo "🔧 Fmt in $dir"
+            (cd "$dir" && cargo fmt --all -- --check) || exit 1
           done
 
   # Note: This job should not be "required" for PRs, as during development there may be temporary
@@ -154,20 +148,18 @@ jobs:
 
       - name: Build all example contracts
         run: |
-          for dir in ./projects/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "🔧 Building in $dir"
-              (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
-            fi
+          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            echo "🔧 Building in $dir"
+            (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
           done
 
       - name: Build all test contracts
         run: |
-          for dir in ./rippled-tests/*/; do
-            if [ -f "$dir/Cargo.toml" ]; then
-              echo "🔧 Building in $dir"
-              (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
-            fi
+          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            echo "🔧 Building in $dir"
+            (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
           done
 
       - name: Build and Test `craft`

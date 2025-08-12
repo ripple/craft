@@ -19,13 +19,12 @@ use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
-use xrpl_std::sfield;
 use xrpl_std::sfield::{
     Account, AccountTxnID, Balance, CredentialType, Domain, EmailHash, Flags, Issuer,
     LedgerEntryType, MessageKey, OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey,
     Sequence, Subject, TakerGets, TicketCount, TicketSequence, TransferRate,
 };
-use xrpl_std::{decode_hex_20, decode_hex_32, host};
+use xrpl_std::{decode_hex_20, decode_hex_32, host, sfield};
 
 fn test_account_root() {
     let _ = trace("\n$$$ test_account_root $$$");

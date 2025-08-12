@@ -1,18 +1,6 @@
 // This file exists as a host_binding stand-in for non-WASM targets. For example, this file will
 // be used during unit tests.
 
-//TODO add docs after discussing the interface
-//Note that Craft currently does not honor the rounding modes
-//TODO discuss reason for this file
-#[allow(unused)]
-pub const FLOAT_ROUNDING_MODES_TO_NEAREST: i32 = 0;
-#[allow(unused)]
-pub const FLOAT_ROUNDING_MODES_TOWARDS_ZERO: i32 = 1;
-#[allow(unused)]
-pub const FLOAT_ROUNDING_MODES_DOWNWARD: i32 = 2;
-#[allow(unused)]
-pub const FLOAT_ROUNDING_MODES_UPWARD: i32 = 3;
-
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_ledger_sqn(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
@@ -208,6 +196,19 @@ pub unsafe fn account_keylet(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn amm_keylet(
+    _issue1_ptr: *const u8,
+    _issue1_len: usize,
+    _issue2_ptr: *const u8,
+    _issue2_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn check_keylet(
     _account_ptr: *const u8,
     _account_len: usize,
@@ -301,6 +302,31 @@ pub unsafe fn line_keylet(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn mpt_issuance_keylet(
+    _issuer_ptr: *const u8,
+    _issuer_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn mptoken_keylet(
+    _mptid_ptr: *const u8,
+    _mptid_len: usize,
+    _holder_ptr: *const u8,
+    _holder_len: usize,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn nft_offer_keylet(
     _account_ptr: *const u8,
     _account_len: usize,
@@ -351,6 +377,18 @@ pub unsafe fn paychan_keylet(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn permissioned_domain_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn signers_keylet(
     _account_ptr: *const u8,
     _account_len: usize,
@@ -363,6 +401,18 @@ pub unsafe fn signers_keylet(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn ticket_keylet(
+    _account_ptr: *const u8,
+    _account_len: usize,
+    _sequence: i32,
+    _out_buff_ptr: *mut u8,
+    _out_buff_len: usize,
+) -> i32 {
+    32
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn vault_keylet(
     _account_ptr: *const u8,
     _account_len: usize,
     _sequence: i32,
@@ -432,6 +482,146 @@ pub unsafe fn get_nft_serial(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_from_int(
+    _in_int: i64,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_from_uint(
+    _in_uint_ptr: *const u8,
+    _in_uint_len: usize,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_set(
+    _exponent: i32,
+    _mantissa: i64,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_compare(
+    _in_buff1: *const u8,
+    _in_buff1_len: usize,
+    _in_buff2: *const u8,
+    _in_buff2_len: usize,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_add(
+    _in_buff1: *const u8,
+    _in_buff1_len: usize,
+    _in_buff2: *const u8,
+    _in_buff2_len: usize,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_subtract(
+    _in_buff1: *const u8,
+    _in_buff1_len: usize,
+    _in_buff2: *const u8,
+    _in_buff2_len: usize,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_multiply(
+    _in_buff1: *const u8,
+    _in_buff1_len: usize,
+    _in_buff2: *const u8,
+    _in_buff2_len: usize,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_divide(
+    _in_buff1: *const u8,
+    _in_buff1_len: usize,
+    _in_buff2: *const u8,
+    _in_buff2_len: usize,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_pow(
+    _in_buff: *const u8,
+    _in_buff_len: usize,
+    _in_int: i32,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_root(
+    _in_buff: *const u8,
+    _in_buff_len: usize,
+    _in_int: i32,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn float_log(
+    _in_buff: *const u8,
+    _in_buff_len: usize,
+    _out_buff: *mut u8,
+    _out_buff_len: usize,
+    _rounding_mode: i32,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace(
     _msg_read_ptr: *const u8,
     _msg_read_len: usize,
@@ -450,140 +640,11 @@ pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number:
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_from_int(
-    in_int: i64,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_from_uint(
-    in_uint_ptr: *const u8,
-    in_uint_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_set(
-    exponent: i32,
-    mantissa: i64,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_compare(
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_add(
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_subtract(
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_multiply(
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_divide(
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_pow(
-    in_buff: *const u8,
-    in_buff_len: usize,
-    in_int: i32,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_root(
-    in_buff: *const u8,
-    in_buff_len: usize,
-    in_int: i32,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn float_log(
-    in_buff: *const u8,
-    in_buff_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
+pub unsafe fn trace_account(
+    _msg_read_ptr: *const u8,
+    _msg_read_len: usize,
+    _account_ptr: *const u8,
+    _account_len: usize,
 ) -> i32 {
     -1
 }
@@ -591,10 +652,21 @@ pub unsafe fn float_log(
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace_opaque_float(
-    msg_read_ptr: *const u8,
-    msg_read_len: usize,
-    opaque_float_ptr: *const u8,
-    opaque_float_len: usize,
+    _msg_read_ptr: *const u8,
+    _msg_read_len: usize,
+    _opaque_float_ptr: *const u8,
+    _opaque_float_len: usize,
+) -> i32 {
+    -1
+}
+
+#[allow(unused)]
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn trace_amount(
+    _msg_read_ptr: *const u8,
+    _msg_read_len: usize,
+    _amount_ptr: *const u8,
+    _amount_len: usize,
 ) -> i32 {
     -1
 }

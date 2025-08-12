@@ -185,7 +185,7 @@ async function main() {
 
     let rustHits = [
         ...rustHostFunctionFile.matchAll(
-            /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]*);$/gm,
+            /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+);$/gm,
         ),
     ]
     const rustFuncs = rustHits.map((hit) => [hit[1], hit[3], hit[2].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])
@@ -200,7 +200,7 @@ async function main() {
 
     let rustTestHits = [
         ...rustHostFunctionTestFile.matchAll(
-            /^ *pub (unsafe )?fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]*)/gm,
+            /^ *pub (unsafe )?fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+)/gm,
         ),
     ]
     const rustTestFuncs = rustTestHits.map((hit) => [hit[2], hit[4], hit[3].trim().split(',').map((s) => s.trim()).filter((s) => s.length > 0).map((s) => s.split(':')[1].trim())])

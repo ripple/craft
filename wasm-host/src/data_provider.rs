@@ -327,9 +327,9 @@ impl DataProvider {
                                     return (HostError::BufferTooSmall as i32, buf);
                                 }
                                 buf[..bytes.len()].copy_from_slice(bytes);
-                                return (bytes.len() as i32, buf);
+                                (bytes.len() as i32, buf)
                             } else {
-                                return (HostError::InternalError as i32, buf);
+                                (HostError::InternalError as i32, buf)
                             }
                         }
                         serde_json::Value::String(s) => match decode(s, decodable) {

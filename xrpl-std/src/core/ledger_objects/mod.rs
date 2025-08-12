@@ -254,7 +254,7 @@ pub mod current_ledger_object {
 
 pub mod ledger_object {
     use crate::core::error_codes::{
-        match_result_code, match_result_code_with_expected_bytes,
+        match_result_code, match_result_code_optional, match_result_code_with_expected_bytes,
         match_result_code_with_expected_bytes_optional,
     };
     use crate::core::types::account_id::{ACCOUNT_ID_SIZE, AccountID};
@@ -275,19 +275,69 @@ pub mod ledger_object {
     /// Returns a `Result<AccountID>` where:
     /// * `Ok(AccountID)` - The account identifier for the specified field
     /// * `Err(Error)` - If the field cannot be retrieved or has unexpected size
-    #[inline(always)]
+    #[inline]
     pub fn get_account_id_field(register_num: i32, field_code: i32) -> Result<AccountID> {
+        to_non_optional(get_account_id_field_optional(register_num, field_code))
+    }
+
+    pub fn get_account_id_field_optional(
+        register_num: i32,
+        field_code: i32,
+    ) -> Result<Option<AccountID>> {
         let mut buffer = [0x00; ACCOUNT_ID_SIZE];
 
         let result_code = unsafe {
             get_ledger_obj_field(register_num, field_code, buffer.as_mut_ptr(), buffer.len())
         };
 
-        match_result_code_with_expected_bytes(result_code, buffer.len(), || buffer.into())
+        match_result_code_with_expected_bytes_optional(result_code, buffer.len(), || {
+            let account_id: AccountID = buffer.into();
+            Some(account_id)
+        })
     }
 
+    /// Retrieves a `TokenAmount` field from a specified ledger object.
+    ///
+    /// This function retrieves a token amount field from a ledger object stored in a register.
+    /// It wraps the optional variant and returns an error if the field is not present.
+    ///
+    /// # Arguments
+    ///
+    /// * `register_num` - The register number holding the ledger object to look for data in
+    /// * `field_code` - The field code identifying which TokenAmount field to retrieve
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<TokenAmount>` where:
+    /// * `Ok(TokenAmount)` - The token amount for the specified field, which can be XRP, IOU, or MPT
+    /// * `Err(Error)` - If the field cannot be retrieved, is not present, or has an unexpected format
     #[inline]
     pub fn get_amount_field(register_num: i32, field_code: i32) -> Result<TokenAmount> {
+        to_non_optional(get_amount_field_optional(register_num, field_code))
+    }
+
+    /// Retrieves an optionally present `TokenAmount` field from a specified ledger object.
+    ///
+    /// This function attempts to retrieve a token amount field from a ledger object stored in a register.
+    /// Unlike the non-optional variant, this function returns `None` if the field is not present,
+    /// rather than returning an error.
+    ///
+    /// # Arguments
+    ///
+    /// * `register_num` - The register number holding the ledger object to look for data in
+    /// * `field_code` - The field code identifying which TokenAmount field to retrieve
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<Option<TokenAmount>>` where:
+    /// * `Ok(Some(TokenAmount))` - The token amount for the specified field, which can be XRP, IOU, or MPT
+    /// * `Ok(None)` - If the field is not present in the ledger object
+    /// * `Err(Error)` - If the field retrieval operation failed or the data has an unexpected format
+    #[inline]
+    pub fn get_amount_field_optional(
+        register_num: i32,
+        field_code: i32,
+    ) -> Result<Option<TokenAmount>> {
         const BUFFER_SIZE: usize = 48usize;
 
         let mut buffer = [0u8; BUFFER_SIZE]; // Enough to hold an Amount
@@ -296,7 +346,7 @@ pub mod ledger_object {
             get_ledger_obj_field(register_num, field_code, buffer.as_mut_ptr(), BUFFER_SIZE)
         };
 
-        match_result_code(result_code, || TokenAmount::from(buffer))
+        match_result_code_optional(result_code, || Some(TokenAmount::from(buffer)))
     }
 
     /// Retrieves a `u16` field from the specified ledger object.

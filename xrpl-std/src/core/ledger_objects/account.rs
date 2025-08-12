@@ -13,7 +13,7 @@ impl LedgerObjectCommonFields for Account {}
 
 impl AccountFields for Account {}
 
-pub fn get_account_balance(account_id: &AccountID) -> host::Result<TokenAmount> {
+pub fn get_account_balance(account_id: &AccountID) -> host::Result<Option<TokenAmount>> {
     // Construct the account keylet. This calls a host function, so propagate the error via `?`
     let account_keylet = match account_keylet(account_id) {
         host::Result::Ok(keylet) => keylet,

@@ -28,7 +28,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace("### Step #1: Trace Account Balance for Account Finishing the Escrow");
         let _ = trace("{ ");
         let account: AccountID = escrow_finish.get_account().unwrap();
-        let balance = match get_account_balance(&account).unwrap() {
+        let balance = match get_account_balance(&account).unwrap().unwrap() {
             TokenAmount::XRP { num_drops } => num_drops,
             TokenAmount::IOU { .. } => {
                 panic!("IOU Balance encountered, but should have been XRP.")
@@ -96,7 +96,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_data("  Account:", &account_id.0, DataRepr::AsHex);
 
         // Trace the `AccountTxnID`
-        let account_txn_id = account.account_txn_id(slot).unwrap();
+        let account_txn_id = account.account_txn_id(slot).unwrap().unwrap();
         assert_eq!(
             account_txn_id.0,
             [
@@ -108,7 +108,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
 
         // Trace `AMMID`
-        let amm_id = account.ammid(slot).unwrap();
+        let amm_id = account.ammid(slot).unwrap().unwrap();
         assert_eq!(
             amm_id.0,
             [
@@ -120,7 +120,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_data("  AMMID:", &amm_id.0, DataRepr::AsHex);
 
         // Trace the `Balance`
-        let balance = match account.balance(slot).unwrap() {
+        let balance = match account.balance(slot).unwrap().unwrap() {
             TokenAmount::XRP { num_drops } => num_drops,
             TokenAmount::IOU { .. } => {
                 panic!("IOU Balance encountered, but should have been XRP.")
@@ -133,17 +133,17 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_num("  Balance of arbitrary Account:", balance);
 
         // Trace the `BurnedNFTokens`
-        let burned_nf_tokens = account.burned_nf_tokens(slot).unwrap();
+        let burned_nf_tokens = account.burned_nf_tokens(slot).unwrap().unwrap();
         assert_eq!(burned_nf_tokens, 20);
         let _ = trace_num("  BurnedNFTokens:", burned_nf_tokens as i64);
 
         // Trace the `Domain`
-        let domain = account.domain(slot).unwrap();
+        let domain = account.domain(slot).unwrap().unwrap();
         assert_eq!(&domain.data[..domain.len], &[0xC8, 0xE8, 0xB4, 0x6E]);
         let _ = trace_data("  Domain:", &domain.data[..domain.len], DataRepr::AsHex);
 
         // Trace the `EmailHash`
-        let email_hash = account.email_hash(slot).unwrap();
+        let email_hash = account.email_hash(slot).unwrap().unwrap();
         assert_eq!(
             email_hash.0,
             [
@@ -154,12 +154,12 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_data("  EmailHash:", &email_hash.0, DataRepr::AsHex);
 
         // Trace the `FirstNFTokenSequence`
-        let first_nf_token_sequence = account.first_nf_token_sequence(slot).unwrap();
+        let first_nf_token_sequence = account.first_nf_token_sequence(slot).unwrap().unwrap();
         assert_eq!(first_nf_token_sequence, 21);
         let _ = trace_num("  FirstNFTokenSequence:", first_nf_token_sequence as i64);
 
         // Trace the `MessageKey`
-        let message_key = account.message_key(slot).unwrap();
+        let message_key = account.message_key(slot).unwrap().unwrap();
         assert_eq!(
             &message_key.data[..message_key.len],
             &[0xC8, 0xE8, 0xB4, 0x6D]
@@ -171,12 +171,12 @@ pub extern "C" fn finish() -> i32 {
         );
 
         // Trace the `MintedNFTokens`
-        let minted_nf_tokens = account.minted_nf_tokens(slot).unwrap();
+        let minted_nf_tokens = account.minted_nf_tokens(slot).unwrap().unwrap();
         assert_eq!(minted_nf_tokens, 22);
         let _ = trace_num("  MintedNFTokens:", minted_nf_tokens as i64);
 
         // Trace the `NFTokenMinter`
-        let nf_token_minter = account.nf_token_minter(slot).unwrap();
+        let nf_token_minter = account.nf_token_minter(slot).unwrap().unwrap();
         assert_eq!(
             nf_token_minter.0,
             [
@@ -209,7 +209,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_num("  PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
 
         // Trace the `RegularKey`
-        let regular_key = account.regular_key(slot).unwrap();
+        let regular_key = account.regular_key(slot).unwrap().unwrap();
         assert_eq!(
             regular_key.0,
             [
@@ -225,22 +225,22 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_num("  Sequence:", sequence as i64);
 
         // Trace the `TicketCount`
-        let ticket_count = account.ticket_count(slot).unwrap();
+        let ticket_count = account.ticket_count(slot).unwrap().unwrap();
         assert_eq!(ticket_count, 23);
         let _ = trace_num("  TicketCount:", ticket_count as i64);
 
         // Trace the `TickSize`
-        let tick_size = account.tick_size(slot).unwrap();
+        let tick_size = account.tick_size(slot).unwrap().unwrap();
         assert_eq!(tick_size, 24);
         let _ = trace_num("  TickSize:", tick_size as i64);
 
         // Trace the `TransferRate`
-        let transfer_rate = account.transfer_rate(slot).unwrap();
+        let transfer_rate = account.transfer_rate(slot).unwrap().unwrap();
         assert_eq!(transfer_rate, 1220000000);
         let _ = trace_num("  TransferRate:", transfer_rate as i64);
 
         // Trace the `WalletLocator`
-        let wallet_locator = account.wallet_locator(slot).unwrap();
+        let wallet_locator = account.wallet_locator(slot).unwrap().unwrap();
         assert_eq!(
             &wallet_locator.0,
             &[
@@ -252,7 +252,7 @@ pub extern "C" fn finish() -> i32 {
         let _ = trace_data("  WalletLocator:", &wallet_locator.0, DataRepr::AsHex);
 
         // Trace the `WalletSize`
-        let wallet_size = account.wallet_size(slot).unwrap();
+        let wallet_size = account.wallet_size(slot).unwrap().unwrap();
         assert_eq!(wallet_size, 25);
         let _ = trace_num("  WalletSize:", wallet_size as i64);
 

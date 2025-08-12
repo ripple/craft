@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "xrpl-std"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 
 [[package]]
 name = "xrpl_std_example"

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Enable recursive globbing
-shopt -s globstar
-
 # Set default profile to dev if not provided
 PROFILE=${1:-dev}
 PROFILE_FLAG=""

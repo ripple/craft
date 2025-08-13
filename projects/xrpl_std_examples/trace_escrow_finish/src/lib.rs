@@ -13,7 +13,10 @@ use xrpl_std::core::types::hash_256::Hash256;
 use xrpl_std::core::types::public_key::PublicKey;
 use xrpl_std::core::types::transaction_type::TransactionType;
 use xrpl_std::host;
-use xrpl_std::host::trace::{DataRepr, trace, trace_amount, trace_data, trace_num};
+use xrpl_std::host::trace::{
+    DataRepr, trace, trace_account, trace_account_buf, trace_amount, trace_data, trace_num,
+};
+use xrpl_std::sfield;
 use xrpl_std::{assert_eq, sfield};
 
 #[unsafe(no_mangle)]
@@ -39,7 +42,7 @@ pub extern "C" fn finish() -> i32 {
 
         // Trace Field: Account
         let account = escrow_finish.get_account().unwrap();
-        let _ = trace_data("  Account:", &account.0, DataRepr::AsHex);
+        let _ = trace_account("  Account:", &account);
         if account.0.eq(&ACCOUNT_ONE.0) {
             let _ = trace("    AccountID == ACCOUNT_ONE => TRUE");
         } else {
@@ -196,11 +199,7 @@ pub extern "C" fn finish() -> i32 {
                 panic!()
             }
             let _ = trace_num("    Signer #:", i as i64);
-            let _ = trace_data(
-                "     Account:",
-                &buf[..output_len as usize],
-                DataRepr::AsHex,
-            );
+            let _ = trace_account_buf("     Account:", &buf[..20].try_into().unwrap());
 
             locator.repack_last(sfield::TxnSignature);
             let output_len = unsafe {
@@ -257,7 +256,7 @@ pub extern "C" fn finish() -> i32 {
 
         // Trace Field: Account
         let owner: AccountID = escrow_finish.get_owner().unwrap();
-        let _ = trace_data("  Owner:", &owner.0, DataRepr::AsHex);
+        let _ = trace_account("  Owner:", &owner);
         if owner.0[0].eq(&ACCOUNT_ZERO.0[0]) {
             let _ = trace("    AccountID == ACCOUNT_ZERO => TRUE");
         } else {

@@ -27,14 +27,14 @@ extern crate std;
 
 use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
 use xrpl_std::host::*;
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let _ = trace_data("=== HOST FUNCTIONS TEST ===", &[], DataRepr::AsHex);
-    let _ = trace_data("Testing 26 host functions", &[], DataRepr::AsHex);
+    let _ = trace("=== HOST FUNCTIONS TEST ===");
+    let _ = trace("Testing 26 host functions");
 
     // Category 1: Ledger Header Data Functions (3 functions)
     // Error range: -100 to -199
@@ -85,11 +85,7 @@ pub extern "C" fn finish() -> i32 {
         err => return err,
     }
 
-    let _ = trace_data(
-        "SUCCESS: All host function tests passed!",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("SUCCESS: All host function tests passed!");
     1 // Success return code for WASM finish function
 }
 
@@ -98,11 +94,7 @@ pub extern "C" fn finish() -> i32 {
 /// - get_parent_ledger_time() - Get parent ledger timestamp
 /// - get_parent_ledger_hash() - Get parent ledger hash
 fn test_ledger_header_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 1: Ledger Header Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 1: Ledger Header Functions ---");
 
     // Test 1.1: get_ledger_sqn() - should return current ledger sequence number
     let mut ledger_sqn_buffer = [0u8; 8];
@@ -150,18 +142,14 @@ fn test_ledger_header_functions() -> i32 {
     }
     let _ = trace_data("Parent ledger hash:", &hash_buffer, DataRepr::AsHex);
 
-    let _ = trace_data("SUCCESS: Ledger header functions", &[], DataRepr::AsHex);
+    let _ = trace("SUCCESS: Ledger header functions");
     0
 }
 
 /// Test Category 2: Transaction Data Functions (5 functions)
 /// Tests all functions for accessing current transaction data
 fn test_transaction_data_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 2: Transaction Data Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 2: Transaction Data Functions ---");
 
     // Test 2.1: get_tx_field() - Basic transaction field access
     // Test with Account field (required, 20 bytes)
@@ -181,7 +169,7 @@ fn test_transaction_data_functions() -> i32 {
         );
         return -201; // Basic transaction field test failed
     }
-    let _ = trace_data("Transaction Account:", &account_buffer, DataRepr::AsHex);
+    let _ = trace_account_buf("Transaction Account:", &account_buffer);
 
     // Test with Fee field (XRP amount - 8 bytes in new serialized format)
     // New format: XRP amounts are always 8 bytes (positive: value | cPositive flag, negative: just value)
@@ -265,18 +253,14 @@ fn test_transaction_data_functions() -> i32 {
         let _ = trace_num("Nested array length:", nested_array_len as i64);
     }
 
-    let _ = trace_data("SUCCESS: Transaction data functions", &[], DataRepr::AsHex);
+    let _ = trace("SUCCESS: Transaction data functions");
     0
 }
 
 /// Test Category 3: Current Ledger Object Functions (4 functions)
 /// Tests functions that access the current ledger object being processed
 fn test_current_ledger_object_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 3: Current Ledger Object Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 3: Current Ledger Object Functions ---");
 
     // Test 3.1: get_current_ledger_obj_field() - Access field from current ledger object
     // Test with Balance field (XRP amount - 8 bytes in new serialized format)
@@ -333,7 +317,7 @@ fn test_current_ledger_object_functions() -> i32 {
             current_account_result as i64,
         );
     } else {
-        let _ = trace_data(
+        let _ = trace_account_buf(
             "Current ledger object account:",
             &current_account_buffer[..current_account_result as usize],
             DataRepr::AsHex,
@@ -389,22 +373,14 @@ fn test_current_ledger_object_functions() -> i32 {
         );
     }
 
-    let _ = trace_data(
-        "SUCCESS: Current ledger object functions",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("SUCCESS: Current ledger object functions");
     0
 }
 
 /// Test Category 4: Any Ledger Object Functions (5 functions)
 /// Tests functions that work with cached ledger objects
 fn test_any_ledger_object_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 4: Any Ledger Object Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 4: Any Ledger Object Functions ---");
 
     // First we need to cache a ledger object to test the other functions
     // Get the account from transaction and generate its keylet
@@ -497,11 +473,7 @@ fn test_any_ledger_object_functions() -> i32 {
             );
         }
 
-        let _ = trace_data(
-            "SUCCESS: Any ledger object functions (interface tested)",
-            &[],
-            DataRepr::AsHex,
-        );
+        let _ = trace("SUCCESS: Any ledger object functions (interface tested)");
         return 0;
     }
 
@@ -597,18 +569,14 @@ fn test_any_ledger_object_functions() -> i32 {
         );
     }
 
-    let _ = trace_data("SUCCESS: Any ledger object functions", &[], DataRepr::AsHex);
+    let _ = trace("SUCCESS: Any ledger object functions");
     0
 }
 
 /// Test Category 5: Keylet Generation Functions (4 functions)
 /// Tests keylet generation functions for different ledger entry types
 fn test_keylet_generation_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 5: Keylet Generation Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 5: Keylet Generation Functions ---");
 
     let escrow_finish = EscrowFinish;
     let account_id = escrow_finish.get_account().unwrap();
@@ -698,18 +666,14 @@ fn test_keylet_generation_functions() -> i32 {
     }
     let _ = trace_data("Oracle keylet:", &oracle_keylet_buffer, DataRepr::AsHex);
 
-    let _ = trace_data("SUCCESS: Keylet generation functions", &[], DataRepr::AsHex);
+    let _ = trace("SUCCESS: Keylet generation functions");
     0
 }
 
 /// Test Category 6: Utility Functions (4 functions)
 /// Tests utility functions for hashing, NFT access, and tracing
 fn test_utility_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 6: Utility Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 6: Utility Functions ---");
 
     // Test 6.1: compute_sha512_half() - SHA512 hash computation (first 32 bytes)
     let test_data = b"Hello, XRPL WASM world!";
@@ -795,18 +759,14 @@ fn test_utility_functions() -> i32 {
         }
     }
 
-    let _ = trace_data("SUCCESS: Utility functions", &[], DataRepr::AsHex);
+    let _ = trace("SUCCESS: Utility functions");
     0
 }
 
 /// Test Category 7: Data Update Functions (1 function)
 /// Tests the function for modifying the current ledger entry
 fn test_data_update_functions() -> i32 {
-    let _ = trace_data(
-        "--- Category 7: Data Update Functions ---",
-        &[],
-        DataRepr::AsHex,
-    );
+    let _ = trace("--- Category 7: Data Update Functions ---");
 
     // Test 7.1: update_data() - Update current ledger entry data
     let update_payload = b"Updated ledger entry data from WASM test";
@@ -823,6 +783,6 @@ fn test_data_update_functions() -> i32 {
         update_payload,
         DataRepr::AsHex,
     );
-    let _ = trace_data("SUCCESS: Data update functions", &[], DataRepr::AsHex);
+    let _ = trace("SUCCESS: Data update functions");
     0
 }

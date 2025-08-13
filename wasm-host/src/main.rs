@@ -44,6 +44,11 @@ struct Args {
     /// Function to run in the WASM module
     #[arg(long, default_value = "finish")]
     function: String,
+
+    /// Gas cap can be changed for debugging.
+    /// Note that default value is the default used in rippled.
+    #[arg(long, default_value = "100000")]
+    gas_cap: u32,
 }
 
 #[allow(clippy::type_complexity)]
@@ -138,7 +143,7 @@ fn main() {
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
     // TODO: Make Gas Cap optional via https://github.com/ripple/craft/issues/141
-    match vm_wamr::run_func(wasm_file, &args.function, Some(1_000_000), data_source) {
+    match vm_wamr::run_func(wasm_file, &args.function, Some(args.gas_cap), data_source) {
         Ok(result) => {
             println!("-------------------------------------------------");
             println!("| WASM FUNCTION EXECUTION RESULT                |");

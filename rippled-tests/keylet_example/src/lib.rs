@@ -72,10 +72,10 @@ pub extern "C" fn finish() -> i32 {
     let escrow: CurrentEscrow = get_current_escrow();
 
     let account = escrow.get_account().unwrap_or_panic();
-    let _ = trace_data("Account:", &account.0, DataRepr::AsHex);
+    let _ = trace_account("Account:", &account, DataRepr::AsHex);
 
     let destination = escrow.get_destination().unwrap_or_panic();
-    let _ = trace_data("Destination:", &destination.0, DataRepr::AsHex);
+    let _ = trace_account("Destination:", &destination, DataRepr::AsHex);
 
     let mut seq = 5;
 

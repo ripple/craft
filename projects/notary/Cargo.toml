@@ -3,7 +3,7 @@ name = "notary"
 version = "0.5.1"
 edition = "2024"
 description = "A Smart Escrow that unlocks when the EscrowFinish transaction is signed by a notary."
-license = "MIT"
+license = "ISC"
 build = "build.rs"
 
 # This empty workspace definition keeps this project independent of the parent workspace

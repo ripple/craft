@@ -40,6 +40,14 @@ impl MptId {
     pub fn as_bytes(&self) -> &[u8; 24] {
         &self.0
     }
+
+    pub fn as_ptr(&self) -> *const u8 {
+        self.0.as_ptr()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 impl From<[u8; 24]> for MptId {

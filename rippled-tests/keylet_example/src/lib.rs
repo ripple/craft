@@ -3,7 +3,7 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use crate::host::{Result, Result::Err, Result::Ok};
+use crate::host::{Error, Result, Result::Err, Result::Ok};
 use xrpl_std::core::ledger_objects::current_escrow::CurrentEscrow;
 use xrpl_std::core::ledger_objects::current_escrow::get_current_escrow;
 use xrpl_std::core::ledger_objects::ledger_object;
@@ -13,7 +13,7 @@ use xrpl_std::core::types::amount::currency_code::CurrencyCode;
 use xrpl_std::core::types::amount::mpt_id::MptId;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;
-use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
+use xrpl_std::host::trace::{DataRepr, trace, trace_account, trace_data, trace_num};
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]
@@ -29,7 +29,7 @@ pub fn object_exists(
             let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot <= 0 {
                 let _ = trace_num("Error: ", slot.into());
-                return Err(slot);
+                return Err(Error::from_code(slot));
             }
             if field == 0 {
                 let new_field = sfield::PreviousTxnID;
@@ -72,10 +72,10 @@ pub extern "C" fn finish() -> i32 {
     let escrow: CurrentEscrow = get_current_escrow();
 
     let account = escrow.get_account().unwrap_or_panic();
-    let _ = trace_account("Account:", &account, DataRepr::AsHex);
+    let _ = trace_account("Account:", &account);
 
     let destination = escrow.get_destination().unwrap_or_panic();
-    let _ = trace_account("Destination:", &destination, DataRepr::AsHex);
+    let _ = trace_account("Destination:", &destination);
 
     let mut seq = 5;
 

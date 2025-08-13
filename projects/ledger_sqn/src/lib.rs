@@ -13,7 +13,7 @@ pub extern "C" fn finish() -> i32 {
         let result_code = host::get_ledger_sqn();
 
         let ledger_sequence = match_result_code(result_code, || {
-            Some(result_code.unwrap()) // <-- Move the value into a buffer
+            Some(result_code) // <-- Move the value into a buffer
         })
         .unwrap()
         .unwrap();

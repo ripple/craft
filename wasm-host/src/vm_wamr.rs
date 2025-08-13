@@ -1,16 +1,17 @@
 use crate::data_provider::DataProvider;
 use crate::host_functions_wamr::{
     account_keylet, cache_ledger_obj, check_keylet, compute_sha512_half, credential_keylet,
-    delegate_keylet, deposit_preauth_keylet, did_keylet, escrow_keylet, float_add, float_compare,
-    float_divide, float_from_int, float_from_uint, float_log, float_multiply, float_pow,
-    float_root, float_set, float_subtract, get_current_ledger_obj_array_len,
-    get_current_ledger_obj_field, get_current_ledger_obj_nested_array_len,
-    get_current_ledger_obj_nested_field, get_ledger_obj_array_len, get_ledger_obj_field,
-    get_ledger_obj_nested_array_len, get_ledger_obj_nested_field, get_ledger_sqn, get_nft,
-    get_parent_ledger_hash, get_parent_ledger_time, get_tx_array_len, get_tx_field,
-    get_tx_nested_array_len, get_tx_nested_field, line_keylet, nft_offer_keylet, offer_keylet,
-    oracle_keylet, paychan_keylet, signers_keylet, ticket_keylet, trace, trace_num,
-    trace_opaque_float, update_data,
+    delegate_keylet, deposit_preauth_keylet, did_keylet, escrow_keylet,
+    get_current_ledger_obj_array_len, get_current_ledger_obj_field,
+    get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
+    get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
+    get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
+    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len,
+    get_tx_nested_field, iou_value_add, iou_value_compare, iou_value_divide, iou_value_from_int,
+    iou_value_from_uint, iou_value_log, iou_value_multiply, iou_value_pow, iou_value_root,
+    iou_value_set, iou_value_subtract, line_keylet, nft_offer_keylet, offer_keylet, oracle_keylet,
+    paychan_keylet, signers_keylet, ticket_keylet, trace, trace_num, trace_opaque_float,
+    update_data,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};
@@ -55,17 +56,17 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("get_nft", get_nft as *mut c_void, "(*~*~*~)i", 1000, data_provider.as_ptr())
         .register_host_function("trace", trace as *mut c_void, "(*~*~i)i", 500, data_provider.as_ptr())
         .register_host_function("trace_num", trace_num as *mut c_void, "(*~I)i", 500, data_provider.as_ptr())
-        .register_host_function("float_from_int", float_from_int as *mut c_void, "(I*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_from_uint", float_from_uint as *mut c_void, "(*~*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_set", float_set as *mut c_void, "(iI*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_compare", float_compare as *mut c_void, "(*~*~)i", 100, data_provider.as_ptr())
-        .register_host_function("float_add", float_add as *mut c_void, "(*~*~*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_subtract", float_subtract as *mut c_void, "(*~*~*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_multiply", float_multiply as *mut c_void, "(*~*~*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_divide", float_divide as *mut c_void, "(*~*~*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_pow", float_pow as *mut c_void, "(*~i*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_root", float_root as *mut c_void, "(*~i*~i)i", 100, data_provider.as_ptr())
-        .register_host_function("float_log", float_log as *mut c_void, "(*~*~i)i", 100, data_provider.as_ptr())
+        .register_host_function("float_from_int", iou_value_from_int as *mut c_void, "(I*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_from_uint", iou_value_from_uint as *mut c_void, "(*~*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_set", iou_value_set as *mut c_void, "(iI*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_compare", iou_value_compare as *mut c_void, "(*~*~)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_add", iou_value_add as *mut c_void, "(*~*~*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_subtract", iou_value_subtract as *mut c_void, "(*~*~*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_multiply", iou_value_multiply as *mut c_void, "(*~*~*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_divide", iou_value_divide as *mut c_void, "(*~*~*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_pow", iou_value_pow as *mut c_void, "(*~i*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_root", iou_value_root as *mut c_void, "(*~i*~i)i", 1000, data_provider.as_ptr())
+        .register_host_function("float_log", iou_value_log as *mut c_void, "(*~*~i)i", 1000, data_provider.as_ptr())
         .register_host_function("trace_opaque_float", trace_opaque_float as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .register_host_function("check_keylet", check_keylet as *mut c_void, "(*~i*~)i", 350, data_provider.as_ptr())
         .register_host_function("delegate_keylet", delegate_keylet as *mut c_void, "(*~*~*~)i", 350, data_provider.as_ptr())

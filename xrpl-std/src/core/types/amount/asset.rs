@@ -59,12 +59,8 @@ impl Asset {
                 static XRP_BUF: [u8; 20] = [0; 20];
                 &XRP_BUF
             }
-            Asset::IOU(iou) => {
-                return iou.as_bytes();
-            }
-            Asset::MPT(mpt) => {
-                return mpt.mpt_id.as_bytes();
-            }
+            Asset::IOU(iou) => iou.as_bytes(),
+            Asset::MPT(mpt) => mpt.mpt_id.as_bytes(),
         }
     }
 }

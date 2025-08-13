@@ -87,19 +87,17 @@ pub fn account_keylet(account_id: &AccountID) -> Result<KeyletBytes> {
 ///
 /// ```rust
 /// use xrpl_std::core::types::account_id::AccountID;
-/// use crate::core::types::amount::asset::Asset;
+/// use xrpl_std::core::types::amount::asset::{Asset, XrpAsset, IouAsset};
+/// use xrpl_std::core::types::amount::currency_code::CurrencyCode;
 /// use xrpl_std::core::types::keylets::amm_keylet;
 /// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///  let asset1: Asset = XRPAsset {};
+///  let asset1: Asset = Asset::XRP(XrpAsset {});
 ///  let issuer: AccountID =
-///    Asset::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
+///    AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///  let currency_code = b"RLUSD\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"; // RLUSD currency code
 ///  let currency: CurrencyCode = CurrencyCode::from(*currency_code);
-///  let asset2: Asset = IouAsset {
-///      issuer: account,
-///      currency_code: currency,
-///  };
+///  let asset2 = Asset::IOU(IouAsset::new(issuer, currency));
 ///  match amm_keylet(&asset1, &asset2) {
 ///    xrpl_std::host::Result::Ok(keylet) => {
 ///      let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
@@ -601,12 +599,13 @@ pub fn mpt_issuance_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 ///
 /// ```rust
 /// use xrpl_std::core::types::account_id::AccountID;
+/// use xrpl_std::core::types::amount::mpt_id::MptId;
 /// use xrpl_std::core::types::keylets::mptoken_keylet;
 /// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let issuer: AccountID =
 ///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
-///     let mptid: MptId = MptId::new(issuer, 1);
+///     let mptid: MptId = MptId::new(1, issuer);
 ///     let holder: AccountID =
 ///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///     match mptoken_keylet(&mptid, &holder) {

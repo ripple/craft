@@ -46,11 +46,6 @@ use crate::core::error_codes::{
     match_result_code_optional, match_result_code_with_expected_bytes,
     match_result_code_with_expected_bytes_optional,
 };
-use crate::core::field_codes::{
-    SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT, SF_HASH,
-    SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE, SF_OWNER, SF_SEQUENCE,
-    SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE,
-};
 use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::blob::Blob;
@@ -80,7 +75,7 @@ pub trait TransactionCommonFields {
     /// * `Ok(AccountID)` - The 20-byte account identifier of the transaction sender
     /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_account(&self) -> Result<AccountID> {
-        get_account_id_field(SF_ACCOUNT)
+        get_account_id_field(sfield::Account)
     }
 
     /// Retrieves the transaction type from the current transaction.
@@ -98,7 +93,7 @@ pub trait TransactionCommonFields {
         let mut buffer = [0u8; 2]; // Allocate memory to read into (this is an i32)
 
         let result_code =
-            unsafe { get_tx_field(SF_TRANSACTION_TYPE, buffer.as_mut_ptr(), buffer.len()) };
+            unsafe { get_tx_field(sfield::TransactionType, buffer.as_mut_ptr(), buffer.len()) };
 
         match_result_code_with_expected_bytes(result_code, 2, || i16::from_le_bytes(buffer).into())
     }
@@ -136,7 +131,7 @@ pub trait TransactionCommonFields {
     /// Returns XRP amounts only (for now). Future versions may support other token types
     /// when the underlying amount handling is enhanced.
     fn get_fee(&self) -> Result<TokenAmount> {
-        get_amount_field(SF_FEE)
+        get_amount_field(sfield::Fee)
     }
 
     /// Retrieves the sequence number from the current transaction.
@@ -157,7 +152,7 @@ pub trait TransactionCommonFields {
     /// If the transaction uses tickets instead of sequence numbers, this field may not
     /// be present. In such cases, use `get_ticket_sequence()` instead.
     fn get_sequence(&self) -> Result<u32> {
-        get_u32_field(SF_SEQUENCE)
+        get_u32_field(sfield::Sequence)
     }
 
     /// Retrieves the account transaction ID from the current transaction.
@@ -173,7 +168,7 @@ pub trait TransactionCommonFields {
     /// * `Ok(None)` - If no previous transaction requirement is specified
     /// * `Err(Error)` - If an error occurred during field retrieval
     fn get_account_txn_id(&self) -> Result<Option<Hash256>> {
-        get_hash_256_field_optional(SF_ACCOUNT_TXN_ID)
+        get_hash_256_field_optional(sfield::AccountTxnID)
     }
 
     /// Retrieves the `flags` field from the current transaction.
@@ -188,7 +183,7 @@ pub trait TransactionCommonFields {
     /// * `Ok(None)` - If no flags are specified (equivalent to flags = 0)
     /// * `Err(Error)` - If an error occurred during field retrieval
     fn get_flags(&self) -> Result<Option<u32>> {
-        get_u32_field_optional(SF_FLAGS)
+        get_u32_field_optional(sfield::Flags)
     }
 
     /// Retrieves the last ledger sequence from the current transaction.
@@ -204,7 +199,7 @@ pub trait TransactionCommonFields {
     /// * `Ok(None)` - If no expiration is specified (transaction never expires)
     /// * `Err(Error)` - If an error occurred during field retrieval
     fn get_last_ledger_sequence(&self) -> Result<Option<u32>> {
-        get_u32_field_optional(SF_LAST_LEDGER_SEQUENCE)
+        get_u32_field_optional(sfield::LastLedgerSequence)
     }
 
     /// Retrieves the network ID from the current transaction.
@@ -220,7 +215,7 @@ pub trait TransactionCommonFields {
     /// * `Ok(None)` - If no specific network is specified (uses default network)
     /// * `Err(Error)` - If an error occurred during field retrieval
     fn get_network_id(&self) -> Result<Option<u32>> {
-        get_u32_field_optional(SF_NETWORK_ID)
+        get_u32_field_optional(sfield::NetworkID)
     }
 
     /// Retrieves the source tag from the current transaction.
@@ -236,7 +231,7 @@ pub trait TransactionCommonFields {
     /// * `Ok(None)` - If no source tag is specified
     /// * `Err(Error)` - If an error occurred during field retrieval
     fn get_source_tag(&self) -> Result<Option<u32>> {
-        get_u32_field_optional(SF_SOURCE_TAG)
+        get_u32_field_optional(sfield::SourceTag)
     }
 
     /// Retrieves the signing public key from the current transaction.
@@ -257,7 +252,7 @@ pub trait TransactionCommonFields {
     /// only provides the key claimed to be used for signing. The XRPL network performs signature
     /// validation before transaction execution.
     fn get_signing_pub_key(&self) -> Result<PublicKey> {
-        get_public_key_field(SF_SIGNING_PUB_KEY)
+        get_public_key_field(sfield::SigningPubKey)
     }
 
     /// Retrieves the ticket sequence from the current transaction.
@@ -277,7 +272,7 @@ pub trait TransactionCommonFields {
     /// Transactions use either `Sequence` or `TicketSequence`, but not both. Check this
     /// field when `get_sequence()` fails or when implementing ticket-aware logic.
     fn get_ticket_sequence(&self) -> Result<Option<u32>> {
-        get_u32_field_optional(SF_TICKET_SEQUENCE)
+        get_u32_field_optional(sfield::TicketSequence)
     }
 
     /// Retrieves the transaction signature from the current transaction.
@@ -297,7 +292,7 @@ pub trait TransactionCommonFields {
     /// In the programmability context, you can access the signature for logging or
     /// analysis purposes, but signature validation has already been performed.
     fn get_txn_signature(&self) -> Result<Blob> {
-        get_blob_field(SF_TXN_SIGNATURE)
+        get_blob_field(sfield::TxnSignature)
     }
 }
 
@@ -327,7 +322,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// * `Ok(Hash256)` - The 256-bit transaction hash identifier
     /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_id(&self) -> Result<Hash256> {
-        get_hash_256_field(SF_HASH)
+        get_hash_256_field(sfield::hash)
     }
 
     /// Retrieves the owner account from the current EscrowFinish transaction.
@@ -342,7 +337,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// * `Ok(AccountID)` - The 20-byte account identifier of the escrow owner
     /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_owner(&self) -> Result<AccountID> {
-        get_account_id_field(SF_OWNER)
+        get_account_id_field(sfield::Owner)
     }
 
     /// Retrieves the offer sequence from the current EscrowFinish transaction.
@@ -358,7 +353,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     /// * `Ok(u32)` - The sequence number of the EscrowCreate transaction
     /// * `Err(Error)` - If the field cannot be retrieved or has an unexpected size
     fn get_offer_sequence(&self) -> Result<u32> {
-        get_u32_field(SF_OFFER_SEQUENCE)
+        get_u32_field(sfield::OfferSequence)
     }
 
     /// Retrieves the cryptographic condition from the current EscrowFinish transaction.
@@ -377,7 +372,8 @@ pub trait EscrowFinishFields: TransactionCommonFields {
     fn get_condition(&self) -> Result<Option<Condition>> {
         let mut buffer = [0u8; 32];
 
-        let result_code = unsafe { get_tx_field(SF_CONDITION, buffer.as_mut_ptr(), buffer.len()) };
+        let result_code =
+            unsafe { get_tx_field(sfield::Condition, buffer.as_mut_ptr(), buffer.len()) };
 
         match_result_code_with_expected_bytes_optional(result_code, 32, || Some(buffer.into()))
     }
@@ -414,7 +410,7 @@ pub trait EscrowFinishFields: TransactionCommonFields {
 
         let mut buffer = [0u8; 256]; // <-- 256 is the current rippled cap.
 
-        let result_code = unsafe { get_tx_field(SF_FULFILLMENT, buffer.as_mut_ptr(), 256) };
+        let result_code = unsafe { get_tx_field(sfield::Fulfillment, buffer.as_mut_ptr(), 256) };
         match_result_code_optional(result_code, || {
             Some(Fulfillment {
                 data: buffer,

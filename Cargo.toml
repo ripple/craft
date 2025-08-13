@@ -6,7 +6,7 @@ members = [
 
 [package]
 name = "craft"
-version = "0.5.1"
+version = "0.5.1-devnet5"
 edition = "2024"
 description = "Command-line tool for building, testing, and deploying XRPL smart contracts in WASM"
 license = "ISC"

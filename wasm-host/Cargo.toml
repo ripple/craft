@@ -1,7 +1,8 @@
 [package]
 name = "wasm-host"
-version = "0.1.0"
+version = "0.5.1-devnet5"
 edition = "2024"
+license = "ISC"
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
@@ -16,3 +17,4 @@ wamr-rust-sdk = { git = "https://github.com/ripple/wamr-rust-sdk.git"}
 bigdecimal = {version = "0.4.8", features = ["serde-json"]}
 num-traits = "0.2.19"
 num-derive = "0.4.2"
+xrpld-number = { path = "xrpld-number" }

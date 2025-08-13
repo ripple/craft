@@ -3,12 +3,12 @@
 version = 4
 
 [[package]]
-name = "xrpl-std"
-version = "0.0.1"
-
-[[package]]
-name = "xrpl_std_example"
+name = "trace_escrow_ledger_object"
 version = "0.0.1"
 dependencies = [
  "xrpl-std",
 ]
+
+[[package]]
+name = "xrpl-std"
+version = "0.5.1-devnet5"

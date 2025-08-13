@@ -39,6 +39,16 @@ async function readFileFromGitHub(repo, filename) {
     }
 }
 
+function areListsEqual(a, b) {
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false
+        }
+    }
+    return true
+}
+
 async function readFile(folder, filename) {
     const filePath = path.join(folder, filename)
     try {
@@ -63,50 +73,52 @@ async function main() {
     const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings_for_testing.rs')
 
     let importHits = [
-    ...wasmImportFile.matchAll(
-        /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z0-9]+), *("([A-Za-z0-9_]+)",)? *hfs, *[0-9]+\);$/gm,
-    ),
+        ...wasmImportFile.matchAll(
+            // parse the WASM host function imports in `WasmVM.cpp`
+            /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z0-9]+), *("([A-Za-z0-9_]+)",)? *hfs, *[0-9]+\);$/gm,
+        ),
     ]
-    const imports = importHits.map((hit) => [hit[1], hit[3] != null ? hit[3] : hit[1]]).filter(
-    (hit) => hit[0] !== 'getLedgerSqnOld')
+    const imports = importHits.map((hit) => [hit[1], hit[3] != null ? hit[3] : hit[1]]).sort((a, b) => a[0].localeCompare(b[0]))
 
     let wrapperHits = [
-    ...hostWrapperFile.matchAll(
-        /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]+)\);$/gm,
-    ),
+        ...hostWrapperFile.matchAll(
+            // parse the `proto` functions in `WasmHostFuncWrapper.h`
+            /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]*)\);$/gm,
+        ),
     ]
-    const wrappers = wrapperHits.map((hit) => [hit[1], hit[2], hit[3].split(',').map((s) => s.trim())])
-    if (imports.length !== wrappers.length) {
-    console.error(
-        'Imports and Host Functions do not match in length! ' +
-        imports.length +
-        ' !== ' +
-        wrappers.length,
-    )
-    process.exit(1)
+    const wrappers = wrapperHits.map((hit) => [hit[1], hit[2], hit[3].length == 0 ? [] : hit[3].split(',').map((s) => s.trim())]).sort((a, b) => a[0].localeCompare(b[0]))
+    if (!areListsEqual(imports.map(f => f[0]), wrappers.map(f => f[0]))) {
+        console.error('Imports and C++ Host Functions do not match!')
+        const importsMissing = wrappers.filter(f => !imports.some(func => func[0] === f[0]))
+        const hfMissing = imports.filter(f => !wrappers.some(func => func[0] === f[0]))
+        if (importsMissing.length > 0)
+            console.error('Missing Imports:', importsMissing.map(func => func[0]).join(', '))
+        if (hfMissing.length > 0)
+            console.error('Missing C++ Host Functions:', hfMissing.map(func => func[0]).join(', '))
+        process.exit(1)
     }
 
     for (let i = 0; i < imports.length; i++) {
-    if (imports[i][0] !== wrappers[i][0]) {
-        console.error(
-        'Imports and Host Functions do not match at index ' +
-            i +
-            ': ' +
-            imports[i][0] +
-            ' !== ' +
-            wrappers[i][0],
-        )
-        process.exit(1)
-    }
+        if (imports[i][0] !== wrappers[i][0]) {
+            console.error(
+            'Imports and Host Functions do not match at index ' +
+                i +
+                ': ' +
+                imports[i][0] +
+                ' !== ' +
+                wrappers[i][0],
+            )
+            process.exit(1)
+        }
     }
 
     const cppHostFunctions = imports.map((hit, i) => {
-    return {
-        name: hit[1],
-        return: wrappers[i][1],
-        params: wrappers[i][2],
-    }
-    })
+        return {
+            name: hit[1],
+            return: wrappers[i][1],
+            params: wrappers[i][2],
+        }
+    }).sort((a, b) => a.name.localeCompare(b.name))
 
     const paramTranslation = {
         'i32': 'int32_t',
@@ -118,15 +130,15 @@ async function main() {
     }
 
     function translateParamType(param) {
-    if (param in paramTranslation) {
-        return paramTranslation[param]
-    }
-    console.error(`Unknown parameter type: ${param}`)
-    process.exit(1)
+        if (param in paramTranslation) {
+            return paramTranslation[param]
+        }
+        console.error(`Unknown parameter type: ${param}`)
+        process.exit(1)
     }
 
     function checkHits(fileTitle, rustHostFunctions) {
-        if (new Set(rustHostFunctions.map(f => f.name)) !== new Set(cppHostFunctions.map(f => f.name))) {
+        if (!areListsEqual(rustHostFunctions.map(f => f.name), cppHostFunctions.map(f => f.name))) {
             console.error('Rust Host Functions and C++ Host Functions do not match!')
             const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
             const cppMissing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
@@ -139,28 +151,29 @@ async function main() {
 
         let hasError = false
         rustHostFunctions.forEach((hit, index) => {
-            if (hit.name !== cppHostFunctions[index].name) {
+            const cppHit = cppHostFunctions[index]
+            if (hit.name !== cppHit.name) {
                 console.error(
-                    `Rust Host Function name mismatch in ${fileTitle}: ${hit.name} !== ${cppHostFunctions[index].name}`,
+                    `Rust Host Function name mismatch in ${fileTitle}: ${hit.name} !== ${cppHit.name}`,
                 )
                 hasError = true
             }
-            else if (hit.return !== cppHostFunctions[index].return) {
+            else if (hit.return !== cppHit.return) {
                 console.error(
-                    `Rust Host Function return type mismatch in ${fileTitle} for ${hit.name}: ${hit.return} !== ${cppHostFunctions[index].return}`,
+                    `Rust Host Function return type mismatch in ${fileTitle} for ${hit.name}: ${hit.return} !== ${cppHit.return}`,
                 )
                 hasError = true
             }
-            else if (hit.params.length !== cppHostFunctions[index].params.length) {
+            else if (hit.params.length !== cppHit.params.length) {
                 console.error(
-                    `Rust Host Function parameter count mismatch in ${fileTitle} for ${hit.name}: ${hit.params.length} !== ${cppHostFunctions[index].params.length}`,
+                    `Rust Host Function parameter count mismatch in ${fileTitle} for ${hit.name}: ${hit.params.length} !== ${cppHit.params.length} (${hit.params.join(', ')}) !== (${cppHit.params.join(', ')})`,
                 )
                 hasError = true
             } else {
                 hit.params.forEach((param, paramIndex) => {
-                    if (param !== cppHostFunctions[index].params[paramIndex]) {
+                    if (param !== cppHit.params[paramIndex]) {
                         console.error(
-                            `Rust Host Function parameter type mismatch in ${fileTitle} for ${hit.name}, parameter ${paramIndex}: ${param} !== ${cppHostFunctions[index].params[paramIndex]}`,
+                            `Rust Host Function parameter type mismatch in ${fileTitle} for ${hit.name}, parameter ${paramIndex}: ${param} !== ${cppHit.params[paramIndex]}`,
                         )
                         hasError = true
                     }
@@ -174,6 +187,7 @@ async function main() {
 
     let rustHits = [
         ...rustHostFunctionFile.matchAll(
+            // parse the Rust host functions in `host_bindings.rs`
             /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+);$/gm,
         ),
     ]
@@ -184,11 +198,12 @@ async function main() {
             return: translateParamType(hit[1]),
             params: hit[2].map(translateParamType),
         }
-    })
+    }).sort((a, b) => a.name.localeCompare(b.name))
     checkHits("host_bindings.rs", rustHostFunctions)
 
     let rustTestHits = [
         ...rustHostFunctionTestFile.matchAll(
+            // parse the Rust host functions in `host_bindings_for_testing.rs`
             /^ *pub (unsafe )?fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+)/gm,
         ),
     ]
@@ -199,8 +214,8 @@ async function main() {
             return: translateParamType(hit[1]),
             params: hit[2].map(translateParamType),
         }
-    })
-    checkHits("host_bindings.rs", rustTestHostFunctions)
+    }).sort((a, b) => a.name.localeCompare(b.name))
+    checkHits("host_bindings_for_testing.rs", rustTestHostFunctions)
 
 
     console.log('All host functions match between Rust and C++ implementations.')

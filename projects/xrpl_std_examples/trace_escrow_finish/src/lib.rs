@@ -16,7 +16,6 @@ use xrpl_std::host;
 use xrpl_std::host::trace::{
     DataRepr, trace, trace_account, trace_account_buf, trace_amount, trace_data, trace_num,
 };
-use xrpl_std::sfield;
 use xrpl_std::{assert_eq, sfield};
 
 #[unsafe(no_mangle)]

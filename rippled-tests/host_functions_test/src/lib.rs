@@ -97,9 +97,7 @@ fn test_ledger_header_functions() -> i32 {
     let _ = trace("--- Category 1: Ledger Header Functions ---");
 
     // Test 1.1: get_ledger_sqn() - should return current ledger sequence number
-    let mut ledger_sqn_buffer = [0u8; 8];
-    let sqn_result =
-        unsafe { get_ledger_sqn(ledger_sqn_buffer.as_mut_ptr(), ledger_sqn_buffer.len()) };
+    let sqn_result = unsafe { get_ledger_sqn() };
 
     if sqn_result <= 0 {
         let _ = trace_num("ERROR: get_ledger_sqn failed:", sqn_result as i64);

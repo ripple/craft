@@ -48,6 +48,10 @@ impl MptId {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.iter().all(|&byte| byte == 0)
+    }
 }
 
 impl From<[u8; 24]> for MptId {

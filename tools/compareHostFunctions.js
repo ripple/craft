@@ -74,6 +74,7 @@ async function main() {
 
     let importHits = [
         ...wasmImportFile.matchAll(
+            // parse the WASM host function imports in `WasmVM.cpp`
             /^ *WASM_IMPORT_FUNC2? *\(i, *([A-Za-z0-9]+), *("([A-Za-z0-9_]+)",)? *hfs, *[0-9]+\);$/gm,
         ),
     ]
@@ -81,6 +82,7 @@ async function main() {
 
     let wrapperHits = [
         ...hostWrapperFile.matchAll(
+            // parse the `proto` functions in `WasmHostFuncWrapper.h`
             /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]*)\);$/gm,
         ),
     ]
@@ -185,6 +187,7 @@ async function main() {
 
     let rustHits = [
         ...rustHostFunctionFile.matchAll(
+            // parse the Rust host functions in `host_bindings.rs`
             /^ *pub fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+);$/gm,
         ),
     ]
@@ -200,6 +203,7 @@ async function main() {
 
     let rustTestHits = [
         ...rustHostFunctionTestFile.matchAll(
+            // parse the Rust host functions in `host_bindings_for_testing.rs`
             /^ *pub (unsafe )?fn ([A-Za-z0-9_]+)\([ \n]*([A-Za-z0-9_:*, \n]*)\) -> ([A-Za-z0-9]+)/gm,
         ),
     ]

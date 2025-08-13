@@ -1130,6 +1130,18 @@ pub extern "C" fn finish() -> i32 {
         error_codes::POINTER_OUT_OF_BOUNDS,
         "trace_account_oob_string",
     );
+    check_result(
+        unsafe {
+            host::trace_account(
+                message.as_ptr().wrapping_add(1_000_000_000),
+                message.len(),
+                amount.as_ptr(),
+                amount.len(),
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "trace_amount_oob_string",
+    );
 
     // trace too large
 

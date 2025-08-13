@@ -47,7 +47,7 @@ struct Args {
 
     /// Gas cap can be changed for debugging.
     /// Note that default value is the default used in rippled.
-    #[arg(long, default_value = "100000")]
+    #[arg(long, default_value = "1000000")]
     gas_cap: u32,
 }
 

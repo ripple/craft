@@ -20,8 +20,8 @@ pub struct IouAsset {
 impl IouAsset {
     pub fn new(issuer: AccountID, currency_code: CurrencyCode) -> Self {
         let mut bytes = [0u8; 40];
-        bytes[..20].copy_from_slice(&issuer.0);
-        bytes[20..].copy_from_slice(currency_code.as_bytes());
+        bytes[..20].copy_from_slice(currency_code.as_bytes());
+        bytes[20..].copy_from_slice(&issuer.0);
         Self {
             issuer,
             currency_code,

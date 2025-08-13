@@ -72,8 +72,7 @@ pub const TOKEN_AMOUNT_SIZE: usize = 48;
 ///      └──────────────────┘└──────────────────┘
 /// ```
 ///
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum TokenAmount {
     XRP {
         // amount: Amount::XRP,

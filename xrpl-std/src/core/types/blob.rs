@@ -1,5 +1,4 @@
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Blob {
     pub data: [u8; 1024],
 

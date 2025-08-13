@@ -2,8 +2,7 @@
 
 pub const HASH256_SIZE: usize = 32;
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Hash256(pub [u8; HASH256_SIZE]);
 
 // Implement From<[u8; 32]> to create Hash256 from the array type

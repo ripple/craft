@@ -49,8 +49,11 @@ pub extern "C" fn finish() -> i32 {
 
         // Trace Field: TransactionType
         let transaction_type: TransactionType = escrow_finish.get_transaction_type().unwrap();
-        assert_eq!(transaction_type, TransactionType::EscrowFinish);
         let tx_type_bytes: [u8; 2] = transaction_type.into();
+        assert_eq!(
+            escrow_finish.get_transaction_type().unwrap(),
+            TransactionType::EscrowFinish
+        );
         let _ = trace_data(
             "  TransactionType (EscrowFinish):",
             &tx_type_bytes,

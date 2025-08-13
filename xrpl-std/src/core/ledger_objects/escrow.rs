@@ -1,7 +1,6 @@
 use crate::core::ledger_objects::traits::{EscrowFields, LedgerObjectCommonFields};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Escrow {
     slot_num: i32,
 }

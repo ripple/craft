@@ -2,8 +2,7 @@
 
 pub const UINT128_SIZE: usize = 16;
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct UInt128(pub [u8; UINT128_SIZE]);
 
 // Implement From<[u8; 16]> to create UInt128 from the array type

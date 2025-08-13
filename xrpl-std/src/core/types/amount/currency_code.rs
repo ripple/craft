@@ -2,8 +2,7 @@ pub const CURRENCY_CODE_SIZE: usize = 20;
 pub const STANDARD_CURRENCY_CODE_SIZE: usize = 3; // For standard currencies like USD, EUR, etc.
 
 /// Represents a currency code in the XRPL, which is a 20-byte identifier.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CurrencyCode(pub [u8; CURRENCY_CODE_SIZE]);
 
 impl CurrencyCode {

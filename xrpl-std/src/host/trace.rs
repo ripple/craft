@@ -6,7 +6,7 @@ use crate::host::Result;
 use core::ptr;
 
 /// Data representation
-#[derive(Clone, Copy)]
+#[repr(u8)]
 pub enum DataRepr {
     /// As UTF-8
     AsUTF8 = 0,

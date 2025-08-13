@@ -8,8 +8,7 @@ const LOCATOR_BUFFER_SIZE: usize = 64;
 /// A Locator allows a WASM developer located any field in any object (even nested fields) by
 /// specifying a `slot_num` (1 byte); a `locator_field_type` (1 byte); then one of an `sfield` (4
 /// bytes) or an `index` (4 bytes).
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Locator {
     // The first packed value is 6 bytes; All nested/packed values are 5 bytes; so 64 bytes allow
     // 12 nested levels of access.

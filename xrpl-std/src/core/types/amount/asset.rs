@@ -4,13 +4,11 @@ use crate::core::types::amount::mpt_id::MptId;
 
 /// Struct to represent an Asset of type XRP. Exists so that other structs can restrict type
 /// information to XRP in their declarations (this is not possible with just the `Asset` enum below).
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct XrpAsset {}
 
 /// Defines an asset for IOUs.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct IouAsset {
     issuer: AccountID,
     currency_code: CurrencyCode,
@@ -18,16 +16,14 @@ pub struct IouAsset {
 
 /// Struct to represent an Asset of type MPT. Exists so that other structs can restrict type
 /// information to XRP in their declarations (this is not possible with just the `Asset` enum below).
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct MptAsset {
     mpt_id: MptId,
 }
 
 /// Represents an asset withoout a value, such as reading `Asset1` and `Asset2` in AMM ledger
 /// objects.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Asset {
     XRP(XrpAsset),
     IOU(IouAsset),

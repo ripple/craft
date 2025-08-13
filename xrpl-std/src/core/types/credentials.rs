@@ -1,9 +1,7 @@
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CredentialID(pub [u8; 256]);
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CredentialIDs {
     pub credential_ids: [CredentialID; 10],
     pub num_credential_ids: u8, // Max of 10!
@@ -27,8 +25,8 @@ impl CredentialIDs {
         // Copy the provided IDs into the start of the array.
         // Using `enumerate` gives us the index `i`.
         // Since CredentialID is Copy, `*id` performs a cheap copy.
-        for (i, &id) in ids.iter().enumerate() {
-            credential_ids_array[i] = id;
+        for (i, id) in ids.iter().enumerate() {
+            credential_ids_array[i] = CredentialID(id.0);
         }
 
         CredentialIDs {
@@ -49,8 +47,8 @@ impl TryFrom<&[CredentialID]> for CredentialIDs {
         }
 
         let mut credential_ids_array = [EMPTY_CREDENTIAL_ID; 10];
-        for (i, &id) in ids.iter().enumerate() {
-            credential_ids_array[i] = id;
+        for (i, id) in ids.iter().enumerate() {
+            credential_ids_array[i] = CredentialID(id.0);
         }
 
         Ok(CredentialIDs {

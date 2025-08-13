@@ -1,7 +1,6 @@
 use crate::core::ledger_objects::traits::{CurrentEscrowFields, CurrentLedgerObjectCommonFields};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CurrentEscrow;
 
 impl CurrentLedgerObjectCommonFields for CurrentEscrow {}

@@ -5,7 +5,6 @@ pub type Hash256 = Vec<u8>;
 
 #[repr(u16)]
 #[allow(dead_code)]
-// #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LedgerNameSpace {
     Account = b'a' as u16,
     DirNode = b'd' as u16,

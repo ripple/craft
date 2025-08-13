@@ -2,8 +2,7 @@
 /// `exponent` and `mantissa` that rippled uses to represent a floating point number. Craft treats
 /// this as an opaque so that developers don't try and do arithmetic with these bytes directly, but
 /// instead use Host functions for any arithmetic on this type of number.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct OpaqueFloat(pub [u8; 8]);
 
 impl OpaqueFloat {

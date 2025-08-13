@@ -1184,5 +1184,24 @@ pub extern "C" fn finish() -> i32 {
         "trace_amount_wrong_length",
     );
 
+    // other misc errors
+
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::mptoken_keylet(
+                    locator.as_ptr(),
+                    locator.len(),
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "mptoken_keylet_mptid_wrong_length",
+        )
+    });
+
     1 // <-- If we get here, finish the escrow.
 }

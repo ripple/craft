@@ -447,100 +447,7 @@ impl DockerManager {
         }
 
         // Create and start new container
-        println!("{}", "Creating new rippled container...".cyan());
-
-        // Get the absolute paths for config files
-        let current_dir = std::env::current_dir().context("Failed to get current directory")?;
-        let config_path = current_dir.join("reference/rippled_cfg/smart-escrow-rippled.cfg");
-        let validators_path = current_dir.join("reference/rippled_cfg/validators.txt");
-
-        // Check if config files exist
-        if !config_path.exists() {
-            return Err(anyhow::anyhow!(
-                "rippled config file not found at: {}",
-                config_path.display()
-            ));
-        }
-        if !validators_path.exists() {
-            return Err(anyhow::anyhow!(
-                "validators file not found at: {}",
-                validators_path.display()
-            ));
-        }
-
-        // Create container with port mappings and volume mounts
-        // Port mapping based on config:
-        // - 6005 (container) -> 6005 (host) for public WebSocket
-        // - 6006 (container) -> 6006 (host) for admin WebSocket
-        // - 5005 (container) -> 5005 (host) for admin RPC
-        // -v /path/to/config:/etc/opt/ripple/rippled.cfg:ro
-        // -v /path/to/validators:/etc/opt/ripple/validators.txt:ro
-        let create_opts = ContainerCreateOpts::builder()
-            .name(CONTAINER_NAME)
-            .image(RIPPLED_IMAGE)
-            .expose(docker_api::opts::PublishPort::tcp(6005), 6005) // Public WS
-            .expose(docker_api::opts::PublishPort::tcp(6006), 6006) // Admin WS
-            .expose(docker_api::opts::PublishPort::tcp(5005), 5005) // Admin RPC
-            .volumes(vec![
-                format!(
-                    "{}:/etc/opt/ripple/rippled.cfg:ro",
-                    config_path.to_string_lossy()
-                ),
-                format!(
-                    "{}:/etc/opt/ripple/validators.txt:ro",
-                    validators_path.to_string_lossy()
-                ),
-            ])
-            // Override entrypoint to ensure rippled runs with correct arguments
-            .entrypoint(vec!["/opt/ripple/bin/rippled"])
-            .command(vec![
-                "-a",      // Stand-alone mode flag
-                "--start", // Start from a fresh ledger
-                "--conf=/etc/opt/ripple/rippled.cfg",
-            ])
-            .build();
-
-        let container = containers.create(&create_opts).await?;
-
-        println!("{}", "Starting container...".cyan());
-        container.start().await?;
-
-        println!(
-            "{}",
-            "rippled container started successfully in stand-alone mode!".green()
-        );
-        println!("{}", "Public WebSocket: ws://localhost:6005".blue());
-        println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
-        println!("{}", "Admin RPC API: http://localhost:5005".blue());
-        println!(
-            "{}",
-            "\nNote: Running in stand-alone mode (no peers, local ledger only)".yellow()
-        );
-
-        if foreground {
-            println!(
-                "{}",
-                "\nShowing container logs (Ctrl+C to stop)...".yellow()
-            );
-            let log_opts = LogsOpts::builder()
-                .stdout(true)
-                .stderr(true)
-                .follow(true)
-                .build();
-
-            let mut logs = container.logs(&log_opts);
-            while let Some(log) = logs.next().await {
-                match log {
-                    Ok(chunk) => print!("{}", String::from_utf8_lossy(&chunk)),
-                    Err(e) => eprintln!("Error reading logs: {e}"),
-                }
-            }
-        } else {
-            println!("{}", "\nTo view logs: docker logs -f craft-rippled".blue());
-            println!("{}", "To stop: craft stop-rippled".blue());
-        }
-
-        Ok(())
+        return self.create_new_container(foreground).await;
     }
 
     pub async fn stop_rippled(&self) -> Result<()> {
@@ -768,6 +675,291 @@ impl DockerManager {
         );
 
         Ok(())
+    }
+
+    async fn handle_container_conflict(&self) -> Result<()> {
+        use inquire::Select;
+
+        println!("{}", "A container named 'craft-rippled' already exists but may not be running properly.".yellow());
+        
+        // Check the current state of the existing container
+        let containers = self.docker.containers();
+        let container = containers.get(CONTAINER_NAME);
+        
+        let container_info = match container.inspect().await {
+            Ok(info) => info,
+            Err(_) => {
+                println!("{}", "Unable to inspect existing container. It may be in an inconsistent state.".red());
+                return self.handle_container_conflict_options().await;
+            }
+        };
+
+        let is_running = container_info.state.as_ref().and_then(|s| s.running).unwrap_or(false);
+        let status = container_info.state.as_ref().and_then(|s| s.status.as_ref()).map_or("unknown", |v| v);
+        
+        println!("{}", format!("Container status: {} (running: {})", status, is_running).cyan());
+
+        if is_running {
+            println!("{}", "The container is currently running!".green());
+            
+            let choices = vec![
+                "Use the existing running container",
+                "Stop and remove the existing container, then create a new one",
+                "Cancel"
+            ];
+            
+            match Select::new("What would you like to do?", choices).prompt()? {
+                "Use the existing running container" => {
+                    println!("{}", "Using existing running container.".green());
+                    println!("{}", "Public WebSocket: ws://localhost:6005".blue());
+                    println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
+                    println!("{}", "Admin RPC API: http://localhost:5005".blue());
+                    return Ok(());
+                }
+                "Stop and remove the existing container, then create a new one" => {
+                    return self.remove_and_recreate_container().await;
+                }
+                _ => {
+                    println!("{}", "Operation cancelled.".yellow());
+                    return Ok(());
+                }
+            }
+        } else {
+            println!("{}", "The container exists but is not running.".yellow());
+            return self.handle_container_conflict_options().await;
+        }
+    }
+
+    async fn handle_container_conflict_options(&self) -> Result<()> {
+        use inquire::{Confirm, Select};
+
+        let choices = vec![
+            "Remove the existing container and create a new one",
+            "Try to start the existing container",
+            "Cancel"
+        ];
+        
+        match Select::new("What would you like to do?", choices).prompt()? {
+            "Remove the existing container and create a new one" => {
+                return self.remove_and_recreate_container().await;
+            }
+            "Try to start the existing container" => {
+                println!("{}", "Attempting to start existing container...".cyan());
+                let containers = self.docker.containers();
+                let container = containers.get(CONTAINER_NAME);
+                
+                match container.start().await {
+                    Ok(_) => {
+                        println!("{}", "Container started successfully!".green());
+                        println!("{}", "Public WebSocket: ws://localhost:6005".blue());
+                        println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
+                        println!("{}", "Admin RPC API: http://localhost:5005".blue());
+                        return Ok(());
+                    }
+                    Err(e) => {
+                        println!("{}", format!("Failed to start existing container: {}", e).red());
+                        println!("{}", "The container may be in an inconsistent state.".yellow());
+                        
+                        if Confirm::new("Would you like to remove the problematic container and create a new one?")
+                            .with_default(true)
+                            .prompt()?
+                        {
+                            return self.remove_and_recreate_container().await;
+                        } else {
+                            println!("{}", "Operation cancelled.".yellow());
+                            return Ok(());
+                        }
+                    }
+                }
+            }
+            _ => {
+                println!("{}", "Operation cancelled.".yellow());
+                return Ok(());
+            }
+        }
+    }
+
+    async fn remove_and_recreate_container(&self) -> Result<()> {
+        println!("{}", "Removing existing container...".cyan());
+        
+        let containers = self.docker.containers();
+        let container = containers.get(CONTAINER_NAME);
+        
+        // Try to stop the container first if it's running
+        let _ = container.stop(&ContainerStopOpts::builder().build()).await;
+        
+        // Remove the container
+        match container.delete().await {
+            Ok(_) => {
+                println!("{}", "Container removed successfully!".green());
+                println!("{}", "Creating new container...".cyan());
+                
+                // Create a new container without conflict handling to avoid recursion
+                return self.create_container_without_conflict_handling(false).await;
+            }
+            Err(e) => {
+                return Err(anyhow::anyhow!(
+                    "Failed to remove existing container: {}\n\nYou may need to remove it manually:\n  docker rm -f craft-rippled",
+                    e
+                ));
+            }
+        }
+    }
+
+    async fn create_new_container(&self, foreground: bool) -> Result<()> {
+        // Get the absolute paths for config files
+        let current_dir = std::env::current_dir().context("Failed to get current directory")?;
+        let config_path = current_dir.join("reference/rippled_cfg/rippled.cfg");
+        let validators_path = current_dir.join("reference/rippled_cfg/validators.txt");
+
+        // Check if config files exist
+        if !config_path.exists() {
+            return Err(anyhow::anyhow!(
+                "rippled config file not found at: {}",
+                config_path.display()
+            ));
+        }
+        if !validators_path.exists() {
+            return Err(anyhow::anyhow!(
+                "validators file not found at: {}",
+                validators_path.display()
+            ));
+        }
+
+        let containers = self.docker.containers();
+        
+        // Create container with port mappings and volume mounts
+        let create_opts = ContainerCreateOpts::builder()
+            .name(CONTAINER_NAME)
+            .image(RIPPLED_IMAGE)
+            .expose(docker_api::opts::PublishPort::tcp(6005), 6005) // Public WS
+            .expose(docker_api::opts::PublishPort::tcp(6006), 6006) // Admin WS
+            .expose(docker_api::opts::PublishPort::tcp(5005), 5005) // Admin RPC
+            .volumes(vec![
+                format!(
+                    "{}:/etc/opt/ripple/rippled.cfg:ro",
+                    config_path.to_string_lossy()
+                ),
+                format!(
+                    "{}:/etc/opt/ripple/validators.txt:ro",
+                    validators_path.to_string_lossy()
+                ),
+            ])
+            // Override entrypoint to ensure rippled runs with correct arguments
+            .entrypoint(vec!["/opt/ripple/bin/rippled"])
+            .command(vec![
+                "-a",      // Stand-alone mode flag
+                "--start", // Start from a fresh ledger
+                "--conf=/etc/opt/ripple/rippled.cfg",
+            ])
+            .build();
+
+        let container = match containers.create(&create_opts).await {
+            Ok(container) => container,
+            Err(e) => {
+                // Handle container name conflict (409 Conflict)
+                if e.to_string().contains("409") || e.to_string().contains("Conflict") {
+                    return self.handle_container_conflict().await;
+                }
+                return Err(e.into());
+            }
+        };
+
+        self.start_and_configure_container(container, foreground).await
+    }
+
+    async fn start_and_configure_container(&self, container: docker_api::Container, foreground: bool) -> Result<()> {
+        println!("{}", "Starting container...".cyan());
+        container.start().await?;
+
+        println!(
+            "{}",
+            "rippled container started successfully in stand-alone mode!".green()
+        );
+        println!("{}", "Public WebSocket: ws://localhost:6005".blue());
+        println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
+        println!("{}", "Admin RPC API: http://localhost:5005".blue());
+        println!(
+            "{}",
+            "\nNote: Running in stand-alone mode (no peers, local ledger only)".yellow()
+        );
+
+        if foreground {
+            println!(
+                "{}",
+                "\nShowing container logs (Ctrl+C to stop)...".yellow()
+            );
+            let log_opts = LogsOpts::builder()
+                .stdout(true)
+                .stderr(true)
+                .follow(true)
+                .build();
+
+            let mut logs = container.logs(&log_opts);
+            while let Some(log) = logs.next().await {
+                match log {
+                    Ok(chunk) => print!("{}", String::from_utf8_lossy(&chunk)),
+                    Err(e) => eprintln!("Error reading logs: {e}"),
+                }
+            }
+        } else {
+            println!("{}", "\nTo view logs: docker logs -f craft-rippled".blue());
+            println!("{}", "To stop: craft stop-rippled".blue());
+        }
+
+        Ok(())
+    }
+
+    async fn create_container_without_conflict_handling(&self, foreground: bool) -> Result<()> {
+        // Get the absolute paths for config files
+        let current_dir = std::env::current_dir().context("Failed to get current directory")?;
+        let config_path = current_dir.join("reference/rippled_cfg/rippled.cfg");
+        let validators_path = current_dir.join("reference/rippled_cfg/validators.txt");
+
+        // Check if config files exist
+        if !config_path.exists() {
+            return Err(anyhow::anyhow!(
+                "rippled config file not found at: {}",
+                config_path.display()
+            ));
+        }
+        if !validators_path.exists() {
+            return Err(anyhow::anyhow!(
+                "validators file not found at: {}",
+                validators_path.display()
+            ));
+        }
+
+        let containers = self.docker.containers();
+        
+        // Create container with port mappings and volume mounts
+        let create_opts = ContainerCreateOpts::builder()
+            .name(CONTAINER_NAME)
+            .image(RIPPLED_IMAGE)
+            .expose(docker_api::opts::PublishPort::tcp(6005), 6005) // Public WS
+            .expose(docker_api::opts::PublishPort::tcp(6006), 6006) // Admin WS
+            .expose(docker_api::opts::PublishPort::tcp(5005), 5005) // Admin RPC
+            .volumes(vec![
+                format!(
+                    "{}:/etc/opt/ripple/rippled.cfg:ro",
+                    config_path.to_string_lossy()
+                ),
+                format!(
+                    "{}:/etc/opt/ripple/validators.txt:ro",
+                    validators_path.to_string_lossy()
+                ),
+            ])
+            // Override entrypoint to ensure rippled runs with correct arguments
+            .entrypoint(vec!["/opt/ripple/bin/rippled"])
+            .command(vec![
+                "-a",      // Stand-alone mode flag
+                "--start", // Start from a fresh ledger
+                "--conf=/etc/opt/ripple/rippled.cfg",
+            ])
+            .build();
+
+        let container = containers.create(&create_opts).await?;
+        self.start_and_configure_container(container, foreground).await
     }
 
     pub async fn is_rippled_running(&self) -> Result<bool> {

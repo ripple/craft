@@ -689,37 +689,7 @@ pub fn get_nft(
     dp_res.0
 }
 
-fn unpack_in_float(env: wasm_exec_env_t, in_buf: *const u8) -> Result<BigDecimal, HostError> {
-    let bytes: [u8; 8] = unsafe {
-        let inst = wasm_runtime_get_module_inst(env);
-        if !wasm_runtime_validate_native_addr(inst, in_buf as *mut ::core::ffi::c_void, 8) {
-            return Err(HostError::PointerOutOfBound);
-        }
-        match std::slice::from_raw_parts(in_buf, 8).try_into() {
-            Ok(bytes) => bytes,
-            Err(_) => return Err(HostError::FloatInputMalformed),
-        }
-    };
-    _deserialize_issued_currency_amount(bytes).map_err(|_| HostError::FloatInputMalformed)
-}
-
-fn pack_out_float(decimal: BigDecimal, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
-    let bytes: [u8; 8] = match _serialize_issued_currency_value(decimal) {
-        Ok(bytes) => bytes,
-        Err(_) => return HostError::FloatComputationError as i32,
-    };
-
-    unsafe {
-        let inst = wasm_runtime_get_module_inst(env);
-        if !wasm_runtime_validate_native_addr(inst, out_buf as *mut ::core::ffi::c_void, 8) {
-            return HostError::PointerOutOfBound as i32;
-        }
-        std::ptr::copy_nonoverlapping(bytes.as_ptr(), out_buf, 8);
-    }
-    8
-}
-
-fn unpack_in_iou_value(env: wasm_exec_env_t, in_buf: *const u8) -> Result<Number, HostError> {
+fn unpack_in_float(env: wasm_exec_env_t, in_buf: *const u8) -> Result<Number, HostError> {
     let bytes: [u8; 8] = unsafe {
         let inst = wasm_runtime_get_module_inst(env);
         if !wasm_runtime_validate_native_addr(inst, in_buf as *mut ::core::ffi::c_void, 8) {
@@ -734,7 +704,7 @@ fn unpack_in_iou_value(env: wasm_exec_env_t, in_buf: *const u8) -> Result<Number
     Number::from_xrpl_iou_value(bytes).map_err(|_| HostError::FloatInputMalformed)
 }
 
-fn pack_out_iou_value(number: Number, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
+fn pack_out_float(number: Number, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
     // Convert Number directly to XRPL IOU format
     let bytes = match number.to_xrpl_iou_value() {
         Ok(bytes) => bytes,
@@ -752,77 +722,6 @@ fn pack_out_iou_value(number: Number, env: wasm_exec_env_t, out_buf: *mut u8) ->
     8
 }
 
-pub fn float_from_int(
-    env: wasm_exec_env_t,
-    in_int: i64,
-    out_buf: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let a = BigDecimal::from(in_int);
-    // println!("float_from_int {a}");
-    pack_out_float(a, env, out_buf)
-}
-
-pub fn float_from_uint(
-    env: wasm_exec_env_t,
-    in_uint_ptr: *const u8,
-    in_uint_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let v: u64 = unsafe {
-        let inst = wasm_runtime_get_module_inst(env);
-        if !wasm_runtime_validate_native_addr(inst, in_uint_ptr as *mut ::core::ffi::c_void, 8) {
-            return HostError::PointerOutOfBound as i32;
-        }
-        let bytes: [u8; 8] = match std::slice::from_raw_parts(in_uint_ptr, 8).try_into() {
-            Ok(bytes) => bytes,
-            Err(_) => return HostError::FloatInputMalformed as i32,
-        };
-        u64::from_le_bytes(bytes)
-    };
-    let a = BigDecimal::from(v);
-    pack_out_float(a, env, out_buff)
-}
-
-pub fn float_set(
-    env: wasm_exec_env_t,
-    exponent: i32,
-    mantissa: i64,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let value = BigDecimal::from_bigint(BigInt::from(mantissa), -exponent as i64);
-    // warn!("float_set {value}");
-    pack_out_float(value, env, out_buff)
-}
-
-pub fn float_compare(
-    env: wasm_exec_env_t,
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-) -> i32 {
-    let f1 = match unpack_in_float(env, in_buff1) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let f2 = match unpack_in_float(env, in_buff2) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    // warn!("float_compare {f1} {f2}");
-    match f1.cmp(&f2) {
-        std::cmp::Ordering::Equal => 0,
-        std::cmp::Ordering::Greater => 1,
-        std::cmp::Ordering::Less => 2,
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
 pub fn float_add(
     env: wasm_exec_env_t,
@@ -834,36 +733,13 @@ pub fn float_add(
     out_buff_len: usize,
     rounding_mode: i32,
 ) -> i32 {
-    let f1 = match unpack_in_float(env, in_buff1) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let f2 = match unpack_in_float(env, in_buff2) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let r = f1 + f2;
-    pack_out_float(r, env, out_buff)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn iou_value_add(
-    env: wasm_exec_env_t,
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
     let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
 
-    let n1 = match unpack_in_iou_value(env, in_buff1) {
+    let n1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let n2 = match unpack_in_iou_value(env, in_buff2) {
+    let n2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -872,10 +748,10 @@ pub fn iou_value_add(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(result, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
 
-pub fn iou_value_from_int(
+pub fn float_from_int(
     env: wasm_exec_env_t,
     in_int: i64,
     out_buf: *mut u8,
@@ -889,10 +765,10 @@ pub fn iou_value_from_int(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(number, env, out_buf)
+    pack_out_float(number, env, out_buf)
 }
 
-pub fn iou_value_from_uint(
+pub fn float_from_uint(
     env: wasm_exec_env_t,
     in_uint_ptr: *const u8,
     in_uint_len: usize,
@@ -926,10 +802,10 @@ pub fn iou_value_from_uint(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(number, env, out_buff)
+    pack_out_float(number, env, out_buff)
 }
 
-pub fn iou_value_set(
+pub fn float_set(
     env: wasm_exec_env_t,
     exponent: i32,
     mantissa: i64,
@@ -944,21 +820,21 @@ pub fn iou_value_set(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(number, env, out_buff)
+    pack_out_float(number, env, out_buff)
 }
 
-pub fn iou_value_compare(
+pub fn float_compare(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
     in_buff1_len: usize,
     in_buff2: *const u8,
     in_buff2_len: usize,
 ) -> i32 {
-    let n1 = match unpack_in_iou_value(env, in_buff1) {
+    let n1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let n2 = match unpack_in_iou_value(env, in_buff2) {
+    let n2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -971,7 +847,7 @@ pub fn iou_value_compare(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn iou_value_subtract(
+pub fn float_subtract(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
     in_buff1_len: usize,
@@ -983,11 +859,11 @@ pub fn iou_value_subtract(
 ) -> i32 {
     let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
 
-    let n1 = match unpack_in_iou_value(env, in_buff1) {
+    let n1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let n2 = match unpack_in_iou_value(env, in_buff2) {
+    let n2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -997,11 +873,11 @@ pub fn iou_value_subtract(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(result, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn iou_value_multiply(
+pub fn float_multiply(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
     in_buff1_len: usize,
@@ -1013,11 +889,11 @@ pub fn iou_value_multiply(
 ) -> i32 {
     let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
 
-    let n1 = match unpack_in_iou_value(env, in_buff1) {
+    let n1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let n2 = match unpack_in_iou_value(env, in_buff2) {
+    let n2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -1027,11 +903,11 @@ pub fn iou_value_multiply(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(result, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn iou_value_divide(
+pub fn float_divide(
     env: wasm_exec_env_t,
     in_buff1: *const u8,
     in_buff1_len: usize,
@@ -1043,11 +919,11 @@ pub fn iou_value_divide(
 ) -> i32 {
     let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
 
-    let n1 = match unpack_in_iou_value(env, in_buff1) {
+    let n1 = match unpack_in_float(env, in_buff1) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
-    let n2 = match unpack_in_iou_value(env, in_buff2) {
+    let n2 = match unpack_in_float(env, in_buff2) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -1057,10 +933,10 @@ pub fn iou_value_divide(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(result, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
 
-pub fn iou_value_pow(
+pub fn float_pow(
     env: wasm_exec_env_t,
     in_buff: *const u8,
     in_buff_len: usize,
@@ -1071,7 +947,7 @@ pub fn iou_value_pow(
 ) -> i32 {
     let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
 
-    let n = match unpack_in_iou_value(env, in_buff) {
+    let n = match unpack_in_float(env, in_buff) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -1090,10 +966,10 @@ pub fn iou_value_pow(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(result, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
 
-pub fn iou_value_root(
+pub fn float_root(
     env: wasm_exec_env_t,
     in_buff: *const u8,
     in_buff_len: usize,
@@ -1104,7 +980,7 @@ pub fn iou_value_root(
 ) -> i32 {
     let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
 
-    let n = match unpack_in_iou_value(env, in_buff) {
+    let n = match unpack_in_float(env, in_buff) {
         Ok(val) => val,
         Err(e) => return e as i32,
     };
@@ -1118,164 +994,7 @@ pub fn iou_value_root(
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_iou_value(result, env, out_buff)
-}
-
-pub fn iou_value_log(
-    env: wasm_exec_env_t,
-    in_buff: *const u8,
-    in_buff_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
-
-    let n = match unpack_in_iou_value(env, in_buff) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-
-    let result = match n.log10() {
-        Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
-    };
-
-    pack_out_iou_value(result, env, out_buff)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn float_subtract(
-    env: wasm_exec_env_t,
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let f1 = match unpack_in_float(env, in_buff1) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let f2 = match unpack_in_float(env, in_buff2) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let r = f1 - f2;
-    pack_out_float(r, env, out_buff)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn float_multiply(
-    env: wasm_exec_env_t,
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let f1 = match unpack_in_float(env, in_buff1) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let f2 = match unpack_in_float(env, in_buff2) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let r = f1 * f2;
-    pack_out_float(r, env, out_buff)
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn float_divide(
-    env: wasm_exec_env_t,
-    in_buff1: *const u8,
-    in_buff1_len: usize,
-    in_buff2: *const u8,
-    in_buff2_len: usize,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let f1 = match unpack_in_float(env, in_buff1) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let f2 = match unpack_in_float(env, in_buff2) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
-    };
-    let r = f1 / f2;
-    pack_out_float(r, env, out_buff)
-}
-
-pub fn float_pow(
-    env: wasm_exec_env_t,
-    in_buff: *const u8,
-    in_buff_len: usize,
-    in_int: i32,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let f = match unpack_in_float(env, in_buff) {
-        Ok(val) => match val.to_f64() {
-            Some(f) => {
-                if f == 0.0 && in_int == 0 {
-                    return HostError::InvalidParams as i32;
-                }
-                f
-            }
-            None => return HostError::FloatComputationError as i32,
-        },
-        Err(e) => return e as i32,
-    };
-
-    if in_int < 0 {
-        return HostError::InvalidParams as i32;
-    }
-
-    let f = f.powf(in_int as f64);
-    let r = match BigDecimal::try_from(f) {
-        Ok(val) => val,
-        Err(_) => return HostError::FloatComputationError as i32,
-    };
-    // warn!("float_pow {r}");
-    pack_out_float(r, env, out_buff)
-}
-
-pub fn float_root(
-    env: wasm_exec_env_t,
-    in_buff: *const u8,
-    in_buff_len: usize,
-    in_int: i32,
-    out_buff: *mut u8,
-    out_buff_len: usize,
-    rounding_mode: i32,
-) -> i32 {
-    let f = match unpack_in_float(env, in_buff) {
-        Ok(val) => match val.to_f64() {
-            Some(f) => f,
-            None => return HostError::FloatComputationError as i32,
-        },
-        Err(e) => return e as i32,
-    };
-
-    if in_int <= 0 {
-        return HostError::InvalidParams as i32;
-    }
-
-    let f = f.powf(1.0 / in_int as f64);
-    let r = match BigDecimal::try_from(f) {
-        Ok(val) => val,
-        Err(_) => return HostError::FloatComputationError as i32,
-    };
-    // warn!("float_root {r}");
-    pack_out_float(r, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
 
 pub fn float_log(
@@ -1286,22 +1005,21 @@ pub fn float_log(
     out_buff_len: usize,
     rounding_mode: i32,
 ) -> i32 {
-    let f = match unpack_in_float(env, in_buff) {
-        Ok(val) => match val.to_f64() {
-            Some(f) => f,
-            None => return HostError::FloatComputationError as i32,
-        },
+    let _rounding_guard = set_rounding_mode_from_param(rounding_mode);
+
+    let n = match unpack_in_float(env, in_buff) {
+        Ok(val) => val,
         Err(e) => return e as i32,
     };
 
-    let f = f.log10();
-    let r = match BigDecimal::try_from(f) {
-        Ok(val) => val,
+    let result = match n.log10() {
+        Ok(r) => r,
         Err(_) => return HostError::FloatComputationError as i32,
     };
 
-    pack_out_float(r, env, out_buff)
+    pack_out_float(result, env, out_buff)
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 
 fn read_utf8_from_wasm(msg_read_ptr: *const u8, msg_read_len: usize) -> Option<String> {
@@ -1410,10 +1128,18 @@ pub fn trace_opaque_float(
     op_float: *const u8,
     float_len: usize,
 ) -> i32 {
-    let f = match unpack_in_float(_env, op_float) {
-        Ok(val) => val,
-        Err(e) => return e as i32,
+    let bytes: [u8; 8] = unsafe {
+        match std::slice::from_raw_parts(op_float, 8).try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return HostError::FloatInputMalformed as i32,
+        }
     };
+
+    let f = match _deserialize_issued_currency_amount(bytes) {
+        Ok(f) => f,
+        Err(_) => return HostError::FloatInputMalformed as i32,
+    };
+
     debug!(
         "trace() params: msg_read_ptr={:?} msg_read_len={} float={} ",
         msg_read_ptr, msg_read_len, f

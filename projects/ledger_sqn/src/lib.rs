@@ -10,10 +10,12 @@ use xrpl_std::host::trace::trace_num;
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     unsafe {
-        let result_code = host::get_ledger_sqn();
+        let mut buffer = [0u8; 4]; // Enough to hold an u32
+
+        let result_code = host::get_ledger_sqn(buffer.as_mut_ptr(), 8);
 
         let ledger_sequence = match_result_code(result_code, || {
-            Some(result_code) // <-- Move the value into a buffer
+            Some(u32::from_le_bytes(buffer)) // <-- Move the value into a buffer
         })
         .unwrap()
         .unwrap();

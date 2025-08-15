@@ -201,47 +201,11 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
     println!("WASM Fingerprint: {fingerprint}");
 
-    // Ask if user wants to export as hex
-    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
-        .with_default(false)
-        .prompt()?
-    {
-        copy_wasm_hex_to_clipboard(&wasm_file).await?;
-    }
-
     Ok(wasm_file)
 }
 
 pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     println!("{}", "Deploying to WASM Devnet...".cyan());
-
-    // Check if rippled is running before attempting deployment
-    if let Ok(docker_manager) = crate::docker::DockerManager::new() {
-        match docker_manager.is_rippled_running().await {
-            Ok(false) => {
-                println!("{}", "\n⚠️  rippled is not currently running.".yellow());
-                println!(
-                    "{}",
-                    "Deployment requires a running rippled instance.".yellow()
-                );
-                println!();
-                println!("{}", "To start rippled:".cyan());
-                println!("{}", "  craft start-rippled".blue());
-                println!();
-                anyhow::bail!("rippled is not running. Start it with 'craft start-rippled'");
-            }
-            Ok(true) => {
-                // rippled is running, continue
-            }
-            Err(_) => {
-                // Couldn't check status, try to proceed anyway
-                println!(
-                    "{}",
-                    "\n⚠️  Could not verify rippled status. Proceeding anyway...".yellow()
-                );
-            }
-        }
-    }
 
     // Convert WASM to hex and save to file
     let hex = utils::wasm_to_hex(wasm_file)?;
@@ -314,9 +278,35 @@ pub async fn optimize(wasm_path: &Path, opt_level: &OptimizationLevel) -> Result
         }
     }
 
-    println!("{}", "Optimizing WASM module...".cyan());
+    use std::fs;
+    let before = fs::metadata(wasm_path).map(|m| m.len()).unwrap_or(0);
+
+    println!(
+        "{}",
+        format!("Optimizing WASM module (level {opt_level})...").cyan()
+    );
+
     utils::optimize_wasm(wasm_path, &opt_level.to_string())?;
-    println!("{}", "Optimization complete!".green());
+
+    let after = fs::metadata(wasm_path).map(|m| m.len()).unwrap_or(0);
+    let saved: i128 = before as i128 - after as i128;
+    let saved_pct: f64 = if before > 0 {
+        (saved as f64 / before as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    println!(
+        "{}",
+        format!(
+            "Optimization complete! Size: {} → {} bytes (saved {} bytes, {:.1}%)",
+            before,
+            after,
+            saved.max(0),
+            saved_pct.max(0.0)
+        )
+        .green()
+    );
     Ok(())
 }
 

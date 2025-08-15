@@ -1,8 +1,8 @@
 [package]
-name = "kyc"
+name = "notary_macro_example"
 version = "0.1.0"
 edition = "2024"
-description = "A Smart Escrow that unlocks based on the presence of a certain credential."
+description = "Example showing compile-time r-address to hex conversion using a macro"
 license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace
@@ -22,3 +22,4 @@ panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
+xrpl-address-macro = { path = "../../xrpl-address-macro" }

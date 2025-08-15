@@ -1,7 +1,8 @@
 [workspace]
 members = [
     ".",
-    "wasm-host"
+    "wasm-host",
+    "xrpl-address-macro"
 ]
 
 [package]

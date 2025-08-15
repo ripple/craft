@@ -1,9 +1,10 @@
 [package]
 name = "notary"
-version = "0.1.0"
+version = "0.5.1"
 edition = "2024"
 description = "A Smart Escrow that unlocks when the EscrowFinish transaction is signed by a notary."
 license = "ISC"
+build = "build.rs"
 
 # This empty workspace definition keeps this project independent of the parent workspace
 [workspace]
@@ -18,7 +19,13 @@ codegen-units = 1 # Compile in one unit for better optimization and smaller bina
 panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no panic handler means smaller binary)
 
 [profile.dev]
-panic = "unwind" # For debugging, support std-lib with unwinding in the `dev` profile
+panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
+xrpl-address-macro = { path = "../../xrpl-address-macro" }
+
+[build-dependencies]
+bs58 = "0.5"
+hex = "0.4"
+sha2 = "0.10"

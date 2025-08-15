@@ -18,4 +18,4 @@ panic = "abort"
 xrpl-std = { path = "../../xrpl-std" }
 
 [profile.dev]
-panic = "abort"
+panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)

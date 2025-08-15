@@ -2,83 +2,119 @@
 
 This WebAssembly module implements a notary-based escrow finish condition. It verifies that only a designated notary account is allowed to finish the escrow.
 
-## Purpose
+### How it works
 
-This module demonstrates implementation of a notary pattern where only a trusted third party can release funds.
+The contract checks whether the account submitting EscrowFinish matches the embedded notary account. If it matches, it returns 1 (allow), otherwise 0 (deny).
 
-## How it Works
+### Function
 
-The contract checks if the account attempting to finish the escrow matches a predefined notary account. Pseudo-code:
+`finish() -> i32` — returns 1 to allow finishing the escrow, 0 to reject (deny finishing). On host errors, the function returns a non-zero error code from the host.
 
-```
-function finish(escrow, finishTx) {
-    return finishTx.Account == "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
-}
-```
+## Prerequisites
 
-In a real implementation, this notary account could be a trusted entity responsible for validating that off-ledger conditions have been met before releasing the escrow.
-
-## Functions
-
-The contract exposes a single function as defined by the XLS-100d specification:
-
-### `finish(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool`
-
-Validates that the "Account" field in the transaction JSON matches the predefined notary account:
-- `tx_json_ptr`: Pointer to the transaction JSON data
-- `tx_json_size`: Size of the transaction JSON data
-- `lo_json_ptr`: Pointer to the ledger object JSON data (not used in this implementation)
-- `lo_json_size`: Size of the ledger object JSON data (not used in this implementation)
-
-Returns `true` if the account attempting to finish the escrow is the authorized notary, otherwise `false`.
-
-## Use Cases
-
-This notary pattern can be used for:
-1. **Trade escrows** - where a trusted third party verifies that goods have been delivered before releasing payment
-2. **Escrow services** - where professional escrow agents manage the release of funds
-3. **Regulatory compliance** - where a regulated entity must approve certain transactions
-
-## Project Structure
-
-This project is intentionally kept as an independent Rust project, separate from the main workspace. This allows:
-- Independent building and testing
-- Project-specific target directory
-- Clear separation of the WASM module from the host application
-
-## Building
-
-Build using:
+- Rust toolchain with `wasm32-unknown-unknown` target
+- Node.js 18+
+- Dependencies installed in `reference/js`:
 
 ```bash
-# Navigate to the project directory
-cd projects/notary
-
-# Build the WASM file
-cargo build --target wasm32-unknown-unknown --release
+cd reference/js
+npm install
 ```
 
-The resulting WASM file will be located at:
-```
-./target/wasm32-unknown-unknown/release/notary.wasm
+## Step-by-step: Use on WASM Devnet
+
+This guide uses the public Devnet WASM endpoint at `wss://wasm.devnet.rippletest.net:51233` and the helper scripts in `reference/js`.
+
+### 1) Create a notary account (funded via faucet)
+
+Use the faucet helper script. It prints export lines you can copy/paste.
+
+```bash
+cd reference/js
+node faucet.js
+# Copy the printed export lines into your shell:
+# export NOTARY_ADDRESS=...
+# export NOTARY_SEED=...
 ```
 
-## Running with wasm-host
+Export them for convenience (replace with your printed values):
 
-Run the contract using the wasm-host application:
+```bash
+export NOTARY_ADDRESS=rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+export NOTARY_SEED=shXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+### 2) Build the notary WASM with your classic address
+
+The build embeds the 20-byte AccountID for the provided r-address.
+
+```bash
+cd ../../projects/notary
+NOTARY_ACCOUNT_R=$NOTARY_ADDRESS \
+  cargo build --target wasm32-unknown-unknown --release
+```
+
+Artifact:
+
+```
+projects/notary/target/wasm32-unknown-unknown/release/notary.wasm
+```
+
+### 3) Deploy an escrow using your FinishFunction on Devnet
+
+Use the helper to deploy an escrow that references your compiled `FinishFunction`.
+
+```bash
+cd ../../reference/js
+node deploy_sample.js notary
+```
+
+This will:
+- Connect to WASM Devnet
+- Create and fund two wallets (Origin and Destination)
+- Create an EscrowCreate transaction with your compiled `FinishFunction`
+- Print the transaction result, including `tx_json.Sequence`
+
+Record the following from the output:
+- Origin (Owner) address: printed as “Account 1 - Address: ...”
+- OfferSequence: from the EscrowCreate `tx_json.Sequence`
+
+For convenience:
+
+```bash
+export OWNER_ADDRESS=<Account 1 Address printed by deploy script>
+export OFFER_SEQUENCE=<Sequence printed in tx_json>
+```
+
+### 4) Finish the escrow as the notary
+
+Submit `EscrowFinish` from the notary account you created in step 1:
+
+```bash
+node finish_escrow.js $NOTARY_ADDRESS $NOTARY_SEED $OWNER_ADDRESS $OFFER_SEQUENCE
+```
+
+Expected result: `tesSUCCESS` and “Escrow finished successfully!”. If you try to finish from a different account, you should get `tecNO_PERMISSION` due to the notary check.
+
+## Local testing with wasm-host (optional)
+
+You can also run the WASM locally with the included host emulator:
 
 ```bash
 cd ../../wasm-host
 cargo run -- --wasm-file ../projects/notary/target/wasm32-unknown-unknown/release/notary.wasm --function finish
 ```
 
-## Modifying the Notary Account
+## Modifying the notary account
 
-To use a different notary account, modify the `NOTARY_ACCOUNT` constant in `src/lib.rs`:
+Provide a classic address (r...) at build time via `NOTARY_ACCOUNT_R`. The build script verifies Base58 checksum and embeds the 20-byte AccountID. If unset, it defaults to the Devnet master account `rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh` (for testing only).
 
-```rust
-// Notary account that is authorized to finish the escrow
-const NOTARY_ACCOUNT: &str = "your_notary_account_here";
+```bash
+NOTARY_ACCOUNT_R=rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3 \
+  cargo build --target wasm32-unknown-unknown --release
 ```
 
-Then rebuild the WASM file.
+## Notes
+
+- The contract compares raw 20-byte AccountIDs. Classic addresses are decoded at build-time only.
+- Make sure `NOTARY_ACCOUNT_R` matches the account you’ll use in step 4 to submit `EscrowFinish`.

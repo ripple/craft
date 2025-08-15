@@ -118,9 +118,6 @@ enum Commands {
     // },
     /// Open the XRPL Explorer for a local rippled instance
     OpenExplorer,
-    /// Initialize a new project (interactive)
-    #[command(alias = "new")]
-    Init,
 }
 
 #[derive(Subcommand)]
@@ -524,14 +521,10 @@ async fn main() -> Result<()> {
             Commands::OpenExplorer => {
                 commands::open_explorer().await?;
             }
-            Commands::Init => {
-                commands::init().await?;
-            }
         },
         None => {
             // Nothing from the CLI was provided, so we'll interactively ask the user what they want to do
             let choices = vec![
-                "Create a new project",
                 "Build WASM module",
                 "Test WASM library function",
                 "Start rippled",
@@ -541,9 +534,6 @@ async fn main() -> Result<()> {
             ];
 
             match Select::new("What would you like to do?", choices).prompt()? {
-                "Create a new project" => {
-                    commands::init().await?;
-                }
                 "Build WASM module" => {
                     let config = commands::configure().await?;
                     let wasm_path = commands::build(&config).await?;

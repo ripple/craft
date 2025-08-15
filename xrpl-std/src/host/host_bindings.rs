@@ -27,24 +27,36 @@ unsafe extern "C" {
     ///
     /// This function populates a provided buffer with the ledger sequence number.
     ///
+    /// # Arguments
+    ///
+    /// - `out_buff_ptr`: A mutable raw pointer to the buffer where the ledger sequence
+    ///   number will be written.
+    /// - `out_buff_len`: Specifies the size of the buffer pointed to by `out_buff_ptr`.
+    ///
     /// # Returns
     ///
-    /// - Returns the current ledger sequence number on success
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
-    pub fn get_ledger_sqn() -> i32;
+    pub fn get_ledger_sqn(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
     /// Retrieves the parent ledger time.
     ///
     /// This function is used to obtain the parent ledger's timestamp as a byte array.
     /// The timestamp is written into a provided output buffer.
     ///
+    /// # Parameters
+    /// - `out_buff_ptr`: A mutable pointer to the output buffer where the parent ledger time will
+    ///   be stored. The buffer should be pre-allocated with enough space to hold the data.
+    /// - `out_buff_len`: The length of the output buffer. This value must be at least as large as
+    ///   the data intended to be written to avoid memory issues.
+    ///
     /// # Returns
     ///
-    /// - Returns the parent ledger time on success
+    /// - Returns a positive number of bytes wrote to an output buffer on success
     /// - Returns a negative error code on failure. The list of error codes is defined in
     ///   `../core/error_codes.rs`
-    pub fn get_parent_ledger_time() -> i32;
+    pub fn get_parent_ledger_time(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
     /// Retrieves the hash of the parent ledger.
     ///

@@ -3,13 +3,13 @@
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_ledger_sqn() -> i32 {
+pub unsafe fn get_ledger_sqn(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
     -1
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_parent_ledger_time() -> i32 {
+pub unsafe fn get_parent_ledger_time(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
     -1
 }
 

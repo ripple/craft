@@ -434,18 +434,17 @@ fn normalize_amount_value(mut value: Value) -> Value {
     }
 
     // Handle IOU amounts with numeric value field
-    if let Some(obj) = value.as_object_mut() {
-        if let Some(amount_value) = obj.get("value") {
-            if amount_value.is_number() {
-                if let Some(num) = amount_value.as_i64() {
-                    obj.insert("value".to_string(), Value::String(num.to_string()));
-                } else if let Some(num) = amount_value.as_f64() {
-                    obj.insert("value".to_string(), Value::String(num.to_string()));
-                }
+    if let Some(obj) = value.as_object_mut()
+        && let Some(amount_value) = obj.get("value")
+    {
+        if amount_value.is_number() {
+            if let Some(num) = amount_value.as_i64() {
+                obj.insert("value".to_string(), Value::String(num.to_string()));
+            } else if let Some(num) = amount_value.as_f64() {
+                obj.insert("value".to_string(), Value::String(num.to_string()));
             }
         }
     }
-
     value
 }
 

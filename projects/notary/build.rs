@@ -33,7 +33,7 @@ fn main() {
         if i > 0 {
             content.push_str(", ");
         }
-        content.push_str(&format!("0x{:02x}", b));
+        content.push_str(&format!("0x{b:02x}"));
     }
     content.push_str("];\n");
 
@@ -63,7 +63,7 @@ fn decode_classic_address_to_20bytes(addr: &str) -> Option<Vec<u8>> {
     // Verify checksum: double SHA-256 of payload, take first 4 bytes
     use sha2::{Digest, Sha256};
     let first = Sha256::digest(payload);
-    let second = Sha256::digest(&first);
+    let second = Sha256::digest(first);
     if &second[0..4] != checksum {
         return None;
     }

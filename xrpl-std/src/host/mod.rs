@@ -73,10 +73,11 @@ impl<T> Result<T> {
         match self {
             Result::Ok(t) => t,
             Result::Err(error) => {
-                let _ = trace::trace_num("error_code=", error.code() as i64);
+                let error_code = error.code();
+                let _ = trace::trace_num("error_code=", error_code as i64);
                 panic!(
                     "called `Result::unwrap()` on an `Err` with code: {}",
-                    error.code()
+                    error_code
                 )
             }
         }
@@ -103,11 +104,12 @@ impl<T> Result<T> {
     #[inline]
     pub fn unwrap_or_panic(self) -> T {
         self.unwrap_or_else(|error| {
-            let _ = trace::trace_num("error_code=", error.code() as i64);
+            let error_code = error.code();
+            let _ = trace::trace_num("error_code=", error_code as i64);
             core::panic!(
                 "Failed in {}: error_code={}",
                 core::panic::Location::caller(),
-                error.code()
+                error_code
             );
         })
     }
@@ -126,7 +128,7 @@ impl From<i64> for Result<u64> {
 /// Possible errors returned by XRPL Programmability APIs.
 ///
 /// Errors are global across all Programmability APIs.
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug)]
 #[repr(i32)]
 pub enum Error {
     /// A pointer or buffer length provided as a parameter described memory outside the allowed memory region.

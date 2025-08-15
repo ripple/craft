@@ -8,7 +8,7 @@ use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::account_id::AccountID;
 use xrpl_std::core::types::keylets::oracle_keylet_safe;
 use xrpl_std::host::trace::trace_num;
-use xrpl_std::host::{Result, Result::Err, Result::Ok};
+use xrpl_std::host::{Error, Result, Result::Err, Result::Ok};
 use xrpl_std::{host, sfield};
 
 const ORACLE_OWNER: AccountID =
@@ -48,8 +48,9 @@ pub fn get_price_from_oracle(slot: i32) -> Result<u64> {
     let asset_price = match match_result_code(result_code, || data) {
         Ok(asset_bytes) => get_u64_from_buffer(&asset_bytes[0..8]),
         Err(error) => {
-            let _ = trace_num("Error getting asset_price", error.code() as i64);
-            return Err(error); // Must return to short circuit.
+            let error_code = error.code();
+            let _ = trace_num("Error getting asset_price", error_code as i64);
+            return Err(Error::from_code(error_code)); // Must return to short circuit.
         }
     };
     Ok(asset_price)
@@ -61,7 +62,7 @@ pub extern "C" fn finish() -> i32 {
 
     let slot: i32;
     unsafe {
-        slot = xrpl_std::host::cache_ledger_obj(oracle_keylet.as_ptr(), oracle_keylet.len(), 0);
+        slot = host::cache_ledger_obj(oracle_keylet.as_ptr(), oracle_keylet.len(), 0);
         if slot < 0 {
             return 0;
         };

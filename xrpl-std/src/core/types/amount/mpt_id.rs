@@ -4,13 +4,12 @@ pub const MPT_ID_SIZE: usize = 24;
 pub const MPT_SEQUENCE_NUM_SIZE: usize = 4;
 
 /// Holds an MPT Identifier, which consists of a 4-byte sequence number and a 20-byte account id.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct MptId([u8; MPT_ID_SIZE]);
 
 impl MptId {
     /// Creates a new MptId from a sequence number and an issuer account ID.
-    pub fn new(sequence_num: u32, issuer: AccountID) -> Self {
+    pub fn new(sequence_num: u32, issuer: &AccountID) -> Self {
         let mut bytes = [0u8; MPT_ID_SIZE];
 
         // Set the sequence number (first 4 bytes)
@@ -48,8 +47,8 @@ impl From<[u8; 24]> for MptId {
     }
 }
 
-impl From<(u32, AccountID)> for MptId {
-    fn from(value: (u32, AccountID)) -> Self {
+impl From<(u32, &AccountID)> for MptId {
+    fn from(value: (u32, &AccountID)) -> Self {
         MptId::new(value.0, value.1)
     }
 }
@@ -66,7 +65,7 @@ mod tests {
 
         // Create an MptId using the constructor
         let sequence_num = 12345u32;
-        let mpt_id = MptId::new(sequence_num, account_id);
+        let mpt_id = MptId::new(sequence_num, &account_id);
 
         // Verify the sequence number and issuer
         assert_eq!(mpt_id.get_sequence_num(), sequence_num);
@@ -103,7 +102,7 @@ mod tests {
 
         // Create an MptId from a tuple
         let sequence_num = 54321u32;
-        let mpt_id = MptId::from((sequence_num, account_id));
+        let mpt_id = MptId::from((sequence_num, &account_id));
 
         // Verify the sequence number and issuer
         assert_eq!(mpt_id.get_sequence_num(), sequence_num);

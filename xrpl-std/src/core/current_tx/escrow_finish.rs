@@ -34,8 +34,7 @@ use crate::core::current_tx::traits::{EscrowFinishFields, TransactionCommonField
 /// This structure has no runtime overhead as it contains no data fields. All field
 /// access is performed through the trait methods, which directly call the underlying
 /// host functions to retrieve data from the current transaction context.
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct EscrowFinish;
 
 /// Implementation of common transaction fields for EscrowFinish transactions.

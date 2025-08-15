@@ -5,8 +5,7 @@ use crate::core::types::keylets::account_keylet;
 use crate::host;
 use host::Error;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct AccountRoot {
     pub slot_num: i32,
 }

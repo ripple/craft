@@ -1,13 +1,15 @@
 use anyhow::{Context, Result};
 use colored::*;
 use docker_api::{
-    Docker,
+    Docker, Error as DockerError,
     opts::{ContainerCreateOpts, ContainerStopOpts, LogsOpts, PullOpts},
 };
 use futures::StreamExt;
 
 const RIPPLED_IMAGE: &str = "legleux/rippled_smart_escrow:bb9bb5f5";
 const CONTAINER_NAME: &str = "craft-rippled";
+const RIPPLED_CONFIG_PATH: &str = "reference/rippled_cfg/rippled.cfg";
+const VALIDATORS_PATH: &str = "reference/rippled_cfg/validators.txt";
 
 pub struct DockerManager {
     docker: Docker,
@@ -51,17 +53,17 @@ impl DockerManager {
         println!("{}", "\nDiagnosing Docker issue...".yellow());
 
         // Check Docker context
-        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output() {
-            if let Ok(contexts) = String::from_utf8(output.stdout) {
-                for line in contexts.lines() {
-                    if line.contains("*") {
-                        println!("{}", format!("Active Docker context: {line}").cyan());
-                        if line.contains("colima") && line.contains("/Users") {
-                            println!(
-                                "{}",
-                                "Colima context is active but connection failed.".yellow()
-                            );
-                        }
+        if let Ok(output) = Command::new("docker").args(["context", "ls"]).output()
+            && let Ok(contexts) = String::from_utf8(output.stdout)
+        {
+            for line in contexts.lines() {
+                if line.contains("*") {
+                    println!("{}", format!("Active Docker context: {line}").cyan());
+                    if line.contains("colima") && line.contains("/Users") {
+                        println!(
+                            "{}",
+                            "Colima context is active but connection failed.".yellow()
+                        );
                     }
                 }
             }
@@ -680,48 +682,67 @@ impl DockerManager {
     async fn handle_container_conflict(&self) -> Result<()> {
         use inquire::Select;
 
-        println!("{}", "A container named 'craft-rippled' already exists but may not be running properly.".yellow());
-        
+        println!(
+            "{}",
+            "A container named 'craft-rippled' already exists but may not be running properly."
+                .yellow()
+        );
+
         // Check the current state of the existing container
         let containers = self.docker.containers();
         let container = containers.get(CONTAINER_NAME);
-        
+
         let container_info = match container.inspect().await {
             Ok(info) => info,
             Err(_) => {
-                println!("{}", "Unable to inspect existing container. It may be in an inconsistent state.".red());
+                println!(
+                    "{}",
+                    "Unable to inspect existing container. It may be in an inconsistent state."
+                        .red()
+                );
                 return self.handle_container_conflict_options().await;
             }
         };
 
-        let is_running = container_info.state.as_ref().and_then(|s| s.running).unwrap_or(false);
-        let status = container_info.state.as_ref().and_then(|s| s.status.as_ref()).map_or("unknown", |v| v);
-        
-        println!("{}", format!("Container status: {} (running: {})", status, is_running).cyan());
+        let is_running = container_info
+            .state
+            .as_ref()
+            .and_then(|s| s.running)
+            .unwrap_or(false);
+        let status = container_info
+            .state
+            .as_ref()
+            .and_then(|s| s.status.as_ref())
+            .map_or("unknown", |v| v);
+
+        println!(
+            "{}",
+            format!("Container status: {status} (running: {is_running})").cyan()
+        );
 
         if is_running {
             println!("{}", "The container is currently running!".green());
-            
+
             let choices = vec![
                 "Use the existing running container",
                 "Stop and remove the existing container, then create a new one",
-                "Cancel"
+                "Cancel",
             ];
-            
+
             match Select::new("What would you like to do?", choices).prompt()? {
                 "Use the existing running container" => {
                     println!("{}", "Using existing running container.".green());
                     println!("{}", "Public WebSocket: ws://localhost:6005".blue());
                     println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
                     println!("{}", "Admin RPC API: http://localhost:5005".blue());
-                    return Ok(());
+                    Ok(())
                 }
                 "Stop and remove the existing container, then create a new one" => {
                     return self.remove_and_recreate_container().await;
                 }
                 _ => {
                     println!("{}", "Operation cancelled.".yellow());
-                    return Ok(());
+                    Ok(())
                 }
             }
         } else {
@@ -736,9 +757,9 @@ impl DockerManager {
         let choices = vec![
             "Remove the existing container and create a new one",
             "Try to start the existing container",
-            "Cancel"
+            "Cancel",
         ];
-        
+
         match Select::new("What would you like to do?", choices).prompt()? {
             "Remove the existing container and create a new one" => {
                 return self.remove_and_recreate_container().await;
@@ -747,19 +768,25 @@ impl DockerManager {
                 println!("{}", "Attempting to start existing container...".cyan());
                 let containers = self.docker.containers();
                 let container = containers.get(CONTAINER_NAME);
-                
+
                 match container.start().await {
                     Ok(_) => {
                         println!("{}", "Container started successfully!".green());
                         println!("{}", "Public WebSocket: ws://localhost:6005".blue());
                         println!("{}", "Admin WebSocket: ws://localhost:6006".blue());
                         println!("{}", "Admin RPC API: http://localhost:5005".blue());
-                        return Ok(());
+                        Ok(())
                     }
                     Err(e) => {
-                        println!("{}", format!("Failed to start existing container: {}", e).red());
-                        println!("{}", "The container may be in an inconsistent state.".yellow());
-                        
+                        println!(
+                            "{}",
+                            format!("Failed to start existing container: {e}").red()
+                        );
+                        println!(
+                            "{}",
+                            "The container may be in an inconsistent state.".yellow()
+                        );
+
                         if Confirm::new("Would you like to remove the problematic container and create a new one?")
                             .with_default(true)
                             .prompt()?
@@ -767,50 +794,48 @@ impl DockerManager {
                             return self.remove_and_recreate_container().await;
                         } else {
                             println!("{}", "Operation cancelled.".yellow());
-                            return Ok(());
+                            Ok(())
                         }
                     }
                 }
             }
             _ => {
                 println!("{}", "Operation cancelled.".yellow());
-                return Ok(());
+                Ok(())
             }
         }
     }
 
     async fn remove_and_recreate_container(&self) -> Result<()> {
         println!("{}", "Removing existing container...".cyan());
-        
+
         let containers = self.docker.containers();
         let container = containers.get(CONTAINER_NAME);
-        
+
         // Try to stop the container first if it's running
         let _ = container.stop(&ContainerStopOpts::builder().build()).await;
-        
+
         // Remove the container
         match container.delete().await {
             Ok(_) => {
                 println!("{}", "Container removed successfully!".green());
                 println!("{}", "Creating new container...".cyan());
-                
+
                 // Create a new container without conflict handling to avoid recursion
                 return self.create_container_without_conflict_handling(false).await;
             }
-            Err(e) => {
-                return Err(anyhow::anyhow!(
-                    "Failed to remove existing container: {}\n\nYou may need to remove it manually:\n  docker rm -f craft-rippled",
-                    e
-                ));
-            }
+            Err(e) => Err(anyhow::anyhow!(
+                "Failed to remove existing container: {}\n\nYou may need to remove it manually:\n  docker rm -f craft-rippled",
+                e
+            )),
         }
     }
 
-    async fn create_new_container(&self, foreground: bool) -> Result<()> {
+    async fn build_container_create_opts(&self) -> Result<ContainerCreateOpts> {
         // Get the absolute paths for config files
         let current_dir = std::env::current_dir().context("Failed to get current directory")?;
-        let config_path = current_dir.join("reference/rippled_cfg/rippled.cfg");
-        let validators_path = current_dir.join("reference/rippled_cfg/validators.txt");
+        let config_path = current_dir.join(RIPPLED_CONFIG_PATH);
+        let validators_path = current_dir.join(VALIDATORS_PATH);
 
         // Check if config files exist
         if !config_path.exists() {
@@ -826,10 +851,8 @@ impl DockerManager {
             ));
         }
 
-        let containers = self.docker.containers();
-        
         // Create container with port mappings and volume mounts
-        let create_opts = ContainerCreateOpts::builder()
+        Ok(ContainerCreateOpts::builder()
             .name(CONTAINER_NAME)
             .image(RIPPLED_IMAGE)
             .expose(docker_api::opts::PublishPort::tcp(6005), 6005) // Public WS
@@ -852,23 +875,35 @@ impl DockerManager {
                 "--start", // Start from a fresh ledger
                 "--conf=/etc/opt/ripple/rippled.cfg",
             ])
-            .build();
+            .build())
+    }
+
+    async fn create_new_container(&self, foreground: bool) -> Result<()> {
+        let create_opts = self.build_container_create_opts().await?;
+        let containers = self.docker.containers();
 
         let container = match containers.create(&create_opts).await {
             Ok(container) => container,
             Err(e) => {
                 // Handle container name conflict (409 Conflict)
-                if e.to_string().contains("409") || e.to_string().contains("Conflict") {
+                if let DockerError::Fault { code, .. } = &e
+                    && code.as_u16() == 409
+                {
                     return self.handle_container_conflict().await;
                 }
                 return Err(e.into());
             }
         };
 
-        self.start_and_configure_container(container, foreground).await
+        self.start_and_configure_container(container, foreground)
+            .await
     }
 
-    async fn start_and_configure_container(&self, container: docker_api::Container, foreground: bool) -> Result<()> {
+    async fn start_and_configure_container(
+        &self,
+        container: docker_api::Container,
+        foreground: bool,
+    ) -> Result<()> {
         println!("{}", "Starting container...".cyan());
         container.start().await?;
 
@@ -911,55 +946,11 @@ impl DockerManager {
     }
 
     async fn create_container_without_conflict_handling(&self, foreground: bool) -> Result<()> {
-        // Get the absolute paths for config files
-        let current_dir = std::env::current_dir().context("Failed to get current directory")?;
-        let config_path = current_dir.join("reference/rippled_cfg/rippled.cfg");
-        let validators_path = current_dir.join("reference/rippled_cfg/validators.txt");
-
-        // Check if config files exist
-        if !config_path.exists() {
-            return Err(anyhow::anyhow!(
-                "rippled config file not found at: {}",
-                config_path.display()
-            ));
-        }
-        if !validators_path.exists() {
-            return Err(anyhow::anyhow!(
-                "validators file not found at: {}",
-                validators_path.display()
-            ));
-        }
-
+        let create_opts = self.build_container_create_opts().await?;
         let containers = self.docker.containers();
-        
-        // Create container with port mappings and volume mounts
-        let create_opts = ContainerCreateOpts::builder()
-            .name(CONTAINER_NAME)
-            .image(RIPPLED_IMAGE)
-            .expose(docker_api::opts::PublishPort::tcp(6005), 6005) // Public WS
-            .expose(docker_api::opts::PublishPort::tcp(6006), 6006) // Admin WS
-            .expose(docker_api::opts::PublishPort::tcp(5005), 5005) // Admin RPC
-            .volumes(vec![
-                format!(
-                    "{}:/etc/opt/ripple/rippled.cfg:ro",
-                    config_path.to_string_lossy()
-                ),
-                format!(
-                    "{}:/etc/opt/ripple/validators.txt:ro",
-                    validators_path.to_string_lossy()
-                ),
-            ])
-            // Override entrypoint to ensure rippled runs with correct arguments
-            .entrypoint(vec!["/opt/ripple/bin/rippled"])
-            .command(vec![
-                "-a",      // Stand-alone mode flag
-                "--start", // Start from a fresh ledger
-                "--conf=/etc/opt/ripple/rippled.cfg",
-            ])
-            .build();
-
         let container = containers.create(&create_opts).await?;
-        self.start_and_configure_container(container, foreground).await
+        self.start_and_configure_container(container, foreground)
+            .await
     }
 
     pub async fn is_rippled_running(&self) -> Result<bool> {

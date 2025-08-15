@@ -3243,6 +3243,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "xrpl-address-macro"
+version = "0.1.0"
+dependencies = [
+ "bs58",
+ "proc-macro2",
+ "quote",
+ "sha2 0.10.9",
+ "syn 2.0.101",
+]
+
+[[package]]
 name = "xrpl-rust"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

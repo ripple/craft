@@ -6,7 +6,7 @@ extern crate std;
 use core::panic;
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-use xrpl_std::core::error_codes;
+use xrpl_std::host::error_codes;
 use xrpl_std::core::locator::Locator;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;

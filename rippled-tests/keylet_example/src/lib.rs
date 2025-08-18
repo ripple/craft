@@ -27,7 +27,7 @@ pub fn object_exists(
             let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot <= 0 {
                 let _ = trace_num("Error: ", slot.into());
-                return Err(host::Error::NoFreeSlots);
+                return Err(host::Error::SlotsFull);
             }
             if field == 0 {
                 let new_field = sfield::PreviousTxnID;

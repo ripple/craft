@@ -17,8 +17,9 @@ pub extern "C" fn finish() -> i32 {
     let account_id = match current_escrow.get_destination() {
         Ok(account_id) => account_id,
         Err(e) => {
-            let _ = trace_num("Error getting destination", e.code() as i64);
-            return e.code(); // <-- Do not execute the escrow.
+            let error_code = e.code();
+            let _ = trace_num("Error getting destination", error_code as i64);
+            return error_code; // <-- Do not execute the escrow.
         }
     };
 
@@ -36,8 +37,9 @@ pub extern "C" fn finish() -> i32 {
             1
         }
         Err(e) => {
-            let _ = trace_num("Error getting credential keylet", e.code() as i64);
-            e.code() // <-- Do not execute the escrow.
+            let error_code = e.code();
+            let _ = trace_num("Error getting credential keylet", error_code as i64);
+            error_code // <-- Do not execute the escrow.
         }
     }
 }

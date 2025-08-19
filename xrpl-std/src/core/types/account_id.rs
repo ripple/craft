@@ -1,7 +1,6 @@
 pub const ACCOUNT_ID_SIZE: usize = 20;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[repr(C)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct AccountID(pub [u8; ACCOUNT_ID_SIZE]);
 
 impl From<[u8; ACCOUNT_ID_SIZE]> for AccountID {

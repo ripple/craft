@@ -1,8 +1,8 @@
 [package]
 name = "decoder_tests"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 edition = "2024"
-description = "Test the WASM host's ability to decode and access various ledger object fields."
+description = "End-to-end test suite for WASM host decoder functionality and ledger object field access validation"
 license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace

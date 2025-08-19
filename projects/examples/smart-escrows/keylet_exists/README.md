@@ -7,10 +7,7 @@ This WebAssembly module is an example using the XRPL std lib to determine if an 
 Build using:
 
 ```bash
-# Navigate to the project directory
-cd projects/keylet_exists
-
-# Build the WASM file
+cargo build --target wasm32-unknown-unknown 
 cargo build --target wasm32-unknown-unknown --release
 ```
 
@@ -25,8 +22,8 @@ The resulting WASM file will be located at:
 Run the contract using the wasm-host application:
 
 ```bash
-cd ../../wasm-host
-cargo run -- --wasm-file ../projects/keylet_exists/target/wasm32-unknown-unknown/release/keylet_exists.wasm --function finish
+cd ../../../../wasm-host
+cargo run -- --wasm-file ../projects/examples/smart-escrows/keylet_exists/target/wasm32-unknown-unknown/release/keylet_exists.wasm --project examples/smart-escrows/keylet_exists
 ```
 
 ### Note

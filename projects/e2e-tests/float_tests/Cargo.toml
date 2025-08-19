@@ -1,7 +1,9 @@
 [package]
 name = "float_tests"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 edition = "2024"
+description = "Test suite for XRPL floating-point operations including arithmetic, comparison, and mathematical functions"
+license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace
 [workspace]

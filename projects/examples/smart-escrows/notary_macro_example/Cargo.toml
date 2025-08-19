@@ -2,7 +2,7 @@
 name = "notary_macro_example"
 version = "0.1.0"
 edition = "2024"
-description = "Example showing compile-time r-address to hex conversion using a macro"
+description = "Smart Escrow example demonstrating compile-time XRPL r-address to hex conversion using procedural macros"
 license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace
@@ -21,5 +21,5 @@ panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no pan
 panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)
 
 [dependencies]
-xrpl-std = { path = "../../xrpl-std" }
-xrpl-address-macro = { path = "../../xrpl-address-macro" }
+xrpl-std = { path = "../../../../xrpl-std" }
+xrpl-address-macro = { path = "../../../../xrpl-address-macro" }

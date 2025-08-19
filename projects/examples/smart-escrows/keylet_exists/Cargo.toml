@@ -1,7 +1,9 @@
 [package]
 edition = "2024"
 name = "keylet_example"
-version = "0.0.1"
+version = "0.1.0"
+description = "Smart Escrow example demonstrating keylet generation and ledger object existence verification"
+license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace
 [workspace]

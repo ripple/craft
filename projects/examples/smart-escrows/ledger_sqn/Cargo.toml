@@ -2,7 +2,7 @@
 name = "ledger_sqn"
 version = "0.1.0"
 edition = "2024"
-description = ""
+description = "Smart Escrow example that unlocks when the ledger sequence number reaches a minimum threshold"
 license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace

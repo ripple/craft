@@ -81,8 +81,8 @@ The resulting WASM file will be located at:
 Run the contract using the wasm-host application:
 
 ```bash
-cd ../../../wasm-host
-cargo run -- --wasm-file ../examples/smart-escrows/nft_owner/target/wasm32-unknown-unknown/release/nft_owner.wasm --function finish
+cd ../../../../wasm-host
+cargo run -- --wasm-file ../projects/examples/smart-escrows/nft_owner/target/wasm32-unknown-unknown/release/nft_owner.wasm --project examples/smart-escrows/nft_owner
 ```
 
 ## Use Cases

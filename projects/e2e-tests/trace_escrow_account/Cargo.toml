@@ -1,8 +1,8 @@
 [package]
 name = "trace_escrow_account"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 edition = "2024"
-description = "A Smart Escrow that accesses and traces every field in an `AccountRoot` object associated with an `EscrowFinish`"
+description = "End-to-end test that validates AccountRoot ledger object field access and tracing functionality"
 license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace

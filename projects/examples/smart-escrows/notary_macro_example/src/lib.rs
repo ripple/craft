@@ -29,5 +29,5 @@ pub extern "C" fn finish() -> i32 {
         }
     };
 
-    (tx_account.0 == NOTARY_ACCOUNT) as i32
+    (tx_account.0 == NOTARY_ACCOUNT) as i32 // <-- Finish the escrow to indicate a successful outcome
 }

@@ -1,8 +1,8 @@
 [package]
 name = "notary"
-version = "0.5.1"
+version = "0.1.0"
 edition = "2024"
-description = "A Smart Escrow that unlocks when the EscrowFinish transaction is signed by a notary."
+description = "Smart Escrow example that unlocks when the EscrowFinish transaction is signed by a designated notary account"
 license = "ISC"
 build = "build.rs"
 

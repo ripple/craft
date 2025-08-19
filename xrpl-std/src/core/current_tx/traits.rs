@@ -42,10 +42,6 @@ use crate::core::current_tx::{
     get_account_id_field, get_amount_field, get_blob_field, get_hash_256_field,
     get_hash_256_field_optional, get_public_key_field, get_u32_field, get_u32_field_optional,
 };
-use crate::core::error_codes::{
-    match_result_code_optional, match_result_code_with_expected_bytes,
-    match_result_code_with_expected_bytes_optional,
-};
 use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::blob::Blob;
@@ -53,6 +49,10 @@ use crate::core::types::crypto_condition::{Condition, Fulfillment};
 use crate::core::types::hash_256::Hash256;
 use crate::core::types::public_key::PublicKey;
 use crate::core::types::transaction_type::TransactionType;
+use crate::host::error_codes::{
+    match_result_code_optional, match_result_code_with_expected_bytes,
+    match_result_code_with_expected_bytes_optional,
+};
 use crate::host::{Result, get_tx_field};
 use crate::sfield;
 

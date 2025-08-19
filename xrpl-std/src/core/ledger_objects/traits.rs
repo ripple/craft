@@ -1,12 +1,3 @@
-/// This module provides traits for interacting with XRP Ledger objects.
-///
-/// It defines common interfaces for accessing and manipulating different types of ledger objects,
-/// particularly focusing on Escrow objects. The traits provide methods to get and set various
-/// fields of ledger objects, with separate traits for current ledger objects and general ledger objects.
-use crate::core::error_codes::{
-    match_result_code, match_result_code_with_expected_bytes,
-    match_result_code_with_expected_bytes_optional,
-};
 use crate::core::ledger_objects::{current_ledger_object, ledger_object};
 use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
@@ -15,6 +6,15 @@ use crate::core::types::contract_data::{ContractData, XRPL_CONTRACT_DATA_SIZE};
 use crate::core::types::crypto_condition::Condition;
 use crate::core::types::hash_256::Hash256;
 use crate::core::types::uint_128::UInt128;
+/// This module provides traits for interacting with XRP Ledger objects.
+///
+/// It defines common interfaces for accessing and manipulating different types of ledger objects,
+/// particularly focusing on Escrow objects. The traits provide methods to get and set various
+/// fields of ledger objects, with separate traits for current ledger objects and general ledger objects.
+use crate::host::error_codes::{
+    match_result_code, match_result_code_with_expected_bytes,
+    match_result_code_with_expected_bytes_optional,
+};
 use crate::host::{Error, get_current_ledger_obj_field, get_ledger_obj_field, update_data};
 use crate::host::{Result, Result::Err, Result::Ok};
 use crate::sfield;

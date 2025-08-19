@@ -107,6 +107,12 @@ impl From<[u8; 8]> for OpaqueFloat {
     }
 }
 
+/// The number `1` in XRPL's custom float format.
+pub const FLOAT_ONE: [u8; 8] = [0xD4, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
+
+/// The number `0` in XRPL's custom float format.
+pub const FLOAT_NEGATIVE_ONE: [u8; 8] = [0x94, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
+
 #[cfg(test)]
 mod tests {
     // use super::*;

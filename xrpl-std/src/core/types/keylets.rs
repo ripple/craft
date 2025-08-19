@@ -1,8 +1,8 @@
-use crate::core::error_codes::match_result_code_with_expected_bytes;
 use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::currency_code::CurrencyCode;
 use crate::host;
 use crate::host::Result;
+use crate::host::error_codes::match_result_code_with_expected_bytes;
 use crate::host::trace::{DataRepr, trace_data, trace_num};
 
 pub const XRPL_KEYLET_SIZE: usize = 32;

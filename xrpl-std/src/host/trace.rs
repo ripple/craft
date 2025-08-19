@@ -1,4 +1,4 @@
-use crate::core::error_codes::match_result_code;
+use crate::host::error_codes::match_result_code;
 
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::host;

@@ -33,6 +33,7 @@ pub fn account_keylet(
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
+#[allow(clippy::too_many_arguments)]
 pub fn line_keylet(
     account1_ptr: *const u8,
     account1_len: usize,

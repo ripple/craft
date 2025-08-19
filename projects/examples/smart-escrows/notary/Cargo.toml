@@ -28,4 +28,3 @@ xrpl-std = { path = "../../../../xrpl-std" }
 bs58 = "0.5"
 hex = "0.4"
 sha2 = "0.10"
-

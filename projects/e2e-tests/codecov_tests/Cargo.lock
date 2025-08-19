@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "codecov_tests"
-version = "0.5.1-devnet5"
+version = "0.0.1"
 dependencies = [
  "xrpl-std",
 ]

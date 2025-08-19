@@ -1,3 +1,4 @@
+#![allow(unused_unsafe)]
 #![cfg_attr(target_arch = "wasm32", no_std)]
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -13,8 +14,14 @@ use xrpl_std::host;
 use xrpl_std::host::trace::{trace, trace_num as trace_number};
 use xrpl_std::sfield;
 
-mod host_bindings_loose;
-include!("host_bindings_loose.rs");
+mod host_bindings_loose {
+    #[cfg(not(target_arch = "wasm32"))]
+    include!("host_bindings_loose_for_testing.rs");
+
+    // host functions defined by the host.
+    #[cfg(target_arch = "wasm32")]
+    include!("host_bindings_loose.rs");
+}
 
 fn check_result(result: i32, expected: i32, test_name: &'static str) {
     match result {

@@ -5,4 +5,4 @@ build cycle.
 
 ## Future Enhancements
 
-- [ ] Fail the build if any of these do not succeed with a positive result code. 
+- [ ] Fail the build if any of these do not succeed with a positive result code.

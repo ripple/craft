@@ -1,0 +1,24 @@
+[package]
+name = "ledger_sqn"
+version = "0.1.0"
+edition = "2024"
+description = ""
+license = "ISC"
+
+# This empty workspace definition keeps this project independent of the parent workspace
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"   # Optimize for size
+lto = true        # Link-time optimization
+codegen-units = 1 # Compile in one unit for better optimization and smaller binary size
+panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no panic handler means smaller binary)
+
+[profile.dev]
+panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)
+
+[dependencies]
+xrpl-std = { path = "../../../../xrpl-std" }

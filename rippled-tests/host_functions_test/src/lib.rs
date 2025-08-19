@@ -99,7 +99,7 @@ fn test_ledger_header_functions() -> i32 {
     // Test 1.1: get_ledger_sqn() - should return current ledger sequence number
     let mut ledger_sqn_buffer = [0u8; 8];
     let sqn_result =
-        unsafe { get_ledger_sqn(ledger_sqn_buffer.as_mut_ptr(), ledger_sqn_buffer.len()) };
+        unsafe { host::get_ledger_sqn(ledger_sqn_buffer.as_mut_ptr(), ledger_sqn_buffer.len()) };
 
     if sqn_result <= 0 {
         let _ = trace_num("ERROR: get_ledger_sqn failed:", sqn_result as i64);
@@ -108,7 +108,9 @@ fn test_ledger_header_functions() -> i32 {
     let _ = trace_num("Ledger sequence number:", sqn_result as i64);
 
     // Test 1.2: get_parent_ledger_time() - should return parent ledger timestamp
-    let time_result = unsafe { host::get_parent_ledger_time() };
+    let mut time_buffer = [0u8; 8];
+    let time_result =
+        unsafe { host::get_parent_ledger_time(time_buffer.as_mut_ptr(), time_buffer.len()) };
 
     if time_result <= 0 {
         let _ = trace_num("ERROR: get_parent_ledger_time failed:", time_result as i64);

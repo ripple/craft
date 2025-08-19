@@ -44,9 +44,23 @@ enum Commands {
         /// Run cargo fmt after building
         #[arg(long)]
         fmt: bool,
+        /// Set environment variable(s) for the build (repeatable): KEY=VALUE
+        #[arg(long = "env", value_name = "KEY=VALUE")]
+        envs: Vec<String>,
         /// Additional arguments to pass to cargo
         #[arg(last = true)]
         cargo_args: Vec<String>,
+    },
+    /// Deploy a built WASM module to WASM Devnet
+    Deploy {
+        /// Project name under projects directory (or path to .wasm)
+        target: String,
+        /// Build before deploy
+        #[arg(long, default_value_t = true)]
+        build: bool,
+        /// Set environment variable(s) (repeatable): KEY=VALUE
+        #[arg(long = "env", value_name = "KEY=VALUE")]
+        envs: Vec<String>,
     },
     /// List available projects, tests, or other resources
     List {
@@ -281,8 +295,15 @@ async fn main() -> Result<()> {
                 debug,
                 opt,
                 fmt,
+                envs,
                 cargo_args,
             } => {
+                // Apply inline env KEY=VALUE
+                for kv in envs {
+                    if let Some((k, v)) = kv.split_once('=') {
+                        unsafe { std::env::set_var(k, v) };
+                    }
+                }
                 // Determine build mode - default to release for WASM
                 let build_mode = if debug {
                     config::BuildMode::Debug
@@ -332,26 +353,47 @@ async fn main() -> Result<()> {
                     commands::optimize(&wasm_path, &config.optimization_level).await?;
                 }
 
-                // After build, ask what to do next
-                let choices = vec![
-                    "Deploy to WASM Devnet",
-                    "Copy WASM hex to clipboard",
-                    "Test WASM library function",
-                    "Exit",
-                ];
-
-                match Select::new("What would you like to do next?", choices).prompt()? {
-                    "Deploy to WASM Devnet" => {
-                        commands::deploy_to_wasm_devnet(&wasm_path).await?;
+                // TODO: non-interactive mode: do not prompt for next steps.
+                // Print a concise success message and exit. Users can run follow-up commands explicitly.
+                println!(
+                    "{}",
+                    format!("Build complete. WASM at: {}", wasm_path.display()).green()
+                );
+            }
+            Commands::Deploy {
+                target,
+                build,
+                envs,
+            } => {
+                // Apply inline env KEY=VALUE
+                for kv in envs {
+                    if let Some((k, v)) = kv.split_once('=') {
+                        unsafe { std::env::set_var(k, v) };
                     }
-                    "Copy WASM hex to clipboard" => {
-                        commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-                    }
-                    "Test WASM library function" => {
-                        commands::test(&wasm_path, None).await?;
-                    }
-                    _ => (),
                 }
+                // Resolve wasm path
+                use std::path::PathBuf;
+                let wasm_path: PathBuf;
+
+                if target.ends_with(".wasm") {
+                    wasm_path = PathBuf::from(&target);
+                } else {
+                    // Treat as project name
+                    let project_path = std::env::current_dir()?.join("projects").join(&target);
+                    if build {
+                        let config = config::Config {
+                            project_path: project_path.clone(),
+                            build_mode: config::BuildMode::Release,
+                            optimization_level: config::OptimizationLevel::Small,
+                            ..Default::default()
+                        };
+                        wasm_path = commands::build(&config).await?;
+                    } else {
+                        wasm_path = utils::find_wasm_output(&project_path)?;
+                    }
+                }
+
+                commands::deploy_to_wasm_devnet(&wasm_path).await?;
             }
             Commands::List { resource } => match resource {
                 ListResource::Projects => {
@@ -500,26 +542,11 @@ async fn main() -> Result<()> {
                         commands::optimize(&wasm_path, &config.optimization_level).await?;
                     }
 
-                    // After build, ask what to do next
-                    let choices = vec![
-                        "Deploy to WASM Devnet",
-                        "Copy WASM hex to clipboard",
-                        "Test WASM library function",
-                        "Exit",
-                    ];
-
-                    match Select::new("What would you like to do next?", choices).prompt()? {
-                        "Deploy to WASM Devnet" => {
-                            commands::deploy_to_wasm_devnet(&wasm_path).await?;
-                        }
-                        "Copy WASM hex to clipboard" => {
-                            commands::copy_wasm_hex_to_clipboard(&wasm_path).await?;
-                        }
-                        "Test WASM library function" => {
-                            commands::test(&wasm_path, None).await?;
-                        }
-                        _ => (),
-                    }
+                    // TODO: non-interactive mode: do not prompt for next steps.
+                    println!(
+                        "{}",
+                        format!("Build complete. WASM at: {}", wasm_path.display()).green()
+                    );
                 }
                 "Test WASM library function" => {
                     let config = commands::configure().await?;

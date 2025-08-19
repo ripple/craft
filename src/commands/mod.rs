@@ -201,47 +201,11 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let fingerprint = utils::calculate_wasm_fingerprint(&wasm_file)?;
     println!("WASM Fingerprint: {fingerprint}");
 
-    // Ask if user wants to export as hex
-    if Confirm::new("Would you like to export the WASM as hex (copied to clipboard)?")
-        .with_default(false)
-        .prompt()?
-    {
-        copy_wasm_hex_to_clipboard(&wasm_file).await?;
-    }
-
     Ok(wasm_file)
 }
 
 pub async fn deploy_to_wasm_devnet(wasm_file: &Path) -> Result<()> {
     println!("{}", "Deploying to WASM Devnet...".cyan());
-
-    // Check if rippled is running before attempting deployment
-    if let Ok(docker_manager) = crate::docker::DockerManager::new() {
-        match docker_manager.is_rippled_running().await {
-            Ok(false) => {
-                println!("{}", "\n⚠️  rippled is not currently running.".yellow());
-                println!(
-                    "{}",
-                    "Deployment requires a running rippled instance.".yellow()
-                );
-                println!();
-                println!("{}", "To start rippled:".cyan());
-                println!("{}", "  craft start-rippled".blue());
-                println!();
-                anyhow::bail!("rippled is not running. Start it with 'craft start-rippled'");
-            }
-            Ok(true) => {
-                // rippled is running, continue
-            }
-            Err(_) => {
-                // Couldn't check status, try to proceed anyway
-                println!(
-                    "{}",
-                    "\n⚠️  Could not verify rippled status. Proceeding anyway...".yellow()
-                );
-            }
-        }
-    }
 
     // Convert WASM to hex and save to file
     let hex = utils::wasm_to_hex(wasm_file)?;
@@ -314,9 +278,35 @@ pub async fn optimize(wasm_path: &Path, opt_level: &OptimizationLevel) -> Result
         }
     }
 
-    println!("{}", "Optimizing WASM module...".cyan());
+    use std::fs;
+    let before = fs::metadata(wasm_path).map(|m| m.len()).unwrap_or(0);
+
+    println!(
+        "{}",
+        format!("Optimizing WASM module (level {opt_level})...").cyan()
+    );
+
     utils::optimize_wasm(wasm_path, &opt_level.to_string())?;
-    println!("{}", "Optimization complete!".green());
+
+    let after = fs::metadata(wasm_path).map(|m| m.len()).unwrap_or(0);
+    let saved: i128 = before as i128 - after as i128;
+    let saved_pct: f64 = if before > 0 {
+        (saved as f64 / before as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    println!(
+        "{}",
+        format!(
+            "Optimization complete! Size: {} → {} bytes (saved {} bytes, {:.1}%)",
+            before,
+            after,
+            saved.max(0),
+            saved_pct.max(0.0)
+        )
+        .green()
+    );
     Ok(())
 }
 
@@ -508,10 +498,10 @@ pub fn list_projects() -> Result<()> {
     for entry in fs::read_dir(projects_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.is_dir() {
-            if let Some(name) = path.file_name() {
-                println!("  • {}", name.to_string_lossy());
-            }
+        if path.is_dir()
+            && let Some(name) = path.file_name()
+        {
+            println!("  • {}", name.to_string_lossy());
         }
     }
     Ok(())
@@ -525,10 +515,10 @@ fn list_all_projects() -> Result<Vec<String>> {
         for entry in fs::read_dir(projects_dir)? {
             let entry = entry?;
             let path = entry.path();
-            if path.is_dir() {
-                if let Some(name) = path.file_name() {
-                    projects.push(name.to_string_lossy().to_string());
-                }
+            if path.is_dir()
+                && let Some(name) = path.file_name()
+            {
+                projects.push(name.to_string_lossy().to_string());
             }
         }
     }
@@ -620,15 +610,14 @@ pub fn list_fixtures() -> Result<()> {
             let project_path = entry.path();
             if project_path.is_dir() {
                 let fixtures_path = project_path.join("fixtures");
-                if fixtures_path.exists() {
-                    if let Some(project_name) = project_path.file_name() {
-                        println!(
-                            "\n{}",
-                            format!("projects/{}/fixtures/:", project_name.to_string_lossy())
-                                .bold()
-                        );
-                        print_tree(&fixtures_path, "  ")?;
-                    }
+                if fixtures_path.exists()
+                    && let Some(project_name) = project_path.file_name()
+                {
+                    println!(
+                        "\n{}",
+                        format!("projects/{}/fixtures/:", project_name.to_string_lossy()).bold()
+                    );
+                    print_tree(&fixtures_path, "  ")?;
                 }
             }
         }
@@ -649,10 +638,10 @@ pub fn discover_test_cases(project: &str) -> Result<Vec<String>> {
     if fixtures_dir.exists() {
         for entry in fs::read_dir(fixtures_dir)? {
             let entry = entry?;
-            if entry.path().is_dir() {
-                if let Some(name) = entry.path().file_name() {
-                    test_cases.push(name.to_string_lossy().to_string());
-                }
+            if entry.path().is_dir()
+                && let Some(name) = entry.path().file_name()
+            {
+                test_cases.push(name.to_string_lossy().to_string());
             }
         }
     }

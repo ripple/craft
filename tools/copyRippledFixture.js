@@ -3,7 +3,7 @@ const fs = require('fs')
 var execSync = require('child_process').execSync
 
 if (process.argv.length < 4) {
-    console.error('Usage: node tools/copy.js <project_name> <fixture_name> <rippled_path>')
+    console.error('Usage: node tools/copyRippledFixture.js <project_name> <fixture_name> <rippled_path>')
     process.exit(1)
 }
 

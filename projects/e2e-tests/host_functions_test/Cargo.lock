@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "host_functions_test"
-version = "0.1.0"
+version = "0.5.1-devnet5"
 dependencies = [
  "xrpl-std",
 ]

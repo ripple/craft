@@ -21,4 +21,3 @@ panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (
 
 [dependencies]
 xrpl-std = { path = "../../../../xrpl-std" }
-

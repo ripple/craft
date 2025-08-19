@@ -7,7 +7,7 @@ This WebAssembly module is an example using the XRPL std lib to determine if an 
 Build using:
 
 ```bash
-cargo build --target wasm32-unknown-unknown 
+cargo build --target wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
 

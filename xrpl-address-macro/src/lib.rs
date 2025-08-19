@@ -6,6 +6,7 @@ use syn::{LitStr, parse_macro_input};
 ///
 /// # Example
 /// ```
+/// use xrpl_address_macro::r_address;
 /// const ACCOUNT: [u8; 20] = r_address!("rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh");
 /// ```
 #[proc_macro]
@@ -31,7 +32,7 @@ pub fn r_address(input: TokenStream) -> TokenStream {
 
             TokenStream::from(expanded)
         }
-        None => syn::Error::new(addr_lit.span(), format!("Invalid r-address: {}", addr))
+        None => syn::Error::new(addr_lit.span(), format!("Invalid r-address: {addr}"))
             .to_compile_error()
             .into(),
     }
@@ -59,7 +60,7 @@ fn decode_classic_address_to_20bytes(addr: &str) -> Option<Vec<u8>> {
     // Verify checksum: double SHA-256 of payload, take first 4 bytes
     use sha2::{Digest, Sha256};
     let first = Sha256::digest(payload);
-    let second = Sha256::digest(&first);
+    let second = Sha256::digest(first);
     if &second[0..4] != checksum {
         return None;
     }

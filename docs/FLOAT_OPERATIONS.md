@@ -74,10 +74,10 @@ https://xrpl.org/docs/references/protocol/binary-format#amount-fields
 
 XRPL uses a custom 64-bit floating-point encoding for fungible token amounts:
 
-```
+```text
 Bit Layout:
 [T][S][EEEEEEEE][MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM]
- │  │  └─8 bits─┘└──────────────────54 bits───────────────────────────┘
+ │  │  └8 bits┘  └──────────────────54 bits───────────────────────────┘
  │  └─ Sign (1=positive, 0=negative)
  └─ Type (1=fungible token, 0=XRP/MPT)
 ```

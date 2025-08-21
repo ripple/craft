@@ -45,17 +45,18 @@
 //! - All functions are marked `#[inline]` to minimize call overhead
 //! - Buffer allocations are stack-based and have minimal cost
 //! - Host function calls are the primary performance bottleneck
-
-
-/// Example: get sender Account and optional flags
-///
-/// ```no_run
-/// use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
-/// use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-/// let tx = EscrowFinish;
-/// let account = tx.get_account().unwrap_or_panic();
-/// let _flags = tx.get_flags().unwrap_or_panic();
-/// ```
+//!
+//! ## Example
+//!
+//! Get sender Account and optional flags:
+//!
+//! ```no_run
+//! use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
+//! use xrpl_std::core::current_tx::traits::TransactionCommonFields;
+//! let tx = EscrowFinish;
+//! let account = tx.get_account().unwrap_or_panic();
+//! let _flags = tx.get_flags().unwrap_or_panic();
+//! ```
 
 use crate::core::error_codes::{
     match_result_code, match_result_code_with_expected_bytes,

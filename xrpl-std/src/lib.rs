@@ -1,12 +1,10 @@
 #![doc = include_str!("../README.md")]
-
 #![no_std]
 
 pub mod core;
 pub mod host;
 pub mod sfield;
 pub mod types;
-
 
 /// Additional guides and how-tos
 #[cfg(doc)]
@@ -17,7 +15,6 @@ pub mod guides {
     /// XRPL WASM Float Operations
     #[doc = include_str!("../../docs/FLOAT_OPERATIONS.md")]
     pub mod float_operations {}
-
 }
 
 /// This function is called on panic but only in the WASM architecture. In non-WASM (e.g., in the

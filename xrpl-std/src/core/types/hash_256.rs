@@ -12,3 +12,10 @@ impl From<[u8; HASH256_SIZE]> for Hash256 {
         Self(bytes) // Access private field legally here
     }
 }
+
+/// Returns the inner 32 bytes.
+impl Hash256 {
+    /// Returns a reference to the inner array.
+    pub fn as_bytes(&self) -> &[u8; HASH256_SIZE] { &self.0 }
+}
+

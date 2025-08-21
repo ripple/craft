@@ -70,7 +70,7 @@ The library provides access to host functions through safe Rust APIs. Host funct
 
 All fallible operations return `Result<T>` with specific error codes:
 
-```rust
+```rust,ignore
 pub enum Error {
     InternalError = -1,        // Internal invariant violation
     FieldNotFound = -2,        // Requested field doesn't exist
@@ -86,7 +86,7 @@ pub enum Error {
 
 Access fields from the current transaction being processed:
 
-```rust
+```rust,ignore
 use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 
 // Create an instance to access the current EscrowFinish transaction
@@ -110,7 +110,7 @@ let fulfillment = tx.get_fulfillment()?;           // Optional fulfillment
 
 Access ledger objects like accounts, escrows, and other on-ledger data:
 
-```rust
+```rust,ignore
 use xrpl_std::core::ledger_objects::{
     current_escrow::get_current_escrow,
     account::get_account_balance,
@@ -134,7 +134,7 @@ let balance = get_account_balance(&account)?;  // Returns drops (u64)
 
 Core types for XRPL data:
 
-```rust
+```rust,ignore
 use xrpl_std::core::types::*;
 
 // Account identifier (20 bytes)
@@ -162,7 +162,7 @@ let tx_type: TransactionType = TransactionType::EscrowFinish;
 
 Access top-level fields from transactions or objects:
 
-```rust
+```rust,ignore
 use xrpl_std::host::get_tx_field;
 use xrpl_std::sfield;
 
@@ -175,7 +175,7 @@ let len = get_tx_field(sfield::Account, 0, &mut buffer)?;
 
 Access fields within complex objects using locators:
 
-```rust
+```rust,ignore
 use xrpl_std::core::locator::Locator;
 use xrpl_std::host::get_tx_nested_field;
 use xrpl_std::sfield;
@@ -199,7 +199,7 @@ let len = get_tx_nested_field(&locator.buffer, &mut buffer)?;
 
 Generate unique identifiers for ledger objects:
 
-```rust
+```rust,ignore
 use xrpl_std::core::types::keylets::*;
 
 // Account keylet
@@ -217,7 +217,7 @@ let cred_key = credential_keylet(&subject, &issuer, credential_type)?;
 
 ### Cryptographic Functions
 
-```rust
+```rust,ignore
 use xrpl_std::core::crypto::compute_sha512_half;
 
 // Compute SHA-512 half (first 32 bytes)
@@ -229,7 +229,7 @@ compute_sha512_half(data, &mut hash)?;
 
 The only allowed state modification:
 
-```rust
+```rust,ignore
 use xrpl_std::core::ledger_objects::current_escrow::update_data;
 
 // Update the escrow's data field (max 256 bytes)
@@ -241,7 +241,7 @@ update_data(new_data)?;
 
 Debug output during development:
 
-```rust
+```rust,ignore
 use xrpl_std::host::trace::{trace, trace_data, trace_num, DataRepr};
 
 // Simple text trace
@@ -259,7 +259,7 @@ trace_num("Balance", balance as i64)?;
 
 Every WASM module must export the following function:
 
-```rust
+```rust,ignore
 #![no_std]
 #![no_main]
 
@@ -277,7 +277,7 @@ Only `finish()` must be exported.
 
 ### Basic Balance Check
 
-```rust
+```rust,ignore
 use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_std::core::ledger_objects::account::get_account_balance;
 
@@ -314,7 +314,7 @@ cargo run -p wasm-host -- --wasm-file path/to/your.wasm --function finish
 
 ### Time-based Release
 
-```rust
+```rust,ignore
 use xrpl_std::core::ledger_objects::current_escrow::get_current_escrow;
 use xrpl_std::host::get_parent_ledger_time;
 
@@ -340,7 +340,7 @@ pub extern "C" fn finish() -> bool {
 
 ### Credential Verification
 
-```rust
+```rust,ignore
 use xrpl_std::core::types::keylets::credential_keylet;
 use xrpl_std::host::cache_ledger_obj;
 
@@ -391,7 +391,7 @@ pub extern "C" fn finish() -> bool {
 
 ### Best Practices
 
-```rust
+```rust,ignore
 // Prefer early returns for errors
 let account = match tx.get_account() {
     Ok(acc) => acc,
@@ -423,7 +423,7 @@ match get_account_balance(&account) {
 ## Best Practices
 
 ### 1. Minimize Host Function Calls
-```rust
+```rust,ignore
 // Bad: Multiple calls for same data
 let balance1 = get_account_balance(&account)?;
 let balance2 = get_account_balance(&account)?;
@@ -434,7 +434,7 @@ let balance = get_account_balance(&account)?;
 ```
 
 ### 2. Handle Optional Fields
-```rust
+```rust,ignore
 // Check if optional field exists
 match tx.get_source_tag()? {
     Some(tag) => { /* use tag */ },
@@ -443,7 +443,7 @@ match tx.get_source_tag()? {
 ```
 
 ### 3. Use Type-Safe APIs
-```rust
+```rust,ignore
 // Prefer high-level APIs
 let balance = get_account_balance(&account)?;
 
@@ -453,7 +453,7 @@ get_ledger_obj_field(slot, sfield::Balance, 0, &mut buffer)?;
 ```
 
 ### 4. Fail Safely
-```rust
+```rust,ignore
 // Return false on any error to keep escrow locked
 match risky_operation() {
     Ok(result) => result,

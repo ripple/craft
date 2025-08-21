@@ -348,3 +348,75 @@ Example error output:
 | Error:     WASM function execution error      |
 -------------------------------------------------
 ```
+
+
+## Rust Documentation
+
+This repository contains multiple Rust crates. You can use rustdoc to generate and view documentation.
+
+### Generate documentation
+
+- Public crates only (recommended):
+  - `cargo doc --no-deps -p craft -p xrpl-std`
+- Entire workspace:
+  - `cargo doc --workspace --no-deps`
+- Open docs in your browser:
+  - `cargo doc --no-deps --open`
+
+A helper script is included:
+
+```bash
+./build-docs.sh
+```
+
+This cleans previous docs, builds docs for `craft` and `xrpl-std`, runs doctests for `xrpl-std`, and prints the path to the rendered docs.
+
+### View the documentation
+
+- After building, open: `target/doc/index.html` to see the docs index
+- Direct links:
+  - Craft CLI docs: `target/doc/craft/index.html`
+  - xrpl-std library: `target/doc/xrpl_std/index.html`
+- Or simply run: `cargo doc --open`
+
+### Best practices for writing Rust docs
+
+- Use `//!` for crate- and module-level documentation; use `///` for items (functions, structs, enums)
+- Prefer small, runnable examples. For examples that should not run in doctests, use code fences with language modifiers:
+  - ```rust,no_run``` for examples that should compile but not execute
+  - ```rust,ignore``` for examples that should not be compiled
+- Use intra-doc links to reference items within a crate, e.g. `[Result](core::result::Result)` or <code>[sfield](crate::sfield)</code>
+- Test your docs: `cargo test --doc` (per-crate or workspace)
+- Hide internal implementation details with `#[doc(hidden)]`
+- Feature-gate docs for optional APIs with `#[cfg_attr(doc_cfg, doc(cfg(feature = "...")))]`
+
+### Including external Markdown in rustdoc
+
+You can include standalone Markdown files directly into your crate documentation using `include_str!`:
+
+- Include a crate README as the top-level docs (in `src/lib.rs` or `src/main.rs`):
+
+```rust
+#![doc = include_str!("../README.md")]
+```
+
+- Include additional guides as modules shown in docs only:
+
+```rust
+/// Additional guides and how-tos
+#[cfg(doc)]
+pub mod guides {
+    /// XRPL Field Access and Locators guide
+    #[doc = include_str!("../../docs/FIELD_ACCESS.md")]
+    pub mod field_access {}
+}
+```
+
+In this repository:
+- The `xrpl-std` crate already includes its README via `#![doc = include_str!("../README.md")]`
+- The guide at `docs/FIELD_ACCESS.md` is included under the rendered docs at `xrpl_std::guides::field_access`
+
+### Notes on code blocks in docs
+
+- Examples that reference unavailable items or host-only APIs are marked as `rust,ignore` to prevent doctest failures
+- Prefer `rust` or `rust,no_run` for examples intended to compile

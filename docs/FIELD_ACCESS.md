@@ -35,7 +35,7 @@ Every field has a unique field code that combines:
 - **Type ID**: The data type (1-19)
 - **Field ID**: The specific field (0-255)
 
-```rust
+```rust,ignore
 // Field code calculation
 const FIELD_CODE: i32 = (TYPE_ID << 16) | FIELD_ID;
 
@@ -54,7 +54,7 @@ For top-level fields, use direct access functions:
 
 ### Transaction Fields
 
-```rust
+```rust,ignore
 use xrpl_std::host::get_tx_field;
 use xrpl_std::sfield;
 
@@ -81,7 +81,7 @@ let len = unsafe {
 
 ### Ledger Object Fields
 
-```rust
+```rust,ignore
 use xrpl_std::host::get_ledger_obj_field;
 
 // First load object into cache
@@ -116,7 +116,7 @@ Each i32 value can be an:
 
 ### Building Locators
 
-```rust
+```rust,ignore
 use xrpl_std::locator::Locator;
 
 let mut locator = Locator::new();
@@ -142,7 +142,7 @@ let result = get_tx_nested_field(
 3. **Maximum size**: 64 bytes
 4. **Encoding**: Each field ID or array index is packed as a 4-byte integer
 
-```rust
+```rust,ignore
 // Internal structure
 pub struct Locator {
     buffer: [u8; 64],    // Packed locator data
@@ -177,7 +177,7 @@ Memos[0].MemoType  // Direct access after array index
 
 When building locators, use the **internal path**, not the JSON path:
 
-```rust
+```rust,ignore
 // CORRECT: Internal representation
 let mut locator = Locator::new();
 locator.pack(sfield::Memos);     // Array field
@@ -206,7 +206,7 @@ However, internally, once you index into an array, you're already at the object 
 
 ### Accessing Memo Fields
 
-```rust
+```rust,ignore
 // Access first memo's type
 let mut locator = Locator::new();
 locator.pack(sfield::Memos);
@@ -224,7 +224,7 @@ let len = get_tx_nested_field(
 
 ### Accessing Signer Fields
 
-```rust
+```rust,ignore
 // Access second signer's account
 let mut locator = Locator::new();
 locator.pack(sfield::Signers);
@@ -242,7 +242,7 @@ let len = get_tx_nested_field(
 
 ### Accessing Oracle Data
 
-```rust
+```rust,ignore
 // Access price from oracle document
 let mut locator = Locator::new();
 locator.pack(sfield::PriceDataSeries);
@@ -261,7 +261,7 @@ let len = get_ledger_obj_nested_field(
 
 ### Iterating Arrays
 
-```rust
+```rust,ignore
 // Get array length
 let memo_count = get_tx_array_len(sfield::Memos)?;
 
@@ -401,7 +401,7 @@ Developers should use named SFields. For example, use `sfield::MemoType` instead
 
 ### Complete Memo Processing
 
-```rust
+```rust,ignore
 use xrpl_std::locator::Locator;
 use xrpl_std::host::{get_tx_array_len, get_tx_nested_field};
 use xrpl_std::sfield;
@@ -451,7 +451,7 @@ fn process_memos() -> Result<()> {
 
 ### Oracle Price Access
 
-```rust
+```rust,ignore
 fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
     // Build locator for first price entry
     let mut locator = Locator::new();

@@ -50,7 +50,7 @@ You can identify the amount type by examining the first and third bits:
 
 The current implementation uses Rust's BigDecimal library for all floating-point computations:
 
-```rust
+```rust,ignore
 // Current flow:
 WASM Module → Host Function → BigDecimal → Result
 ```
@@ -103,7 +103,7 @@ Bit Layout:
 
 ### Creation Functions
 
-```rust
+```rust,ignore
 // Create from integer
 float_from_int(value: i64, out: *mut u8, rounding_mode: i32) -> i32
 
@@ -116,7 +116,7 @@ float_set(exponent: i32, mantissa: i64, out: *mut u8, rounding_mode: i32) -> i32
 
 ### Arithmetic Operations
 
-```rust
+```rust,ignore
 // Addition: out = a + b
 float_add(a: *const u8, b: *const u8, out: *mut u8, rounding_mode: i32) -> i32
 
@@ -132,7 +132,7 @@ float_divide(a: *const u8, b: *const u8, out: *mut u8, rounding_mode: i32) -> i3
 
 ### Mathematical Functions
 
-```rust
+```rust,ignore
 // Nth power: out = aⁿ
 float_pow(a: *const u8, n: i32, out: *mut u8, rounding_mode: i32) -> i32
 
@@ -145,7 +145,7 @@ float_log(a: *const u8, out: *mut u8, rounding_mode: i32) -> i32
 
 ### Comparison
 
-```rust
+```rust,ignore
 // Compare two floats
 // Returns: 0 (equal), 1 (a > b), 2 (a < b)
 float_compare(a: *const u8, b: *const u8) -> i32
@@ -157,7 +157,7 @@ float_compare(a: *const u8, b: *const u8) -> i32
 
 Create Rust bindings to rippled's Number class:
 
-```rust
+```rust,ignore
 // Example FFI declarations
 extern "C" {
     // Number creation
@@ -213,7 +213,7 @@ Option B is likely the best starting point. The other options can be considered 
 
 ### Current BigDecimal Flow
 
-```rust
+```rust,ignore
 fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8, 
              out: *mut u8, rounding_mode: i32) -> i32 {
     // 1. Deserialize XRPL format to BigDecimal
@@ -231,7 +231,7 @@ fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8,
 
 ### Future Rippled Number Flow
 
-```rust
+```rust,ignore
 fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8,
              out: *mut u8, rounding_mode: i32) -> i32 {
     // Direct pass-through to rippled with rounding support
@@ -261,7 +261,7 @@ fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8,
 
 ### Performance Testing
 
-```rust
+```rust,ignore
 #[bench]
 fn bench_float_multiply_bigdecimal(b: &mut Bencher) {
     // Current implementation benchmark
@@ -292,7 +292,7 @@ The float operations described in this document specifically handle the 64-bit a
 
 When working with full Amount objects in XRPL, you need to consider which type you're dealing with and use the appropriate handling:
 
-```rust
+```rust,ignore
 // Example: Checking amount type
 fn get_amount_type(first_byte: u8) -> AmountType {
     let type_bit = (first_byte & 0x80) != 0;  // First bit

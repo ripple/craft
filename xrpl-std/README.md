@@ -289,7 +289,7 @@ pub extern "C" fn finish() -> bool {
         Ok(acc) => acc,
         Err(_) => return false,
     };
-    
+
     // Check if balance > 10 XRP
     match get_account_balance(&account) {
         Ok(balance) => balance > 10_000_000,  // 10 XRP in drops
@@ -325,14 +325,14 @@ pub extern "C" fn finish() -> bool {
         Ok(time) => time,
         Err(_) => return false,
     };
-    
+
     // Get escrow finish_after time
     let escrow = get_current_escrow();
     let finish_after = match escrow.get_finish_after() {
         Ok(Some(time)) => time,
         _ => return false,
     };
-    
+
     // Release if current time >= finish_after
     current_time >= finish_after
 }
@@ -348,7 +348,7 @@ use xrpl_std::host::cache_ledger_obj;
 pub extern "C" fn finish() -> bool {
     let tx = EscrowFinish;
     let account = tx.get_account().unwrap_or_default();
-    
+
     // Generate credential keylet
     let keylet = match credential_keylet(
         &account,
@@ -358,7 +358,7 @@ pub extern "C" fn finish() -> bool {
         Ok(k) => k,
         Err(_) => return false,
     };
-    
+
     // Try to load credential (returns slot number if exists)
     match cache_ledger_obj(&keylet.data) {
         Ok(_) => true,   // Credential exists

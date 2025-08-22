@@ -85,7 +85,7 @@ let len = unsafe {
 use xrpl_std::host::get_ledger_obj_field;
 
 // First load object into cache
-let slot = unsafe { 
+let slot = unsafe {
     cache_ledger_obj(
         keylet.as_ptr(),
         keylet.len(),
@@ -272,7 +272,7 @@ for i in 0..memo_count {
     locator.pack(sfield::Memos);
     locator.pack(i as i32);
     locator.pack(sfield::MemoType);
-    
+
     // Read MemoType
     let type_len = get_tx_nested_field(
         locator.get_addr(),
@@ -280,10 +280,10 @@ for i in 0..memo_count {
         type_buf.as_mut_ptr(),
         type_buf.len()
     )?;
-    
+
     // Reuse locator for MemoData (same path, different field)
     locator.repack_last(sfield::MemoData);
-    
+
     // Read MemoData
     let data_len = get_tx_nested_field(
         locator.get_addr(),
@@ -409,14 +409,14 @@ use xrpl_std::sfield;
 fn process_memos() -> Result<()> {
     // Get memo count
     let count = get_tx_array_len(sfield::Memos)?;
-    
+
     for i in 0..count {
         // Build locator for MemoType
         let mut type_loc = Locator::new();
         type_loc.pack(sfield::Memos);
         type_loc.pack(i);
         type_loc.pack(sfield::MemoType);
-        
+
         // Read MemoType
         let mut type_buf = [0u8; 256];
         let type_len = get_tx_nested_field(
@@ -425,10 +425,10 @@ fn process_memos() -> Result<()> {
             type_buf.as_mut_ptr(),
             type_buf.len()
         )?;
-        
+
         // Reuse locator for MemoData (same path, different field)
         type_loc.repack_last(sfield::MemoData);
-        
+
         // Read MemoData
         let mut data_buf = [0u8; 256];
         let data_len = get_tx_nested_field(
@@ -437,14 +437,14 @@ fn process_memos() -> Result<()> {
             data_buf.as_mut_ptr(),
             data_buf.len()
         )?;
-        
+
         // Process memo
         let memo_type = &type_buf[..type_len as usize];
         let memo_data = &data_buf[..data_len as usize];
-        
+
         // Your logic here...
     }
-    
+
     Ok(())
 }
 ```
@@ -458,7 +458,7 @@ fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
     locator.pack(sfield::PriceDataSeries);
     locator.pack(0);
     locator.pack(sfield::AssetPrice);
-    
+
     // Read price
     let mut price_buf = [0u8; 8];
     let len = get_ledger_obj_nested_field(
@@ -468,7 +468,7 @@ fn get_oracle_price(oracle_slot: i32) -> Result<u64> {
         price_buf.as_mut_ptr(),
         price_buf.len()
     )?;
-    
+
     // Convert to u64
     Ok(u64::from_le_bytes(price_buf))
 }

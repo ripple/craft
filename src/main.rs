@@ -9,7 +9,6 @@ use colored::*;
 use inquire::Confirm;
 use inquire::Select;
 
-
 /// Additional guides and how-tos
 #[cfg(doc)]
 pub mod guides {

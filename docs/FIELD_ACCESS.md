@@ -169,7 +169,7 @@ pub struct Locator {
 ```
 
 **Internal representation** omits the wrapper:
-```
+```text
 Memos[0].MemoType  // Direct access after array index
 ```
 

@@ -50,9 +50,9 @@ You can identify the amount type by examining the first and third bits:
 
 The current implementation uses Rust's BigDecimal library for all floating-point computations:
 
-```rust,ignore
-// Current flow:
-WASM Module → Host Function → BigDecimal → Result
+```text
+Current flow:
+WASM Module -> Host Function -> BigDecimal -> Result
 ```
 
 **Characteristics:**
@@ -318,14 +318,14 @@ fn get_amount_type(first_byte: u8) -> AmountType {
 ## Appendix: Example Migration
 
 ### Before (BigDecimal)
-```rust
+```rust,ignore
 let val = BigDecimal::from_str("123.456").unwrap();
 let result = val * BigDecimal::from(2);
 // No control over rounding
 ```
 
 ### After (rippled Number)
-```rust
+```rust,ignore
 let val = Number::from_string("123.456").unwrap();
 let result = val.multiply(Number::from(2), RoundingMode::ToNearest);
 // Explicit rounding control

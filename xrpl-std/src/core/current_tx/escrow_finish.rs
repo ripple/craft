@@ -75,6 +75,17 @@ impl EscrowFinishFields for EscrowFinish {}
 ///
 /// This function has zero runtime cost as it simply returns a zero-sized type.
 /// All actual field access happens lazily when trait methods are called.
+///
+/// # Example
+///
+/// ```no_run
+/// use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
+/// use xrpl_std::core::current_tx::traits::{TransactionCommonFields, EscrowFinishFields};
+/// let tx = EscrowFinish;
+/// let owner = tx.get_owner().unwrap_or_panic();
+/// let offer_seq = tx.get_offer_sequence().unwrap_or_panic();
+/// let condition = tx.get_condition().unwrap_or_panic(); // Option<_>
+/// ```
 #[inline]
 pub fn get_current_escrow_finish() -> EscrowFinish {
     EscrowFinish

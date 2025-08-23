@@ -1,3 +1,19 @@
+//! Builder for nested field access locators.
+//!
+//! Locators encode a path to a nested field (sfields and array indices) in a compact
+//! binary format understood by the host. Use it to access fields like `Memos[0].MemoType`.
+//!
+//! Example
+//! ```no_run
+//! use xrpl_std::core::locator::Locator;
+//! use xrpl_std::sfield;
+//! let mut l = Locator::new();
+//! l.pack(sfield::Memos);
+//! l.pack(0);
+//! l.pack(sfield::MemoType);
+//! # let _ = (l.len() >= 3);
+//! ```
+
 /// The size of the buffer, in bytes, to use for any new locator
 const LOCATOR_BUFFER_SIZE: usize = 64;
 

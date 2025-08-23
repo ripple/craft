@@ -1,9 +1,15 @@
+//! Host bindings and utilities exposed to WASM smart contracts.
+//!
+//! This module surfaces the low-level host ABI as safe, typed Rust functions and types.
+//! Most users should prefer the high-level APIs in [`crate::core`].
+
 use crate::core::error_codes;
 
 pub mod assert;
 mod host_bindings;
 mod host_bindings_for_testing;
 pub mod trace;
+
 //////////////////////////////////////
 // Host functions (defined by the host)
 //////////////////////////////////////

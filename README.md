@@ -25,25 +25,11 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
-- Docker (required for running rippled)
+- Docker (recommended for running rippled; optional if you build rippled locally)
 
 ### Installing Docker
 
-Docker is required to run the rippled server. You have two options:
-
-#### Option 1: Colima (for macOS)
-
-Colima is a lightweight, open-source Docker runtime that craft can install automatically:
-
-```bash
-craft docker install  # Installs Colima via Homebrew
-```
-
-Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use, requires no login, and has no licensing restrictions.
-
-#### Option 2: Docker Desktop
-
-Traditional option with GUI:
+Docker is recommended to run the rippled server. Alternatively, you can build and run rippled locally by following the BUILD instructions in the rippled repository.
 
 - **macOS**: https://docs.docker.com/desktop/install/mac-install/
 - **Windows**: https://docs.docker.com/desktop/install/windows-install/
@@ -67,7 +53,6 @@ craft start-rippled   # Start rippled in Docker container
 craft list-rippled    # List rippled Docker containers
 craft stop-rippled    # Stop the rippled container
 craft advance-ledger  # Advance the ledger in stand-alone mode
-craft docker          # Manage Docker runtime (install/start/stop/status)
 craft open-explorer   # Open the XRPL Explorer
 ```
 
@@ -178,25 +163,20 @@ git clone git@github.com:ripple/craft.git
 
 ## Managing rippled
 
-The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install Colima (a lightweight Docker runtime) for you:
+The `craft` tool uses Docker to manage a `rippled` instance.
+
+Ensure Docker Desktop is installed and running. Then manage rippled using these commands:
 
 ```bash
-# Check Docker status and install if needed
-craft docker          # Shows status
-craft docker install  # Installs Colima (lightweight Docker)
-craft docker start    # Starts Colima
-craft docker stop     # Stops Colima
-
-# Once Docker is running, manage rippled:
-craft start-rippled   # Start rippled container (background mode)
-craft start-rippled --foreground  # With visible console output
-craft list-rippled    # List running rippled containers
-craft stop-rippled    # Stop the rippled container
+craft start-rippled                 # Start rippled container (background mode)
+craft start-rippled --foreground    # Start with visible console output
+craft list-rippled                  # List running rippled containers
+craft stop-rippled                  # Stop the rippled container
 ```
 
 The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which includes support for smart escrows.
 
-**Note**: If Docker is not installed when you run `craft start-rippled`, it will offer to install Colima automatically.
+**Note**: Ensure Docker is installed and running before using `craft start-rippled`.
 
 ### Docker Commands
 
@@ -215,9 +195,9 @@ docker rm craft-rippled
 
 ### Ports
 
-- API/WebSocket: `http://localhost:6006`
-- Peer Protocol: `localhost:51235`
-- Admin API: `localhost:5005`
+- Public WebSocket: `ws://localhost:6005`
+- Admin WebSocket: `ws://localhost:6006`
+- Admin RPC API: `http://localhost:5005`
 
 ## Running the XRPL Explorer
 
@@ -357,7 +337,8 @@ This repository contains multiple Rust crates. You can use rustdoc to generate a
 ### Generate documentation
 
 - Public crates only (recommended):
-  - `cargo doc --no-deps -p craft -p xrpl-std`
+  - `cargo doc --no-deps -p craft --target-dir target`
+  - `cargo doc --no-deps --manifest-path xrpl-std/Cargo.toml --target-dir target`
 - Entire workspace:
   - `cargo doc --workspace --no-deps`
 - Open docs in your browser:
@@ -369,7 +350,7 @@ A helper script is included:
 ./build-docs.sh
 ```
 
-This cleans previous docs, builds docs for `craft` and `xrpl-std`, runs doctests for `xrpl-std`, and prints the path to the rendered docs.
+This cleans previous docs, builds docs for `craft` and `xrpl-std` (into a shared target/ directory), runs doctests for `xrpl-std`, and prints the path to the rendered docs.
 
 ### View the documentation
 

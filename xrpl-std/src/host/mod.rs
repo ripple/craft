@@ -3,7 +3,6 @@
 //! This module exposes the low-level host ABI plus typed primitives (Result, Error, helpers).
 //! Most users should prefer the safe, high-level APIs in [`crate::core`], which wrap these bindings.
 
-
 pub mod assert;
 pub mod error_codes;
 mod host_bindings;

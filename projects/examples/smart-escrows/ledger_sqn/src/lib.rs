@@ -3,8 +3,8 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_std::core::error_codes::match_result_code;
 use xrpl_std::host;
+use xrpl_std::host::error_codes::match_result_code;
 use xrpl_std::host::trace::trace_num;
 
 #[unsafe(no_mangle)]

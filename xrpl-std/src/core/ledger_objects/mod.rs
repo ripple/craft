@@ -5,14 +5,14 @@ pub mod nft;
 pub mod traits;
 
 pub mod current_ledger_object {
-    use crate::core::error_codes::{
-        match_result_code, match_result_code_with_expected_bytes,
-        match_result_code_with_expected_bytes_optional,
-    };
     use crate::core::types::account_id::{ACCOUNT_ID_SIZE, AccountID};
     use crate::core::types::amount::token_amount::TokenAmount;
     use crate::core::types::blob::Blob;
     use crate::core::types::hash_256::{HASH256_SIZE, Hash256};
+    use crate::host::error_codes::{
+        match_result_code, match_result_code_with_expected_bytes,
+        match_result_code_with_expected_bytes_optional,
+    };
     use crate::host::{Result, get_current_ledger_obj_field, to_non_optional};
 
     /// Retrieves an `AccountID` field from the current ledger object.
@@ -253,15 +253,15 @@ pub mod current_ledger_object {
 }
 
 pub mod ledger_object {
-    use crate::core::error_codes::{
-        match_result_code, match_result_code_optional, match_result_code_with_expected_bytes,
-        match_result_code_with_expected_bytes_optional,
-    };
     use crate::core::types::account_id::{ACCOUNT_ID_SIZE, AccountID};
     use crate::core::types::amount::token_amount::TokenAmount;
     use crate::core::types::blob::Blob;
     use crate::core::types::hash_256::{HASH256_SIZE, Hash256};
     use crate::core::types::uint_128::{UINT128_SIZE, UInt128};
+    use crate::host::error_codes::{
+        match_result_code, match_result_code_optional, match_result_code_with_expected_bytes,
+        match_result_code_with_expected_bytes_optional,
+    };
     use crate::host::{Result, get_ledger_obj_field, to_non_optional};
 
     /// Retrieves an AccountID field from the current ledger object.

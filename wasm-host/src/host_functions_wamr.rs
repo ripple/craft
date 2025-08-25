@@ -697,18 +697,18 @@ fn unpack_in_float(env: wasm_exec_env_t, in_buf: *const u8) -> Result<Number, Ho
         }
         match std::slice::from_raw_parts(in_buf, 8).try_into() {
             Ok(bytes) => bytes,
-            Err(_) => return Err(HostError::FloatInputMalformed),
+            Err(_) => return Err(HostError::InvalidFloatInput),
         }
     };
 
-    Number::from_xrpl_iou_value(bytes).map_err(|_| HostError::FloatInputMalformed)
+    Number::from_xrpl_iou_value(bytes).map_err(|_| HostError::InvalidFloatInput)
 }
 
 fn pack_out_float(number: Number, env: wasm_exec_env_t, out_buf: *mut u8) -> i32 {
     // Convert Number directly to XRPL IOU format
     let bytes = match number.to_xrpl_iou_value() {
         Ok(bytes) => bytes,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     unsafe {
@@ -745,7 +745,7 @@ pub fn float_add(
     };
     let result = match (&n1 + &n2) {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -762,7 +762,7 @@ pub fn float_from_int(
 
     let number = match Number::from_i64(in_int) {
         Ok(n) => n,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(number, env, out_buf)
@@ -785,7 +785,7 @@ pub fn float_from_uint(
         }
         let bytes: [u8; 8] = match std::slice::from_raw_parts(in_uint_ptr, 8).try_into() {
             Ok(bytes) => bytes,
-            Err(_) => return HostError::FloatInputMalformed as i32,
+            Err(_) => return HostError::InvalidFloatInput as i32,
         };
         u64::from_le_bytes(bytes)
     };
@@ -794,12 +794,12 @@ pub fn float_from_uint(
     let signed_val = if v <= i64::MAX as u64 {
         v as i64
     } else {
-        return HostError::FloatComputationError as i32;
+        return HostError::InvalidFloatComputation as i32;
     };
 
     let number = match Number::from_i64(signed_val) {
         Ok(n) => n,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(number, env, out_buff)
@@ -817,7 +817,7 @@ pub fn float_set(
 
     let number = match Number::from_mantissa_exponent(mantissa, exponent) {
         Ok(n) => n,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(number, env, out_buff)
@@ -870,7 +870,7 @@ pub fn float_subtract(
 
     let result = match (&n1 - &n2) {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -900,7 +900,7 @@ pub fn float_multiply(
 
     let result = match (&n1 * &n2) {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -930,7 +930,7 @@ pub fn float_divide(
 
     let result = match (&n1 / &n2) {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -963,7 +963,7 @@ pub fn float_pow(
 
     let result = match n.pow(in_int as u32) {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -991,7 +991,7 @@ pub fn float_root(
 
     let result = match n.root(in_int as u32) {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -1014,7 +1014,7 @@ pub fn float_log(
 
     let result = match n.log10() {
         Ok(r) => r,
-        Err(_) => return HostError::FloatComputationError as i32,
+        Err(_) => return HostError::InvalidFloatComputation as i32,
     };
 
     pack_out_float(result, env, out_buff)
@@ -1072,11 +1072,11 @@ pub fn trace(
     );
 
     let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
-        return HostError::DecodingError as i32;
+        return HostError::InvalidDecoding as i32;
     };
 
     let Some(data_string) = read_hex_from_wasm(data_read_ptr, data_read_len, data_as_hex) else {
-        return HostError::DecodingError as i32;
+        return HostError::InvalidDecoding as i32;
     };
 
     if data_read_len > 0 {
@@ -1109,7 +1109,7 @@ pub fn trace_num(
         msg_read_ptr, msg_read_len, number
     );
     let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
-        return HostError::DecodingError as i32;
+        return HostError::InvalidDecoding as i32;
     };
 
     if (number < 0) {
@@ -1131,13 +1131,13 @@ pub fn trace_opaque_float(
     let bytes: [u8; 8] = unsafe {
         match std::slice::from_raw_parts(op_float, 8).try_into() {
             Ok(bytes) => bytes,
-            Err(_) => return HostError::FloatInputMalformed as i32,
+            Err(_) => return HostError::InvalidFloatInput as i32,
         }
     };
 
     let f = match _deserialize_issued_currency_amount(bytes) {
         Ok(f) => f,
-        Err(_) => return HostError::FloatInputMalformed as i32,
+        Err(_) => return HostError::InvalidFloatInput as i32,
     };
 
     debug!(
@@ -1145,7 +1145,7 @@ pub fn trace_opaque_float(
         msg_read_ptr, msg_read_len, f
     );
     let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
-        return HostError::DecodingError as i32;
+        return HostError::InvalidDecoding as i32;
     };
 
     println!("WASM TRACE: {message} {f}");

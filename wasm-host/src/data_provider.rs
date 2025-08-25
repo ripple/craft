@@ -92,8 +92,8 @@ pub fn error_code_to_string(code: i64) -> &'static str {
         HostError::InvalidAccount => "INVALID_ACCOUNT (-16)",
         HostError::InvalidField => "INVALID_FIELD (-17)",
         HostError::IndexOutOfBounds => "INDEX_OUT_OF_BOUNDS (-18)",
-        HostError::InvalidFloatInput => "FLOAT_INPUT_MALFORMED (-19)",
-        HostError::InvalidFloatComputation => "FLOAT_COMPUTATION_ERROR (-20)",
+        HostError::InvalidFloatInput => "INVALID_FLOAT_INPUT (-19)",
+        HostError::InvalidFloatComputation => "INVALID_FLOAT_COMPUTATION (-20)",
     }
 }
 

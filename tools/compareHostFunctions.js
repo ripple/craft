@@ -64,7 +64,7 @@ const read = process.argv[2].includes('github.com')
 
 async function main() {
     const wasmImportFile = await read(
-        process.argv[2], 'src/xrpld/app/wasm/VM.cpp',
+        process.argv[2], 'src/xrpld/app/wasm/WasmVM.cpp',
     )
     const hostWrapperFile = await read(
         process.argv[2], 'src/xrpld/app/wasm/HostFuncWrapper.h',

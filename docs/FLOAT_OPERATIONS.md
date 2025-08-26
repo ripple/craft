@@ -61,7 +61,7 @@ WASM Module -> Host Function -> xrpld-number (rippled Number via FFI) -> Result
 
 ## Fungible Token Float Format
 
-https://xrpl.org/docs/references/protocol/binary-format#amount-fields
+See: <https://xrpl.org/docs/references/protocol/binary-format#amount-fields>
 
 XRPL uses a custom 64-bit floating-point encoding for fungible token amounts:
 

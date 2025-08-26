@@ -1,9 +1,29 @@
-use crate::core::error_codes;
+//! Host bindings and utilities exposed to WASM smart contracts.
+//!
+//! This module exposes the low-level host ABI plus typed primitives (Result, Error, helpers).
+//! Most users should prefer the safe, high-level APIs in [`crate::core`], which wrap these bindings.
+//!
+//! ## Float Operations for Fungible Tokens (IOUs)
+//!
+//! The host provides float arithmetic functions for XRPL's fungible token amounts.
+//! These operations use rippled's Number class via FFI to ensure exact consensus compatibility:
+//!
+//! - `float_from_int` / `float_from_uint` - Convert integers to float format
+//! - `float_set` - Create float from exponent and mantissa
+//! - `float_add` / `float_subtract` / `float_multiply` / `float_divide` - Arithmetic
+//! - `float_pow` / `float_root` / `float_log` - Mathematical functions
+//! - `float_compare` - Comparison operations
+//!
+//! All operations support explicit rounding modes (0=ToNearest, 1=TowardsZero, 2=Downward, 3=Upward).
+//!
+//! See the host_bindings documentation for detailed function signatures.
 
 pub mod assert;
+pub mod error_codes;
 mod host_bindings;
 mod host_bindings_for_testing;
 pub mod trace;
+
 //////////////////////////////////////
 // Host functions (defined by the host)
 //////////////////////////////////////
@@ -15,8 +35,7 @@ include!("host_bindings_for_testing.rs");
 #[cfg(target_arch = "wasm32")]
 include!("host_bindings.rs");
 
-/// `Result` is a type that represents either success ([`Ok`]) or failure ([`Err`]) that better
-/// conforms to the xrpld programmability APIs.
+/// `Result` is a type that represents either a success ([`Ok`]) or failure ([`Err`]) result from the host.
 #[must_use]
 pub enum Result<T> {
     /// Contains the success value
@@ -123,117 +142,6 @@ impl From<i64> for Result<u64> {
     }
 }
 
-/// Possible errors returned by XRPL Programmability APIs.
-///
-/// Errors are global across all Programmability APIs.
-#[derive(Clone, Copy, Debug)]
-#[repr(i32)]
-pub enum Error {
-    /// A pointer or buffer length provided as a parameter described memory outside the allowed memory region.
-    OutOfBounds = error_codes::POINTER_OUT_OF_BOUNDS,
-    /// Reserved for internal invariant trips, generally unrelated to inputs.
-    /// These should be reported with an issue.
-    InternalError = error_codes::INTERNAL_ERROR,
-    // TODO: Remove Option and check for this error for any optional fields.
-    FieldNotFound = error_codes::FIELD_NOT_FOUND,
-    NoFreeSlots = error_codes::NO_FREE_SLOTS,
-    // /// Attempted to set a parameter or value larger than the allowed space .
-    // TooBig = _c::TOO_BIG,
-    // /// The API was unable to produce output to the write_ptr because the specified write_len was too small
-    // TooSmall = _c::TOO_SMALL,
-    // /// The requested object or item wasn't found
-    // DoesntExist = _c::DOESNT_EXIST,
-    // /// The Hook attempted to allocate an item into a slot, but there were no slots free.
-    // /// To avoid ensure re-use of existing slots. The maximum number of slots is 255.
-    // NoFreeSlots = _c::NO_FREE_SLOTS,
-    // /// One or more of the parameters to the API were invalid according to the individual API's specification.
-    // InvalidArgument = _c::INVALID_ARGUMENT,
-    // /// Some APIs allow for a once-per-execution parameter to be set.
-    // /// A second attempt to set a once-per-execution parameter results in this error.
-    // AlreadySet = _c::ALREADY_SET,
-    // /// An API required the Hook to do something before the API is allowed to be called.
-    // /// Check the API's documentation.
-    // PrerequisiteNotMet = _c::PREREQUISITE_NOT_MET,
-    // /// During fee calculation if an absurdly large fee is calculated this error is returned.
-    // FeeTooLarge = _c::FEE_TOO_LARGE,
-    // /// An attempt to emit() a TXN was unsccessful for any of a number of reasons.
-    // /// Check the trace log of the rippled to which you are submitting the originating TXN.
-    // EmissionFailure = _c::EMISSION_FAILURE,
-    // /// A Hook may only use up to 256 calls to nonce() per execution.
-    // /// Further calls result in this error code.
-    // TooManyNonces = _c::TOO_MANY_NONCES,
-    // /// A Hook must declare ahead of time how many TXN it intends to emit().
-    // /// If it emits fewer than this many, this is allowed.
-    // /// If it emits more than this many this error is returned.
-    // TooManyEmittedTxn = _c::TOO_MANY_EMITTED_TXN,
-    // /// While Hooks is/was in development an API may return this if some or all of that API is planned but not yet implemented.
-    // NotImplemented = _c::NOT_IMPLEMENTED,
-    // /// An API which accepts a 20 byte Account ID may return this if, in its opinion, the Account ID was not valid for any reason.
-    // InvalidAccount = _c::INVALID_ACCOUNT,
-    // /// All loops inside a Hook must declare at the top of the loop, as the first non trivial instruction,
-    // /// before any branch instruction, the promised maximum number of iterations of the loop.
-    // /// If this promise is violated the hook terminates immediately with this error code.
-    // GuardViolation = _c::GUARD_VIOLATION,
-    // The requested serialized field could not be found in the specified object.
-    // InvalidField = _c::INVALID_FIELD,
-    // /// While parsing serialized content an error was encountered (typically indicating an invalidly serialized object).
-    // ParseError = _c::PARSE_ERROR,
-    // /// Used internally to communicate a rollback event.
-    // RcRollback = _c::RC_ROLLBACK,
-    // /// Used internally to communicate an accept event.
-    // RcAccept = _c::RC_ACCEPT,
-    // /// Specified keylet could not be found, or keylet is invalid
-    // NoSuchKeylet = _c::NO_SUCH_KEYLET,
-    // /// API was asked to assume object under analysis is an STArray but it was not.
-    // NotAnArray = -22,
-    // /// API was asked to assume object under analysis is an STObject but it was not.
-    // NotAnObject = -23,
-    // /// A floating point operation resulted in Not-A-Number or API call attempted to specify an XFL floating point number outside of the expressible range of XFL.
-    // InvalidFloat = _c::INVALID_FLOAT,
-    // /// API call would result in a division by zero, so API ended early.
-    // DivisionByZero = -25,
-    // /// When attempting to create an XFL the mantissa must be 16 decimal digits.
-    // ManitssaOversized = -26,
-    // /// When attempting to create an XFL the mantissa must be 16 decimal digits.
-    // MantissaUndersized = -27,
-    // /// When attempting to create an XFL the exponent must not exceed 80.
-    // ExponentOversized = -28,
-    // /// When attempting to create an XFL the exponent must not be less than -96.
-    // ExponentUndersized = -29,
-    // /// A floating point operation done on an XFL resulted in a value larger than XFL format is able to represent.
-    // Overflow = -30,
-    /// An API assumed an STAmount was an IOU when in fact it was XRP or MPT.
-    NotIouAmount = -31,
-    /// An API assumed an STAmount was an IOU when in fact it was XRP or MPT.
-    NotMptAmount = -32,
-    /// An API assumed an STAmount was an IOU when in fact it was XRP or MPT.
-    NotXrpAmount = -33,
-    /// An API assumed an STObject was an STAmount when in fact it was not.
-    NotAnAmount = -34,
-    // /// An API would have returned a negative integer except that negative integers are reserved for error codes (i.e. what you are reading.)
-    // CantReturnNegative = -33,
-}
-
-impl Error {
-    // TODO: Use Trait instead?
-    #[inline(always)] // <-- Inline because this function is very small
-    pub fn from_code(code: i32) -> Self {
-        unsafe { core::mem::transmute(code) }
-    }
-
-    /// Error code
-    #[inline(always)] // <-- Inline because this function is very small
-    pub fn code(self) -> i32 {
-        self as _
-    }
-}
-
-impl From<Error> for i64 {
-    fn from(val: Error) -> Self {
-        val as i64
-    }
-}
-
 /// Converts a `Result<Option<T>>` to a `Result<T>` by treating `None` as an error.
 ///
 /// This utility function is commonly used in the XRPL Programmability API context
@@ -262,5 +170,112 @@ pub(crate) fn to_non_optional<T>(result: Result<Option<T>>) -> Result<T> {
         Result::Err(err) => Result::Err(err),
     }
 }
-pub const FLOAT_ONE: [u8; 8] = [0xD4, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
-pub const FLOAT_NEGATIVE_ONE: [u8; 8] = [0x94, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
+
+/// Possible errors returned by XRPL Programmability APIs.
+///
+/// Errors are global across all Programmability APIs.
+#[derive(Clone, Copy, Debug)]
+#[repr(i32)]
+pub enum Error {
+    /// Reserved for internal invariant trips, generally unrelated to inputs.
+    /// These should be reported with an issue.
+    InternalError = error_codes::INTERNAL_ERROR,
+
+    /// The requested serialized field could not be found in the specified object.
+    /// This error is returned when attempting to access a field that doesn't exist
+    /// in the current transaction or ledger object.
+    FieldNotFound = error_codes::FIELD_NOT_FOUND,
+
+    /// The provided buffer is too small to hold the requested data.
+    /// Increase the buffer size and retry the operation.
+    BufferTooSmall = error_codes::BUFFER_TOO_SMALL,
+
+    /// The API was asked to assume the object under analysis is an STArray but it was not.
+    /// This error occurs when trying to perform array operations on non-array objects.
+    NoArray = error_codes::NO_ARRAY,
+
+    /// The specified field is not a leaf field and cannot be accessed directly.
+    /// Leaf fields are primitive types that contain actual data values.
+    NotLeafField = error_codes::NOT_LEAF_FIELD,
+
+    /// The provided locator string is malformed or invalid.
+    /// Locators must follow the proper format for field identification.
+    LocatorMalformed = error_codes::LOCATOR_MALFORMED,
+
+    /// The specified slot number is outside the valid range.
+    /// Slot numbers must be within the allowed bounds for the current context.
+    SlotOutRange = error_codes::SLOT_OUT_RANGE,
+
+    /// No free slots are available for allocation.
+    /// All available slots are currently in use. Consider reusing existing slots.
+    SlotsFull = error_codes::SLOTS_FULL,
+
+    /// The specified slot did not contain any slotted data (i.e., is empty).
+    /// This error occurs when trying to access a slot that hasn't been allocated
+    /// or has been freed.
+    EmptySlot = error_codes::EMPTY_SLOT,
+
+    /// The requested ledger object could not be found.
+    /// This may occur if the object doesn't exist or the keylet is invalid.
+    LedgerObjNotFound = error_codes::LEDGER_OBJ_NOT_FOUND,
+
+    /// An error occurred while decoding serialized data.
+    /// This typically indicates corrupted or invalidly formatted data.
+    InvalidDecoding = error_codes::INVALID_DECODING,
+
+    /// The data field is too large to be processed.
+    /// Consider reducing the size of the data or splitting it into smaller chunks.
+    DataFieldTooLarge = error_codes::DATA_FIELD_TOO_LARGE,
+
+    /// A pointer or buffer length provided as a parameter described memory outside the allowed memory region.
+    /// This error indicates a memory access violation.
+    PointerOutOfBounds = error_codes::POINTER_OUT_OF_BOUNDS,
+
+    /// No memory has been exported by the WebAssembly module.
+    /// The module must export its memory for host functions to access it.
+    NoMemoryExported = error_codes::NO_MEM_EXPORTED,
+
+    /// One or more of the parameters provided to the API are invalid.
+    /// Check the API documentation for valid parameter ranges and formats.
+    InvalidParams = error_codes::INVALID_PARAMS,
+
+    /// The provided account identifier is invalid.
+    /// Account IDs must be valid 20-byte addresses in the proper format.
+    InvalidAccount = error_codes::INVALID_ACCOUNT,
+
+    /// The specified field identifier is invalid or not recognized.
+    /// Field IDs must correspond to valid XRPL serialization fields.
+    InvalidField = error_codes::INVALID_FIELD,
+
+    /// The specified index is outside the valid bounds of the array or collection.
+    /// Ensure the index is within the valid range for the target object.
+    IndexOutOfBounds = error_codes::INDEX_OUT_OF_BOUNDS,
+
+    /// The input provided for floating-point parsing is malformed.
+    /// Floating-point values must be in the correct format for XFL operations.
+    InvalidFloatInput = error_codes::INVALID_FLOAT_INPUT,
+
+    /// An error occurred during floating-point computation.
+    /// This may indicate overflow, underflow, or other arithmetic errors.
+    InvalidFloatComputation = error_codes::INVALID_FLOAT_COMPUTATION,
+}
+
+impl Error {
+    // TODO: Use Trait instead?
+    #[inline(always)] // <-- Inline because this function is very small
+    pub fn from_code(code: i32) -> Self {
+        unsafe { core::mem::transmute(code) }
+    }
+
+    /// Error code
+    #[inline(always)] // <-- Inline because this function is very small
+    pub fn code(self) -> i32 {
+        self as _
+    }
+}
+
+impl From<Error> for i64 {
+    fn from(val: Error) -> Self {
+        val as i64
+    }
+}

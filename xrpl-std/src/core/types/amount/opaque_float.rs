@@ -1,7 +1,36 @@
-/// A struct that holds 8 opaque bytes supplied by `rippled`. This opaque value _actually_ holds an
-/// `exponent` and `mantissa` that rippled uses to represent a floating point number. Craft treats
-/// this as an opaque so that developers don't try and do arithmetic with these bytes directly, but
-/// instead use Host functions for any arithmetic on this type of number.
+/// Opaque 64-bit representation of an XRPL fungible token (IOU) amount.
+///
+/// This struct encapsulates the XRPL's custom floating-point format used for fungible tokens.
+/// The format is: `[Type:1][Sign:1][Exponent:8][Mantissa:54]` bits.
+///
+/// # Important
+///
+/// This type is intentionally opaque - arithmetic operations MUST be performed through
+/// host functions (float_add, float_multiply, etc.) which use rippled's Number class
+/// to ensure exact compatibility with XRPL consensus rules.
+///
+/// # Format Details
+///
+/// - **Type bit** (bit 63): Always 1 for fungible tokens
+/// - **Sign bit** (bit 62): 1 = positive, 0 = negative
+/// - **Exponent** (bits 61-54): 8 bits, biased by 97 (range -96 to +80)
+/// - **Mantissa** (bits 53-0): 54 bits providing ~16 decimal digits precision
+///
+/// # Special Values
+///
+/// - Zero: `0x8000000000000000`
+/// - Maximum: ~9.999999999999999 × 10^80
+/// - Minimum positive: ~1.0 × 10^-81
+///
+/// # Example
+///
+/// ```no_run
+/// # use xrpl_std::core::types::amount::opaque_float::OpaqueFloat;
+/// // Create from host function
+/// let mut float_bytes = [0u8; 8];
+/// // float_from_int(100, float_bytes.as_mut_ptr(), 8, 0);
+/// let amount = OpaqueFloat(float_bytes);
+/// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[repr(C)]
 pub struct OpaqueFloat(pub [u8; 8]);
@@ -106,6 +135,12 @@ impl From<[u8; 8]> for OpaqueFloat {
         OpaqueFloat(value)
     }
 }
+
+/// The number `1` in XRPL's custom float format.
+pub const FLOAT_ONE: [u8; 8] = [0xD4, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
+
+/// The number `0` in XRPL's custom float format.
+pub const FLOAT_NEGATIVE_ONE: [u8; 8] = [0x94, 0x83, 0x8D, 0x7E, 0xA4, 0xC6, 0x80, 0x00];
 
 #[cfg(test)]
 mod tests {

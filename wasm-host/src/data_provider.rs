@@ -19,7 +19,7 @@ pub enum HostError {
     NoFreeSlots = -8,
     EmptySlot = -9,
     LedgerObjNotFound = -10,
-    DecodingError = -11,
+    InvalidDecoding = -11,
     DataFieldTooLarge = -12,
     PointerOutOfBound = -13, // WAMR VM checks, so we don't need to
     NoMemoryExported = -14,  // We don't explicitly call WAMR memory functions.
@@ -27,8 +27,8 @@ pub enum HostError {
     InvalidAccount = -16,
     InvalidField = -17,
     IndexOutOfBounds = -18,
-    FloatInputMalformed = -19,
-    FloatComputationError = -20,
+    InvalidFloatInput = -19,
+    InvalidFloatComputation = -20,
 }
 
 impl From<i64> for HostError {
@@ -44,7 +44,7 @@ impl From<i64> for HostError {
             -8 => HostError::NoFreeSlots,
             -9 => HostError::EmptySlot,
             -10 => HostError::LedgerObjNotFound,
-            -11 => HostError::DecodingError,
+            -11 => HostError::InvalidDecoding,
             -12 => HostError::DataFieldTooLarge,
             -13 => HostError::PointerOutOfBound,
             -14 => HostError::NoMemoryExported,
@@ -84,7 +84,7 @@ pub fn error_code_to_string(code: i64) -> &'static str {
         HostError::NoFreeSlots => "SLOTS_FULL (-8)",
         HostError::EmptySlot => "EMPTY_SLOT (-9)",
         HostError::LedgerObjNotFound => "LEDGER_OBJ_NOT_FOUND (-10)",
-        HostError::DecodingError => "DECODING_ERROR (-11)",
+        HostError::InvalidDecoding => "DECODING_ERROR (-11)",
         HostError::DataFieldTooLarge => "DATA_FIELD_TOO_LARGE (-12)",
         HostError::PointerOutOfBound => "POINTER_OUT_OF_BOUND (-13)",
         HostError::NoMemoryExported => "NO_MEMORY_EXPORTED (-14)",
@@ -92,8 +92,8 @@ pub fn error_code_to_string(code: i64) -> &'static str {
         HostError::InvalidAccount => "INVALID_ACCOUNT (-16)",
         HostError::InvalidField => "INVALID_FIELD (-17)",
         HostError::IndexOutOfBounds => "INDEX_OUT_OF_BOUNDS (-18)",
-        HostError::FloatInputMalformed => "FLOAT_INPUT_MALFORMED (-19)",
-        HostError::FloatComputationError => "FLOAT_COMPUTATION_ERROR (-20)",
+        HostError::InvalidFloatInput => "INVALID_FLOAT_INPUT (-19)",
+        HostError::InvalidFloatComputation => "INVALID_FLOAT_COMPUTATION (-20)",
     }
 }
 
@@ -261,7 +261,7 @@ impl DataProvider {
             Some(value) => {
                 if decodable == Decodable::AMOUNT {
                     match decode_amount_json(value.clone()) {
-                        None => (HostError::DecodingError as i32, buf),
+                        None => (HostError::InvalidDecoding as i32, buf),
                         Some(bytes) => {
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
@@ -272,7 +272,7 @@ impl DataProvider {
                     }
                 } else if decodable == Decodable::ISSUE {
                     match decode_issue_json(value.clone()) {
-                        None => (HostError::DecodingError as i32, buf),
+                        None => (HostError::InvalidDecoding as i32, buf),
                         Some(bytes) => {
                             if bytes.len() > buf_cap {
                                 return (HostError::BufferTooSmall as i32, buf);
@@ -333,7 +333,7 @@ impl DataProvider {
                             }
                         }
                         serde_json::Value::String(s) => match decode(s, decodable) {
-                            None => (HostError::DecodingError as i32, buf),
+                            None => (HostError::InvalidDecoding as i32, buf),
                             Some(bytes) => {
                                 if bytes.len() > buf_cap {
                                     return (HostError::BufferTooSmall as i32, buf);

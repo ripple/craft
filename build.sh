@@ -31,6 +31,9 @@ echo "✅  'xrpl-host' project built successfully"
 
 cd .. || exit
 
+echo "🔧 Setting NOTARY_ACCOUNT_R to rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
+export NOTARY_ACCOUNT_R=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
+
 find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   dir=$(dirname "$cargo_file")
   echo "🔧 Building example WASM: $dir"

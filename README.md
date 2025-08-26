@@ -31,9 +31,9 @@ To update the tool, use the same command.
 
 Docker is recommended to run the rippled server. Alternatively, you can build and run rippled locally by following the BUILD instructions in the rippled repository.
 
-- **macOS**: https://docs.docker.com/desktop/install/mac-install/
-- **Windows**: https://docs.docker.com/desktop/install/windows-install/
-- **Linux**: https://docs.docker.com/engine/install/
+- **macOS**: <https://docs.docker.com/desktop/install/mac-install/>
+- **Windows**: <https://docs.docker.com/desktop/install/windows-install/>
+- **Linux**: <https://docs.docker.com/engine/install/>
 
 After installation, ensure Docker is running before using rippled-related commands.
 
@@ -100,7 +100,7 @@ craft test
 
 Organize your WASM modules in the `projects` directory:
 
-```
+```text
 .
 ├── projects/
 │   └── helloworld/      # Example
@@ -368,7 +368,7 @@ This cleans previous docs, builds docs for `craft` and `xrpl-std` (into a shared
 - Prefer small, runnable examples. For examples that should not run in doctests, use code fences with language modifiers:
   - ```rust,no_run``` for examples that should compile but not execute
   - ```rust,ignore``` for examples that should not be compiled
-- Use intra-doc links to reference items within a crate, e.g. `[Result](core::result::Result)` or <code>[sfield](crate::sfield)</code>
+- Use intra-doc links to reference items within a crate, e.g. `[Result](core::result::Result)`
 - Test your docs: `cargo test --doc` (per-crate or workspace)
 - Hide internal implementation details with `#[doc(hidden)]`
 - Feature-gate docs for optional APIs with `#[cfg_attr(doc_cfg, doc(cfg(feature = "...")))]`

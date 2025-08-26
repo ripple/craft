@@ -1,3 +1,23 @@
+//! Host bindings and utilities exposed to WASM smart contracts.
+//!
+//! This module exposes the low-level host ABI plus typed primitives (Result, Error, helpers).
+//! Most users should prefer the safe, high-level APIs in [`crate::core`], which wrap these bindings.
+//!
+//! ## Float Operations for Fungible Tokens (IOUs)
+//!
+//! The host provides float arithmetic functions for XRPL's fungible token amounts.
+//! These operations use rippled's Number class via FFI to ensure exact consensus compatibility:
+//!
+//! - `float_from_int` / `float_from_uint` - Convert integers to float format
+//! - `float_set` - Create float from exponent and mantissa
+//! - `float_add` / `float_subtract` / `float_multiply` / `float_divide` - Arithmetic
+//! - `float_pow` / `float_root` / `float_log` - Mathematical functions
+//! - `float_compare` - Comparison operations
+//!
+//! All operations support explicit rounding modes (0=ToNearest, 1=TowardsZero, 2=Downward, 3=Upward).
+//!
+//! See the host_bindings documentation for detailed function signatures.
+
 pub mod assert;
 pub mod error_codes;
 mod host_bindings;

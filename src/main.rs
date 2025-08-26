@@ -9,6 +9,14 @@ use colored::*;
 use inquire::Confirm;
 use inquire::Select;
 
+/// Additional guides and how-tos
+#[cfg(doc)]
+pub mod guides {
+    /// XRPL Field Access and Locators guide
+    #[doc = include_str!("../docs/FIELD_ACCESS.md")]
+    pub mod field_access {}
+}
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {

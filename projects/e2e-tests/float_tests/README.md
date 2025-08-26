@@ -26,54 +26,29 @@ cd ../../../wasm-host
 cargo run -- --wasm-file ../projects/e2e-tests/float_tests/target/wasm32-unknown-unknown/release/float_tests.wasm --project e2e-tests/float_tests
 ```
 
-## Current Limitations
+## Rounding Modes
 
-### Rounding Modes Not Implemented
+The host honors the `rounding_mode` parameter for float operations by setting rippled Number's rounding mode per call. Behavior should match rippled.
 
-The current implementation accepts but **does not honor** the `rounding_mode` parameter in float operations. All
-operations use BigDecimal's default behavior, unlike XRPL/rippled.
+Supported rounding modes:
+- `0`: Round to nearest (ties to even)
+- `1`: Round towards zero
+- `2`: Round down (floor)
+- `3`: Round up (ceiling)
 
-**Affected functions:**
+### Precision and Compatibility
 
-- `float_from_int`
-- `float_from_uint`
-- `float_set`
-- `float_add`
-- `float_subtract`
-- `float_multiply`
-- `float_divide`
-- `float_root`
-- `float_log`
-
-### Precision Differences
-
-The current implementation uses Rust's BigDecimal library, which may produce slightly different results than rippled's
-Number class for edge cases involving:
-
-- Very large or very small numbers
-- Operations near the precision limits
-- Rounding of intermediate results
+Float operations are backed by rippled's Number implementation to ensure compatibility with validator behavior, including edge cases around limits and rounding.
 
 ### Performance Considerations
 
-BigDecimal operations are significantly slower than native floating-point operations. This is acceptable for testing but
-may impact performance in production scenarios.
+The FFI-backed implementation should be performant for typical contract workloads.
 
-## Expected Behavior After Migration
+## Guarantees
 
-Once migrated to rippled's Number class:
-
-1. **Rounding modes will be fully supported**:
-    - `0`: Round to nearest (ties to even)
-    - `1`: Round towards zero
-    - `2`: Round down (floor)
-    - `3`: Round up (ceiling)
-
-2. **Bit-for-bit compatibility** with rippled validators
-
-3. **Improved performance** using optimized C++ implementation
-
-4. **Consistent behavior** across all XRPL nodes, per the XRPL protocol
+1. **Rounding modes are fully supported** and honored by the host
+2. **Bit-for-bit compatibility** with rippled validators for IOU values
+3. **Consistent behavior** across all XRPL nodes, per the XRPL protocol
 
 ## Test Coverage
 
@@ -84,8 +59,8 @@ The test module covers:
 - ✅ Basic arithmetic (add, subtract, multiply, divide)
 - ✅ Mathematical functions (root, log)
 - ✅ Special values (positive/negative)
-- ❌ Rounding mode variations (not yet implemented)
-- ❌ Edge cases requiring exact rippled compatibility
+- ✅ Rounding mode variations
+- ✅ Edge cases matching rippled behavior
 
 ## Notes
 

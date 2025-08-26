@@ -9,7 +9,18 @@ if [ "$PROFILE" != "dev" ]; then
   PROFILE_FLAG="--profile $PROFILE"
 fi
 
+echo ""
 echo "🔧 Building ALL with profile: $PROFILE"
+echo ""
+
+echo "🔧 Building 'craft' ($PROFILE)"
+cargo build $PROFILE_FLAG
+cargo test $PROFILE_FLAG
+cargo clippy --all-targets --all-features
+cargo fmt --all -- --check
+echo ""
+echo "✅ 'Craft' project built successfully"
+echo ""
 
 cd xrpl-std || exit
 echo "🔧 Building 'xrpl-std' ($PROFILE)"
@@ -18,16 +29,20 @@ cargo test $PROFILE_FLAG
 cargo build $PROFILE_FLAG --target wasm32-unknown-unknown
 cargo clippy --all-targets --all-features
 cargo fmt --all -- --check
+echo ""
 echo "✅ 'xrpl-std' project built successfully"
+echo ""
 
 cd ..
 cd ./wasm-host || exit
-echo "🔧 Building 'xrpl-host' ($PROFILE)"
+echo "🔧 Building 'wasm-host' ($PROFILE)"
 cargo build $PROFILE_FLAG
 cargo test $PROFILE_FLAG
 cargo clippy --all-targets --all-features
 cargo fmt --all -- --check
-echo "✅  'xrpl-host' project built successfully"
+echo ""
+echo "✅  'wasm-host' project built successfully"
+echo ""
 
 cd .. || exit
 
@@ -40,7 +55,9 @@ find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   (cd "$dir" && cargo build $PROFILE_FLAG --target wasm32-unknown-unknown) || exit 1
 done
 
+echo ""
 echo "✅  All WASM examples built successfully"
+echo ""
 
 find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   dir=$(dirname "$cargo_file")
@@ -48,7 +65,9 @@ find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   (cd "$dir" && cargo build $PROFILE_FLAG) || exit 1
 done
 
+echo ""
 echo "✅  All Rust examples built successfully"
+echo ""
 
 find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   dir=$(dirname "$cargo_file")
@@ -56,14 +75,18 @@ find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   (cd "$dir" && cargo fmt --all -- --check) || exit 1
 done
 
+echo ""
 echo "✅  All 'cargo fmt' checks completed successfully"
+echo ""
 
 find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
   dir=$(dirname "$cargo_file")
   echo "🔧 'cargo clippy' for $dir"
-  (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
+  (cd "$dir" && cargo clippy --all-targets --all-features -- -Dclippy::all) || exit 1
 done
 
+echo ""
 echo "✅  All 'cargo clippy' checks completed successfully"
+echo ""
 
 cd ../.. || exit

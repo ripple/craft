@@ -6,7 +6,7 @@ extern crate std;
 use xrpl_std::core::current_tx::escrow_finish;
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_std::host::trace::trace_num;
-use xrpl_std::host::{Result::Err, Result::Ok};
+// Standard Result is now used - Ok and Err are available in the prelude
 
 // Two options for specifying the notary account:
 //

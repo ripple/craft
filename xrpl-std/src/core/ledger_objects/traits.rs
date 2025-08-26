@@ -15,8 +15,7 @@ use crate::host::error_codes::{
     match_result_code, match_result_code_with_expected_bytes,
     match_result_code_with_expected_bytes_optional,
 };
-use crate::host::{Error, get_current_ledger_obj_field, get_ledger_obj_field, update_data};
-use crate::host::{Result, Result::Err, Result::Ok};
+use crate::host::{Error, Result, get_current_ledger_obj_field, get_ledger_obj_field, update_data};
 use crate::sfield;
 
 /// Trait providing access to common fields present in all ledger objects.

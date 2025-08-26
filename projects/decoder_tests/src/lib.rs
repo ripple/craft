@@ -515,7 +515,7 @@ fn get_account(slot: i32, field: i32) -> AccountID {
 
 fn process_keylet_result(result: host::Result<KeyletBytes>, expected: [u8; 32]) {
     match result {
-        host::Result::Ok(computed_keylet) => {
+        Ok(computed_keylet) => {
             if computed_keylet == expected {
                 let _ = trace("  keylet match");
             } else {
@@ -524,7 +524,7 @@ fn process_keylet_result(result: host::Result<KeyletBytes>, expected: [u8; 32]) 
                 let _ = trace_data("    expected:", &expected[..], DataRepr::AsHex);
             }
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace("  keylet function error");
         }
     }

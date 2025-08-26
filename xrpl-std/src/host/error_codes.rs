@@ -1,6 +1,6 @@
 use crate::host::Error::{InternalError, PointerOutOfBounds};
 use crate::host::trace::trace_num;
-use crate::host::{Error, Result, Result::Err, Result::Ok};
+use crate::host::{Error, Result};
 
 /// Reserved for internal invariant trips, generally unrelated to inputs.
 pub const INTERNAL_ERROR: i32 = -1;

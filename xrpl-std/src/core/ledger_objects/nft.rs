@@ -2,7 +2,7 @@ use crate::core::types::account_id::AccountID;
 use crate::core::types::contract_data::XRPL_CONTRACT_DATA_SIZE;
 use crate::host;
 use crate::types::NFT;
-use host::{Error, Result, Result::Ok};
+use host::{Error, Result};
 
 // TODO: Add documentation and examples.
 

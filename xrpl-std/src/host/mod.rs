@@ -15,110 +15,26 @@ include!("host_bindings_for_testing.rs");
 #[cfg(target_arch = "wasm32")]
 include!("host_bindings.rs");
 
-/// `Result` is a type that represents either a success ([`Ok`]) or failure ([`Err`]) result from the host.
-#[must_use]
-pub enum Result<T> {
-    /// Contains the success value
-    Ok(T),
-    /// Contains the error value
-    Err(Error), // TODO: Test if the WASM size is expanded if we use an enum here instead of i32
+/// `Result` is a type alias to the standard Result with our custom Error type.
+/// This maintains API compatibility while using standard Rust error handling.
+pub type Result<T> = core::result::Result<T, Error>;
+
+// Helper functions for WASM response code handling
+pub fn unwrap_or_panic<T>(result: Result<T>) -> T {
+    result.unwrap_or_else(|error| {
+        let _ = trace::trace_num("error_code=", error.code() as i64);
+        core::panic!(
+            "Failed in {}: error_code={}",
+            core::panic::Location::caller(),
+            error.code()
+        );
+    })
 }
 
-impl<T> Result<T> {
-    /// Returns `true` if the result is [`Ok`].
-    #[inline]
-    pub fn is_ok(&self) -> bool {
-        matches!(*self, Result::Ok(_))
-    }
-
-    /// Returns `true` if the result is [`Err`].
-    #[inline]
-    pub fn is_err(&self) -> bool {
-        !self.is_ok()
-    }
-
-    /// Converts from `Result<T>` to `Option<T>`.
-    ///
-    /// Converts `self` into an `Option<T>`, consuming `self`,
-    /// and discarding the error, if any.
-    #[inline]
-    pub fn ok(self) -> Option<T> {
-        match self {
-            Result::Ok(x) => Some(x),
-            Result::Err(_) => None,
-        }
-    }
-
-    /// Converts from `Result<T>` to `Option<Error>`.
-    ///
-    /// Converts `self` into an `Option<Error>`, consuming `self`,
-    /// and discarding the success value, if any.
-    #[inline]
-    pub fn err(self) -> Option<Error> {
-        match self {
-            Result::Ok(_) => None,
-            Result::Err(x) => Some(x),
-        }
-    }
-
-    /// Returns the contained [`Ok`] value, consuming the `self` value.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the value is an [`Err`], with a panic message provided by the
-    /// [`Err`]'s value.
-    #[inline]
-    pub fn unwrap(self) -> T {
-        match self {
-            Result::Ok(t) => t,
-            Result::Err(error) => {
-                let _ = trace::trace_num("error_code=", error.code() as i64);
-                panic!(
-                    "called `Result::unwrap()` on an `Err` with code: {}",
-                    error.code()
-                )
-            }
-        }
-    }
-
-    /// Returns the contained [`Ok`] value or a provided default.
-    #[inline]
-    pub fn unwrap_or(self, default: T) -> T {
-        match self {
-            Result::Ok(t) => t,
-            Result::Err(_) => default,
-        }
-    }
-
-    /// Returns the contained [`Ok`] value or computes it from a closure.
-    #[inline]
-    pub fn unwrap_or_else<F: FnOnce(Error) -> T>(self, op: F) -> T {
-        match self {
-            Result::Ok(t) => t,
-            Result::Err(e) => op(e),
-        }
-    }
-
-    #[inline]
-    pub fn unwrap_or_panic(self) -> T {
-        self.unwrap_or_else(|error| {
-            let _ = trace::trace_num("error_code=", error.code() as i64);
-            core::panic!(
-                "Failed in {}: error_code={}",
-                core::panic::Location::caller(),
-                error.code()
-            );
-        })
-    }
-}
-
-impl From<i64> for Result<u64> {
-    #[inline(always)] // <-- Inline because this function is very small
-    fn from(value: i64) -> Self {
-        match value {
-            res if res >= 0 => Result::Ok(value as _),
-            _ => Result::Err(Error::from_code(value as _)),
-        }
+pub fn result_from_i64(value: i64) -> Result<u64> {
+    match value {
+        res if res >= 0 => Ok(value as _),
+        _ => Err(Error::from_code(value as _)),
     }
 }
 
@@ -145,15 +61,16 @@ impl From<i64> for Result<u64> {
 /// XRPL ledger objects or API responses.
 pub(crate) fn to_non_optional<T>(result: Result<Option<T>>) -> Result<T> {
     match result {
-        Result::Ok(Some(value)) => Result::Ok(value),
-        Result::Ok(None) => Result::Err(Error::FieldNotFound),
-        Result::Err(err) => Result::Err(err),
+        Ok(Some(value)) => Ok(value),
+        Ok(None) => Err(Error::FieldNotFound),
+        Err(err) => Err(err),
     }
 }
 
 /// Possible errors returned by XRPL Programmability APIs.
 ///
 /// Errors are global across all Programmability APIs.
+/// Each error variant maps to a specific negative i32 code used in WASM response codes.
 #[derive(Clone, Copy, Debug)]
 #[repr(i32)]
 pub enum Error {
@@ -259,3 +176,33 @@ impl From<Error> for i64 {
         val as i64
     }
 }
+
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let message = match self {
+            Error::InternalError => "Internal error occurred",
+            Error::FieldNotFound => "Requested field not found",
+            Error::BufferTooSmall => "Buffer too small to hold requested data",
+            Error::NoArray => "Object is not an STArray",
+            Error::NotLeafField => "Field is not a leaf field",
+            Error::LocatorMalformed => "Locator string is malformed",
+            Error::SlotOutRange => "Slot number is out of range",
+            Error::SlotsFull => "No free slots available",
+            Error::EmptySlot => "Slot is empty",
+            Error::LedgerObjNotFound => "Ledger object not found",
+            Error::InvalidDecoding => "Invalid data decoding",
+            Error::DataFieldTooLarge => "Data field too large",
+            Error::PointerOutOfBounds => "Pointer out of bounds",
+            Error::NoMemoryExported => "No memory exported by WASM module",
+            Error::InvalidParams => "Invalid parameters",
+            Error::InvalidAccount => "Invalid account identifier",
+            Error::InvalidField => "Invalid field identifier",
+            Error::IndexOutOfBounds => "Index out of bounds",
+            Error::InvalidFloatInput => "Invalid float input",
+            Error::InvalidFloatComputation => "Invalid float computation",
+        };
+        write!(f, "{} (code: {})", message, self.code())
+    }
+}
+
+impl core::error::Error for Error {}

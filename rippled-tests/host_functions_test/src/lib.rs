@@ -784,12 +784,11 @@ fn test_utility_functions() -> i32 {
     let test_number = 42i64;
     let trace_num_result = trace_num("Test number trace", test_number);
 
-    use xrpl_std::host::Result;
     match trace_num_result {
-        Result::Ok(_) => {
+        Ok(_) => {
             let _ = trace_num("Trace_num function succeeded", 0);
         }
-        Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_num() failed:", -604);
             return -604; // Trace number function failed
         }

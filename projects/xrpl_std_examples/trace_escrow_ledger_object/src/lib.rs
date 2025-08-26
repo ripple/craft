@@ -9,7 +9,6 @@ use xrpl_std::core::ledger_objects::traits::{
     CurrentEscrowFields, CurrentLedgerObjectCommonFields,
 };
 use xrpl_std::host::trace::{DataRepr, trace, trace_amount, trace_data, trace_num};
-use xrpl_std::host::{Result::Err, Result::Ok};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {

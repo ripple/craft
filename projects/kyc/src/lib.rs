@@ -8,7 +8,6 @@ use xrpl_std::core::ledger_objects::current_escrow::CurrentEscrow;
 use xrpl_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_std::core::types::keylets::credential_keylet;
 use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
-use xrpl_std::host::{Result::Err, Result::Ok};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {

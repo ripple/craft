@@ -17,3 +17,4 @@ categories = ["no-std", "embedded", "cryptography::cryptocurrencies"]
 crate-type = ["lib"]
 
 [dependencies]
+thiserror = "2.0.16"

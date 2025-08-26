@@ -56,7 +56,7 @@ impl Drop for RoundingModeGuard {
 /// Helper function to set rounding mode from WASM parameter and return RAII guard
 /// Returns a guard that will automatically restore the previous rounding mode
 fn set_rounding_mode_from_param(rounding_mode: i32) -> RoundingModeGuard {
-    if rounding_mode >= 0 && rounding_mode <= 3 {
+    if (0..=3).contains(&rounding_mode) {
         let mode = match rounding_mode {
             0 => NumberRoundingMode::ToNearest,
             1 => NumberRoundingMode::TowardsZero,

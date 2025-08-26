@@ -157,7 +157,7 @@ impl Number {
         let exponent = (exponent_bits as i32) - 97;
 
         // Validate exponent range
-        if exponent < -96 || exponent > 80 {
+        if !(-96..=80).contains(&exponent) {
             return Err(NumberError::InvalidArgument);
         }
 
@@ -189,14 +189,14 @@ impl Number {
         let exponent = self.exponent();
 
         // Validate that we can represent this number in XRPL format
-        if exponent < -96 || exponent > 80 {
+        if !(-96..=80).contains(&exponent) {
             return Err(NumberError::InvalidArgument);
         }
 
         // Get absolute mantissa for bit packing
-        let abs_mantissa = mantissa.abs() as u64;
+        let abs_mantissa = mantissa.unsigned_abs();
 
-        // Validate mantissa is in expected range for XRPL format
+        // Validate mantissa is in the expected range for XRPL format
         // The C++ Number class should normalize values, but let's be safe
         if abs_mantissa == 0 {
             return Ok(FLOAT_ZERO);

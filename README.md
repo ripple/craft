@@ -256,7 +256,7 @@ The verbose output may include:
 
 Example verbose output:
 
-```
+```text
 [INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
@@ -321,7 +321,7 @@ If the WebAssembly module execution fails, the tool will:
 
 Example error output:
 
-```
+```text
 -------------------------------------------------
 | WASM FUNCTION EXECUTION ERROR                 |
 -------------------------------------------------

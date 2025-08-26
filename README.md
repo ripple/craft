@@ -149,9 +149,11 @@ The notary project includes test fixtures for validating escrow finish condition
 - **Failure Case** (`projects/notary/fixtures/failure/`): Tests when the escrow finish condition is not met (transaction with an incorrect notary account)
 
 #### Host Functions Test Project
-The host_functions_test project includes fixtures for testing various host function capabilities:
+The host_functions_test project includes fixtures for testing various host function capabilities. This project can be found in:
 
-- **Success Case** (`projects/host_functions_test/fixtures/success/`): Tests successful execution of 26 host functions
+`rippled-tests/host_functions_test/`
+
+- **Success Case** (`rippled-tests/host_functions_test/fixtures/success/`): Tests successful execution of 26 host functions
 
 ### Cloning the Repository
 

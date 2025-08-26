@@ -904,7 +904,33 @@ unsafe extern "C" {
     // #############################
     // Host Function Category: FLOAT
     // #############################
-    // Note that Craft currently does not honor the rounding mode
+    // Float operations for fungible token (IOU) arithmetic.
+    // These functions use rippled's Number class via FFI for exact compatibility.
+    //
+    // ## Architecture
+    // Float computations use the rippled Number class:
+    // WASM Module -> Host Function -> XRPLD Number (rippled via FFI) -> Result
+    //
+    // ## XRPL Amount Types
+    // The XRPL has three amount types:
+    // 1. XRP - 64-bit integer (drops)
+    // 2. Fungible Tokens (IOUs) - Custom 64-bit float format (these functions)
+    // 3. MPTs - 64-bit integer quantity with issuance ID
+    //
+    // ## Float Format (IOUs)
+    // 64-bit custom encoding: [Type:1][Sign:1][Exponent:8][Mantissa:54]
+    // - Type bit: Always 1 for fungible tokens
+    // - Sign bit: 1=positive, 0=negative
+    // - Exponent: 8 bits, biased by 97 (range -96 to +80)
+    // - Mantissa: 54 bits (16 decimal digits precision)
+    // - Zero: Special encoding 0x8000000000000000
+    //
+    // ## Rounding Modes
+    // All functions accept a rounding_mode parameter:
+    // - 0: ToNearest (ties to even)
+    // - 1: TowardsZero (truncate)
+    // - 2: Downward (towards -∞)
+    // - 3: Upward (towards +∞)
 
     /// Converts a signed 64-bit integer to an opaque float representation
     /// # Parameters

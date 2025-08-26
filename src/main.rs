@@ -15,9 +15,6 @@ pub mod guides {
     /// XRPL Field Access and Locators guide
     #[doc = include_str!("../docs/FIELD_ACCESS.md")]
     pub mod field_access {}
-    /// XRPL WASM Float Operations
-    #[doc = include_str!("../docs/FLOAT_OPERATIONS.md")]
-    pub mod float_operations {}
 }
 
 #[derive(Parser)]

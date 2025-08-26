@@ -5,7 +5,7 @@
 //! - [`ledger_objects`]: Read fields from on-ledger objects (current or cached)
 //! - [`types`]: Strongly-typed XRPL primitives (AccountID, Hash256, Amount, etc.)
 //! - [`locator`]: Build locators for nested field access
-//! - [`constants`], [`error_codes`]: Internal helpers for buffer sizes and error mapping
+//! - [`constants`]: Internal helpers for buffer sizes
 //!
 //! Start with [`current_tx::escrow_finish::EscrowFinish`] to access EscrowFinish TX fields,
 //! or [`ledger_objects::current_escrow::get_current_escrow`] to access the active escrow.

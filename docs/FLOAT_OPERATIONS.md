@@ -1,20 +1,11 @@
-# XRPL WASM Float Operations
+# XRPL Float Operations Technical Reference
 
 ## Overview
 
-This document describes the floating-point operations available to XRPL WebAssembly smart contracts and the planned migration from the current BigDecimal implementation to rippled's native Number class.
+Float operations in XRPL are used exclusively for **fungible token (IOU)** amounts.
 
-The float operations in XRPL are specifically used for **fungible tokens** (also called IOUs), which is one of three amount types supported by the XRP Ledger.
+Computations use rippled's Number class via FFI for exact consensus compatibility.
 
-## Table of Contents
-
-- [XRPL Amount Types](#xrpl-amount-types)
-- [Current Architecture](#current-architecture)
-- [Fungible Token Float Format](#fungible-token-float-format)
-- [Available Operations](#available-operations)
-- [Migration Plan](#migration-plan)
-- [Implementation Details](#implementation-details)
-- [Testing Strategy](#testing-strategy)
 
 ## XRPL Amount Types
 
@@ -46,27 +37,27 @@ You can identify the amount type by examining the first and third bits:
 
 ## Current Architecture
 
-### BigDecimal Implementation
+### Number Implementation (via rippled Number)
 
-The current implementation uses Rust's BigDecimal library for all floating-point computations:
+As of PR #139, float/IOU computations are performed by the rippled Number class, wrapped by the xrpld-number crate and invoked from host functions.
 
 ```text
 Current flow:
-WASM Module -> Host Function -> BigDecimal -> Result
+WASM Module -> Host Function -> xrpld-number (rippled Number via FFI) -> Result
 ```
 
 **Characteristics:**
-- Arbitrary precision decimal arithmetic
-- No native rounding mode support
-- Slower than native operations
-- May differ from rippled in edge cases
+- Deterministic decimal arithmetic matching rippled semantics
+- Explicit rounding modes (ToNearest, TowardsZero, Downward, Upward)
+- Bit/byte compatibility with XRPL serialization for IOU values
+- Better performance than BigDecimal (with minor FFI overhead)
 
-### Limitations
+### Notes and caveats
 
-1. **Rounding Modes**: Currently ignored, always uses BigDecimal defaults
-2. **Performance**: ~10x slower than native float operations
-3. **Compatibility**: Not guaranteed to match rippled exactly
-4. **Precision**: Different internal representation than XRPL
+1. **Rounding Modes**: The rounding_mode parameter is honored; host functions set Number's thread-local rounding mode per call.
+2. **Compatibility**: Designed to match rippled exactly; please report any divergences found in tests.
+3. **Range/Normalization**: IOU format normalization and exponent range [-96, +80] are enforced.
+4. **FFI boundary**: Calls cross the Rust<->C++ FFI; keep buffers valid and sizes correct.
 
 ## Fungible Token Float Format
 
@@ -88,7 +79,7 @@ Bit Layout:
 2. **Sign bit**: 1 = positive, 0 = negative
 3. **Exponent**: 8 bits, biased by 97
    - Actual exponent = stored value - 97
-   - Range: approximately -97 to +158
+   - Valid range when normalized: -96 to +80 (inclusive)
 4. **Mantissa**: 54 bits of precision
    - Normalized to 16 decimal digits
 
@@ -151,182 +142,24 @@ float_log(a: *const u8, out: *mut u8, rounding_mode: i32) -> i32
 float_compare(a: *const u8, b: *const u8) -> i32
 ```
 
-## Migration Plan
 
-### Phase 1: FFI Interface Design
+## Implementation Notes
 
-Create Rust bindings to rippled's Number class:
+- Host functions use rippled's Number class via the xrpld-number FFI wrapper
+- Rounding modes are applied per-operation using thread-local state
+- All operations maintain bit-exact compatibility with rippled consensus
 
-```rust,ignore
-// Example FFI declarations
-extern "C" {
-    // Number creation
-    fn rippled_number_from_mantissa_exponent(
-        mantissa: i64,
-        exponent: i32,
-        out: *mut u8
-    ) -> i32;
+## Rounding Modes
 
-    // Arithmetic with rounding
-    fn rippled_number_add(
-        a: *const u8,
-        b: *const u8,
-        out: *mut u8,
-        rounding_mode: i32
-    ) -> i32;
+| Mode | Name | Description |
+|------|------|-------------|
+| 0 | ToNearest | Round to nearest, ties to even |
+| 1 | TowardsZero | Truncate towards zero |
+| 2 | Downward | Round towards -∞ |
+| 3 | Upward | Round towards +∞ |
 
-    // Comparison
-    fn rippled_number_compare(
-        a: *const u8,
-        b: *const u8
-    ) -> i32;
-}
-```
+## See Also
 
-### Phase 2: Implementation Options
-
-#### Option A: Dynamic Linking
-- Link against rippled shared library
-- Pros: Always up-to-date with rippled
-- Cons: Deployment complexity
-
-#### Option B: Static Extraction
-- Extract Number class into separate library
-- Pros: Simpler deployment
-- Cons: Manual updates needed
-
-#### Option C: Reimplementation
-- Reimplement Number in Rust
-- Pros: Pure Rust, no FFI
-- Cons: Risk of divergence
-
-Option B is likely the best starting point. The other options can be considered later on.
-
-### Phase 3: Integration
-
-1. **Wrapper Layer**: Create safe Rust wrappers around FFI calls
-2. **Error Handling**: Map C++ exceptions to Rust Results
-3. **Memory Management**: Ensure proper cleanup of C++ objects
-4. **Testing**: Comprehensive comparison against current implementation
-
-## Implementation Details
-
-### Current BigDecimal Flow
-
-```rust,ignore
-fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8,
-             out: *mut u8, rounding_mode: i32) -> i32 {
-    // 1. Deserialize XRPL format to BigDecimal
-    let val_a = _deserialize_issued_currency_amount(read_bytes(a))?;
-    let val_b = _deserialize_issued_currency_amount(read_bytes(b))?;
-
-    // 2. Perform operation (no rounding mode support)
-    let result = val_a + val_b;
-
-    // 3. Serialize back to XRPL format
-    let bytes = _serialize_issued_currency_value(result)?;
-    write_bytes(out, bytes)
-}
-```
-
-### Future Rippled Number Flow
-
-```rust,ignore
-fn float_add(env: wasm_exec_env_t, a: *const u8, b: *const u8,
-             out: *mut u8, rounding_mode: i32) -> i32 {
-    // Direct pass-through to rippled with rounding support
-    unsafe {
-        rippled_number_add(a, b, out, rounding_mode)
-    }
-}
-```
-
-### Rounding Mode Mapping
-
-| Mode | Name | Description | IEEE 754 Equivalent |
-|------|------|-------------|-------------------|
-| 0 | ToNearest | Round to nearest, ties to even | roundTiesToEven |
-| 1 | TowardsZero | Truncate towards zero | roundTowardZero |
-| 2 | Downward | Round towards -∞ | roundTowardNegative |
-| 3 | Upward | Round towards +∞ | roundTowardPositive |
-
-## Testing Strategy
-
-### Compatibility Testing
-
-1. **Golden Dataset**: Generate test vectors using rippled
-2. **Comparison Suite**: Compare BigDecimal vs Number results
-3. **Edge Cases**: Focus on rounding boundaries
-4. **Regression Tests**: Ensure no breaking changes
-
-### Performance Testing
-
-```rust,ignore
-#[bench]
-fn bench_float_multiply_bigdecimal(b: &mut Bencher) {
-    // Current implementation benchmark
-}
-
-#[bench]
-fn bench_float_multiply_rippled(b: &mut Bencher) {
-    // Future implementation benchmark
-}
-```
-
-### Security Testing
-
-1. **Fuzzing**: Random inputs to find crashes
-2. **Bounds Checking**: Verify all memory accesses
-3. **FFI Safety**: Audit C++/Rust boundary
-
-## Important Notes
-
-### Context: Float Operations vs Amount Types
-
-The float operations described in this document specifically handle the 64-bit amount portion of fungible tokens. They do NOT handle:
-
-1. **XRP amounts** - These use simple 64-bit integers
-2. **MPT amounts** - These also use 64-bit integers
-3. **Currency codes** - The 160-bit currency identifier
-4. **Issuer IDs** - The 160-bit account identifier
-
-When working with full Amount objects in XRPL, you need to consider which type you're dealing with and use the appropriate handling:
-
-```rust,ignore
-// Example: Checking amount type
-fn get_amount_type(first_byte: u8) -> AmountType {
-    let type_bit = (first_byte & 0x80) != 0;  // First bit
-    let mpt_bit = (first_byte & 0x20) != 0;   // Third bit
-
-    if type_bit {
-        AmountType::FungibleToken  // Uses float operations
-    } else if mpt_bit {
-        AmountType::MPT            // Uses integer operations
-    } else {
-        AmountType::XRP            // Uses integer operations
-    }
-}
-```
-
-## References
-
-1. [XRPL Amount Fields Specification](https://xrpl.org/docs/references/protocol/binary-format#amount-fields)
-2. [rippled Number Implementation](https://github.com/XRPLF/rippled/blob/develop/src/ripple/basics/Number.h)
-3. [XRPL Binary Codec Specification](https://xrpl.org/serialization.html)
-4. [XLS-100d Specification](https://github.com/XRPLF/XRPL-Standards/discussions/100)
-
-## Appendix: Example Migration
-
-### Before (BigDecimal)
-```rust,ignore
-let val = BigDecimal::from_str("123.456").unwrap();
-let result = val * BigDecimal::from(2);
-// No control over rounding
-```
-
-### After (rippled Number)
-```rust,ignore
-let val = Number::from_string("123.456").unwrap();
-let result = val.multiply(Number::from(2), RoundingMode::ToNearest);
-// Explicit rounding control
-```
+- [XRPL Amount Fields Specification](https://xrpl.org/docs/references/protocol/binary-format#amount-fields)
+- [rippled Number Implementation](https://github.com/XRPLF/rippled/blob/develop/src/ripple/basics/Number.h)
+- xrpl-std documentation: `cargo doc --open -p xrpl-std`

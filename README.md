@@ -25,29 +25,15 @@ To update the tool, use the same command.
 
 - Rust
 - Cargo (with rustup)
-- Docker (required for running rippled)
+- Docker (recommended for running rippled; optional if you build rippled locally)
 
 ### Installing Docker
 
-Docker is required to run the rippled server. You have two options:
+Docker is recommended to run the rippled server. Alternatively, you can build and run rippled locally by following the BUILD instructions in the rippled repository.
 
-#### Option 1: Colima (for macOS)
-
-Colima is a lightweight, open-source Docker runtime that craft can install automatically:
-
-```bash
-craft docker install  # Installs Colima via Homebrew
-```
-
-Colima uses less memory and CPU, starts quickly, and works seamlessly with standard Docker commands. It is free to use, requires no login, and has no licensing restrictions.
-
-#### Option 2: Docker Desktop
-
-Traditional option with GUI:
-
-- **macOS**: https://docs.docker.com/desktop/install/mac-install/
-- **Windows**: https://docs.docker.com/desktop/install/windows-install/
-- **Linux**: https://docs.docker.com/engine/install/
+- **macOS**: <https://docs.docker.com/desktop/install/mac-install/>
+- **Windows**: <https://docs.docker.com/desktop/install/windows-install/>
+- **Linux**: <https://docs.docker.com/engine/install/>
 
 After installation, ensure Docker is running before using rippled-related commands.
 
@@ -67,7 +53,6 @@ craft start-rippled   # Start rippled in Docker container
 craft list-rippled    # List rippled Docker containers
 craft stop-rippled    # Stop the rippled container
 craft advance-ledger  # Advance the ledger in stand-alone mode
-craft docker          # Manage Docker runtime (install/start/stop/status)
 craft open-explorer   # Open the XRPL Explorer
 ```
 
@@ -115,7 +100,7 @@ craft test
 
 Organize your WASM modules in the `projects` directory:
 
-```
+```text
 .
 ├── projects/
 │   └── helloworld/      # Example
@@ -164,9 +149,11 @@ The notary project includes test fixtures for validating escrow finish condition
 - **Failure Case** (`projects/notary/fixtures/failure/`): Tests when the escrow finish condition is not met (transaction with an incorrect notary account)
 
 #### Host Functions Test Project
-The host_functions_test project includes fixtures for testing various host function capabilities:
+The host_functions_test project includes fixtures for testing various host function capabilities. This project can be found in:
 
-- **Success Case** (`projects/host_functions_test/fixtures/success/`): Tests successful execution of 26 host functions
+`rippled-tests/host_functions_test/`
+
+- **Success Case** (`rippled-tests/host_functions_test/fixtures/success/`): Tests successful execution of 26 host functions
 
 ### Cloning the Repository
 
@@ -178,25 +165,20 @@ git clone git@github.com:ripple/craft.git
 
 ## Managing rippled
 
-The `craft` tool uses Docker to manage a `rippled` instance. If Docker is not installed, craft can automatically install Colima (a lightweight Docker runtime) for you:
+The `craft` tool uses Docker to manage a `rippled` instance.
+
+Ensure Docker Desktop is installed and running. Then manage rippled using these commands:
 
 ```bash
-# Check Docker status and install if needed
-craft docker          # Shows status
-craft docker install  # Installs Colima (lightweight Docker)
-craft docker start    # Starts Colima
-craft docker stop     # Stops Colima
-
-# Once Docker is running, manage rippled:
-craft start-rippled   # Start rippled container (background mode)
-craft start-rippled --foreground  # With visible console output
-craft list-rippled    # List running rippled containers
-craft stop-rippled    # Stop the rippled container
+craft start-rippled                 # Start rippled container (background mode)
+craft start-rippled --foreground    # Start with visible console output
+craft list-rippled                  # List running rippled containers
+craft stop-rippled                  # Stop the rippled container
 ```
 
 The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which includes support for smart escrows.
 
-**Note**: If Docker is not installed when you run `craft start-rippled`, it will offer to install Colima automatically.
+**Note**: Ensure Docker is installed and running before using `craft start-rippled`.
 
 ### Docker Commands
 
@@ -215,9 +197,9 @@ docker rm craft-rippled
 
 ### Ports
 
-- API/WebSocket: `http://localhost:6006`
-- Peer Protocol: `localhost:51235`
-- Admin API: `localhost:5005`
+- Public WebSocket: `ws://localhost:6005`
+- Admin WebSocket: `ws://localhost:6006`
+- Admin RPC API: `http://localhost:5005`
 
 ## Running the XRPL Explorer
 
@@ -274,7 +256,7 @@ The verbose output may include:
 
 Example verbose output:
 
-```
+```text
 [INFO wasm_host] Starting Wasm host application
 [INFO wasm_host] Loading WASM module from: path/to/module.wasm
 [INFO wasm_host] Target function: finish (XLS-100d)
@@ -339,7 +321,7 @@ If the WebAssembly module execution fails, the tool will:
 
 Example error output:
 
-```
+```text
 -------------------------------------------------
 | WASM FUNCTION EXECUTION ERROR                 |
 -------------------------------------------------
@@ -348,3 +330,76 @@ Example error output:
 | Error:     WASM function execution error      |
 -------------------------------------------------
 ```
+
+
+## Rust Documentation
+
+This repository contains multiple Rust crates. You can use rustdoc to generate and view documentation.
+
+### Generate documentation
+
+- Public crates only (recommended):
+  - `cargo doc --no-deps -p craft --target-dir target`
+  - `cargo doc --no-deps --manifest-path xrpl-std/Cargo.toml --target-dir target`
+- Entire workspace:
+  - `cargo doc --workspace --no-deps`
+- Open docs in your browser:
+  - `cargo doc --no-deps --open`
+
+A helper script is included:
+
+```bash
+./build-docs.sh
+```
+
+This cleans previous docs, builds docs for `craft` and `xrpl-std` (into a shared target/ directory), runs doctests for `xrpl-std`, and prints the path to the rendered docs.
+
+### View the documentation
+
+- After building, open: `target/doc/index.html` to see the docs index
+- Direct links:
+  - Craft CLI docs: `target/doc/craft/index.html`
+  - xrpl-std library: `target/doc/xrpl_std/index.html`
+- Or simply run: `cargo doc --open`
+
+### Best practices for writing Rust docs
+
+- Use `//!` for crate- and module-level documentation; use `///` for items (functions, structs, enums)
+- Prefer small, runnable examples. For examples that should not run in doctests, use code fences with language modifiers:
+  - ```rust,no_run``` for examples that should compile but not execute
+  - ```rust,ignore``` for examples that should not be compiled
+- Use intra-doc links to reference items within a crate, e.g. `[Result](core::result::Result)`
+- Test your docs: `cargo test --doc` (per-crate or workspace)
+- Hide internal implementation details with `#[doc(hidden)]`
+- Feature-gate docs for optional APIs with `#[cfg_attr(doc_cfg, doc(cfg(feature = "...")))]`
+
+### Including external Markdown in rustdoc
+
+You can include standalone Markdown files directly into your crate documentation using `include_str!`:
+
+- Include a crate README as the top-level docs (in `src/lib.rs` or `src/main.rs`):
+
+```rust
+#![doc = include_str!("../README.md")]
+```
+
+- Include additional guides as modules shown in docs only:
+
+```rust
+/// Additional guides and how-tos
+#[cfg(doc)]
+pub mod guides {
+    /// XRPL Field Access and Locators guide
+    #[doc = include_str!("../../docs/FIELD_ACCESS.md")]
+    pub mod field_access {}
+}
+```
+
+In this repository:
+- The `xrpl-std` crate already includes its README via `#![doc = include_str!("../README.md")]`
+- The guide at `docs/FIELD_ACCESS.md` is included under the rendered docs at `xrpl_std::guides::field_access`
+
+### Notes on code blocks in docs
+
+- Examples that reference unavailable items or host-only APIs are marked as `rust,ignore` to prevent doctest failures
+- Prefer `rust` or `rust,no_run` for examples intended to compile

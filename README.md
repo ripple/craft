@@ -16,7 +16,7 @@ An interactive CLI tool for building and testing WASM modules for the XRP Ledger
 ## Installation
 
 ```bash
-cargo install --path .
+cargo install --path ./craft
 ```
 
 To update the tool, use the same command.
@@ -342,7 +342,7 @@ This repository contains multiple Rust crates. You can use rustdoc to generate a
 
 - Public crates only (recommended):
   - `cargo doc --no-deps -p craft --target-dir target`
-  - `cargo doc --no-deps --manifest-path xrpl-std/Cargo.toml --target-dir target`
+  - `cargo doc --no-deps -p xrpl-std --target-dir target`
 - Entire workspace:
   - `cargo doc --workspace --no-deps`
 - Open docs in your browser:

@@ -40,18 +40,22 @@ jobs:
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Run Clippy (Workspace)
+      - name: Run Clippy (Native Workspace)
         run: cargo clippy --workspace --all-targets --all-features -- -Dclippy::all
 
-      - name: Run Clippy (WASM Example Contracts)
+      - name: Run Clippy (WASM Projects Workspace)
         env:
           NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(basename $(dirname "$cargo_file"))
-            echo "🔧 Clippy for $dir (WASM target)"
-            cargo clippy -p "$dir" --target wasm32-unknown-unknown --all-features -- -Dclippy::all || exit 1
-          done
+          cd projects
+          cargo clippy --workspace --target wasm32-unknown-unknown --all-features -- -Dclippy::all
+
+      - name: Run Clippy (WASM Tests Workspace)
+        env:
+          NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
+        run: |
+          cd rippled-tests
+          cargo clippy --workspace --target wasm32-unknown-unknown --all-features -- -Dclippy::all
 
       - name: Check WASM contract exports
         run: |
@@ -107,28 +111,34 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build & Test Default Workspace Members (Native)
+      - name: Build & Test Native Workspace
         run: |
-          # Build and test the main workspace members
-          cargo build
-          cargo test
+          # Build and test the native workspace (fast!)
+          cargo build --workspace
+          cargo test --workspace
 
       - name: Build xrpl-std for WASM
         run: |
           cargo build -p xrpl-std --target wasm32-unknown-unknown
           cargo rustc -p xrpl-std --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build All WASM Contracts
+      - name: Build WASM Projects Workspace
         env:
           NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(basename $(dirname "$cargo_file"))
-            echo "🔧 Building $dir for WASM"
-            cargo build -p "$dir" --target wasm32-unknown-unknown || exit 1
-            cargo build -p "$dir" --target wasm32-unknown-unknown --release || exit 1
-            cargo rustc -p "$dir" --target wasm32-unknown-unknown -- -D warnings || exit 1
-          done
+          cd projects
+          echo "🔧 Building projects workspace for WASM"
+          cargo build --workspace --target wasm32-unknown-unknown
+          cargo build --workspace --target wasm32-unknown-unknown --release
+
+      - name: Build WASM Tests Workspace
+        env:
+          NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
+        run: |
+          cd rippled-tests
+          echo "🔧 Building rippled-tests workspace for WASM"
+          cargo build --workspace --target wasm32-unknown-unknown
+          cargo build --workspace --target wasm32-unknown-unknown --release
 
   generate-documentation:
     runs-on: ubuntu-latest

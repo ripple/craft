@@ -1,15 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-    "craft",
-    "wasm-host",
-    "xrpl-address-macro",
-    "xrpl-std",
-    "wasm-host/xrpld-number"
-]
-exclude = [
-    "projects",
-    "rippled-tests"
+    "decoder_tests",
+    "float_tests",
+    "kyc",
+    "ledger_sqn",
+    "nft_owner",
+    "notary",
+    "notary_macro_example",
+    "oracle",
+    "xrpl_std_examples/trace_escrow_account",
+    "xrpl_std_examples/trace_escrow_finish",
+    "xrpl_std_examples/trace_escrow_ledger_object"
 ]
 
 [profile.release]

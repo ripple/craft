@@ -3,8 +3,6 @@ edition = "2024"
 name = "keylet_example"
 version = "0.0.1"
 
-# This empty workspace definition keeps this project independent of the parent workspace
-[workspace]
 
 [lib]
 crate-type = ["cdylib"]

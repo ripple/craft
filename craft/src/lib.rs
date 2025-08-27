@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 
 //! # Craft - XRPL Smart Contract Development Toolkit
 //!
@@ -17,6 +17,6 @@ pub mod utils;
 #[cfg(doc)]
 pub mod guides {
     /// XRPL Field Access and Locators guide
-    #[doc = include_str!("../docs/FIELD_ACCESS.md")]
+    #[doc = include_str!("../../docs/FIELD_ACCESS.md")]
     pub mod field_access {}
 }

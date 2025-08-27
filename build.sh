@@ -9,73 +9,44 @@ if [ "$PROFILE" != "dev" ]; then
   PROFILE_FLAG="--profile $PROFILE"
 fi
 
-
-printf "🔧 Building ALL with profile: $PROFILE \n"
-
-printf "🔧 Building 'craft' ($PROFILE) \n"
-cargo build $PROFILE_FLAG
-cargo test $PROFILE_FLAG
-cargo clippy --all-targets --all-features
-cargo fmt --all -- --check
-
-printf "\n✅ 'Craft' project built successfully\n\n"
-
-
-cd xrpl-std || exit
-printf "🔧 Building 'xrpl-std' ($PROFILE) \n"
-cargo build $PROFILE_FLAG
-cargo test $PROFILE_FLAG
-cargo build $PROFILE_FLAG --target wasm32-unknown-unknown
-cargo clippy --all-targets --all-features
-cargo fmt --all -- --check
-
-printf "\n✅ 'xrpl-std' project built successfully\n\n"
-
-cd ..
-cd ./wasm-host || exit
-printf "🔧 Building 'wasm-host' ($PROFILE) \n"
-cargo build $PROFILE_FLAG
-cargo test $PROFILE_FLAG
-cargo clippy --all-targets --all-features
-cargo fmt --all -- --check
-
-printf "\n✅  'wasm-host' project built successfully\n\n"
-
-cd .. || exit
+printf "🔧 Building ALL workspace projects with profile: $PROFILE \n"
 
 printf "🔧 Setting NOTARY_ACCOUNT_R to rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\n\n"
 export NOTARY_ACCOUNT_R=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 
-find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-  dir=$(dirname "$cargo_file")
-  printf "🔧 Building example WASM: $dir \n"
-  (cd "$dir" && cargo build $PROFILE_FLAG --target wasm32-unknown-unknown) || exit 1
-done
+printf "🔧 Building entire workspace (native) \n"
+cargo build --workspace $PROFILE_FLAG
 
-printf "\n✅  All WASM examples built successfully\n\n"
+printf "\n🔧 Testing entire workspace \n"
+cargo test --workspace $PROFILE_FLAG
 
-find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-  dir=$(dirname "$cargo_file")
-  printf "🔧 Building example Rust: $dir \n"
-  (cd "$dir" && cargo build $PROFILE_FLAG) || exit 1
-done
+printf "\n🔧 Building WASM targets for applicable projects \n"
+# Build WASM for xrpl-std and all example projects
+cargo build -p xrpl-std $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p decoder_tests $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p float_tests $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p kyc $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p ledger_sqn $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p nft_owner $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p notary $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p notary_macro_example $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p oracle $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p trace_escrow_account $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p trace_escrow_finish $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p trace_escrow_ledger_object $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p codecov_tests $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p host_functions_test $PROFILE_FLAG --target wasm32-unknown-unknown
+cargo build -p keylet_example $PROFILE_FLAG --target wasm32-unknown-unknown
 
-printf "\n✅  All Rust examples built successfully\n\n"
+printf "\n✅  All WASM projects built successfully\n\n"
 
-find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-  dir=$(dirname "$cargo_file")
-  printf "🔧 cargo fmt for $dir \n"
-  (cd "$dir" && cargo fmt --all -- --check) || exit 1
-done
+printf "🔧 Running clippy on entire workspace \n"
+cargo clippy --workspace --all-targets --all-features -- -Dclippy::all
 
-printf "\n✅  All 'cargo fmt' checks completed successfully\n\n"
+printf "\n✅  Clippy checks completed successfully\n\n"
 
-find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-  dir=$(dirname "$cargo_file")
-  printf "🔧 'cargo clippy' for $dir"
-  (cd "$dir" && cargo clippy --all-targets --all-features -- -Dclippy::all) || exit 1
-done
+printf "🔧 Running fmt check on entire workspace \n"
+cargo fmt --all -- --check
 
-printf "\n✅  All 'cargo clippy' checks completed successfully\n\n"
-
-cd ../.. || exit
+printf "\n✅  Format checks completed successfully\n\n"
+printf "✅  All workspace builds completed successfully\n"

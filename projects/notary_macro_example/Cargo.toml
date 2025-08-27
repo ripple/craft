@@ -5,8 +5,6 @@ edition = "2024"
 description = "Example showing compile-time r-address to hex conversion using a macro"
 license = "ISC"
 
-# This empty workspace definition keeps this project independent of the parent workspace
-[workspace]
 
 [lib]
 crate-type = ["cdylib"]

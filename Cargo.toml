@@ -1,39 +1,32 @@
 [workspace]
+resolver = "2"
 members = [
-    ".",
+    "craft",
     "wasm-host",
-    "xrpl-address-macro"
+    "xrpl-address-macro",
+    "xrpl-std",
+    "projects/decoder_tests",
+    "projects/float_tests",
+    "projects/kyc",
+    "projects/ledger_sqn",
+    "projects/nft_owner",
+    "projects/notary",
+    "projects/notary_macro_example",
+    "projects/oracle",
+    "projects/xrpl_std_examples/trace_escrow_account",
+    "projects/xrpl_std_examples/trace_escrow_finish",
+    "projects/xrpl_std_examples/trace_escrow_ledger_object",
+    "rippled-tests/codecov_tests",
+    "rippled-tests/host_functions_test",
+    "rippled-tests/keylet_example",
+    "wasm-host/xrpld-number"
 ]
 
-[package]
-name = "craft"
-version = "0.5.1-devnet5"
-edition = "2024"
-description = "Command-line tool for building, testing, and deploying XRPL smart contracts in WASM"
-license = "ISC"
-repository = "https://github.com/ripple/craft"
-homepage = "https://github.com/ripple/craft"
-readme = "README.md"
-keywords = ["xrpl", "wasm", "smart-contracts", "cli"]
-categories = ["command-line-utilities", "development-tools"]
+[profile.release]
+opt-level = "s"   # Optimize for size
+lto = true        # Link-time optimization
+codegen-units = 1 # Compile in one unit for better optimization and smaller binary size
+panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no panic handler means smaller binary)
 
-[dependencies]
-anyhow = "1.0"
-atty = "0.2"
-bs58 = "0.5"
-clap = { version = "4.4", features = ["derive"] }
-colored = "2.2.0"
-docker-api = "0.14"
-futures = "0.3"
-hex = "0.4"
-inquire = "0.7.5"
-open = "5.3.2"
-regex = "1.10"
-reqwest = { version = "0.11", features = ["json"] }
-ripemd = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-sha2 = "0.10"
-tokio = { version = "1.36", features = ["full"] }
-walkdir = "2.4"
-which = "7.0.3"
+[profile.dev]
+panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)

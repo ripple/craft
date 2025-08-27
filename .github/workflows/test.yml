@@ -194,9 +194,9 @@ jobs:
       - name: Run integration tests
         run: |
           find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-              dir=$(dirname "$cargo_file")
-              contract_name=$(basename "$dir")
-              if [ -d "$dir/fixtures" ]; then
-                cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --wasm-file "$dir/target/wasm32-unknown-unknown/release/${contract_name}.wasm"
-              fi
-            done
+            dir=$(dirname "$cargo_file")
+            contract_name=$(basename "$dir")
+            if [ -d "$dir/fixtures" ]; then
+              cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --wasm-file "$dir/target/wasm32-unknown-unknown/release/${contract_name}.wasm"
+            fi
+          done

@@ -48,7 +48,7 @@ jobs:
           NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
           find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(basename "$cargo_file")
+            dir=$(basename $(dirname "$cargo_file"))
             echo "🔧 Clippy for $dir (WASM target)"
             cargo clippy -p "$dir" --target wasm32-unknown-unknown --all-features -- -Dclippy::all || exit 1
           done
@@ -123,7 +123,7 @@ jobs:
           NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
           find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(basename "$cargo_file")
+            dir=$(basename $(dirname "$cargo_file"))
             echo "🔧 Building $dir for WASM"
             cargo build -p "$dir" --target wasm32-unknown-unknown || exit 1
             cargo build -p "$dir" --target wasm32-unknown-unknown --release || exit 1

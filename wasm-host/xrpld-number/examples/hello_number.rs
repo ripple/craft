@@ -31,7 +31,7 @@ fn main() -> Result<(), NumberError> {
     // Comparisons
     println!("\n⚖️  Comparisons:");
     println!("  {} > {} ? {}", a, b, a > b);
-    println!("  {} == {} ? {}", a, a.clone(), a == a);
+    println!("  {} == {} ? {}", a, a.clone(), a == a.clone());
     println!("  {} is zero? {}", zero, zero.is_zero());
     println!("  Sign of {}: {}", b, b.signum());
 

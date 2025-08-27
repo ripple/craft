@@ -134,6 +134,7 @@ This convention co-locates each project's test data with its source code, making
 ### Fixture Structure
 
 Each test case directory can contain:
+
 - `tx.json`: Transaction data
 - `ledger_object.json`: Current ledger object being tested
 - `ledger_header.json`: Ledger header information
@@ -143,12 +144,14 @@ Each test case directory can contain:
 ### Example Projects with Test Fixtures
 
 #### Notary Project
+
 The notary project includes test fixtures for validating escrow finish conditions:
 
 - **Success Case** (`projects/notary/fixtures/success/`): Tests when the escrow finish condition is met (transaction with the correct notary account)
 - **Failure Case** (`projects/notary/fixtures/failure/`): Tests when the escrow finish condition is not met (transaction with an incorrect notary account)
 
 #### Host Functions Test Project
+
 The host_functions_test project includes fixtures for testing various host function capabilities. This project can be found in:
 
 `rippled-tests/host_functions_test/`
@@ -331,7 +334,6 @@ Example error output:
 -------------------------------------------------
 ```
 
-
 ## Rust Documentation
 
 This repository contains multiple Rust crates. You can use rustdoc to generate and view documentation.
@@ -366,8 +368,8 @@ This cleans previous docs, builds docs for `craft` and `xrpl-std` (into a shared
 
 - Use `//!` for crate- and module-level documentation; use `///` for items (functions, structs, enums)
 - Prefer small, runnable examples. For examples that should not run in doctests, use code fences with language modifiers:
-  - ```rust,no_run``` for examples that should compile but not execute
-  - ```rust,ignore``` for examples that should not be compiled
+  - `rust,no_run` for examples that should compile but not execute
+  - `rust,ignore` for examples that should not be compiled
 - Use intra-doc links to reference items within a crate, e.g. `[Result](core::result::Result)`
 - Test your docs: `cargo test --doc` (per-crate or workspace)
 - Hide internal implementation details with `#[doc(hidden)]`
@@ -380,7 +382,7 @@ You can include standalone Markdown files directly into your crate documentation
 - Include a crate README as the top-level docs (in `src/lib.rs` or `src/main.rs`):
 
 ```rust
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 ```
 
 - Include additional guides as modules shown in docs only:
@@ -396,6 +398,7 @@ pub mod guides {
 ```
 
 In this repository:
+
 - The `xrpl-std` crate already includes its README via `#![doc = include_str!("../README.md")]`
 - The guide at `docs/FIELD_ACCESS.md` is included under the rendered docs at `xrpl_std::guides::field_access`
 

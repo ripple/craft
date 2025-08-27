@@ -21,6 +21,13 @@ members = [
     "rippled-tests/keylet_example",
     "wasm-host/xrpld-number"
 ]
+default-members = [
+    "craft",
+    "wasm-host",
+    "xrpl-address-macro",
+    "xrpl-std",
+    "wasm-host/xrpld-number"
+]
 
 [profile.release]
 opt-level = "s"   # Optimize for size

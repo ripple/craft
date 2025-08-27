@@ -163,9 +163,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("| Error:      {:<33} |", e);
             println!("-------------------------------------------------");
             error!("Function execution failed: {}", e);
-            return Err(e);
+            return Err(Box::new(e));
         }
     }
 
     info!("Wasm host application execution completed");
+    return Ok(());
 }

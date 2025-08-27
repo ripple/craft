@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -40,42 +40,34 @@ jobs:
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -Dclippy::all
+      - name: Run Clippy (Workspace)
+        run: cargo clippy --workspace --all-targets --all-features -- -Dclippy::all
 
-      - name: Run Clippy (xrpl-std)
-        run: |
-          cd xrpl-std
-          cargo clippy --all-targets --all-features -- -Dclippy::all
-
-      - name: Run Clippy (All Example Contracts)
+      - name: Run Clippy (WASM Example Contracts)
+        env:
+          NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
           find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
             dir=$(dirname "$cargo_file")
-            echo "🔧 Clippy in $dir"
-            (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
+            echo "🔧 Clippy for $dir (WASM target)"
+            cargo clippy -p "$dir" --target wasm32-unknown-unknown --all-features -- -Dclippy::all || exit 1
           done
 
-      - name: Run Clippy (All Test Contracts)
+      - name: Check WASM contract exports
         run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Clippy in $dir"
-            (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
-          done
-
-      - name: Check project exports
-        run: |
+          # Check that all WASM projects export the required finish function
           find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
             dir=$(dirname "$cargo_file")
-            grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
-          done
-
-      - name: Check ripple-tests exports
-        run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
+            echo "🔧 Clippy in $dir"
+            if [[ -f "$dir/src/lib.rs" ]]; then
+              grep -q "finish() -> i32" "$dir/src/lib.rs" || {
+                echo "❌ Missing required finish() -> i32 export in $dir"
+                exit 1
+              }
+            else
+              echo "❌ Missing src/lib.rs in $dir"
+              exit 1
+            fi
           done
 
   rustfmt:
@@ -83,29 +75,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run fmt (Craft)
+      - name: Run fmt (Entire Workspace)
         run: cargo fmt --all -- --check
-
-      - name: Run fmt (xrpl-std)
-        run: |
-          cd xrpl-std
-          cargo fmt --all -- --check
-
-      - name: Run fmt (All Example Contracts)
-        run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Fmt in $dir"
-            (cd "$dir" && cargo fmt --all -- --check) || exit 1
-          done
-
-      - name: Run fmt (All Test Contracts)
-        run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Fmt in $dir"
-            (cd "$dir" && cargo fmt --all -- --check) || exit 1
-          done
 
   # Note: This job should not be "required" for PRs, as during development there may be temporary
   # discrepancies between craft and rippled
@@ -136,37 +107,28 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build & Test `xrpl-std`
+      - name: Build & Test Default Workspace Members (Native)
         run: |
-          cd xrpl-std
+          # Build and test the main workspace members
           cargo build
           cargo test
-          cargo build --target wasm32-unknown-unknown
-          cargo rustc --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build & Test `wasm-host`
-        run: (cd wasm-host && cargo build && cargo test)
-
-      - name: Build all example contracts
+      - name: Build xrpl-std for WASM
         run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Building in $dir"
-            (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
-          done
+          cargo build -p xrpl-std --target wasm32-unknown-unknown
+          cargo rustc -p xrpl-std --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build all test contracts
+      - name: Build All WASM Contracts
+        env:
+          NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
           find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
             dir=$(dirname "$cargo_file")
-            echo "🔧 Building in $dir"
-            (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
+            echo "🔧 Building $dir for WASM"
+            cargo build -p "$dir" --target wasm32-unknown-unknown || exit 1
+            cargo build -p "$dir" --target wasm32-unknown-unknown --release || exit 1
+            cargo rustc -p "$dir" --target wasm32-unknown-unknown -- -D warnings || exit 1
           done
-
-      - name: Build and Test `craft`
-        run: |
-          cargo build
-          cargo test
 
   generate-documentation:
     runs-on: ubuntu-latest
@@ -177,14 +139,14 @@ jobs:
 
       - name: Build documentation
         run: |
-          cd xrpl-std
-          cargo doc --no-deps
+          # Build docs for main crates using workspace
+          cargo doc --no-deps -p xrpl-std -p craft --target-dir target
 
       - name: Upload documentation files as artifact
         id: docs-artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: xrpl-std/target/doc
+          path: target/doc
           retention-days: 10
 
   deploy-docs-pages:

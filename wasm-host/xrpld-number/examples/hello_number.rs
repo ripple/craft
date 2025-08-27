@@ -8,6 +8,7 @@ fn main() -> Result<(), NumberError> {
     println!("\n📝 Creating Numbers:");
     let zero = Number::new();
     let a = Number::from(12345);
+    let a2 = Number::from(12345); // Same as a
     let b = Number::from_i64(-6789)?;
     let c = Number::from_mantissa_exponent(314159, -5)?; // π ≈ 3.14159
 
@@ -31,7 +32,7 @@ fn main() -> Result<(), NumberError> {
     // Comparisons
     println!("\n⚖️  Comparisons:");
     println!("  {} > {} ? {}", a, b, a > b);
-    println!("  {} == {} ? {}", a, a.clone(), a == a.clone());
+    println!("  {} == {} ? {}", a, a2, a == a2);
     println!("  {} is zero? {}", zero, zero.is_zero());
     println!("  Sign of {}: {}", b, b.signum());
 

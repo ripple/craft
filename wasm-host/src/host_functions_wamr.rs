@@ -96,11 +96,9 @@ fn set_data(dp_res: i32, out_buf_ptr: *mut u8, data_to_write: Vec<u8>) {
     }
 }
 
-pub fn get_ledger_sqn(env: wasm_exec_env_t, out_buf_ptr: *mut u8, out_buf_cap: usize) -> i32 {
+pub fn get_ledger_sqn(env: wasm_exec_env_t) -> i32 {
     let data_provider = get_dp(env);
-    let dp_res = data_provider.get_ledger_sqn(out_buf_cap);
-    set_data(dp_res.0, out_buf_ptr, dp_res.1);
-    dp_res.0
+    data_provider.get_ledger_sqn()
 }
 
 pub fn get_parent_ledger_time(
@@ -109,9 +107,7 @@ pub fn get_parent_ledger_time(
     out_buf_cap: usize,
 ) -> i32 {
     let data_provider = get_dp(env);
-    let dp_res = data_provider.get_parent_ledger_time(out_buf_cap);
-    set_data(dp_res.0, out_buf_ptr, dp_res.1);
-    dp_res.0
+    data_provider.get_parent_ledger_time()
 }
 
 pub fn get_parent_ledger_hash(

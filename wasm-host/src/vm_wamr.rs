@@ -30,8 +30,8 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
     let mut data_provider = DataProvider::new(data_source);
     let runtime = Runtime::builder()
         .use_system_allocator()
-        .register_host_function("get_ledger_sqn", get_ledger_sqn as *mut c_void, "(*~)i", 60, data_provider.as_ptr())
-        .register_host_function("get_parent_ledger_time", get_parent_ledger_time as *mut c_void, "(*~)i", 60, data_provider.as_ptr())
+        .register_host_function("get_ledger_sqn", get_ledger_sqn as *mut c_void, "()i", 60, data_provider.as_ptr())
+        .register_host_function("get_parent_ledger_time", get_parent_ledger_time as *mut c_void, "()i", 60, data_provider.as_ptr())
         .register_host_function("get_parent_ledger_hash", get_parent_ledger_hash as *mut c_void, "(*~)i", 60, data_provider.as_ptr())
         .register_host_function("cache_ledger_obj", cache_ledger_obj as *mut c_void, "(*~i)i", 5000, data_provider.as_ptr())
         .register_host_function("get_tx_field", get_tx_field as *mut c_void, "(i*~)i", 70, data_provider.as_ptr())

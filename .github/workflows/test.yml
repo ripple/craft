@@ -198,38 +198,3 @@ jobs:
                 contract_name=$(basename "$dir")
                 cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --wasm-file "$dir/target/wasm32-unknown-unknown/release/${contract_name}.wasm"
             done
-
-  generate-documentation:
-    runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/main'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build documentation
-        run: |
-          cd xrpl-std
-          cargo doc --no-deps
-
-      - name: Upload documentation files as artifact
-        id: docs-artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: xrpl-std/target/doc
-          retention-days: 10
-
-  deploy-docs-pages:
-    permissions:
-      id-token: write # Needed for OIDC authentication
-      pages: write # this permission is needed for deploying into Github Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.docs-artifact.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: generate-documentation
-    # Deploy docs only pushes into the main branch
-    if: success() && github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploy to Documentation to GitHub Pages
-        id: docs-artifact
-        uses: actions/deploy-pages@v4

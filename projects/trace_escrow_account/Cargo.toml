@@ -1,8 +1,8 @@
 [package]
-name = "trace_escrow_finish"
+name = "trace_escrow_account"
 version = "0.0.1"
 edition = "2024"
-description = "A Smart Escrow that accesses and traces every field in the `EscrowFinish` transaction of a Smart Escrow."
+description = "A Smart Escrow that accesses and traces every field in an `AccountRoot` object associated with an `EscrowFinish`"
 license = "ISC"
 
 # This empty workspace definition keeps this project independent of the parent workspace
@@ -18,7 +18,7 @@ codegen-units = 1 # Compile in one unit for better optimization and smaller bina
 panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no panic handler means smaller binary)
 
 [profile.dev]
-panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)
+panic = "unwind" # For debugging, support std-lib with unwinding in the `dev` profile
 
 [dependencies]
-xrpl-std = { path = "../../../xrpl-std" }
+xrpl-std = { path = "../../xrpl-std" }

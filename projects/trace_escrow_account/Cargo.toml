@@ -21,4 +21,4 @@ panic = "abort"   # `no-std` can't unwind on panic, so choose abort (plus no pan
 panic = "unwind" # For debugging, support std-lib with unwinding in the `dev` profile
 
 [dependencies]
-xrpl-std = { path = "../../../xrpl-std" }
+xrpl-std = { path = "../../xrpl-std" }

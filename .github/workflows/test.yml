@@ -60,16 +60,16 @@ jobs:
       - name: Check WASM contract exports
         run: |
           # Check that all WASM projects export the required finish function
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Clippy in $dir"
-            if [[ -f "$dir/src/lib.rs" ]]; then
-              grep -q "finish() -> i32" "$dir/src/lib.rs" || {
-                echo "❌ Missing required finish() -> i32 export in $dir"
-                exit 1
+          find ./projects -type d -name "src" | while read -r src_dir; do
+            dir=$(dirname "$src_dir")
+            echo "🔧 Checking exports in $dir"
+            if [[ -f "$src_dir/lib.rs" ]]; then
+              grep -q "finish() -> i32" "$src_dir/lib.rs" || {
+              echo "❌ Missing required finish() -> i32 export in $dir"
+              exit 1
               }
             else
-              echo "❌ Missing src/lib.rs in $dir"
+              echo "❌ Missing lib.rs in $src_dir"
               exit 1
             fi
           done

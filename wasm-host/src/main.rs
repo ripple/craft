@@ -89,7 +89,7 @@ fn load_test_data(
     Ok((tx_json, lo_json, lh_json, l_json, nft_json))
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -145,7 +145,7 @@ fn main() {
             }
             Err(e) => {
                 error!("Failed to load test data: {}", e);
-                return;
+                return Err(e);
             }
         };
 
@@ -172,8 +172,10 @@ fn main() {
             println!("| Error:      {:<33} |", e);
             println!("-------------------------------------------------");
             error!("Function execution failed: {}", e);
+            return Err(Box::new(e));
         }
     }
 
     info!("Wasm host application execution completed");
+    Ok(())
 }

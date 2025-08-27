@@ -9,11 +9,3 @@ crate-type = ["cdylib"]
 
 [dependencies]
 xrpl-std = { path = "../../xrpl-std", default-features = false }
-
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
-opt-level = "z"
-lto = true

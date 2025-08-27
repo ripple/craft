@@ -7,13 +7,5 @@ edition = "2024"
 [lib]
 crate-type = ["cdylib"]
 
-[profile.release]
-lto = true
-opt-level = 's'
-panic = "abort"
-
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
-
-[profile.dev]
-panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)

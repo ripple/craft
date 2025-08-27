@@ -7,13 +7,5 @@ version = "0.0.1"
 [lib]
 crate-type = ["cdylib"]
 
-[profile.release]
-lto = true
-opt-level = 's'
-panic = "abort"
-
 [dependencies]
 xrpl-std = { path = "../../xrpl-std" }
-
-[profile.dev]
-panic = "abort"

@@ -92,15 +92,24 @@ fn load_test_data(
 fn main() {
     let args = Args::parse();
 
-    // Use wasm_file if provided, otherwise use wasm_path
-    let wasm_file = match (&args.wasm_file, &args.wasm_path) {
-        (Some(file), _) => file.clone(),
-        (None, Some(path)) => path.clone(),
-        (None, None) => {
-            eprintln!("Error: Either --wasm-file or --wasm-path must be provided");
-            std::process::exit(1);
-        }
-    };
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("projects");
+
+    if !base_path.exists() {
+        eprintln!(
+            "Error: Could not find projects directory at expected location: {}",
+            base_path.display()
+        );
+        std::process::exit(1);
+    }
+
+    let wasm_file = base_path
+        .join("target/wasm32-unknown-unknown/debug")
+        .join(format!("{}.wasm", args.project))
+        .to_string_lossy()
+        .to_string();
 
     // Initialize logger with appropriate level
     let log_level = if args.verbose {

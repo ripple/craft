@@ -1,1 +1,13 @@
-{}
+{
+  "Account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn",
+  "Amount": "100000000",
+  "Destination": "rH4KEcG9dEwGwpn6AyoWK9cZPLL4RLSmWW",
+  "DestinationNode": "0",
+  "FinishAfter": 120,
+  "Flags": 0,
+  "LedgerEntryType": "Escrow",
+  "OwnerNode": "0",
+  "PreviousTxnID": "5191F376A011DF26C3EF2A58C0B8CEDAB2772BD351377564F346C7CD103E0619",
+  "PreviousTxnLgrSeq": 5,
+  "index": "A40AEB1310B9DB58A0C97AD290385133765C8BB7A2062FB1F611B73A9E33BEA6"
+}

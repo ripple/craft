@@ -5,15 +5,15 @@ use std::process::Command;
 
 /// A unified test runner that simplifies wasm-host testing
 pub struct TestRunner {
-    wasm_path: std::path::PathBuf,
+    dir: std::path::PathBuf,
     project: String,
     verbose: bool,
 }
 
 impl TestRunner {
-    pub fn new(wasm_path: &Path, project: &str) -> Self {
+    pub fn new(dir: &Path, project: &str) -> Self {
         Self {
-            wasm_path: wasm_path.to_path_buf(),
+            dir: dir.to_path_buf(),
             project: project.to_string(),
             verbose: false,
         }
@@ -34,8 +34,8 @@ impl TestRunner {
         let wasm_host_path = self.get_wasm_host_path()?;
 
         let mut args = vec![
-            "--wasm-file",
-            self.wasm_path.to_str().unwrap(),
+            "--dir",
+            self.dir.to_str().unwrap(),
             "--test-case",
             test_case,
             "--project",

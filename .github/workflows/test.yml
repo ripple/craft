@@ -169,6 +169,6 @@ jobs:
             dir=$(dirname "$cargo_file")
             contract_name=$(basename "$dir")
             if [ -d "$dir/fixtures" ]; then
-              cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --wasm-file "$dir/target/wasm32-unknown-unknown/debug/${contract_name}.wasm" || exit 1
+              cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --dir $dir || exit 1
             fi
           done

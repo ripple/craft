@@ -221,22 +221,21 @@ From the `wasm-host` directory:
 
 ```bash
 # Run with success test case
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success
+cargo run -- --dir path/to/your/project_name --test-case success
 
 # Run with failure test case
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
+cargo run -- --dir path/to/your/project_name --test-case failure
 ```
 
 From any workspace directory:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --project <project_name>
+cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --project <project_name>
 ```
 
 ### Command Line Options
 
-- `--wasm-file <PATH>`: Path to the WebAssembly module to test
-- `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
+- `--dir <PATH>`: Path to the source code where fixtures are located
 - `--test-case <CASE>`: Test case to run (defaults to `success`)
 - `--project <NAME>`: Project name (required)
 - `--verbose`: Enable detailed logging
@@ -247,7 +246,7 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case succe
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --verbose
+cargo run -p wasm-host --dir path/to/folder --project project --test-case success --verbose
 ```
 
 The verbose output may include:

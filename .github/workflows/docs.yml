@@ -25,6 +25,7 @@ jobs:
       - name: Build documentation
         # the `--enable-index-page` flag creates an index.html file at the root of the docs
         # the `-Zunstable-options` flag is needed to use `--enable-index-page`
+        # see https://github.com/rust-lang/cargo/issues/8229 for why `nightly` is needed
         run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --no-deps --workspace
 
       - name: Upload documentation files as artifact

@@ -10,8 +10,6 @@ readme = "README.md"
 keywords = ["xrpl", "wasm", "smart-contracts", "no-std"]
 categories = ["no-std", "embedded", "cryptography::cryptocurrencies"]
 
-# This empty workspace definition keeps this project independent of the parent workspace
-[workspace]
 
 [lib]
 crate-type = ["lib"]

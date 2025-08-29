@@ -16,7 +16,7 @@ An interactive CLI tool for building and testing WASM modules for the XRP Ledger
 ## Installation
 
 ```bash
-cargo install --path .
+cargo install --path ./craft
 ```
 
 To update the tool, use the same command.
@@ -134,6 +134,7 @@ This convention co-locates each project's test data with its source code, making
 ### Fixture Structure
 
 Each test case directory can contain:
+
 - `tx.json`: Transaction data
 - `ledger_object.json`: Current ledger object being tested
 - `ledger_header.json`: Ledger header information
@@ -143,12 +144,14 @@ Each test case directory can contain:
 ### Example Projects with Test Fixtures
 
 #### Notary Project
+
 The notary project includes test fixtures for validating escrow finish conditions:
 
 - **Success Case** (`projects/notary/fixtures/success/`): Tests when the escrow finish condition is met (transaction with the correct notary account)
 - **Failure Case** (`projects/notary/fixtures/failure/`): Tests when the escrow finish condition is not met (transaction with an incorrect notary account)
 
 #### Host Functions Test Project
+
 The host_functions_test project includes fixtures for testing various host function capabilities. This project can be found in:
 
 `rippled-tests/host_functions_test/`
@@ -218,22 +221,21 @@ From the `wasm-host` directory:
 
 ```bash
 # Run with success test case
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success
+cargo run -- --dir path/to/your/project_name --test-case success
 
 # Run with failure test case
-cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure
+cargo run -- --dir path/to/your/project_name --test-case failure
 ```
 
 From any workspace directory:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --project <project_name>
+cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --project <project_name>
 ```
 
 ### Command Line Options
 
-- `--wasm-file <PATH>`: Path to the WebAssembly module to test
-- `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
+- `--dir <PATH>`: Path to the source code where fixtures are located
 - `--test-case <CASE>`: Test case to run (defaults to `success`)
 - `--project <NAME>`: Project name (required)
 - `--verbose`: Enable detailed logging
@@ -244,7 +246,7 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case succe
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
 ```bash
-cargo run -p wasm-host -- --wasm-file path/to/module.wasm --test-case success --verbose
+cargo run -p wasm-host --dir path/to/folder --project project --test-case success --verbose
 ```
 
 The verbose output may include:
@@ -331,7 +333,6 @@ Example error output:
 -------------------------------------------------
 ```
 
-
 ## Rust Documentation
 
 This repository contains multiple Rust crates. You can use rustdoc to generate and view documentation.
@@ -340,7 +341,7 @@ This repository contains multiple Rust crates. You can use rustdoc to generate a
 
 - Public crates only (recommended):
   - `cargo doc --no-deps -p craft --target-dir target`
-  - `cargo doc --no-deps --manifest-path xrpl-std/Cargo.toml --target-dir target`
+  - `cargo doc --no-deps -p xrpl-std --target-dir target`
 - Entire workspace:
   - `cargo doc --workspace --no-deps`
 - Open docs in your browser:
@@ -366,8 +367,8 @@ This cleans previous docs, builds docs for `craft` and `xrpl-std` (into a shared
 
 - Use `//!` for crate- and module-level documentation; use `///` for items (functions, structs, enums)
 - Prefer small, runnable examples. For examples that should not run in doctests, use code fences with language modifiers:
-  - ```rust,no_run``` for examples that should compile but not execute
-  - ```rust,ignore``` for examples that should not be compiled
+  - `rust,no_run` for examples that should compile but not execute
+  - `rust,ignore` for examples that should not be compiled
 - Use intra-doc links to reference items within a crate, e.g. `[Result](core::result::Result)`
 - Test your docs: `cargo test --doc` (per-crate or workspace)
 - Hide internal implementation details with `#[doc(hidden)]`
@@ -380,7 +381,7 @@ You can include standalone Markdown files directly into your crate documentation
 - Include a crate README as the top-level docs (in `src/lib.rs` or `src/main.rs`):
 
 ```rust
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../../README.md")]
 ```
 
 - Include additional guides as modules shown in docs only:
@@ -396,6 +397,7 @@ pub mod guides {
 ```
 
 In this repository:
+
 - The `xrpl-std` crate already includes its README via `#![doc = include_str!("../README.md")]`
 - The guide at `docs/FIELD_ACCESS.md` is included under the rendered docs at `xrpl_std::guides::field_access`
 

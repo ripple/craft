@@ -59,8 +59,8 @@ The contract expects:
 ### Prerequisites
 
 - Rust with `wasm32-unknown-unknown` target
-    - This is necessary for blockchain deployments because WebAssembly does not require a specific vendor (e.g.,
-      `apple`) or operating system (e.g., `darwin`), so both are `unknown`
+  - This is necessary for blockchain deployments because WebAssembly does not require a specific vendor (e.g.,
+    `apple`) or operating system (e.g., `darwin`), so both are `unknown`
 - XRPL standard library (dependency)
 
 ### Build Commands
@@ -82,7 +82,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../../wasm-host
-cargo run -- --wasm-file ../projects/examples/smart-escrows/nft_owner/target/wasm32-unknown-unknown/release/nft_owner.wasm --project examples/smart-escrows/nft_owner
+cargo run -- --dir ../projects/examples/smart-escrows/nft_owner --project examples/smart-escrows/nft_owner
 ```
 
 ## Use Cases
@@ -119,7 +119,7 @@ The transaction must include a memo with the NFT ID:
 The contract handles various error scenarios:
 
 | Scenario                     | Behavior        | Return Code |
-|------------------------------|-----------------|-------------|
+| ---------------------------- | --------------- | ----------- |
 | Missing memo                 | Escrow fails    | `0`         |
 | Invalid memo format          | Escrow fails    | Error code  |
 | NFT not found                | Escrow fails    | Error code  |

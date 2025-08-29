@@ -22,12 +22,8 @@ use std::path::PathBuf;
 #[command(version, about, long_about = None)]
 struct Args {
     /// Path to the WASM file
-    #[arg(short, long)]
-    wasm_file: Option<String>,
-
-    /// Path to the WASM file (alias for backward compatibility)
     #[arg(long)]
-    wasm_path: Option<String>,
+    dir: Option<String>,
 
     /// Test case to run (success/failure)
     #[arg(short, long, default_value = "success")]
@@ -53,17 +49,22 @@ struct Args {
 
 #[allow(clippy::type_complexity)]
 fn load_test_data(
+    dir: Option<String>,
     project: &str,
     test_case: &str,
 ) -> Result<(String, String, String, String, String), Box<dyn std::error::Error>> {
     // Convention: fixtures must be in projects/<project>/fixtures/<test_case>/
-    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .join("projects")
-        .join(project)
-        .join("fixtures")
-        .join(test_case);
+    let base_path = if let Some(dir) = dir {
+        PathBuf::from(dir).join("fixtures").join(test_case)
+    } else {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("projects")
+            .join(project)
+            .join("fixtures")
+            .join(test_case)
+    };
 
     if !base_path.exists() {
         return Err(format!(
@@ -92,15 +93,24 @@ fn load_test_data(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    // Use wasm_file if provided, otherwise use wasm_path
-    let wasm_file = match (&args.wasm_file, &args.wasm_path) {
-        (Some(file), _) => file.clone(),
-        (None, Some(path)) => path.clone(),
-        (None, None) => {
-            eprintln!("Error: Either --wasm-file or --wasm-path must be provided");
-            std::process::exit(1);
-        }
-    };
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .join("projects");
+
+    if !base_path.exists() {
+        eprintln!(
+            "Error: Could not find projects directory at expected location: {}",
+            base_path.display()
+        );
+        std::process::exit(1);
+    }
+
+    let wasm_file = base_path
+        .join("target/wasm32-unknown-unknown/debug")
+        .join(format!("{}.wasm", args.project))
+        .to_string_lossy()
+        .to_string();
 
     // Initialize logger with appropriate level
     let log_level = if args.verbose {
@@ -123,13 +133,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     info!("Starting Wasm host application {:?}", args);
-    info!("Loading WASM module from: {}", wasm_file);
     info!("Target function: {} (default is 'finish')", args.function);
     info!("Using test case: {}", args.test_case);
     info!("Project: {}", args.project);
+    info!(
+        "Source Directory: {}",
+        args.dir.as_deref().unwrap_or("default")
+    );
     info!("Loading test data from fixtures");
     let (tx_json, lo_json, lh_json, l_json, nft_json) =
-        match load_test_data(&args.project, &args.test_case) {
+        match load_test_data(args.dir, &args.project, &args.test_case) {
             Ok((tx, lo, lh, l, nft)) => {
                 debug!("Test data loaded successfully");
                 (tx, lo, lh, l, nft)
@@ -168,5 +181,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     info!("Wasm host application execution completed");
-    return Ok(());
+    Ok(())
 }

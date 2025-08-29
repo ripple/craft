@@ -23,7 +23,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../../wasm-host
-cargo run -- --wasm-file ../projects/examples/smart-escrows/keylet_exists/target/wasm32-unknown-unknown/release/keylet_exists.wasm --project examples/smart-escrows/keylet_exists
+cargo run -- --dir ../projects/examples/smart-escrows/keylet_exists --project examples/smart-escrows/keylet_exists
 ```
 
 ### Note

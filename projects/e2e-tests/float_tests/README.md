@@ -23,7 +23,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../wasm-host
-cargo run -- --wasm-file ../projects/e2e-tests/float_tests/target/wasm32-unknown-unknown/release/float_tests.wasm --project e2e-tests/float_tests
+cargo run -- --dir ../projects/e2e-tests/float_tests --project e2e-tests/float_tests
 ```
 
 ## Rounding Modes
@@ -31,6 +31,7 @@ cargo run -- --wasm-file ../projects/e2e-tests/float_tests/target/wasm32-unknown
 The host honors the `rounding_mode` parameter for float operations by setting rippled Number's rounding mode per call. Behavior should match rippled.
 
 Supported rounding modes:
+
 - `0`: Round to nearest (ties to even)
 - `1`: Round towards zero
 - `2`: Round down (floor)

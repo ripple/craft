@@ -3291,6 +3291,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "xrpl-std"
+version = "0.5.1-devnet5"
+
+[[package]]
 name = "xrpld-number"
 version = "0.1.0"
 dependencies = [

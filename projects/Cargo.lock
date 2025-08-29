@@ -22,9 +22,16 @@ dependencies = [
 
 [[package]]
 name = "cfg-if"
-version = "1.0.1"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268"
+checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
+
+[[package]]
+name = "codecov_tests"
+version = "0.0.1"
+dependencies = [
+ "xrpl-std",
+]
 
 [[package]]
 name = "cpufeatures"
@@ -46,6 +53,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "decoder_tests"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -53,6 +67,13 @@ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
 dependencies = [
  "block-buffer",
  "crypto-common",
+]
+
+[[package]]
+name = "float_tests"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
 ]
 
 [[package]]
@@ -72,10 +93,45 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "host_functions_test"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "keylet_exists"
+version = "0.1.0"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "kyc"
+version = "0.0.1"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "ledger_sqn"
+version = "0.1.0"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
 name = "libc"
-version = "0.2.174"
+version = "0.2.175"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
+checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
+
+[[package]]
+name = "nft_owner"
+version = "0.1.0"
+dependencies = [
+ "xrpl-std",
+]
 
 [[package]]
 name = "notary"
@@ -85,6 +141,39 @@ dependencies = [
  "hex",
  "sha2",
  "xrpl-std",
+]
+
+[[package]]
+name = "notary_macro_example"
+version = "0.1.0"
+dependencies = [
+ "xrpl-address-macro",
+ "xrpl-std",
+]
+
+[[package]]
+name = "oracle"
+version = "0.1.0"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.101"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89ae43fd86e4158d6db51ad8e2b80f313af9cc74f5c0e03ccb87de09998732de"
+dependencies = [
+ "unicode-ident",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.40"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
+dependencies = [
+ "proc-macro2",
 ]
 
 [[package]]
@@ -99,10 +188,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "tinyvec"
-version = "1.9.0"
+name = "syn"
+version = "2.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09b3661f17e86524eccd4371ab0429194e0d7c008abb45f7a7495b1719463c71"
+checksum = "ede7c438028d4436d71104916910f5bb611972c5cfd7f89b8300a8186e6fada6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "tinyvec"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa5fdc3bce6191a1dbc8c02d5c8bffcf557bafa17c124c5264a458f1b0613fa"
 dependencies = [
  "tinyvec_macros",
 ]
@@ -114,16 +214,54 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "trace_escrow_account"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "trace_escrow_finish"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "trace_escrow_ledger_object"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
 name = "typenum"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 
 [[package]]
+name = "unicode-ident"
+version = "1.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a5f39404a5da50712a4c1eecf25e90dd62b613502b7e925fd4e4d19b5c96512"
+
+[[package]]
 name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "xrpl-address-macro"
+version = "0.1.0"
+dependencies = [
+ "bs58",
+ "proc-macro2",
+ "quote",
+ "sha2",
+ "syn",
+]
 
 [[package]]
 name = "xrpl-std"

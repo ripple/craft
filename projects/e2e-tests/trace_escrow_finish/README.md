@@ -28,7 +28,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../wasm-host
-cargo run -- --wasm-file ../projects/e2e-tests/trace_escrow_finish/target/wasm32-unknown-unknown/release/trace_escrow_finish.wasm --project e2e-tests/trace_escrow_finish
+cargo run -- --dir ../projects/e2e-tests/trace_escrow_finish --project e2e-tests/trace_escrow_finish
 ```
 
 ### Note

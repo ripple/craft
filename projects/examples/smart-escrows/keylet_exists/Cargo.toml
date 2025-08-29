@@ -1,0 +1,23 @@
+[package]
+edition = "2024"
+name = "keylet_example"
+version = "0.1.0"
+description = "Smart Escrow example demonstrating keylet generation and ledger object existence verification"
+license = "ISC"
+
+# This empty workspace definition keeps this project independent of the parent workspace
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+opt-level = 's'
+panic = "abort"
+
+[profile.dev]
+panic = "unwind" # For debugging, allows unwinding if code is executed as Rust (e.g., unit tests)
+
+[dependencies]
+xrpl-std = { path = "../../../../xrpl-std" }

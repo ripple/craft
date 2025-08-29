@@ -1,0 +1,20 @@
+[package]
+edition = "2024"
+name = "codecov_tests"
+version = "0.0.1"
+description = "Comprehensive test suite for WASM host function code coverage and error handling validation"
+license = "ISC"
+
+# This empty workspace definition keeps this project independent of the parent workspace
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+lto = true
+opt-level = 's'
+panic = "abort"
+
+[dependencies]
+xrpl-std = { path = "../../../xrpl-std" }

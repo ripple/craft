@@ -1,0 +1,12 @@
+[package]
+edition = "2024"
+name = "keylet_example"
+version = "0.1.0"
+description = "Smart Escrow example demonstrating keylet generation and ledger object existence verification"
+license = "ISC"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+xrpl-std = { path = "../../../../xrpl-std" }

@@ -1,17 +1,20 @@
 [workspace]
 resolver = "2"
 members = [
-    "decoder_tests",
-    "float_tests",
-    "kyc",
-    "ledger_sqn",
-    "nft_owner",
-    "notary",
-    "notary_macro_example",
-    "oracle",
-    "trace_escrow_account",
-    "trace_escrow_finish",
-    "trace_escrow_ledger_object"
+    "e2e-tests/codecov_tests",
+    "e2e-tests/decoder_tests",
+    "e2e-tests/float_tests",
+    "e2e-tests/host_functions_test",
+    "e2e-tests/trace_escrow_account",
+    "e2e-tests/trace_escrow_finish",
+    "e2e-tests/trace_escrow_ledger_object",
+    "examples/smart-escrows/keylet_exists",
+    "examples/smart-escrows/kyc",
+    "examples/smart-escrows/ledger_sqn",
+    "examples/smart-escrows/nft_owner",
+    "examples/smart-escrows/notary",
+    "examples/smart-escrows/notary_macro_example",
+    "examples/smart-escrows/oracle",
 ]
 
 [profile.release]

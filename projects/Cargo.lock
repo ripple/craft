@@ -27,6 +27,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
 
 [[package]]
+name = "codecov_tests"
+version = "0.0.1"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -47,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "decoder_tests"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 dependencies = [
  "xrpl-std",
 ]
@@ -64,7 +71,7 @@ dependencies = [
 
 [[package]]
 name = "float_tests"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 dependencies = [
  "xrpl-std",
 ]
@@ -86,8 +93,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "kyc"
+name = "host_functions_test"
+version = "0.5.1-devnet5"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "keylet_example"
 version = "0.1.0"
+dependencies = [
+ "xrpl-std",
+]
+
+[[package]]
+name = "kyc"
+version = "0.0.1"
 dependencies = [
  "xrpl-std",
 ]
@@ -114,12 +135,11 @@ dependencies = [
 
 [[package]]
 name = "notary"
-version = "0.5.1"
+version = "0.1.0"
 dependencies = [
  "bs58",
  "hex",
  "sha2",
- "xrpl-address-macro",
  "xrpl-std",
 ]
 
@@ -195,21 +215,21 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "trace_escrow_account"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 dependencies = [
  "xrpl-std",
 ]
 
 [[package]]
 name = "trace_escrow_finish"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 dependencies = [
  "xrpl-std",
 ]
 
 [[package]]
 name = "trace_escrow_ledger_object"
-version = "0.0.1"
+version = "0.5.1-devnet5"
 dependencies = [
  "xrpl-std",
 ]

@@ -67,7 +67,6 @@ impl From<i64> for HostError {
 ///
 /// Returns a string slice representing the name of the error code constant and its integer value.
 /// Returns "UNKNOWN_ERROR (code)" if the error code is not recognized.
-/// ```
 pub fn error_code_to_string(code: i64) -> &'static str {
     // Convert the code to a HostError
     let host_error: HostError = code.into();

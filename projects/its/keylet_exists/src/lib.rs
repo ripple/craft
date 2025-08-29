@@ -189,8 +189,9 @@ pub extern "C" fn finish() -> i32 {
         Err(error) => return error.code(),
     };
     seq += 1;
+    seq += 1; // skip ones added in lastdevnet
 
-    let nft_offer_keylet = keylets::nft_offer_keylet(&destination, 4);
+    let nft_offer_keylet = keylets::nft_offer_keylet(&destination, 6);
     match object_exists(nft_offer_keylet, "NFTokenOffer", sfield::Owner) {
         Ok(exists) => {
             if exists {
@@ -244,6 +245,7 @@ pub extern "C" fn finish() -> i32 {
         Err(error) => return error.code(),
     };
     seq += 1;
+    seq += 1; // skip ones added in lastdevnet
 
     seq += 1; // ticket sequence number is one greater
     let ticket_keylet = keylets::ticket_keylet(&account, seq);

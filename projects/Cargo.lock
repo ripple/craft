@@ -100,7 +100,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "keylet_example"
+name = "keylet_exists"
 version = "0.1.0"
 dependencies = [
  "xrpl-std",

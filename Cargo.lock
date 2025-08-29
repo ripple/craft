@@ -3255,9 +3255,9 @@ dependencies = [
 
 [[package]]
 name = "xrpl-rust"
-version = "0.5.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26afe3367cf063bbd8530d72846564becc05f9430c02eec99d6b88873a3bbd7e"
+checksum = "5835a0c4319e51423a12bd3244857dad7517472733c33729dca294e217088063"
 dependencies = [
  "bigdecimal",
  "bs58",
@@ -3287,7 +3287,19 @@ dependencies = [
  "strum_macros",
  "thiserror-no-std",
  "url",
+ "xrpl-rust-macros",
  "zeroize",
+]
+
+[[package]]
+name = "xrpl-rust-macros"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9c5a56d688dd492c201011c19933a9d0e64452d3763bc88624dde91fff37164"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.101",
 ]
 
 [[package]]

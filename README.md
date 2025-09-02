@@ -114,7 +114,7 @@ The tool automatically detects WASM projects in the `projects` directory.
 
 # WASM Host Testing Tool
 
-This tool provides a testing environment for XLS-100d compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
+This tool provides a testing environment for [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270) compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
 
 ## Purpose
 
@@ -122,7 +122,7 @@ The wasm-host tool:
 
 1. Loads and executes WebAssembly modules
 2. Provides test transaction and ledger object data
-3. Calls the `finish` function as specified in XLS-100d
+3. Calls the `finish` function as specified in [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270)
 4. Reports execution results and any errors
 
 ## Test Fixtures

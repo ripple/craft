@@ -15,7 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
       # This runs the pre-commit hooks defined in .pre-commit-config.yaml
       # TODO: figure out how to update to use pre-commit.ci
       - uses: pre-commit/action@v3.0.1
@@ -24,9 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin/
@@ -39,42 +40,31 @@ jobs:
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -Dclippy::all
+      - name: Run Clippy (Native Workspace)
+        run: cargo clippy --workspace --all-targets --all-features -- -Dclippy::all
 
-      - name: Run Clippy (xrpl-std)
+      - name: Run Clippy (WASM Projects Workspace)
+        env:
+          NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
-          cd xrpl-std
-          cargo clippy --all-targets --all-features -- -Dclippy::all
+          cd projects
+          cargo clippy --workspace --target wasm32-unknown-unknown --all-features -- -Dclippy::all
 
-      - name: Run Clippy (All Example Contracts)
+      - name: Check WASM contract exports
         run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Clippy in $dir"
-            (cd "$dir" && cargo clippy --target wasm32-unknown-unknown --all-features -- -Dclippy::all) || exit 1
-          done
-
-      - name: Run Clippy (All Test Contracts)
-        run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Clippy in $dir"
-            (cd "$dir" && cargo clippy --all-targets --all-features) || exit 1
-          done
-
-      - name: Check project exports
-        run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
-          done
-
-      - name: Check ripple-tests exports
-        run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            grep -q "finish() -> i32" "$dir/src/lib.rs" || exit 1
+          # Check that all WASM projects export the required finish function
+          find ./projects -type d -name "src" | while read -r src_dir; do
+            dir=$(dirname "$src_dir")
+            echo "🔧 Checking exports in $dir"
+            if [[ -f "$src_dir/lib.rs" ]]; then
+              grep -q "finish() -> i32" "$src_dir/lib.rs" || {
+              echo "❌ Missing required finish() -> i32 export in $dir"
+              exit 1
+              }
+            else
+              echo "❌ Missing lib.rs in $src_dir"
+              exit 1
+            fi
           done
 
   rustfmt:
@@ -82,29 +72,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run fmt (Craft)
+      - name: Run fmt (Entire Workspace)
         run: cargo fmt --all -- --check
-
-      - name: Run fmt (xrpl-std)
-        run: |
-          cd xrpl-std
-          cargo fmt --all -- --check
-
-      - name: Run fmt (All Example Contracts)
-        run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Fmt in $dir"
-            (cd "$dir" && cargo fmt --all -- --check) || exit 1
-          done
-
-      - name: Run fmt (All Test Contracts)
-        run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Fmt in $dir"
-            (cd "$dir" && cargo fmt --all -- --check) || exit 1
-          done
 
   # Note: This job should not be "required" for PRs, as during development there may be temporary
   # discrepancies between craft and rippled
@@ -135,69 +104,55 @@ jobs:
       - name: Add target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Build & Test `xrpl-std`
+      - name: Build & Test Native Workspace
         run: |
-          cd xrpl-std
-          cargo build
-          cargo test
-          cargo build --target wasm32-unknown-unknown
-          cargo rustc --target wasm32-unknown-unknown -- -D warnings
+          # Build and test the native workspace (fast!)
+          cargo build --workspace
+          cargo test --workspace
 
-      - name: Build & Test `wasm-host`
-        run: (cd wasm-host && cargo build && cargo test)
-
-      - name: Build all example contracts
+      - name: Build xrpl-std for WASM
         run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Building in $dir"
-            (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
-          done
+          cargo build -p xrpl-std --target wasm32-unknown-unknown
+          cargo rustc -p xrpl-std --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Build all test contracts
+      - name: Build WASM Projects Workspace
+        env:
+          NOTARY_ACCOUNT_R: rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
         run: |
-          find ./rippled-tests -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            echo "🔧 Building in $dir"
-            (cd "$dir" && cargo build --target wasm32-unknown-unknown && cargo build --target wasm32-unknown-unknown --release && cargo rustc --target wasm32-unknown-unknown -- -D warnings) || exit 1
-          done
+          cd projects
+          echo "🔧 Building projects workspace for WASM"
+          cargo build --workspace --target wasm32-unknown-unknown
+          cargo build --workspace --target wasm32-unknown-unknown --release
 
-      - name: Build and Test `craft`
-        run: |
-          cargo build
-          cargo test
-
-  generate-documentation:
+  e2e-tests:
     runs-on: ubuntu-latest
-    if: success() && github.ref == 'refs/heads/main'
-
+    # needs: build_and_test
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build documentation
-        run: |
-          cd xrpl-std
-          cargo doc --no-deps
-
-      - name: Upload documentation files as artifact
-        id: docs-artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Cache dependencies
+        uses: actions/cache@v4
         with:
-          path: xrpl-std/target/doc
-          retention-days: 10
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-  deploy-docs-pages:
-    permissions:
-      id-token: write # Needed for OIDC authentication
-      pages: write # this permission is needed for deploying into Github Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.docs-artifact.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: generate-documentation
-    # Deploy docs only pushes into the main branch
-    if: success() && github.ref == 'refs/heads/main'
-    steps:
-      - name: Deploy to Documentation to GitHub Pages
-        id: docs-artifact
-        uses: actions/deploy-pages@v4
+      - name: Add target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Run integration tests
+        run: |
+          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
+            contract_name=$(basename "$dir")
+            if [ -d "$dir/fixtures" ]; then
+              cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --dir $dir || exit 1
+            fi
+          done

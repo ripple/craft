@@ -20,6 +20,7 @@ This convention co-locates each project's test data with its source code, making
 ### Fixture Structure
 
 Each test case directory can contain:
+
 - `tx.json`: Transaction data
 - `ledger_object.json`: Current ledger object being tested
 - `ledger_header.json`: Ledger header information
@@ -31,10 +32,12 @@ Each test case directory can contain:
 The notary project includes test fixtures for validating escrow finish conditions:
 
 #### Success Case (`projects/notary/fixtures/success/`)
+
 - `tx.json`: Transaction with the correct notary account
 - `ledger_object.json`: Corresponding escrow object
 
 #### Failure Case (`projects/notary/fixtures/failure/`)
+
 - `tx.json`: Transaction with an incorrect notary account
 - `ledger_object.json`: Corresponding escrow object
 
@@ -63,8 +66,7 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case succe
 
 ### Command Line Options
 
-- `--wasm-file <PATH>`: Path to the WebAssembly module to test
-- `--wasm-path <PATH>`: (Alias for --wasm-file for backward compatibility)
+- `--dir <PATH>`: Path to the source code (for fixture purposes)
 - `--test-case <CASE>`: Test case to run (defaults to `success`)
 - `--project <NAME>`: Project name (required)
 - `--function <NAME>`: The name of the function to execute in the WASM module, defaults to `finish`

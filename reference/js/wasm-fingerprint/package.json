@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "bs58": "^5.0.0",
-    "ripple-address-codec": "^1.6.0"
+    "ripple-address-codec": "^5.0.0"
   },
   "author": "",
   "license": "ISC"

@@ -280,7 +280,7 @@ async fn main() -> Result<()> {
             "{}",
             "\nDetected changes to the CLI source code that haven't been installed yet.".yellow()
         );
-        if Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
+        if Confirm::new("Would you like to update the CLI now with 'cargo install --path craft'?")
             .with_default(true)
             .prompt()?
         {

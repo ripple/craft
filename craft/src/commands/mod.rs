@@ -151,7 +151,7 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
     let project_name = project_name.unwrap_or_else(|| "unknown".to_string());
 
     // Try to find the WASM file with the exact crate name
-    let wasm_file = build_dir.join(&project_name).with_extension("wasm");
+    let mut wasm_file = build_dir.join(&project_name).with_extension("wasm");
 
     if !wasm_file.exists() {
         // If not found, check if the directory name and crate name differ
@@ -171,23 +171,41 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
             println!(
                 "This can happen when directory name contains hyphens but crate name uses underscores."
             );
-            return Ok(alt_wasm_file);
-        }
+            wasm_file = alt_wasm_file;
+        } else {
+            let alt_wasm_file2 = project_dir
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .join("target")
+                .join(config.wasm_target.to_string())
+                .join(config.build_mode.to_string())
+                .join(&project_name)
+                .with_extension("wasm");
 
-        // Also check for lib prefix, which can happen with library crates
-        let lib_wasm_file = build_dir
-            .join(format!("lib{}", &project_name))
-            .with_extension("wasm");
-        if lib_wasm_file.exists() {
-            return Ok(lib_wasm_file);
+            if alt_wasm_file2.exists() {
+                wasm_file = alt_wasm_file2;
+            } else {
+                // Also check for lib prefix, which can happen with library crates
+                let lib_wasm_file = build_dir
+                    .join(format!("lib{}", &project_name))
+                    .with_extension("wasm");
+                if lib_wasm_file.exists() {
+                    wasm_file = lib_wasm_file;
+                } else {
+                    anyhow::bail!(
+                        "WASM file not found at expected locations:\n  • {:?}\n  • {:?}\n  • {:?}\n\n{}",
+                        wasm_file,
+                        alt_wasm_file,
+                        alt_wasm_file2,
+                        "Suggestions:\n  • Make sure the build completed successfully\n  • Check if the crate type is set to 'cdylib' in Cargo.toml\n  • Verify the project name matches the package name\n  • Try running 'craft build' again with --debug flag"
+                    );
+                }
+            }
         }
-
-        anyhow::bail!(
-            "WASM file not found at expected locations:\n  • {:?}\n  • {:?}\n\n{}",
-            wasm_file,
-            alt_wasm_file,
-            "Suggestions:\n  • Make sure the build completed successfully\n  • Check if the crate type is set to 'cdylib' in Cargo.toml\n  • Verify the project name matches the package name\n  • Try running 'craft build' again with --debug flag"
-        );
     }
 
     println!("{}", "\nBuild completed successfully!".green());

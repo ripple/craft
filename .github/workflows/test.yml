@@ -140,12 +140,19 @@ jobs:
       - name: Run code in Markdown files
         run: |
           # Find all .md files and run code blocks
-          find . -name "*.md" | while read -r md_file; do
-            echo "🔧 Running code blocks in $md_file"
-            npx markdown-doctest "$md_file" || {
-              echo "❌ Code blocks in $md_file failed"
+          find . -type d -name target -prune -false -o -name "*.md" -print | while read -r md_file; do
+            set -euo pipefail
+
+            awk '
+              BEGIN { inblock=0 }
+              /^```bash/ { inblock=1; next }
+              /^```/     { if (inblock) inblock=0; next }
+              inblock    { print }
+            ' "$md_file" | bash || {
+              echo "❌ Bash code blocks in $md_file failed"
               exit 1
             }
+            echo "✅ Bash code blocks in $md_file succeeded"
           done
 
   e2e-tests:

@@ -23,7 +23,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../wasm-host
-cargo run -- --dir ../projects/e2e-tests/float_tests --project e2e-tests/float_tests
+cargo run -- --dir ../projects/e2e-tests/float_tests --project float_tests
 ```
 
 ## Rounding Modes

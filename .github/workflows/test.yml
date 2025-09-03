@@ -155,7 +155,9 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Build
-        run: ./build.sh
+        run: |
+          ./build.sh
+          ./build.sh release
 
       - name: Run integration tests
         run: |

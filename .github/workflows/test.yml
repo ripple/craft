@@ -135,13 +135,14 @@ jobs:
           find . -type d -name target -prune -false -o -name "*.md" -print | while read -r md_file; do
             echo "🔧 Running code blocks in $md_file"
             set -euo pipefail
+            md_dir=$(dirname "$md_file")
 
             awk '
               BEGIN { inblock=0 }
               /^```bash/ { inblock=1; next }
               /^```/     { if (inblock) inblock=0; next }
               inblock    { print }
-            ' "$md_file" | bash || {
+            ' "$md_file" | (cd "$md_dir" && bash) || {
               echo "❌ Bash code blocks in $md_file failed"
               exit 1
             }

@@ -3,23 +3,9 @@
 
 version: 2
 updates:
-  # Main workspace and craft CLI tool
+  # Cargo workspace - this will handle all members centrally
   - package-ecosystem: "cargo"
     directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 7
-
-  # xrpl-std library
-  - package-ecosystem: "cargo"
-    directory: "/xrpl-std"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 7
-
-  # wasm-host
-  - package-ecosystem: "cargo"
-    directory: "/wasm-host"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 7

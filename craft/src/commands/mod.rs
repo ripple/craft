@@ -129,84 +129,8 @@ pub async fn build(config: &Config) -> Result<PathBuf> {
         }
     }
 
-    let target_dir = project_dir.join("target");
-    let build_dir = target_dir
-        .join(config.wasm_target.to_string())
-        .join(config.build_mode.to_string());
-
-    // Get the project name from Cargo.toml instead of directory name
-    let cargo_content = std::fs::read_to_string(&cargo_toml)?;
-    let name_pattern = regex::Regex::new(r#"name\s*=\s*"([^"]*)""#)?;
-
-    let project_name = if let Some(caps) = name_pattern.captures(&cargo_content) {
-        caps.get(1).map(|m| m.as_str().to_string())
-    } else {
-        // Fall back to directory name if we can't extract from Cargo.toml
-        project_dir
-            .file_name()
-            .and_then(|name| name.to_str())
-            .map(|s| s.to_string())
-    };
-
-    let project_name = project_name.unwrap_or_else(|| "unknown".to_string());
-
     // Try to find the WASM file with the exact crate name
-    let mut wasm_file = build_dir.join(&project_name).with_extension("wasm");
-
-    if !wasm_file.exists() {
-        // If not found, check if the directory name and crate name differ
-        // (which happens with hyphens vs underscores)
-        let dir_name = project_dir
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or("unknown");
-
-        let alt_wasm_file = build_dir.join(dir_name).with_extension("wasm");
-
-        if alt_wasm_file.exists() {
-            println!(
-                "{}",
-                "\nFound WASM file with directory name instead of crate name.".yellow()
-            );
-            println!(
-                "This can happen when directory name contains hyphens but crate name uses underscores."
-            );
-            wasm_file = alt_wasm_file;
-        } else {
-            let alt_wasm_file2 = project_dir
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .join("target")
-                .join(config.wasm_target.to_string())
-                .join(config.build_mode.to_string())
-                .join(&project_name)
-                .with_extension("wasm");
-
-            if alt_wasm_file2.exists() {
-                wasm_file = alt_wasm_file2;
-            } else {
-                // Also check for lib prefix, which can happen with library crates
-                let lib_wasm_file = build_dir
-                    .join(format!("lib{}", &project_name))
-                    .with_extension("wasm");
-                if lib_wasm_file.exists() {
-                    wasm_file = lib_wasm_file;
-                } else {
-                    anyhow::bail!(
-                        "WASM file not found at expected locations:\n  • {:?}\n  • {:?}\n  • {:?}\n\n{}",
-                        wasm_file,
-                        alt_wasm_file,
-                        alt_wasm_file2,
-                        "Suggestions:\n  • Make sure the build completed successfully\n  • Check if the crate type is set to 'cdylib' in Cargo.toml\n  • Verify the project name matches the package name\n  • Try running 'craft build' again with --debug flag"
-                    );
-                }
-            }
-        }
-    }
+    let wasm_file = utils::find_wasm_output(project_dir)?;
 
     println!("{}", "\nBuild completed successfully!".green());
     println!("{}", "\nWASM file location:".cyan());
@@ -506,7 +430,7 @@ pub async fn open_explorer() -> Result<()> {
 // New helper functions for improved craft commands
 
 pub fn list_projects() -> Result<()> {
-    let projects_dir = std::env::current_dir()?.join("projects");
+    let projects_dir = std::env::current_dir()?.join("projects/examples/smart-escrow");
     if !projects_dir.exists() {
         println!("{}", "No projects directory found.".yellow());
         return Ok(());
@@ -527,7 +451,7 @@ pub fn list_projects() -> Result<()> {
 
 fn list_all_projects() -> Result<Vec<String>> {
     let mut projects = Vec::new();
-    let projects_dir = std::env::current_dir()?.join("projects");
+    let projects_dir = std::env::current_dir()?.join("projects/examples/smart-escrow");
 
     if projects_dir.exists() {
         for entry in fs::read_dir(projects_dir)? {
@@ -621,7 +545,7 @@ pub fn list_fixtures() -> Result<()> {
     }
 
     // Show fixtures in project directories
-    let projects_dir = std::env::current_dir()?.join("projects");
+    let projects_dir = std::env::current_dir()?.join("projects/examples/smart-escrow");
     if projects_dir.exists() {
         for entry in fs::read_dir(projects_dir)? {
             let entry = entry?;

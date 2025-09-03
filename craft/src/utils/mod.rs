@@ -377,6 +377,13 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     let cargo_toml = find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
     let project_dir = cargo_toml.parent().unwrap();
     let project_name = project_dir.file_name().unwrap().to_str().unwrap();
+    let project_main_dir = project_dir
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap();
 
     // Try release first, then debug
     let candidates = vec![
@@ -390,6 +397,18 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
             .join("target/wasm32-unknown-unknown/debug")
             .join(format!("{project_name}.wasm")),
         project_dir
+            .join("target/wasm32-unknown-unknown/debug")
+            .join(format!("lib{project_name}.wasm")),
+        project_main_dir
+            .join("target/wasm32-unknown-unknown/release")
+            .join(format!("{project_name}.wasm")),
+        project_main_dir
+            .join("target/wasm32-unknown-unknown/release")
+            .join(format!("lib{project_name}.wasm")),
+        project_main_dir
+            .join("target/wasm32-unknown-unknown/debug")
+            .join(format!("{project_name}.wasm")),
+        project_main_dir
             .join("target/wasm32-unknown-unknown/debug")
             .join(format!("lib{project_name}.wasm")),
     ];

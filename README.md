@@ -124,7 +124,7 @@ The wasm-host tool:
 
 1. Loads and executes WebAssembly modules
 2. Provides test transaction and ledger object data
-3. Calls the `finish` function as specified in [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270)
+3. Calls the `finish` function as specified in [XLS-100](https://github.com/XRPLF/XRPL-Standards/discussions/270)
 4. Reports execution results and any errors
 
 ## Test Fixtures

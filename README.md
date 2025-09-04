@@ -114,7 +114,7 @@ The tool automatically detects WASM projects in the `projects` directory.
 
 # WASM Host Testing Tool
 
-This tool provides a testing environment for [XLS-100d](https://github.com/XRPLF/XRPL-Standards/discussions/270) compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
+This tool provides a testing environment for [XLS-100](https://github.com/XRPLF/XRPL-Standards/discussions/270) compliant WebAssembly modules. It simulates the host environment that will execute escrow finish conditions on the XRPL.
 
 For details on the WASM VM integration, see [XLS-102: WASM VM Configuration](https://github.com/XRPLF/XRPL-Standards/discussions/303).
 

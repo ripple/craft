@@ -123,6 +123,15 @@ jobs:
           echo "🔧 Building projects workspace for WASM"
           cargo build --workspace --target wasm32-unknown-unknown
           cargo build --workspace --target wasm32-unknown-unknown --release
+      - name: Install and run craft
+        run: |
+          cargo install --path craft
+          find ./projects/examples -name "Cargo.toml" -type f | while read -r cargo_file; do
+            contract_name=$(basename "$dir")
+            if [ -d "$dir/fixtures" ]; then
+              craft build $(contract_name) -r -O aggressive || exit 1
+            fi
+          done
 
   run-markdown:
     runs-on: ubuntu-latest
@@ -170,7 +179,9 @@ jobs:
         run: rustup target add wasm32-unknown-unknown
 
       - name: Build
-        run: ./build.sh
+        run: |
+          ./build.sh
+          ./build.sh release
 
       - name: Run integration tests
         run: |

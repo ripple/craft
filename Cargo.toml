@@ -8,8 +8,7 @@ members = [
     "wasm-host/xrpld-number"
 ]
 exclude = [
-    "projects",
-    "rippled-tests"
+    "projects"
 ]
 
 [profile.release]

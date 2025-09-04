@@ -8,6 +8,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use colored::*;
 use inquire::Confirm;
 use inquire::Select;
+use std::io::IsTerminal;
 
 /// Additional guides and how-tos
 #[cfg(doc)]
@@ -280,7 +281,7 @@ async fn main() -> Result<()> {
             "{}",
             "\nDetected changes to the CLI source code that haven't been installed yet.".yellow()
         );
-        if Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
+        if Confirm::new("Would you like to update the CLI now with 'cargo install --path craft'?")
             .with_default(true)
             .prompt()?
         {
@@ -320,8 +321,10 @@ async fn main() -> Result<()> {
                 };
 
                 let project_path = if let Some(proj) = project {
-                    std::env::current_dir()?.join("projects").join(proj)
-                } else if atty::is(atty::Stream::Stdout) {
+                    std::env::current_dir()?
+                        .join("projects/examples/smart-escrows")
+                        .join(proj)
+                } else if std::io::stdout().is_terminal() {
                     // Interactive selection if TTY available
                     let config = commands::configure().await?;
                     commands::build(&config).await?;
@@ -440,7 +443,7 @@ async fn main() -> Result<()> {
 
                 let project_name = if let Some(proj) = project {
                     proj
-                } else if atty::is(atty::Stream::Stdout) {
+                } else if std::io::stdout().is_terminal() {
                     // Interactive mode
                     let config = commands::configure().await?;
                     let wasm_path = if build {

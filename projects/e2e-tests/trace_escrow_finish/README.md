@@ -28,7 +28,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../wasm-host
-cargo run -- --dir ../projects/e2e-tests/trace_escrow_finish --project e2e-tests/trace_escrow_finish
+cargo run -- --dir ../projects/e2e-tests/trace_escrow_finish --project trace_escrow_finish
 ```
 
 ### Note

@@ -23,7 +23,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../wasm-host
-cargo run -- --dir ../projects/e2e-tests/decoder_tests --project e2e-tests/decoder_tests
+cargo run -- --dir ../projects/e2e-tests/decoder_tests --project decoder_tests
 ```
 
 ### Note

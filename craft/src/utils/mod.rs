@@ -10,7 +10,7 @@ use which::which;
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
 
-    if let Ok(entries) = std::fs::read_dir(base_path.join("projects")) {
+    if let Ok(entries) = std::fs::read_dir(base_path.join("projects/examples/smart-escrows")) {
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
             if path.is_dir() && path.join("Cargo.toml").exists() {
@@ -279,7 +279,7 @@ pub fn needs_cli_update() -> Result<bool> {
 
     // Check if we're in the project root directory
     let is_in_project_root =
-        workspace_dir.join("src").exists() && workspace_dir.join("Cargo.toml").exists();
+        workspace_dir.join("craft").exists() && workspace_dir.join("Cargo.toml").exists();
 
     if !is_in_project_root {
         println!(
@@ -293,12 +293,13 @@ pub fn needs_cli_update() -> Result<bool> {
     }
 
     let source_files = vec![
-        workspace_dir.join("src/main.rs"),
-        workspace_dir.join("src/commands/mod.rs"),
-        workspace_dir.join("src/utils/mod.rs"),
-        workspace_dir.join("src/config/mod.rs"),
-        workspace_dir.join("src/docker.rs"),
+        workspace_dir.join("craft/src/main.rs"),
+        workspace_dir.join("craft/src/commands/mod.rs"),
+        workspace_dir.join("craft/src/utils/mod.rs"),
+        workspace_dir.join("craft/src/config/mod.rs"),
+        workspace_dir.join("craft/src/docker.rs"),
         workspace_dir.join("Cargo.toml"),
+        workspace_dir.join("craft/Cargo.toml"),
     ];
 
     // Check if any source file is newer than the binary
@@ -333,7 +334,7 @@ pub fn install_cli() -> Result<()> {
 
     // Run cargo install with real-time output
     let status = Command::new("cargo")
-        .args(["install", "--path", "."])
+        .args(["install", "--path", "craft"])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()
@@ -376,6 +377,13 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     let cargo_toml = find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
     let project_dir = cargo_toml.parent().unwrap();
     let project_name = project_dir.file_name().unwrap().to_str().unwrap();
+    let project_main_dir = project_dir
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap();
 
     // Try release first, then debug
     let candidates = vec![
@@ -389,6 +397,18 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
             .join("target/wasm32-unknown-unknown/debug")
             .join(format!("{project_name}.wasm")),
         project_dir
+            .join("target/wasm32-unknown-unknown/debug")
+            .join(format!("lib{project_name}.wasm")),
+        project_main_dir
+            .join("target/wasm32-unknown-unknown/release")
+            .join(format!("{project_name}.wasm")),
+        project_main_dir
+            .join("target/wasm32-unknown-unknown/release")
+            .join(format!("lib{project_name}.wasm")),
+        project_main_dir
+            .join("target/wasm32-unknown-unknown/debug")
+            .join(format!("{project_name}.wasm")),
+        project_main_dir
             .join("target/wasm32-unknown-unknown/debug")
             .join(format!("lib{project_name}.wasm")),
     ];

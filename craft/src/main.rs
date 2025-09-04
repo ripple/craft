@@ -281,7 +281,7 @@ async fn main() -> Result<()> {
             "{}",
             "\nDetected changes to the CLI source code that haven't been installed yet.".yellow()
         );
-        if Confirm::new("Would you like to update the CLI now with 'cargo install --path .'?")
+        if Confirm::new("Would you like to update the CLI now with 'cargo install --path craft'?")
             .with_default(true)
             .prompt()?
         {
@@ -321,7 +321,9 @@ async fn main() -> Result<()> {
                 };
 
                 let project_path = if let Some(proj) = project {
-                    std::env::current_dir()?.join("projects").join(proj)
+                    std::env::current_dir()?
+                        .join("projects/examples/smart-escrows")
+                        .join(proj)
                 } else if std::io::stdout().is_terminal() {
                     // Interactive selection if TTY available
                     let config = commands::configure().await?;

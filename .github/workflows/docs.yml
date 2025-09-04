@@ -11,17 +11,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build documentation
-        run: |
-          cd xrpl-std
-          cargo doc --no-deps
+        # the `--enable-index-page` flag creates an index.html file at the root of the docs
+        # the `-Zunstable-options` flag is needed to use `--enable-index-page`
+        # see https://github.com/rust-lang/cargo/issues/8229 for why `nightly` is needed
+        run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --no-deps --workspace
 
       - name: Upload documentation files as artifact
         id: docs-artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: xrpl-std/target/doc
+          path: target/doc
           retention-days: 10
 
   deploy-docs-pages:
@@ -33,8 +44,6 @@ jobs:
       url: ${{ steps.docs-artifact.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: generate-documentation
-    # Deploy docs only pushes into the main branch
-    if: success() && github.ref == 'refs/heads/main'
     steps:
       - name: Deploy to Documentation to GitHub Pages
         id: docs-artifact

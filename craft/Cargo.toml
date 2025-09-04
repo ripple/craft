@@ -12,7 +12,6 @@ categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 anyhow = "1.0"
-atty = "0.2"
 bs58 = "0.5"
 clap = { version = "4.4", features = ["derive"] }
 colored = "2.2.0"

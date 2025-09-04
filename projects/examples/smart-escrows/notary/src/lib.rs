@@ -11,7 +11,7 @@ use xrpl_std::host::{Result::Err, Result::Ok};
 
 // The notary account that is authorized to complete escrows
 // Using example notary account for testing
-const NOTARY_ACCOUNT: [u8; 20] = r_address!("rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH");
+const NOTARY_ACCOUNT: [u8; 20] = r_address!("rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh");
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {

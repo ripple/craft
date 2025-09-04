@@ -158,14 +158,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: Make Gas Cap optional via https://github.com/ripple/craft/issues/141
     match vm_wamr::run_func(wasm_file, &args.function, Some(args.gas_cap), data_source) {
         Ok(result) => {
-            println!("-------------------------------------------------");
-            println!("| WASM FUNCTION EXECUTION RESULT                |");
-            println!("-------------------------------------------------");
-            println!("| Function:   {:<33} |", args.function);
-            println!("| Test Case:  {:<33} |", args.test_case);
-            println!("| Result:     {:<33} |", result);
-            println!("-------------------------------------------------");
-            info!("Function completed successfully with result: {}", result);
+            if (result && args.test_case == "success") || (!result && args.test_case == "failure") {
+                println!("-------------------------------------------------");
+                println!("| WASM FUNCTION EXECUTION RESULT                |");
+                println!("-------------------------------------------------");
+                println!("| Function:   {:<33} |", args.function);
+                println!("| Test Case:  {:<33} |", args.test_case);
+                println!("| Result:     {:<33} |", result);
+                println!("-------------------------------------------------");
+                info!("Function completed with result: {}", result);
+            } else {
+                println!("-------------------------------------------------");
+                println!("| WASM FUNCTION EXECUTION RESULT                |");
+                println!("-------------------------------------------------");
+                println!("| Function:   {:<33} |", args.function);
+                println!("| Test Case:  {:<33} |", args.test_case);
+                println!("| Result:     {:<33} |", result);
+                println!("-------------------------------------------------");
+                info!("Function completed with result: {}", result);
+                return Err("Function result did not match expected outcome".into());
+            }
         }
         Err(e) => {
             println!("-------------------------------------------------");

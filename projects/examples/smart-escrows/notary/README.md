@@ -108,7 +108,7 @@ You can also run the WASM locally with the included host emulator:
 
 ```bash
 cd ../../../../wasm-host
-cargo run -- --dir ../projects/examples/smart-escrows/notary --project examples/smart-escrows/notary
+cargo run -- --dir ../projects/examples/smart-escrows/notary --project notary
 ```
 
 ## Modifying the notary account

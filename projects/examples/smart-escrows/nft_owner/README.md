@@ -82,7 +82,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../../wasm-host
-cargo run -- --dir ../projects/examples/smart-escrows/nft_owner --project examples/smart-escrows/nft_owner
+cargo run -- --dir ../projects/examples/smart-escrows/nft_owner --project nft_owner
 ```
 
 ## Use Cases

@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 description = "Smart Escrow example that unlocks when the EscrowFinish transaction is signed by a designated notary account"
 license = "ISC"
-build = "build.rs"
 
 
 [lib]
@@ -13,8 +12,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 xrpl-std = { path = "../../../../xrpl-std" }
-
-[build-dependencies]
-bs58 = "0.5"
-hex = "0.4"
-sha2 = "0.10"
+xrpl-address-macro = { path = "../../../../xrpl-address-macro" }

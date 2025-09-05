@@ -22,8 +22,8 @@ The resulting WASM file will be located at:
 Run the contract using the wasm-host application:
 
 ```bash
-cd ../../../wasm-host
-cargo run -- --dir ../projects/e2e-tests/decoder_tests --project decoder_tests
+cd ../../../
+cargo run --package wasm-host --bin wasm-host -- --dir projects/e2e-tests/decoder_tests --project decoder_tests
 ```
 
 ### Note

@@ -205,6 +205,18 @@ pub async fn copy_wasm_hex_to_clipboard(wasm_file: &Path) -> Result<()> {
 
 pub async fn optimize(wasm_path: &Path, opt_level: &OptimizationLevel) -> Result<()> {
     if !utils::check_wasm_opt_installed() {
+        // Check if we're in an interactive environment
+        use std::io::IsTerminal;
+        if !std::io::stdin().is_terminal() || !std::io::stdout().is_terminal() {
+            // Non-interactive environment (e.g., CI) - skip optimization
+            println!(
+                "{}",
+                "wasm-opt not found. Skipping optimization in non-interactive environment."
+                    .yellow()
+            );
+            return Ok(());
+        }
+
         println!(
             "{}",
             "wasm-opt not found. Would you like to install it?".yellow()

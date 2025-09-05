@@ -47,17 +47,14 @@ Export them for convenience (replace with your printed values):
 export NOTARY_ADDRESS=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 ```
 
-### 2) Build the notary WASM with your classic address
+### 2) Build the notary WASM
 
-The build embeds the 20-byte AccountID for the provided r-address.
+The notary address is hardcoded in the source code. To change it, edit `src/lib.rs` and modify the `NOTARY_ACCOUNT` constant.
 
 ```bash
-NOTARY_ACCOUNT_R=$NOTARY_ADDRESS \
-  cargo build
-NOTARY_ACCOUNT_R=$NOTARY_ADDRESS \
-  cargo build --target wasm32-unknown-unknown
-NOTARY_ACCOUNT_R=$NOTARY_ADDRESS \
-  cargo build --target wasm32-unknown-unknown --release
+cargo build
+cargo build --target wasm32-unknown-unknown
+cargo build --target wasm32-unknown-unknown --release
 ```
 
 Artifact:
@@ -110,22 +107,21 @@ should get `tecNO_PERMISSION` due to the notary check.
 You can also run the WASM locally with the included host emulator:
 
 ```bash
-cd ../../../../wasm-host
-cargo run -- --dir ../projects/examples/smart-escrows/notary --project notary
+cd ../../../../
+cargo run --package wasm-host --bin wasm-host -- --dir projects/examples/smart-escrows/notary --project notary
 ```
 
 ## Modifying the notary account
 
-Provide a classic address (r...) at build time via `NOTARY_ACCOUNT_R`. The build script verifies Base58 checksum and
-embeds the 20-byte AccountID. If unset, it defaults to the Devnet master account `rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh` (
-for testing only).
+The notary account is defined as a constant in `src/lib.rs` using the `r_address!` macro:
 
-```bash
-NOTARY_ACCOUNT_R=rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3 \
-  cargo build --target wasm32-unknown-unknown --release
+```rust
+const NOTARY_ACCOUNT: [u8; 20] = r_address!("rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH");
 ```
+
+To use a different notary account, simply edit this line with your desired r-address. The macro validates the address at compile time and converts it to the 20-byte AccountID.
 
 ## Notes
 
-- The contract compares raw 20-byte AccountIDs. Classic addresses are decoded at build-time only.
-- Make sure `NOTARY_ACCOUNT_R` matches the account you’ll use in step 4 to submit `EscrowFinish`.
+- The contract compares raw 20-byte AccountIDs. Classic addresses are converted at compile-time by the `r_address!` macro.
+- Make sure the hardcoded notary address in `src/lib.rs` matches the account you'll use in step 4 to submit `EscrowFinish`.

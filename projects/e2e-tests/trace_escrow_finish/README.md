@@ -27,8 +27,8 @@ The resulting WASM file will be located at:
 Run the contract using the wasm-host application:
 
 ```bash
-cd ../../../wasm-host
-cargo run -- --dir ../projects/e2e-tests/trace_escrow_finish --project trace_escrow_finish
+cd ../../../
+cargo run --package wasm-host --bin wasm-host -- --dir projects/e2e-tests/trace_escrow_finish --project trace_escrow_finish
 ```
 
 ### Note

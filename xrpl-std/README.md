@@ -300,7 +300,7 @@ pub extern "C" fn finish() -> bool {
 
 ### Using classic (r...) addresses
 
-Contracts compare 20-byte AccountID values. If you have a classic XRPL address (r...) during development, convert it to 20 bytes at build time and embed it as a constant. See `projects/notary` which accepts `NOTARY_ACCOUNT_R=r...` and generates a `[u8; 20]` at build time for comparison inside the WASM.
+Contracts compare 20-byte AccountID values. If you have a classic XRPL address (r...) during development, use the `xrpl-address-macro` crate with the `r_address!` macro to convert it to a `[u8; 20]` constant at compile time. See `projects/notary` for an example of how to use this macro for address comparison inside the WASM.
 
 ### Build and run your contract
 

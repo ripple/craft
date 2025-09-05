@@ -107,8 +107,8 @@ should get `tecNO_PERMISSION` due to the notary check.
 You can also run the WASM locally with the included host emulator:
 
 ```bash
-cd ../../../../wasm-host
-cargo run -- --dir ../projects/examples/smart-escrows/notary --project notary
+cd ../../../../
+cargo run --package wasm-host --bin wasm-host -- --dir projects/examples/smart-escrows/notary --project notary
 ```
 
 ## Modifying the notary account

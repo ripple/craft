@@ -121,11 +121,12 @@ jobs:
           cargo build --workspace --target wasm32-unknown-unknown --release
       - name: Install and run craft
         run: |
-          cargo install --path craft
+          cargo install --path craft --force
           find ./projects/examples -name "Cargo.toml" -type f | while read -r cargo_file; do
+            dir=$(dirname "$cargo_file")
             contract_name=$(basename "$dir")
             if [ -d "$dir/fixtures" ]; then
-              craft build $(contract_name) -r -O aggressive || exit 1
+              craft build $contract_name -r -O aggressive || exit 1
             fi
           done
 

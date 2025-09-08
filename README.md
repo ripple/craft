@@ -164,7 +164,7 @@ The host_functions_test project includes fixtures for testing various host funct
 
 To clone this repository, use:
 
-```bash
+```shell
 git clone git@github.com:ripple/craft.git
 ```
 

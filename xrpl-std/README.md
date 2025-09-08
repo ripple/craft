@@ -308,8 +308,11 @@ Build a contract for WASM and run it with the host:
 
 ```bash
 cargo build --target wasm32-unknown-unknown --release
+```
+
+```shell
 # From the wasm-host crate:
-cargo run -p wasm-host -- --wasm-file path/to/your.wasm --function finish
+cargo run -p wasm-host -- --dir path/to/project --project project_name --function finish
 ```
 
 ### Time-based Release

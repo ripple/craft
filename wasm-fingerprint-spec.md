@@ -47,7 +47,7 @@ A WASM module fingerprint must:
 
 #### Usage
 
-```bash
+```shell
 # Install dependencies
 npm install --prefix reference/js/wasm-fingerprint
 

@@ -77,7 +77,7 @@ cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case succe
 
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
-```bash
+```shell
 cargo run -p wasm-host -- --dir path/to/project --project project_name --test-case success --verbose
 ```
 

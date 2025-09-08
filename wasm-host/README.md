@@ -47,7 +47,7 @@ The notary project includes test fixtures for validating escrow finish condition
 
 From the `wasm-host` directory:
 
-```bash
+```shell
 # Run with success test case
 cargo run -- --wasm-file ../path/to/your/module.wasm --test-case success --project <project_name>
 
@@ -108,7 +108,7 @@ Example verbose output:
 
 The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
 
-```bash
+```shell
 # Test a WASM module
 craft test
 

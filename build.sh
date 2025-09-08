@@ -11,9 +11,6 @@ fi
 
 printf "🔧 Building ALL workspace projects with profile: $PROFILE \n"
 
-printf "🔧 Setting NOTARY_ACCOUNT_R to rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh\n\n"
-export NOTARY_ACCOUNT_R=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
-
 printf "🔧 Building 'craft' ($PROFILE) \n"
 cargo build $PROFILE_FLAG
 cargo test $PROFILE_FLAG

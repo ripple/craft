@@ -60,7 +60,7 @@ cargo run -- --wasm-file ../path/to/your/module.wasm --test-case failure --proje
 
 From any workspace directory:
 
-```bash
+```shell
 cargo run -p wasm-host -- --wasm-file path/to/your/module.wasm --test-case success --project <project_name> --function finish
 ```
 

@@ -20,8 +20,8 @@ returns a non-zero error code from the host.
 - Dependencies installed in `reference/js`:
 
 ```bash
-cd reference/js
-npm install
+cd ../../../../reference/js
+npm install --verbose
 ```
 
 ## Step-by-step: Use on WASM Devnet
@@ -34,17 +34,8 @@ This guide uses the public Devnet WASM endpoint at `wss://wasm.devnet.rippletest
 Use the faucet helper script. It prints export lines you can copy/paste.
 
 ```bash
-cd reference/js
+cd ../../../../reference/js
 node faucet.js
-# Copy the printed export lines into your shell:
-# export NOTARY_ADDRESS=...
-# export NOTARY_SEED=...
-```
-
-Export them for convenience (replace with your printed values):
-
-```bash
-export NOTARY_ADDRESS=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 ```
 
 ### 2) Build the notary WASM
@@ -57,19 +48,15 @@ cargo build --target wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-Artifact:
-
-```
-projects/examples/smart-escrows/notary/target/wasm32-unknown-unknown/release/notary.wasm
-```
+Artifact: `projects/examples/smart-escrows/notary/target/wasm32-unknown-unknown/release/notary.wasm`
 
 ### 3) Deploy an escrow using your FinishFunction on Devnet
 
 Use the helper to deploy an escrow that references your compiled `FinishFunction`.
 
 ```bash
-cd ../../reference/js
-node deploy_sample.js notary
+cd ../../../../reference/js
+node deploy_sample.js examples/smart-escrows/notary
 ```
 
 This will:
@@ -96,6 +83,7 @@ export OFFER_SEQUENCE=<Sequence printed in tx_json>
 Submit `EscrowFinish` from the notary account you created in step 1:
 
 ```bash
+cd ../../../../reference/js
 node finish_escrow.js $NOTARY_ADDRESS $NOTARY_SEED $OWNER_ADDRESS $OFFER_SEQUENCE
 ```
 
@@ -107,7 +95,7 @@ should get `tecNO_PERMISSION` due to the notary check.
 You can also run the WASM locally with the included host emulator:
 
 ```bash
-cd ../../../../
+cd ../../../..
 cargo run --package wasm-host --bin wasm-host -- --dir projects/examples/smart-escrows/notary --project notary
 ```
 

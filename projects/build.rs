@@ -10,9 +10,9 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed=examples/smart-escrows");
-    
+
     let smart_escrows_dir = Path::new("examples/smart-escrows");
-    
+
     if !smart_escrows_dir.exists() {
         println!("cargo:warning=Smart escrows directory not found, skipping");
         return;
@@ -20,7 +20,7 @@ fn main() {
 
     let projects = [
         "kyc",
-        "ledger_sqn", 
+        "ledger_sqn",
         "nft_owner",
         "notary",
         "notary_macro_example",
@@ -30,13 +30,19 @@ fn main() {
     let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
     let target = env::var("TARGET").unwrap_or_else(|_| "native".to_string());
 
-    println!("cargo:warning=Building smart escrow examples (profile: {}, target: {})", profile, target);
+    println!(
+        "cargo:warning=Building smart escrow examples (profile: {}, target: {})",
+        profile, target
+    );
 
     for project in &projects {
         let project_dir = smart_escrows_dir.join(project);
-        
+
         if !project_dir.exists() {
-            println!("cargo:warning=Project directory {} does not exist, skipping", project_dir.display());
+            println!(
+                "cargo:warning=Project directory {} does not exist, skipping",
+                project_dir.display()
+            );
             continue;
         }
 
@@ -44,8 +50,7 @@ fn main() {
 
         // Build the project
         let mut cmd = Command::new("cargo");
-        cmd.arg("build")
-           .current_dir(&project_dir);
+        cmd.arg("build").current_dir(&project_dir);
 
         // Add profile flag if release
         if profile == "release" {
@@ -58,20 +63,26 @@ fn main() {
         }
 
         let output = cmd.output();
-        
+
         match output {
             Ok(output) => {
                 if !output.status.success() {
                     let stderr = String::from_utf8_lossy(&output.stderr);
                     let stdout = String::from_utf8_lossy(&output.stdout);
-                    println!("cargo:warning=Failed to build {}: {}\n{}", project, stderr, stdout);
+                    println!(
+                        "cargo:warning=Failed to build {}: {}\n{}",
+                        project, stderr, stdout
+                    );
                     // Don't panic, just warn and continue
                 } else {
                     println!("cargo:warning=Successfully built {}", project);
                 }
             }
             Err(e) => {
-                println!("cargo:warning=Failed to execute cargo for {}: {}", project, e);
+                println!(
+                    "cargo:warning=Failed to execute cargo for {}: {}",
+                    project, e
+                );
             }
         }
     }

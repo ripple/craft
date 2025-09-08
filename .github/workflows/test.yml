@@ -51,7 +51,7 @@ jobs:
       - name: Check WASM contract exports
         run: |
           # Check that all WASM projects export the required finish function
-          find ./projects -type d -name "src" | while read -r src_dir; do
+          find ./projects -mindepth 2 -type d -name "src" | while read -r src_dir; do
             dir=$(dirname "$src_dir")
             echo "🔧 Checking exports in $dir"
             if [[ -f "$src_dir/lib.rs" ]]; then

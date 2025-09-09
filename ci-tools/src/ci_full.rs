@@ -38,7 +38,10 @@ async fn main() -> Result<()> {
 
     println!("\n{}", "🔧 Running: Clippy (All Targets)".yellow());
     if let Err(e) = check_clippy_all().await {
-        println!("{}", format!("❌ Clippy (All Targets): FAILED - {}", e).red());
+        println!(
+            "{}",
+            format!("❌ Clippy (All Targets): FAILED - {}", e).red()
+        );
         failed_checks.push("Clippy (All Targets)");
     } else {
         println!("{}", "✅ Clippy (All Targets): PASSED".green());

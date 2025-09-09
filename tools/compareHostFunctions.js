@@ -1,12 +1,12 @@
 if (process.argv.length !== 3) {
-  console.error(
-    'Usage: ' +
-      process.argv[0] +
-      ' ' +
-      process.argv[1] +
-      ' path/to/rippled',
-  )
-  process.exit(1)
+    console.error(
+        'Usage: ' +
+        process.argv[0] +
+        ' ' +
+        process.argv[1] +
+        ' path/to/rippled',
+    )
+    process.exit(1)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -64,10 +64,10 @@ const read = process.argv[2].includes('github.com')
 
 async function main() {
     const wasmImportFile = await read(
-        process.argv[2], 'src/xrpld/app/misc/WasmVM.cpp',
+        process.argv[2], 'src/xrpld/app/wasm/detail/WasmVM.cpp',
     )
     const hostWrapperFile = await read(
-        process.argv[2], 'src/xrpld/app/misc/WasmHostFuncWrapper.h',
+        process.argv[2], 'src/xrpld/app/wasm/HostFuncWrapper.h',
     )
     const rustHostFunctionFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings.rs')
     const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings_for_testing.rs')
@@ -82,7 +82,7 @@ async function main() {
 
     let wrapperHits = [
         ...hostWrapperFile.matchAll(
-            // parse the `proto` functions in `WasmHostFuncWrapper.h`
+            // parse the `proto` functions in `HostFuncWrapper.h.h`
             /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]*)\);$/gm,
         ),
     ]
@@ -101,7 +101,7 @@ async function main() {
     for (let i = 0; i < imports.length; i++) {
         if (imports[i][0] !== wrappers[i][0]) {
             console.error(
-            'Imports and Host Functions do not match at index ' +
+                'Imports and Host Functions do not match at index ' +
                 i +
                 ': ' +
                 imports[i][0] +

@@ -373,8 +373,8 @@ pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
     }
 }
 
-const POSITIVE_MPT: u8 = 0b_0110_0000;
-const NEGATIVE_MPT: u8 = 0b_0010_0000;
+pub const POSITIVE_MPT: u8 = 0b_0110_0000;
+pub const NEGATIVE_MPT: u8 = 0b_0010_0000;
 
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
     // try to decode an MPT

@@ -5,19 +5,21 @@ use crate::data_provider::{
 };
 use crate::decoding::{
     _deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN,
-    CURRENCY_LEN, MPT_ID_LEN,
+    CURRENCY_LEN, MPT_ID_LEN, decode_account_id,
 };
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
 use bigdecimal::num_bigint::{BigInt, ToBigInt};
 use bigdecimal::num_traits::real::Real;
 use bigdecimal::{BigDecimal, ToPrimitive};
+use hex::decode;
 use log::{debug, warn};
 use num_traits::FromPrimitive;
 use wamr_rust_sdk::sys::{
     wasm_exec_env_t, wasm_runtime_get_function_attachment, wasm_runtime_get_module_inst,
     wasm_runtime_validate_native_addr,
 };
+use xrpl::core::addresscodec::utils::encode_base58;
 use xrpld_number::{
     FLOAT_NEGATIVE_ONE, FLOAT_ONE, Number, RoundingMode as NumberRoundingMode, XrplIouValue,
 };
@@ -553,7 +555,7 @@ pub fn line_keylet(
     if ACCOUNT_ID_LEN != account1.len() || ACCOUNT_ID_LEN != account2.len() {
         return HostError::InvalidAccount as i32;
     }
-    if ACCOUNT_ID_LEN != currency.len() {
+    if CURRENCY_LEN != currency.len() {
         return HostError::InvalidParams as i32;
     }
     let mut data = account1;
@@ -1256,6 +1258,9 @@ pub fn trace_opaque_float(
     op_float: *const u8,
     float_len: usize,
 ) -> i32 {
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || float_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
     let bytes: [u8; 8] = unsafe {
         match std::slice::from_raw_parts(op_float, 8).try_into() {
             Ok(bytes) => bytes,
@@ -1278,4 +1283,158 @@ pub fn trace_opaque_float(
 
     println!("WASM TRACE: {message} {f}");
     0
+}
+
+pub fn trace_account(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *const u8,
+    msg_read_len: usize,
+    account_ptr: *const u8,
+    account_len: usize,
+) -> i32 {
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
+
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || account_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
+    if ACCOUNT_ID_LEN != account_len {
+        return HostError::InvalidAccount as i32;
+    }
+
+    debug!(
+        "trace() params: msg_read_ptr={:?} msg_read_len={} account_ptr={:?} account_len={}",
+        msg_read_ptr, msg_read_len, account_ptr, account_len
+    );
+
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::InvalidDecoding as i32;
+    };
+
+    let bytes: [u8; ACCOUNT_ID_LEN] = unsafe {
+        match std::slice::from_raw_parts(account_ptr, account_len).try_into() {
+            Ok(arr) => arr,
+            Err(_) => return HostError::InvalidAccount as i32,
+        }
+    };
+    let account_id = match encode_base58(&bytes, &[0x0], Some(20)) {
+        Ok(val) => val,
+        Err(_) => return HostError::InvalidAccount as i32,
+    };
+
+    if account_len > 0 {
+        println!(
+            "WASM TRACE: {message} ({account_id} | {} data bytes)",
+            account_len
+        );
+    } else {
+        println!("WASM TRACE: {message}");
+    }
+
+    (account_id.len() + msg_read_len + 1) as i32
+}
+
+pub fn encode_amount_json(bytes: &[u8]) -> Option<serde_json::Value> {
+    use crate::decoding::{_deserialize_issued_currency_amount, NEGATIVE_MPT, POSITIVE_MPT};
+    use serde_json::{Map, Value};
+
+    if bytes.is_empty() {
+        return None;
+    }
+
+    // Check if this is an MPT amount (starts with MPT prefix bytes)
+    if !bytes.is_empty() && (bytes[0] == POSITIVE_MPT || bytes[0] == NEGATIVE_MPT) {
+        if bytes.len() != 41 {
+            // 1 byte prefix + 8 bytes amount + 32 bytes MPT issuance ID
+            return None;
+        }
+
+        let is_positive = bytes[0] == POSITIVE_MPT;
+
+        // Extract amount (bytes 1-8, big endian)
+        let amount_bytes: [u8; 8] = bytes[1..9].try_into().ok()?;
+        let amount_abs = u64::from_be_bytes(amount_bytes);
+        let amount = if is_positive {
+            amount_abs as i64
+        } else {
+            -(amount_abs as i64)
+        };
+
+        // Extract MPT issuance ID (bytes 9-40)
+        let mpt_id_bytes = &bytes[9..41];
+        let mpt_id_hex = hex::encode(mpt_id_bytes);
+
+        let mut mpt_obj = Map::new();
+        mpt_obj.insert("value".to_string(), Value::String(amount.to_string()));
+        mpt_obj.insert("mpt_issuance_id".to_string(), Value::String(mpt_id_hex));
+
+        return Some(Value::Object(mpt_obj));
+    }
+
+    // Try to decode as regular XRP/IOU amount
+    if bytes.len() == 8 {
+        // Could be XRP amount (8 bytes) or IOU amount (8 bytes)
+        let amount_u64 = u64::from_be_bytes(bytes.try_into().ok()?);
+
+        // Check if this is XRP (positive bit set, not-XRP bit clear)
+        if (amount_u64 & 0x8000000000000000) == 0 {
+            // This is XRP - the value is the amount directly
+            return Some(Value::String(amount_u64.to_string()));
+        }
+
+        // This might be an IOU amount - try to deserialize
+        if let Ok(decimal_value) = _deserialize_issued_currency_amount(bytes.try_into().ok()?) {
+            return Some(Value::String(decimal_value.to_string()));
+        }
+    }
+
+    // For other amounts (like IOU with currency/issuer), we need more complex parsing
+    // This would require parsing the full Amount structure from bytes
+    None
+}
+
+pub fn trace_amount(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *const u8,
+    msg_read_len: usize,
+    amount_ptr: *const u8,
+    amount_len: usize,
+) -> i32 {
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
+
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || amount_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
+    if ACCOUNT_ID_LEN != amount_len {
+        return HostError::InvalidParams as i32;
+    }
+
+    debug!(
+        "trace() params: msg_read_ptr={:?} msg_read_len={} amount_ptr={:?} amount_len={}",
+        msg_read_ptr, msg_read_len, amount_ptr, amount_len
+    );
+
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::InvalidDecoding as i32;
+    };
+
+    let bytes: &[u8] = unsafe { std::slice::from_raw_parts(amount_ptr, amount_len) };
+    let amount_json = match encode_amount_json(bytes) {
+        Some(json) => json,
+        None => return HostError::InvalidParams as i32,
+    };
+    let amount_json = amount_json.to_string();
+    let amount_json_len = amount_json.len();
+
+    if amount_json_len > 0 {
+        println!(
+            "WASM TRACE: {message} ({amount_json} | {} data bytes)",
+            amount_json_len
+        );
+    } else {
+        println!("WASM TRACE: {message}");
+    }
+
+    (amount_json_len + msg_read_len + 1) as i32
 }

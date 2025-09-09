@@ -64,10 +64,10 @@ const read = process.argv[2].includes('github.com')
 
 async function main() {
     const wasmImportFile = await read(
-        process.argv[2], 'src/xrpld/app/misc/WasmVM.cpp',
+        process.argv[2], 'src/xrpld/app/wasm/detail/WasmVM.cpp',
     )
     const hostWrapperFile = await read(
-        process.argv[2], 'src/xrpld/app/misc/WasmHostFuncWrapper.h',
+        process.argv[2], 'src/xrpld/app/wasm/HostFuncWrapper.h',
     )
     const rustHostFunctionFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings.rs')
     const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings_for_testing.rs')
@@ -82,7 +82,7 @@ async function main() {
 
     let wrapperHits = [
         ...hostWrapperFile.matchAll(
-            // parse the `proto` functions in `WasmHostFuncWrapper.h`
+            // parse the `proto` functions in `HostFuncWrapper.h.h`
             /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]*)\);$/gm,
         ),
     ]

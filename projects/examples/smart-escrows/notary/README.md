@@ -51,7 +51,7 @@ export NOTARY_ADDRESS=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 
 The notary address is hardcoded in the source code. To change it, edit `src/lib.rs` and modify the `NOTARY_ACCOUNT` constant.
 
-```bash
+```shell
 cargo build
 cargo build --target wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
@@ -106,7 +106,7 @@ should get `tecNO_PERMISSION` due to the notary check.
 
 You can also run the WASM locally with the included host emulator:
 
-```bash
+```shell
 cd ../../../../
 cargo run --package wasm-host --bin wasm-host -- --dir projects/examples/smart-escrows/notary --project notary
 ```

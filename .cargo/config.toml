@@ -1,0 +1,32 @@
+# Cargo configuration for local CI command execution
+# This mirrors the GitHub Actions workflow for easy local development
+
+[alias]
+# Core CI commands (main entry points)
+ci-check = "run --package ci-tools --bin ci-check"
+ci-full = "run --package ci-tools --bin ci-full"
+
+# Individual CI steps (these use the library functions from ci-tools)
+clippy-all = "clippy --workspace --all-targets --all-features -- -Dclippy::all"
+fmt-check = "fmt --all -- --check"
+
+# Build commands
+build-all = "run --package ci-tools --bin build-all"
+
+# Test commands
+test-all = "run --package ci-tools --bin test-all"
+
+# CI workflow commands (matching test.yml)
+pre-commit-check = "run --package ci-tools --bin pre-commit-check"
+wasm-exports-check = "run --package ci-tools --bin wasm-exports-check"
+host-functions-audit = "run --package ci-tools --bin host-functions-audit"
+markdown-test = "run --package ci-tools --bin markdown-test"
+e2e-test = "run --package ci-tools --bin e2e-test"
+
+# Convenience aliases
+ci = "run --package ci-tools --bin ci-check"  # Default to quick check
+lint = "clippy --workspace --all-targets --all-features -- -Dclippy::all"
+
+[env]
+# Set RUSTFLAGS to match CI environment
+RUSTFLAGS = "-Dwarnings"

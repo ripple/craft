@@ -5,7 +5,8 @@ members = [
     "wasm-host",
     "xrpl-address-macro",
     "xrpl-std",
-    "wasm-host/xrpld-number"
+    "wasm-host/xrpld-number",
+    "ci-tools"
 ]
 exclude = [
     "projects"

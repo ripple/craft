@@ -19,7 +19,7 @@ returns a non-zero error code from the host.
 - Node.js 18+
 - Dependencies installed in `reference/js`:
 
-```bash
+```shell
 cd reference/js
 npm install
 ```
@@ -33,7 +33,7 @@ This guide uses the public Devnet WASM endpoint at `wss://wasm.devnet.rippletest
 
 Use the faucet helper script. It prints export lines you can copy/paste.
 
-```bash
+```shell
 cd reference/js
 node faucet.js
 # Copy the printed export lines into your shell:
@@ -43,7 +43,7 @@ node faucet.js
 
 Export them for convenience (replace with your printed values):
 
-```bash
+```shell
 export NOTARY_ADDRESS=rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh
 ```
 
@@ -67,7 +67,7 @@ projects/examples/smart-escrows/notary/target/wasm32-unknown-unknown/release/not
 
 Use the helper to deploy an escrow that references your compiled `FinishFunction`.
 
-```bash
+```shell
 cd ../../reference/js
 node deploy_sample.js notary
 ```
@@ -86,7 +86,7 @@ Record the following from the output:
 
 For convenience:
 
-```bash
+```shell
 export OWNER_ADDRESS=<Account 1 Address printed by deploy script>
 export OFFER_SEQUENCE=<Sequence printed in tx_json>
 ```
@@ -95,7 +95,7 @@ export OFFER_SEQUENCE=<Sequence printed in tx_json>
 
 Submit `EscrowFinish` from the notary account you created in step 1:
 
-```bash
+```shell
 node finish_escrow.js $NOTARY_ADDRESS $NOTARY_SEED $OWNER_ADDRESS $OFFER_SEQUENCE
 ```
 

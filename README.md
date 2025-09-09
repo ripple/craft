@@ -41,13 +41,13 @@ After installation, ensure Docker is running before using rippled-related comman
 
 Use specific commands:
 
-```bash
+```shell
 craft
 ```
 
 Or, run the tool without any arguments for an interactive experience:
 
-```bash
+```shell
 craft
 craft start-rippled   # Start rippled in Docker container
 craft list-rippled    # List rippled Docker containers
@@ -62,7 +62,7 @@ Currently, the `craft` tool primarily uses interactive prompts to gather informa
 
 - **Build**: Non-interactive build with options:
 
-  ```bash
+  ```shell
   craft build [project-name] [--mode <debug|release>] [--opt <none|small|aggressive>]
   ```
 
@@ -80,7 +80,7 @@ Currently, the `craft` tool primarily uses interactive prompts to gather informa
 
 The `test` command supports direct command-line options:
 
-```bash
+```shell
 craft test --function <name>  # Test a specific function in your WASM module
 ```
 
@@ -92,7 +92,7 @@ For scripting purposes, you may want to specify options directly without interac
 
 The `test` command provides an interactive environment for testing your WASM modules:
 
-```bash
+```shell
 craft test
 ```
 
@@ -164,7 +164,7 @@ The host_functions_test project includes fixtures for testing various host funct
 
 To clone this repository, use:
 
-```bash
+```shell
 git clone git@github.com:ripple/craft.git
 ```
 
@@ -174,7 +174,7 @@ The `craft` tool uses Docker to manage a `rippled` instance.
 
 Ensure Docker Desktop is installed and running. Then manage rippled using these commands:
 
-```bash
+```shell
 craft start-rippled                 # Start rippled container (background mode)
 craft start-rippled --foreground    # Start with visible console output
 craft list-rippled                  # List running rippled containers
@@ -189,7 +189,7 @@ The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which inc
 
 You can also manage the container directly with Docker:
 
-```bash
+```shell
 # View logs
 docker logs -f craft-rippled
 
@@ -210,7 +210,7 @@ docker rm craft-rippled
 
 The `craft` tool includes commands to open the XRPL Explorer:
 
-```bash
+```shell
 # Open the Explorer
 craft open-explorer
 ```
@@ -221,7 +221,7 @@ craft open-explorer
 
 From the `wasm-host` directory:
 
-```bash
+```shell
 # Run with success test case
 cargo run -- --dir path/to/your/project_name --test-case success
 
@@ -231,7 +231,7 @@ cargo run -- --dir path/to/your/project_name --test-case failure
 
 From any workspace directory:
 
-```bash
+```shell
 cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --project <project_name>
 ```
 
@@ -247,7 +247,7 @@ cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --
 
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
-```bash
+```shell
 cargo run -p wasm-host --dir path/to/folder --project project --test-case success --verbose
 ```
 
@@ -278,7 +278,7 @@ Example verbose output:
 
 The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
 
-```bash
+```shell
 # Test a WASM module
 craft test
 
@@ -351,7 +351,7 @@ This repository contains multiple Rust crates. You can use rustdoc to generate a
 
 A helper script is included:
 
-```bash
+```shell
 ./build-docs.sh
 ```
 

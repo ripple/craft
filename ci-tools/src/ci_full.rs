@@ -36,20 +36,12 @@ async fn main() -> Result<()> {
         println!("{}", "✅ Rust formatting: PASSED".green());
     }
 
-    println!("\n{}", "🔧 Running: Clippy (native)".yellow());
+    println!("\n{}", "🔧 Running: Clippy (All Targets)".yellow());
     if let Err(e) = check_clippy_all().await {
-        println!("{}", format!("❌ Clippy (native): FAILED - {}", e).red());
-        failed_checks.push("Clippy (native)");
+        println!("{}", format!("❌ Clippy (All Targets): FAILED - {}", e).red());
+        failed_checks.push("Clippy (All Targets)");
     } else {
-        println!("{}", "✅ Clippy (native): PASSED".green());
-    }
-
-    println!("\n{}", "🔧 Running: Clippy (WASM)".yellow());
-    if let Err(e) = check_clippy_all().await {
-        println!("{}", format!("❌ Clippy (WASM): FAILED - {}", e).red());
-        failed_checks.push("Clippy (WASM)");
-    } else {
-        println!("{}", "✅ Clippy (WASM): PASSED".green());
+        println!("{}", "✅ Clippy (All Targets): PASSED".green());
     }
 
     println!("\n{}", "🔧 Running: WASM exports".yellow());

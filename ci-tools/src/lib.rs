@@ -207,24 +207,11 @@ pub async fn check_host_functions() -> Result<()> {
                 "https://github.com/XRPLF/rippled/tree/ripple/smart-escrow",
             ]);
 
-            match run_command_with_output(&mut cmd, "Running host functions audit") {
-                Ok(_) => Ok(()),
-                Err(_) => {
-                    println!(
-                        "{}",
-                        "     ⚠️  Host functions audit failed (this is not required for PRs)"
-                            .yellow()
-                    );
-                    Ok(())
-                }
-            }
+            // Run the audit and propagate any failures
+            run_command_with_output(&mut cmd, "Running host functions audit")
         }
         _ => {
-            println!(
-                "{}",
-                "     ⚠️  Node.js not installed, skipping host functions audit...".yellow()
-            );
-            Ok(())
+            anyhow::bail!("Node.js is not installed - required for host functions audit");
         }
     }
 }

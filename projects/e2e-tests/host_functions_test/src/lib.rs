@@ -28,7 +28,7 @@ extern crate std;
 use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_std::host;
-use xrpl_std::host::trace::{trace, trace_account_buf, trace_data, trace_num, DataRepr};
+use xrpl_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
 use xrpl_std::sfield;
 
 #[unsafe(no_mangle)]

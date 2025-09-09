@@ -227,7 +227,7 @@ impl DataProvider {
                 if let Some(num) = value.as_i64() {
                     num as i32
                 } else {
-                    HostError::DecodingError as i32
+                    HostError::InvalidDecoding as i32
                 }
             }
             None => HostError::InternalError as i32,
@@ -240,7 +240,7 @@ impl DataProvider {
                 if let Some(num) = value.as_i64() {
                     num as i32
                 } else {
-                    HostError::DecodingError as i32
+                    HostError::InvalidDecoding as i32
                 }
             }
             None => HostError::InternalError as i32,

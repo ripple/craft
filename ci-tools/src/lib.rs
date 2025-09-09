@@ -288,10 +288,10 @@ pub async fn markdown_tests() -> Result<()> {
 
     // Define the directories to search for markdown files
     let search_dirs = vec![
-        "projects",  // projects and all subfolders
-        ".",         // root craft folder (but only direct files, not subdirs)
-        "examples",  // eventual root examples folder
-        "its",       // eventual root its folder
+        "projects", // projects and all subfolders
+        ".",        // root craft folder (but only direct files, not subdirs)
+        "examples", // eventual root examples folder
+        "its",      // eventual root its folder
     ];
 
     for search_dir in search_dirs {

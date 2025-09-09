@@ -25,24 +25,24 @@ path = "src/build_all.rs"
 
 [[bin]]
 name = "test-all"
-path = "src/test_all.rs"
+path = "src/helpers/test_all.rs"
 
 [[bin]]
 name = "pre-commit-check"
-path = "src/pre_commit_check.rs"
+path = "src/helpers/pre_commit_check.rs"
 
 [[bin]]
 name = "wasm-exports-check"
-path = "src/wasm_exports_check.rs"
+path = "src/helpers/wasm_exports_check.rs"
 
 [[bin]]
 name = "host-functions-audit"
-path = "src/host_functions_audit.rs"
+path = "src/helpers/host_functions_audit.rs"
 
 [[bin]]
 name = "markdown-test"
-path = "src/markdown_test.rs"
+path = "src/helpers/markdown_test.rs"
 
 [[bin]]
 name = "e2e-test"
-path = "src/e2e_test.rs"
+path = "src/helpers/e2e_test.rs"

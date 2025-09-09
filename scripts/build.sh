@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Change to the repository root directory (where this script's parent directory is located)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
 # Parse command line arguments
 RELEASE_MODE=""
 if [[ "${1:-}" == "release" ]]; then

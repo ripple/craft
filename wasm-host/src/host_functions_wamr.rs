@@ -5,6 +5,7 @@ use crate::data_provider::{
 };
 use crate::decoding::{
     _deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN,
+    CURRENCY_LEN, MPT_ID_LEN,
 };
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
@@ -355,6 +356,44 @@ pub fn account_keylet(
     HASH256_LEN as i32
 }
 
+fn validate_asset(asset_data: &[u8]) -> bool {
+    // TODO: do more validation here
+    if MPT_ID_LEN == asset_data.len() {
+        return true; // MPT ID
+    }
+    if CURRENCY_LEN == asset_data.len() {
+        return true; // XRP Asset
+    }
+    if CURRENCY_LEN + ACCOUNT_ID_LEN == asset_data.len() {
+        return true; // IOU Asset
+    }
+    false
+}
+
+pub fn amm_keylet(
+    _env: wasm_exec_env_t,
+    asset1_ptr: *const u8,
+    asset1_len: usize,
+    asset2_ptr: *const u8,
+    asset2_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut asset1 = get_data(asset1_ptr, asset1_len);
+    let mut asset2 = get_data(asset2_ptr, asset2_len);
+    if !validate_asset(&asset1) || !validate_asset(&asset2) {
+        return HostError::InvalidParams as i32;
+    }
+    let mut data = asset1;
+    data.append(&mut asset2);
+    let keylet_hash = index_hash(LedgerNameSpace::Amm, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn check_keylet(
     _env: wasm_exec_env_t,
     account_buf_ptr: *const u8,
@@ -525,6 +564,55 @@ pub fn line_keylet(
     HASH256_LEN as i32
 }
 
+pub fn mpt_issuance_keylet(
+    _env: wasm_exec_env_t,
+    issuer_buf_ptr: *const u8,
+    issuer_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(issuer_buf_ptr, issuer_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::MptokenIssuance, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn mptoken_keylet(
+    _env: wasm_exec_env_t,
+    mpt_id_ptr: *const u8,
+    mpt_id_len: usize,
+    holder_ptr: *const u8,
+    holder_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut mpt_id = get_data(mpt_id_ptr, mpt_id_len);
+    let mut holder = get_data(holder_ptr, holder_len);
+    if MPT_ID_LEN != mpt_id.len() {
+        return HostError::InvalidParams as i32;
+    }
+    if ACCOUNT_ID_LEN != holder.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let mut data = mpt_id;
+    data.append(&mut holder);
+    let keylet_hash = index_hash(LedgerNameSpace::Mptoken, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn nft_offer_keylet(
     _env: wasm_exec_env_t,
     account_buf_ptr: *const u8,
@@ -618,6 +706,28 @@ pub fn paychan_keylet(
     HASH256_LEN as i32
 }
 
+pub fn permissioned_domain_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *const u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::PermissionedDomain, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn signers_keylet(
     _env: wasm_exec_env_t,
     account_buf_ptr: *const u8,
@@ -658,6 +768,28 @@ pub fn ticket_keylet(
     let sqn_data = sequence.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Ticket, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn vault_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *const u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::Vault, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }

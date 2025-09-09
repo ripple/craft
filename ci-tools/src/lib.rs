@@ -62,6 +62,7 @@ pub async fn check_clippy_all() -> Result<()> {
         "--all-targets",
         "--all-features",
         "--",
+        "--no-deps",
         "-Dclippy::all",
     ]);
 

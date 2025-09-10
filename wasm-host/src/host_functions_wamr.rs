@@ -358,18 +358,70 @@ pub fn account_keylet(
     HASH256_LEN as i32
 }
 
-fn validate_asset(asset_data: &[u8]) -> bool {
-    // TODO: do more validation here
-    if MPT_ID_LEN == asset_data.len() {
-        return true; // MPT ID
+struct Issue {
+    currency: [u8; CURRENCY_LEN],
+    issuer: [u8; ACCOUNT_ID_LEN],
+}
+
+impl PartialEq for Issue {
+    fn eq(&self, other: &Self) -> bool {
+        self.currency == other.currency && self.issuer == other.issuer
     }
-    if CURRENCY_LEN == asset_data.len() {
-        return true; // XRP Asset
+}
+
+impl Eq for Issue {}
+
+impl PartialOrd for Issue {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
-    if CURRENCY_LEN + ACCOUNT_ID_LEN == asset_data.len() {
-        return true; // IOU Asset
+}
+
+impl Ord for Issue {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match self.currency.cmp(&other.currency) {
+            std::cmp::Ordering::Equal => self.issuer.cmp(&other.issuer),
+            ord => ord,
+        }
     }
-    false
+}
+
+fn parse_asset(asset_data: &[u8]) -> Result<Issue, HostError> {
+    // MPT Asset
+    if asset_data.len() == MPT_ID_LEN {
+        // MPT IDs not supported for AMMs yet
+        // return Ok(asset_data.to_vec());
+        return Err(HostError::InvalidParams);
+    }
+
+    // XRP Asset
+    if asset_data.len() == CURRENCY_LEN {
+        // Construct Issue { currency, xrpAccount }
+        // Check if native (XRP) - in C++: issue.native() must be true
+        return Ok(Issue {
+            currency: asset_data.try_into().unwrap(),
+            issuer: [0u8; ACCOUNT_ID_LEN],
+        });
+    }
+
+    // IOU Asset
+    if asset_data.len() == CURRENCY_LEN + ACCOUNT_ID_LEN {
+        // Construct Issue { currency, issuer }
+        let currency = &asset_data[..CURRENCY_LEN];
+        let issuer = &asset_data[CURRENCY_LEN..];
+        // Check if native (should NOT be native for IOU)
+        // If currency is all zeros and issuer is all zeros, it's native (invalid for IOU)
+        let is_native = currency.iter().all(|&b| b == 0) && issuer.iter().all(|&b| b == 0);
+        if is_native {
+            return Err(HostError::InvalidParams);
+        }
+        return Ok(Issue {
+            currency: currency.try_into().unwrap(),
+            issuer: issuer.try_into().unwrap(),
+        });
+    }
+
+    Err(HostError::InvalidParams)
 }
 
 pub fn amm_keylet(
@@ -384,13 +436,24 @@ pub fn amm_keylet(
     if HASH256_LEN > out_buf_cap {
         return HostError::BufferTooSmall as i32;
     }
-    let mut asset1 = get_data(asset1_ptr, asset1_len);
-    let mut asset2 = get_data(asset2_ptr, asset2_len);
-    if !validate_asset(&asset1) || !validate_asset(&asset2) {
-        return HostError::InvalidParams as i32;
-    }
-    let mut data = asset1;
-    data.append(&mut asset2);
+    let asset1 = match parse_asset(&get_data(asset1_ptr, asset1_len)) {
+        Ok(a) => a,
+        Err(e) => return e as i32,
+    };
+    let asset2 = match parse_asset(&get_data(asset2_ptr, asset2_len)) {
+        Ok(a) => a,
+        Err(e) => return e as i32,
+    };
+    // Sort assets lexicographically to match C++ minmax logic
+    let (min_asset, mut max_asset) = if asset1 <= asset2 {
+        (asset1, asset2)
+    } else {
+        (asset2, asset1)
+    };
+    let mut data = min_asset.issuer.to_vec();
+    data.append(&mut min_asset.currency.to_vec());
+    data.append(&mut max_asset.issuer.to_vec());
+    data.append(&mut max_asset.currency.to_vec());
     let keylet_hash = index_hash(LedgerNameSpace::Amm, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
@@ -577,12 +640,15 @@ pub fn mpt_issuance_keylet(
     if HASH256_LEN > out_buf_cap {
         return HostError::BufferTooSmall as i32;
     }
-    let mut data = get_data(issuer_buf_ptr, issuer_buf_len);
-    if ACCOUNT_ID_LEN != data.len() {
+    let mut account = get_data(issuer_buf_ptr, issuer_buf_len);
+    if ACCOUNT_ID_LEN != account.len() {
         return HostError::InvalidAccount as i32;
     }
-    let sqn_data = sequence.to_be_bytes();
-    data.extend_from_slice(&sqn_data);
+    // Write the sequence (big endian) followed by the account bytes into data
+    let sqn_data = (sequence as u32).to_be_bytes();
+    let mut mpt_id: Vec<u8> = sqn_data.to_vec();
+    mpt_id.append(&mut account);
+    let data = mpt_id;
     let keylet_hash = index_hash(LedgerNameSpace::MptokenIssuance, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
@@ -608,7 +674,8 @@ pub fn mptoken_keylet(
     if ACCOUNT_ID_LEN != holder.len() {
         return HostError::InvalidAccount as i32;
     }
-    let mut data = mpt_id;
+    let mpt_id_hash = index_hash(LedgerNameSpace::MptokenIssuance, &mpt_id);
+    let mut data = mpt_id_hash;
     data.append(&mut holder);
     let keylet_hash = index_hash(LedgerNameSpace::Mptoken, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);

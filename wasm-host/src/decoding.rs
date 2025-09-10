@@ -16,7 +16,7 @@ pub const ACCOUNT_ID_LEN: usize = 20;
 pub type AccountId = Vec<u8>;
 
 pub const CURRENCY_LEN: usize = 20;
-pub const MPT_ID_LEN: usize = 32;
+pub const MPT_ID_LEN: usize = 24;
 
 /* from rippled:
 

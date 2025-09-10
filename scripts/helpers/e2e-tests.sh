@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Change to the repository root directory (where this script's grandparent directory is located)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
 echo "🔧 Running end-to-end tests..."
 
 # Set RUSTFLAGS to match CI environment
@@ -14,11 +19,11 @@ echo "📦 Ensuring wasm32-unknown-unknown target is installed..."
 rustup target add wasm32-unknown-unknown
 
 echo "🏗️  Building projects..."
-../build.sh
-../build.sh release
+scripts/build.sh
+scripts/build.sh release
 
 echo "🧪 Running integration tests..."
-find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
+find projects -name "Cargo.toml" -type f | while read -r cargo_file; do
     dir=$(dirname "$cargo_file")
     contract_name=$(basename "$dir")
     if [ -d "$dir/fixtures" ]; then

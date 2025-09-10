@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Change to the repository root directory (where this script's parent directory is located)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
+
 echo "🚀 Running complete test suite..."
 echo "This mirrors the GitHub Actions workflow from test.yml"
 echo ""

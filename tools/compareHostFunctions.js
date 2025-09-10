@@ -157,14 +157,12 @@ async function main() {
                     `Rust Host Function name mismatch in ${fileTitle}: ${hit.name} !== ${cppHit.name}`,
                 )
                 hasError = true
-            }
-            else if (hit.return !== cppHit.return) {
+            } else if (hit.return !== cppHit.return) {
                 console.error(
                     `Rust Host Function return type mismatch in ${fileTitle} for ${hit.name}: ${hit.return} !== ${cppHit.return}`,
                 )
                 hasError = true
-            }
-            else if (hit.params.length !== cppHit.params.length) {
+            } else if (hit.params.length !== cppHit.params.length) {
                 console.error(
                     `Rust Host Function parameter count mismatch in ${fileTitle} for ${hit.name}: ${hit.params.length} !== ${cppHit.params.length} (${hit.params.join(', ')}) !== (${cppHit.params.join(', ')})`,
                 )

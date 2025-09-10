@@ -23,11 +23,9 @@ start_time=$(date +%s)
 run_script() {
     local script_name="$1"
     local script_path="./scripts/$script_name"
-    
     echo "=================================================="
     echo "🔧 Running $script_name..."
     echo "=================================================="
-    
     if [[ -x "$script_path" ]]; then
         if "$script_path"; then
             echo "✅ $script_name completed successfully"

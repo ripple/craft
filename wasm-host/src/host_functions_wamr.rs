@@ -451,9 +451,9 @@ pub fn amm_keylet(
         (asset2, asset1)
     };
     let mut data = min_asset.issuer.to_vec();
-    data.append(&mut min_asset.currency.to_vec());
-    data.append(&mut max_asset.issuer.to_vec());
-    data.append(&mut max_asset.currency.to_vec());
+    data.extend_from_slice(&min_asset.currency);
+    data.extend_from_slice(&max_asset.issuer);
+    data.extend_from_slice(&max_asset.currency);
     let keylet_hash = index_hash(LedgerNameSpace::Amm, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32

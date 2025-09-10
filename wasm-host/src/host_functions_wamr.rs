@@ -1473,7 +1473,7 @@ pub fn trace_amount(
     if msg_read_len > MAX_WASM_PARAM_LENGTH || amount_len > MAX_WASM_PARAM_LENGTH {
         return HostError::DataFieldTooLarge as i32;
     }
-    if ACCOUNT_ID_LEN != amount_len {
+    if amount_len != 8 && amount_len != 41 {
         return HostError::InvalidParams as i32;
     }
 

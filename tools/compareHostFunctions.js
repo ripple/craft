@@ -92,9 +92,9 @@ async function main() {
         const importsMissing = wrappers.filter(f => !imports.some(func => func[0] === f[0]))
         const hfMissing = imports.filter(f => !wrappers.some(func => func[0] === f[0]))
         if (importsMissing.length > 0)
-            console.error('Missing Imports:', importsMissing.map(func => func[0]).join(', '))
+            console.error('Missing Imports:', '\x1b[31m' + importsMissing.map(func => func[0]).join(', ') + '\x1b[0m')
         if (hfMissing.length > 0)
-            console.error('Missing C++ Host Functions:', hfMissing.map(func => func[0]).join(', '))
+            console.error('Missing C++ Host Functions:', '\x1b[31m' + hfMissing.map(func => func[0]).join(', ') + '\x1b[0m')
         process.exit(1)
     }
 
@@ -143,9 +143,9 @@ async function main() {
             const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
             const cppMissing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
             if (rustMissing.length > 0)
-                console.error('Missing Rust Host Functions:', rustMissing.map(f => f.name).join(', '))
+                console.error('Missing Rust Host Functions:', '\x1b[31m' + rustMissing.map(f => f.name).join(', ') + '\x1b[0m')
             if (cppMissing.length > 0)
-                console.error('Missing C++ Host Functions:', cppMissing.map(f => f.name).join(', '))
+                console.error('Missing C++ Host Functions:', '\x1b[31m' + cppMissing.map(f => f.name).join(', ') + '\x1b[0m')
             process.exit(1)
         }
 

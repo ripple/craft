@@ -138,7 +138,6 @@ pub extern "C" fn finish() -> i32 {
     let escrow_keylet = keylets::escrow_keylet(&account, seq);
     check_object_exists!(escrow_keylet, "Escrow", sfield::Account);
     seq += 1;
-    seq += 1; // skip ones added in lastdevnet
 
     let mpt_issuance_keylet = keylets::mpt_issuance_keylet(&account, seq);
     let mpt_id = MptId::new(seq.try_into().unwrap(), account);
@@ -166,7 +165,6 @@ pub extern "C" fn finish() -> i32 {
     let signers_keylet = keylets::signers_keylet(&account);
     check_object_exists!(signers_keylet, "SignerList", sfield::Generic);
     seq += 1;
-    seq += 1; // skip ones added in lastdevnet
 
     seq += 1; // ticket sequence number is one greater
     let ticket_keylet = keylets::ticket_keylet(&account, seq);
@@ -177,5 +175,5 @@ pub extern "C" fn finish() -> i32 {
     check_object_exists!(vault_keylet, "Vault", sfield::Account);
     // seq += 1;
 
-    1 // <-- Finish the escrow to indicate a successful outcome (i.e., All keylets exist)
+    1 // All keylets exist, finish the escrow.
 }

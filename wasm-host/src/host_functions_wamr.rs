@@ -5,18 +5,21 @@ use crate::data_provider::{
 };
 use crate::decoding::{
     _deserialize_issued_currency_amount, _serialize_issued_currency_value, ACCOUNT_ID_LEN,
+    CURRENCY_LEN, MPT_ID_LEN, decode_account_id,
 };
 use crate::hashing::{HASH256_LEN, LedgerNameSpace, index_hash, sha512_half};
 use crate::mock_data::{DataSource, Keylet};
 use bigdecimal::num_bigint::{BigInt, ToBigInt};
 use bigdecimal::num_traits::real::Real;
 use bigdecimal::{BigDecimal, ToPrimitive};
+use hex::decode;
 use log::{debug, warn};
 use num_traits::FromPrimitive;
 use wamr_rust_sdk::sys::{
     wasm_exec_env_t, wasm_runtime_get_function_attachment, wasm_runtime_get_module_inst,
     wasm_runtime_validate_native_addr,
 };
+use xrpl::core::addresscodec::utils::encode_base58;
 use xrpld_number::{
     FLOAT_NEGATIVE_ONE, FLOAT_ONE, Number, RoundingMode as NumberRoundingMode, XrplIouValue,
 };
@@ -355,6 +358,107 @@ pub fn account_keylet(
     HASH256_LEN as i32
 }
 
+struct Issue {
+    currency: [u8; CURRENCY_LEN],
+    issuer: [u8; ACCOUNT_ID_LEN],
+}
+
+impl PartialEq for Issue {
+    fn eq(&self, other: &Self) -> bool {
+        self.currency == other.currency && self.issuer == other.issuer
+    }
+}
+
+impl Eq for Issue {}
+
+impl PartialOrd for Issue {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Issue {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match self.currency.cmp(&other.currency) {
+            std::cmp::Ordering::Equal => self.issuer.cmp(&other.issuer),
+            ord => ord,
+        }
+    }
+}
+
+fn parse_asset(asset_data: &[u8]) -> Result<Issue, HostError> {
+    // MPT Asset
+    if asset_data.len() == MPT_ID_LEN {
+        // MPT IDs not supported for AMMs yet
+        // return Ok(asset_data.to_vec());
+        return Err(HostError::InvalidParams);
+    }
+
+    // XRP Asset
+    if asset_data.len() == CURRENCY_LEN {
+        // Construct Issue { currency, xrpAccount }
+        // Check if native (XRP) - in C++: issue.native() must be true
+        return Ok(Issue {
+            currency: asset_data.try_into().unwrap(),
+            issuer: [0u8; ACCOUNT_ID_LEN],
+        });
+    }
+
+    // IOU Asset
+    if asset_data.len() == CURRENCY_LEN + ACCOUNT_ID_LEN {
+        // Construct Issue { currency, issuer }
+        let currency = &asset_data[..CURRENCY_LEN];
+        let issuer = &asset_data[CURRENCY_LEN..];
+        // Check if native (should NOT be native for IOU)
+        // If currency is all zeros and issuer is all zeros, it's native (invalid for IOU)
+        let is_native = currency.iter().all(|&b| b == 0) && issuer.iter().all(|&b| b == 0);
+        if is_native {
+            return Err(HostError::InvalidParams);
+        }
+        return Ok(Issue {
+            currency: currency.try_into().unwrap(),
+            issuer: issuer.try_into().unwrap(),
+        });
+    }
+
+    Err(HostError::InvalidParams)
+}
+
+pub fn amm_keylet(
+    _env: wasm_exec_env_t,
+    asset1_ptr: *const u8,
+    asset1_len: usize,
+    asset2_ptr: *const u8,
+    asset2_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let asset1 = match parse_asset(&get_data(asset1_ptr, asset1_len)) {
+        Ok(a) => a,
+        Err(e) => return e as i32,
+    };
+    let asset2 = match parse_asset(&get_data(asset2_ptr, asset2_len)) {
+        Ok(a) => a,
+        Err(e) => return e as i32,
+    };
+    // Sort assets lexicographically to match C++ minmax logic
+    let (min_asset, mut max_asset) = if asset1 <= asset2 {
+        (asset1, asset2)
+    } else {
+        (asset2, asset1)
+    };
+    let mut data = min_asset.issuer.to_vec();
+    data.extend_from_slice(&min_asset.currency);
+    data.extend_from_slice(&max_asset.issuer);
+    data.extend_from_slice(&max_asset.currency);
+    let keylet_hash = index_hash(LedgerNameSpace::Amm, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn check_keylet(
     _env: wasm_exec_env_t,
     account_buf_ptr: *const u8,
@@ -514,13 +618,66 @@ pub fn line_keylet(
     if ACCOUNT_ID_LEN != account1.len() || ACCOUNT_ID_LEN != account2.len() {
         return HostError::InvalidAccount as i32;
     }
-    if ACCOUNT_ID_LEN != currency.len() {
+    if CURRENCY_LEN != currency.len() {
         return HostError::InvalidParams as i32;
     }
     let mut data = account1;
     data.append(&mut account2);
     data.append(&mut currency);
     let keylet_hash = index_hash(LedgerNameSpace::TrustLine, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn mpt_issuance_keylet(
+    _env: wasm_exec_env_t,
+    issuer_buf_ptr: *const u8,
+    issuer_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut account = get_data(issuer_buf_ptr, issuer_buf_len);
+    if ACCOUNT_ID_LEN != account.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    // Write the sequence (big endian) followed by the account bytes into data
+    let sqn_data = (sequence as u32).to_be_bytes();
+    let mut mpt_id: Vec<u8> = sqn_data.to_vec();
+    mpt_id.append(&mut account);
+    let data = mpt_id;
+    let keylet_hash = index_hash(LedgerNameSpace::MptokenIssuance, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn mptoken_keylet(
+    _env: wasm_exec_env_t,
+    mpt_id_ptr: *const u8,
+    mpt_id_len: usize,
+    holder_ptr: *const u8,
+    holder_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut mpt_id = get_data(mpt_id_ptr, mpt_id_len);
+    let mut holder = get_data(holder_ptr, holder_len);
+    if MPT_ID_LEN != mpt_id.len() {
+        return HostError::InvalidParams as i32;
+    }
+    if ACCOUNT_ID_LEN != holder.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let mpt_id_hash = index_hash(LedgerNameSpace::MptokenIssuance, &mpt_id);
+    let mut data = mpt_id_hash;
+    data.append(&mut holder);
+    let keylet_hash = index_hash(LedgerNameSpace::Mptoken, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
@@ -618,6 +775,28 @@ pub fn paychan_keylet(
     HASH256_LEN as i32
 }
 
+pub fn permissioned_domain_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *const u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::PermissionedDomain, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
 pub fn signers_keylet(
     _env: wasm_exec_env_t,
     account_buf_ptr: *const u8,
@@ -658,6 +837,28 @@ pub fn ticket_keylet(
     let sqn_data = sequence.to_be_bytes();
     data.extend_from_slice(&sqn_data);
     let keylet_hash = index_hash(LedgerNameSpace::Ticket, &data);
+    set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
+    HASH256_LEN as i32
+}
+
+pub fn vault_keylet(
+    _env: wasm_exec_env_t,
+    account_buf_ptr: *const u8,
+    account_buf_len: usize,
+    sequence: i32,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let mut data = get_data(account_buf_ptr, account_buf_len);
+    if ACCOUNT_ID_LEN != data.len() {
+        return HostError::InvalidAccount as i32;
+    }
+    let sqn_data = sequence.to_be_bytes();
+    data.extend_from_slice(&sqn_data);
+    let keylet_hash = index_hash(LedgerNameSpace::Vault, &data);
     set_data(keylet_hash.len() as i32, out_buf_ptr, keylet_hash);
     HASH256_LEN as i32
 }
@@ -1124,6 +1325,9 @@ pub fn trace_opaque_float(
     op_float: *const u8,
     float_len: usize,
 ) -> i32 {
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || float_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
     let bytes: [u8; 8] = unsafe {
         match std::slice::from_raw_parts(op_float, 8).try_into() {
             Ok(bytes) => bytes,
@@ -1146,4 +1350,158 @@ pub fn trace_opaque_float(
 
     println!("WASM TRACE: {message} {f}");
     0
+}
+
+pub fn trace_account(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *const u8,
+    msg_read_len: usize,
+    account_ptr: *const u8,
+    account_len: usize,
+) -> i32 {
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
+
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || account_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
+    if ACCOUNT_ID_LEN != account_len {
+        return HostError::InvalidAccount as i32;
+    }
+
+    debug!(
+        "trace() params: msg_read_ptr={:?} msg_read_len={} account_ptr={:?} account_len={}",
+        msg_read_ptr, msg_read_len, account_ptr, account_len
+    );
+
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::InvalidDecoding as i32;
+    };
+
+    let bytes: [u8; ACCOUNT_ID_LEN] = unsafe {
+        match std::slice::from_raw_parts(account_ptr, account_len).try_into() {
+            Ok(arr) => arr,
+            Err(_) => return HostError::InvalidAccount as i32,
+        }
+    };
+    let account_id = match encode_base58(&bytes, &[0x0], Some(20)) {
+        Ok(val) => val,
+        Err(_) => return HostError::InvalidAccount as i32,
+    };
+
+    if account_len > 0 {
+        println!(
+            "WASM TRACE: {message} ({account_id} | {} data bytes)",
+            account_len
+        );
+    } else {
+        println!("WASM TRACE: {message}");
+    }
+
+    (account_id.len() + msg_read_len + 1) as i32
+}
+
+pub fn encode_amount_json(bytes: &[u8]) -> Option<serde_json::Value> {
+    use crate::decoding::{_deserialize_issued_currency_amount, NEGATIVE_MPT, POSITIVE_MPT};
+    use serde_json::{Map, Value};
+
+    if bytes.is_empty() {
+        return None;
+    }
+
+    // Check if this is an MPT amount (starts with MPT prefix bytes)
+    if !bytes.is_empty() && (bytes[0] == POSITIVE_MPT || bytes[0] == NEGATIVE_MPT) {
+        if bytes.len() != 41 {
+            // 1 byte prefix + 8 bytes amount + 32 bytes MPT issuance ID
+            return None;
+        }
+
+        let is_positive = bytes[0] == POSITIVE_MPT;
+
+        // Extract amount (bytes 1-8, big endian)
+        let amount_bytes: [u8; 8] = bytes[1..9].try_into().ok()?;
+        let amount_abs = u64::from_be_bytes(amount_bytes);
+        let amount = if is_positive {
+            amount_abs as i64
+        } else {
+            -(amount_abs as i64)
+        };
+
+        // Extract MPT issuance ID (bytes 9-40)
+        let mpt_id_bytes = &bytes[9..41];
+        let mpt_id_hex = hex::encode(mpt_id_bytes);
+
+        let mut mpt_obj = Map::new();
+        mpt_obj.insert("value".to_string(), Value::String(amount.to_string()));
+        mpt_obj.insert("mpt_issuance_id".to_string(), Value::String(mpt_id_hex));
+
+        return Some(Value::Object(mpt_obj));
+    }
+
+    // Try to decode as regular XRP/IOU amount
+    if bytes.len() == 8 {
+        // Could be XRP amount (8 bytes) or IOU amount (8 bytes)
+        let amount_u64 = u64::from_be_bytes(bytes.try_into().ok()?);
+
+        // Check if this is XRP (positive bit set, not-XRP bit clear)
+        if (amount_u64 & 0x8000000000000000) == 0 {
+            // This is XRP - the value is the amount directly
+            return Some(Value::String(amount_u64.to_string()));
+        }
+
+        // This might be an IOU amount - try to deserialize
+        if let Ok(decimal_value) = _deserialize_issued_currency_amount(bytes.try_into().ok()?) {
+            return Some(Value::String(decimal_value.to_string()));
+        }
+    }
+
+    // For other amounts (like IOU with currency/issuer), we need more complex parsing
+    // This would require parsing the full Amount structure from bytes
+    None
+}
+
+pub fn trace_amount(
+    _env: wasm_exec_env_t,
+    msg_read_ptr: *const u8,
+    msg_read_len: usize,
+    amount_ptr: *const u8,
+    amount_len: usize,
+) -> i32 {
+    // Don't need to check number of inputs or types since these will manifest at runtime and
+    // cancel execution of the contract.
+
+    if msg_read_len > MAX_WASM_PARAM_LENGTH || amount_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
+    if amount_len != 8 && amount_len != 41 {
+        return HostError::InvalidParams as i32;
+    }
+
+    debug!(
+        "trace() params: msg_read_ptr={:?} msg_read_len={} amount_ptr={:?} amount_len={}",
+        msg_read_ptr, msg_read_len, amount_ptr, amount_len
+    );
+
+    let Some(message) = read_utf8_from_wasm(msg_read_ptr, msg_read_len) else {
+        return HostError::InvalidDecoding as i32;
+    };
+
+    let bytes: &[u8] = unsafe { std::slice::from_raw_parts(amount_ptr, amount_len) };
+    let amount_json = match encode_amount_json(bytes) {
+        Some(json) => json,
+        None => return HostError::InvalidParams as i32,
+    };
+    let amount_json = amount_json.to_string();
+    let amount_json_len = amount_json.len();
+
+    if amount_json_len > 0 {
+        println!(
+            "WASM TRACE: {message} ({amount_json} | {} data bytes)",
+            amount_json_len
+        );
+    } else {
+        println!("WASM TRACE: {message}");
+    }
+
+    (amount_json_len + msg_read_len + 1) as i32
 }

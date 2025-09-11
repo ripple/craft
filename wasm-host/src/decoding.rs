@@ -15,6 +15,9 @@ use xrpl::utils::{MAX_IOU_EXPONENT, MAX_IOU_PRECISION, MIN_IOU_EXPONENT, verify_
 pub const ACCOUNT_ID_LEN: usize = 20;
 pub type AccountId = Vec<u8>;
 
+pub const CURRENCY_LEN: usize = 20;
+pub const MPT_ID_LEN: usize = 24;
+
 /* from rippled:
 
     STYPE(STI_UNKNOWN, -2)                        \
@@ -370,8 +373,8 @@ pub fn decode_currency(s: &str) -> Option<Vec<u8>> {
     }
 }
 
-const POSITIVE_MPT: u8 = 0b_0110_0000;
-const NEGATIVE_MPT: u8 = 0b_0010_0000;
+pub const POSITIVE_MPT: u8 = 0b_0110_0000;
+pub const NEGATIVE_MPT: u8 = 0b_0010_0000;
 
 pub fn decode_amount_json(value: Value) -> Option<Vec<u8>> {
     // try to decode an MPT

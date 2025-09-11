@@ -272,13 +272,6 @@ pub async fn configure() -> Result<Config> {
     let mut projects = utils::find_wasm_projects(&current_dir);
 
     let project_path = if projects.is_empty() {
-        let searched_path = current_dir.join("projects");
-        let searched_path_abs = std::fs::canonicalize(&searched_path).unwrap_or(searched_path);
-        println!(
-            "{}",
-            format!("No projects found at path: {}", searched_path_abs.display()).yellow()
-        );
-
         // Check if current directory is a valid WASM project
         if !utils::is_valid_rust_project(&current_dir) {
             println!("{}", "Current directory is not a valid WASM project.".red());
@@ -287,7 +280,7 @@ pub async fn configure() -> Result<Config> {
             println!(
                 "  1. Navigate to a WASM project directory (with cdylib crate-type in Cargo.toml)"
             );
-            println!("  2. Create a new WASM project in the projects/examples directory");
+            println!("  2. Create a new WASM project in projects/ or projects/examples/");
             println!("  3. Run 'craft build <project-name>' to specify an existing project");
             println!();
             println!("{}", "A valid WASM project needs:".cyan());
@@ -300,7 +293,7 @@ pub async fn configure() -> Result<Config> {
             anyhow::bail!("Not in a valid WASM project directory");
         }
 
-        println!("Using current directory...");
+        println!("Using current directory: {}", current_dir.display());
         current_dir
     } else {
         let project_choices: Vec<_> = projects

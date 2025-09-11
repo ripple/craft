@@ -433,8 +433,8 @@ pub fn cli_update_status() -> Result<Option<String>> {
             hex::encode(hasher.finalize())
         };
 
-        if let Some(build_fp) = build_source_fp.clone()
-            && build_fp == current_fp
+        if let Some(ref build_fp) = build_source_fp
+            && build_fp == &current_fp
         {
             return Ok(None);
         }

@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
 use std::env;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -10,10 +12,50 @@ use which::which;
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
 
-    if let Ok(entries) = std::fs::read_dir(base_path.join("projects/examples/smart-escrows")) {
+    // First check projects/examples for all example projects
+    let examples_path = base_path.join("projects/examples");
+    if examples_path.exists() {
+        // Walk through all subdirectories in examples
+        if let Ok(entries) = std::fs::read_dir(&examples_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() {
+                    // Check direct children (like examples/foo)
+                    if path.join("Cargo.toml").exists()
+                        && is_valid_wasm_project(&path.join("Cargo.toml"))
+                    {
+                        projects.push(path.clone());
+                    }
+
+                    // Also check subdirectories (like examples/smart-escrows/notary)
+                    if let Ok(sub_entries) = std::fs::read_dir(&path) {
+                        for sub_entry in sub_entries.filter_map(|e| e.ok()) {
+                            let sub_path = sub_entry.path();
+                            if sub_path.is_dir()
+                                && sub_path.join("Cargo.toml").exists()
+                                && is_valid_wasm_project(&sub_path.join("Cargo.toml"))
+                            {
+                                projects.push(sub_path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Also check projects/ root for any direct WASM projects
+    let projects_path = base_path.join("projects");
+    if projects_path.exists()
+        && let Ok(entries) = std::fs::read_dir(&projects_path)
+    {
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
-            if path.is_dir() && path.join("Cargo.toml").exists() {
+            if path.is_dir()
+                && !path.ends_with("examples")
+                && path.join("Cargo.toml").exists()
+                && is_valid_wasm_project(&path.join("Cargo.toml"))
+            {
                 projects.push(path);
             }
         }
@@ -35,6 +77,36 @@ pub fn find_cargo_toml(start_path: &Path) -> Option<PathBuf> {
         .filter_map(|e| e.ok())
         .find(|e| e.file_name() == "Cargo.toml")
         .map(|e| e.path().to_path_buf())
+}
+
+pub fn is_valid_rust_project(path: &Path) -> bool {
+    // Check if there's a Cargo.toml in this directory
+    let cargo_toml_path = path.join("Cargo.toml");
+    if !cargo_toml_path.exists() {
+        // Also check parent directory
+        if let Some(parent) = path.parent() {
+            let parent_cargo = parent.join("Cargo.toml");
+            if parent_cargo.exists() {
+                return is_valid_wasm_project(&parent_cargo);
+            }
+        }
+        return false;
+    }
+
+    is_valid_wasm_project(&cargo_toml_path)
+}
+
+fn is_valid_wasm_project(cargo_toml_path: &Path) -> bool {
+    // Read Cargo.toml and check if it's configured for WASM
+    if let Ok(content) = std::fs::read_to_string(cargo_toml_path) {
+        // Check for cdylib crate type which is required for WASM
+        content.contains("cdylib") ||
+        // Also accept projects that might have wasm-related dependencies
+        content.contains("wasm-bindgen") ||
+        content.contains("wasm32-unknown-unknown")
+    } else {
+        false
+    }
 }
 
 pub fn check_wasm_target_installed(target: &str) -> bool {
@@ -148,7 +220,10 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
     let cargo_toml_path = project_path.join("Cargo.toml");
 
     if !cargo_toml_path.exists() {
-        return Ok(project_path.to_path_buf());
+        anyhow::bail!(
+            "No Cargo.toml found in {}. This is not a valid Rust project directory.",
+            project_path.display()
+        );
     }
 
     let cargo_content = std::fs::read_to_string(&cargo_toml_path)?;
@@ -260,69 +335,187 @@ pub fn validate_project_name(project_path: &Path) -> Result<PathBuf> {
     Ok(project_path.to_path_buf())
 }
 
-/// Checks if the installed CLI binary is outdated compared to the source code
-pub fn needs_cli_update() -> Result<bool> {
-    use colored::*;
+/// Returns a user-facing message describing why an update is recommended, or None if up-to-date
+pub fn cli_update_status() -> Result<Option<String>> {
+    use std::time::{SystemTime, UNIX_EPOCH};
 
-    // Get the path to the currently running binary
+    // Allow disabling update checks (useful for CI/non-dev usage)
+    if std::env::var_os("CRAFT_DISABLE_UPDATE_CHECK").is_some() {
+        return Ok(None);
+    }
+
+    let workspace_dir = env::current_dir().context("Failed to get current directory")?;
+    let in_project_root =
+        workspace_dir.join("craft").exists() && workspace_dir.join("Cargo.toml").exists();
+
+    // Helper to get current HEAD hash
+    let git_head = || -> Option<String> {
+        let out = Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .output()
+            .ok()?;
+        if out.status.success() {
+            Some(String::from_utf8_lossy(&out.stdout).trim().to_string())
+        } else {
+            None
+        }
+    }();
+
+    // Helper to detect dirty working tree
+    let git_dirty = || -> Option<bool> {
+        let out = Command::new("git")
+            .args(["status", "--porcelain"])
+            .output()
+            .ok()?;
+        if out.status.success() {
+            Some(!out.stdout.is_empty())
+        } else {
+            None
+        }
+    }();
+
+    // Helper to get timestamp of latest commit
+    let git_head_time = || -> Option<u64> {
+        let out = Command::new("git")
+            .args(["log", "-1", "--format=%ct"])
+            .output()
+            .ok()?;
+        if !out.status.success() {
+            return None;
+        }
+        let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        s.parse::<u64>().ok()
+    }();
+
+    // Build-time metadata injected by build.rs (if present)
+    let build_hash = option_env!("BUILD_GIT_HASH").map(|s| s.to_string());
+    let build_dirty = option_env!("BUILD_GIT_DIRTY")
+        .map(|s| s == "1")
+        .unwrap_or(false);
+    let build_unix_time = option_env!("BUILD_UNIX_TIME")
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or_else(|| {
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs()
+        });
+    let build_source_fp = option_env!("BUILD_SOURCE_FINGERPRINT").map(|s| s.to_string());
+
+    // If we can compute a deterministic fingerprint of the craft sources and it matches
+    // what the binary was built from, we consider it up-to-date even if the workspace is dirty.
+    if in_project_root {
+        let current_fp = {
+            // Collect relevant craft package sources (must match build.rs logic)
+            let craft_dir = workspace_dir.join("craft");
+            let mut paths: Vec<PathBuf> = vec![craft_dir.join("Cargo.toml")];
+            let src_dir = craft_dir.join("src");
+            if src_dir.exists() {
+                for entry in WalkDir::new(&src_dir).into_iter().filter_map(|e| e.ok()) {
+                    if entry.path().is_file() {
+                        paths.push(entry.path().to_path_buf());
+                    }
+                }
+            }
+            paths.sort();
+            // Compute SHA-256 over relative path + NUL + bytes per file
+            let mut hasher = Sha256::new();
+            for p in &paths {
+                if let Ok(rel) = p.strip_prefix(&craft_dir) {
+                    hasher.update(rel.to_string_lossy().as_bytes());
+                    hasher.update([0]);
+                }
+                if let Ok(bytes) = fs::read(p) {
+                    hasher.update(&bytes);
+                }
+                hasher.update([0xFF]);
+            }
+            hex::encode(hasher.finalize())
+        };
+
+        if let Some(build_fp) = build_source_fp.clone()
+            && build_fp == current_fp
+        {
+            return Ok(None);
+        }
+    }
+
+    // Prefer a robust git-based comparison when in repo root and git is usable
+    if in_project_root && let Some(head) = git_head {
+        let dirty = git_dirty.unwrap_or(false);
+        let head_time = git_head_time.unwrap_or(build_unix_time);
+
+        // If working tree is dirty, recommend update (dev workflow)
+        if dirty {
+            return Ok(Some(format!(
+                "Detected uncommitted changes in the repository. The craft binary may be stale.\n  Built from: {}{}\n  Workspace:  {} (dirty)\n  Tip: Reinstall with: cargo install --path craft",
+                build_hash.clone().unwrap_or_else(|| "unknown".to_string()),
+                if build_dirty { " (dirty)" } else { "" },
+                head
+            )));
+        }
+
+        // If built from different commit, recommend update
+        if build_hash.as_deref() != Some(head.as_str()) {
+            return Ok(Some(format!(
+                "Newer source detected than the installed craft binary.\n  Built from: {}{}\n  Workspace:  {}\n  Tip: Reinstall with: cargo install --path craft",
+                build_hash.unwrap_or_else(|| "unknown".to_string()),
+                if build_dirty { " (dirty)" } else { "" },
+                head
+            )));
+        }
+
+        // If latest commit time is after build time, recommend update
+        if head_time > build_unix_time {
+            return Ok(Some(
+                "Source repository has newer commits than this binary's build. Tip: cargo install --path craft".to_string(),
+            ));
+        }
+
+        // Up to date according to git metadata
+        return Ok(None);
+    }
+
+    // Fallback: compare source file mtimes to the current binary mtime
     let current_exe = env::current_exe().context("Failed to get current executable path")?;
-
-    // Get the timestamp of the current binary
     let binary_modified = current_exe
         .metadata()
         .context("Failed to get binary metadata")?
         .modified()
         .context("Failed to get binary modification time")?;
 
-    // Get paths to important source files
-    let workspace_dir = env::current_dir().context("Failed to get current directory")?;
-
-    // Check if we're in the project root directory
-    let is_in_project_root =
-        workspace_dir.join("craft").exists() && workspace_dir.join("Cargo.toml").exists();
-
-    if !is_in_project_root {
-        println!(
-            "{}",
-            "\nWarning: Not running from the project root directory.".yellow()
-        );
-        println!(
-            "Update detection may not work correctly. Current dir: {}",
-            workspace_dir.display()
-        );
-    }
-
     let source_files = vec![
-        workspace_dir.join("craft/src/main.rs"),
-        workspace_dir.join("craft/src/commands/mod.rs"),
-        workspace_dir.join("craft/src/utils/mod.rs"),
-        workspace_dir.join("craft/src/config/mod.rs"),
-        workspace_dir.join("craft/src/docker.rs"),
-        workspace_dir.join("Cargo.toml"),
+        workspace_dir.join("craft/src"),
         workspace_dir.join("craft/Cargo.toml"),
+        workspace_dir.join("Cargo.toml"),
     ];
 
-    // Check if any source file is newer than the binary
-    for source_file in source_files {
-        if !source_file.exists() {
+    // Walk directories and check mtimes
+    for path in source_files {
+        if !path.exists() {
             continue;
         }
-
-        let source_modified = source_file
-            .metadata()
-            .context(format!("Failed to get metadata for {source_file:?}"))?
-            .modified()
-            .context(format!(
-                "Failed to get modification time for {source_file:?}"
-            ))?;
-
-        // If source file is newer than binary, update is needed
-        if source_modified > binary_modified {
-            return Ok(true);
+        if path.is_file() {
+            let src_m = path.metadata()?.modified()?;
+            if src_m > binary_modified {
+                return Ok(Some(
+                    "Source files are newer than the craft binary. Tip: cargo install --path craft"
+                        .into(),
+                ));
+            }
+        } else {
+            for entry in WalkDir::new(&path).into_iter().filter_map(|e| e.ok()) {
+                if entry.path().is_file() {
+                    let src_m = entry.metadata()?.modified()?;
+                    if src_m > binary_modified {
+                        return Ok(Some("Source files are newer than the craft binary. Tip: cargo install --path craft".into()));
+                    }
+                }
+            }
         }
     }
 
-    Ok(false)
+    Ok(None)
 }
 
 /// Installs the CLI from the current directory

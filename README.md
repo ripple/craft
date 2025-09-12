@@ -67,7 +67,7 @@ After installation, ensure Docker is running before using rippled-related comman
 
 Common examples:
 
-```shell
+```bash
 # Interactive menu (TTY only)
 craft
 
@@ -141,7 +141,7 @@ Organize your WASM modules in the `projects` directory:
 └── ...
 ```
 
-The tool automatically discovers WASM projects under `projects/` and `projects/examples/` (including nested subprojects).
+The tool automatically discovers WASM projects under `projects/` (including nested subprojects).
 
 # WASM Host Testing Tool
 

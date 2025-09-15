@@ -4,13 +4,14 @@ const path = require('path')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-if (process.argv.length != 3) {
+if (process.argv.length < 3) {
   console.error(
     'Usage: ' +
       process.argv[0] +
       ' ' +
       process.argv[1] +
-      ' (path/to/file.wasm OR path/to/file.hex OR project_name)',
+      ' (path/to/file.wasm OR project_name)' +
+      '[Account1 Account1Seed [Account2 Account2Seed]]',
   )
   process.exit(1)
 }
@@ -56,8 +57,27 @@ async function submit(tx, wallet, debug = true) {
 async function deploy() {
   await client.connect()
   console.log("connected")
-  const {wallet} = await client.fundWallet()
-  const {wallet: wallet2 } = await client.fundWallet()
+  let wallet, wallet2
+  if (process.argv.length > 3) {
+    const account = process.argv[3]
+    const accountSecret = process.argv[4]
+    wallet = xrpl.Wallet.fromSeed(accountSecret, {masterAddress: account})
+
+    if (process.argv.length > 5) {
+      const account2 = process.argv[5]
+      const accountSecret2 = process.argv[6]
+      wallet2 = xrpl.Wallet.fromSeed(accountSecret2, {masterAddress: account2})
+    } else {
+      wallet2 = xrpl.Wallet.generate()
+    }
+  } else {
+    wallet = xrpl.Wallet.generate()
+    wallet2 = xrpl.Wallet.generate()
+    await client.fundWallet(wallet)
+    await client.fundWallet(wallet2)
+  }
+
+
   console.log(`\nFunded accounts:`)
   console.log(`Account 1 - Address: ${wallet.address}`)
   console.log(`Account 1 - Secret: ${wallet.seed}`)

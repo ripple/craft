@@ -67,7 +67,7 @@ After installation, ensure Docker is running before using rippled-related comman
 
 Common examples:
 
-```bash
+```shell
 # Interactive menu (TTY only)
 craft
 

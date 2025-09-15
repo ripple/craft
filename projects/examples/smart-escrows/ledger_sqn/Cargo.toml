@@ -5,10 +5,10 @@ edition = "2024"
 description = "Smart Escrow example that unlocks when the ledger sequence number reaches a minimum threshold"
 license = "ISC"
 
+[workspace]
 
 [lib]
 crate-type = ["cdylib"]
-
 
 [dependencies]
 xrpl-std = { path = "../../../../xrpl-std" }

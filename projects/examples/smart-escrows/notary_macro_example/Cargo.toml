@@ -5,10 +5,10 @@ edition = "2024"
 description = "Smart Escrow example demonstrating compile-time XRPL r-address to hex conversion using procedural macros"
 license = "ISC"
 
+[workspace]
 
 [lib]
 crate-type = ["cdylib"]
-
 
 [dependencies]
 xrpl-std = { path = "../../../../xrpl-std" }

@@ -27,7 +27,7 @@ function getFinishFunctionFromFile(filePath) {
   if (filePath.endsWith('.wasm') || filePath.endsWith('.hex')) {
     absolutePath = path.resolve(filePath)
   } else {
-    absolutePath = path.resolve(__dirname, `../../projects/${filePath}/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
+    absolutePath = path.resolve(__dirname, `../../projects/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
   }
   try {
       const data = fs.readFileSync(absolutePath)
@@ -83,6 +83,7 @@ async function deploy() {
     FinishAfter: close_time + 10, // about 10 seconds. After this time, the escrow can be finished.
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),
+    Fee: '1000000',
   }, wallet)
 
   if (response1.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1)

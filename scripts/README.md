@@ -23,7 +23,7 @@ You can also run individual test suites:
 ### Core Development Scripts
 
 - **`setup.sh`** - Install dependencies and setup the development environment
-- **`build-and-test-all.sh`** - Run the complete test suite (all scripts below in sequence)
+- **`run-all.sh`** - Run the complete test suite (all scripts below in sequence)
 
 ### Main Scripts
 

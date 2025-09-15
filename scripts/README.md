@@ -106,4 +106,4 @@ setup.sh (run first)
 **Note**: Pre-commit checks are handled by the GitHub Actions workflow using `pre-commit/action@v3.0.1` rather than a
 local script.
 
-The `build-and-test-all.sh` script runs all individual scripts in the correct order.
+The `run-all.sh` script runs all individual scripts in the correct order.

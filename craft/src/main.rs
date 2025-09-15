@@ -276,12 +276,9 @@ async fn main() -> Result<()> {
     }
 
     // Check if the CLI binary needs to be updated
-    if utils::needs_cli_update().unwrap_or(false) {
-        println!(
-            "{}",
-            "\nDetected changes to the CLI source code that haven't been installed yet.".yellow()
-        );
-        if Confirm::new("Would you like to update the CLI now with 'cargo install --path craft'?")
+    if let Ok(Some(msg)) = utils::cli_update_status() {
+        println!("{}", format!("\n{}", msg).yellow());
+        if Confirm::new("Update craft now with 'cargo install --path craft'?")
             .with_default(true)
             .prompt()?
         {
@@ -321,9 +318,40 @@ async fn main() -> Result<()> {
                 };
 
                 let project_path = if let Some(proj) = project {
-                    std::env::current_dir()?
-                        .join("projects/examples/smart-escrows")
-                        .join(proj)
+                    // Find the project from all discovered WASM projects
+                    let current_dir = std::env::current_dir()?;
+                    let all_projects = utils::find_wasm_projects(&current_dir);
+
+                    // Try to find a project matching the given name
+                    let matching_project = all_projects
+                        .iter()
+                        .find(|p| {
+                            p.file_name()
+                                .and_then(|n| n.to_str())
+                                .map(|n| n == proj)
+                                .unwrap_or(false)
+                        })
+                        .or_else(|| {
+                            // Also check if it's a partial path match
+                            all_projects.iter().find(|p| p.ends_with(&proj))
+                        });
+
+                    if let Some(found_path) = matching_project {
+                        found_path.clone()
+                    } else {
+                        // If not found, check the old default location for backward compatibility
+                        let legacy_path = current_dir
+                            .join("projects/examples/smart-escrows")
+                            .join(&proj);
+                        if legacy_path.exists() && legacy_path.join("Cargo.toml").exists() {
+                            legacy_path
+                        } else {
+                            println!("{}", format!("Project '{}' not found.", proj).red());
+                            println!();
+                            commands::list_projects()?;
+                            anyhow::bail!("Project not found");
+                        }
+                    }
                 } else if std::io::stdout().is_terminal() {
                     // Interactive selection if TTY available
                     let config = commands::configure().await?;

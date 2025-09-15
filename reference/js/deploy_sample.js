@@ -83,7 +83,6 @@ async function deploy() {
     FinishAfter: close_time + 10, // about 10 seconds. After this time, the escrow can be finished.
     FinishFunction: finish,
     Data: xrpl.xrpToDrops(70),
-    Fee: '1000000',
   }, wallet)
 
   if (response1.result.meta.TransactionResult !== "tesSUCCESS") process.exit(1)

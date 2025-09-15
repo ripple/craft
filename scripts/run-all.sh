@@ -44,6 +44,7 @@ run_script() {
 run_script "helpers/clippy.sh"
 run_script "helpers/fmt.sh"
 run_script "helpers/host-function-audit.sh"
+run_script "helpers/check-wasm-exports.sh"
 run_script "build-and-test.sh"
 run_script "helpers/run-markdown.sh"
 run_script "helpers/e2e-tests.sh"

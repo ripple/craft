@@ -61,7 +61,7 @@ if command -v node &> /dev/null; then
 fi
 echo ""
 echo "Next steps:"
-echo "  - Run './scripts/build-and-test-all.sh' to run all tests"
+echo "  - Run './scripts/run-all.sh' to run all tests"
 echo "  - Run individual test scripts as needed"
 echo ""
 echo "💡 Tips:"

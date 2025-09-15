@@ -272,11 +272,28 @@ pub async fn configure() -> Result<Config> {
     let mut projects = utils::find_wasm_projects(&current_dir);
 
     let project_path = if projects.is_empty() {
-        println!(
-            "{}",
-            "No WASM projects found in the projects directory.".yellow()
-        );
-        println!("Using current directory...");
+        // Check if current directory is a valid WASM project
+        if !utils::is_valid_rust_project(&current_dir) {
+            println!("{}", "Current directory is not a valid WASM project.".red());
+            println!();
+            println!("{}", "To use craft, you need to either:".yellow());
+            println!(
+                "  1. Navigate to a WASM project directory (with cdylib crate-type in Cargo.toml)"
+            );
+            println!("  2. Create a new WASM project in projects/ or projects/examples/");
+            println!("  3. Run 'craft build <project-name>' to specify an existing project");
+            println!();
+            println!("{}", "A valid WASM project needs:".cyan());
+            println!("  • A Cargo.toml file");
+            println!("  • crate-type = [\"cdylib\"] in the [lib] section");
+            println!();
+            println!("{}", "Example:".cyan());
+            println!("  cd projects/examples/smart-escrows/notary");
+            println!("  craft build");
+            anyhow::bail!("Not in a valid WASM project directory");
+        }
+
+        println!("Using current directory: {}", current_dir.display());
         current_dir
     } else {
         let project_choices: Vec<_> = projects
@@ -442,21 +459,22 @@ pub async fn open_explorer() -> Result<()> {
 // New helper functions for improved craft commands
 
 pub fn list_projects() -> Result<()> {
-    let projects_dir = std::env::current_dir()?.join("projects/examples/smart-escrow");
-    if !projects_dir.exists() {
-        println!("{}", "No projects directory found.".yellow());
+    let current_dir = std::env::current_dir()?;
+    let projects = utils::find_wasm_projects(&current_dir);
+
+    if projects.is_empty() {
+        println!("{}", "No WASM projects found.".yellow());
+        println!("Looking in: projects/examples/");
         return Ok(());
     }
 
-    println!("{}", "Available projects:".cyan());
-    for entry in fs::read_dir(projects_dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_dir()
-            && let Some(name) = path.file_name()
-        {
-            println!("  • {}", name.to_string_lossy());
-        }
+    println!("{}", "Available WASM projects:".cyan());
+    for project_path in projects {
+        // Display the path relative to current directory for clarity
+        let relative_path = project_path
+            .strip_prefix(&current_dir)
+            .unwrap_or(&project_path);
+        println!("  • {}", relative_path.display());
     }
     Ok(())
 }

@@ -95,12 +95,13 @@ setup.sh (run first)
 ├── build-and-test.sh
 ├── build.sh
 └── helpers/
+    ├── check-wasm-exports.sh
     ├── clippy.sh
+    └── e2e-tests.sh
+        └── ../build.sh (dependency)
     ├── fmt.sh
     ├── host-function-audit.sh (requires Node.js)
     ├── run-markdown.sh
-    └── e2e-tests.sh
-        └── ../build.sh (dependency)
 ```
 
 **Note**: Pre-commit checks are handled by the GitHub Actions workflow using `pre-commit/action@v3.0.1` rather than a

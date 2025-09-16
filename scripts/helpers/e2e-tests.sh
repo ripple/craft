@@ -28,7 +28,7 @@ find projects -name "Cargo.toml" -type f | while read -r cargo_file; do
     contract_name=$(basename "$dir")
     if [ -d "$dir/fixtures" ]; then
         echo "🔧 Running integration test for $contract_name in $dir"
-        cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --dir $dir || exit 1
+        cargo run --package wasm-host-simulator --bin wasm-host-simulator -- -p "$contract_name" --dir $dir || exit 1
     fi
 done
 

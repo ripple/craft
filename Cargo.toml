@@ -2,10 +2,10 @@
 resolver = "2"
 members = [
     "craft",
-    "wasm-host",
+    "wasm-host-simulator",
     "xrpl-address-macro",
     "xrpl-wasm-std-lib",
-    "wasm-host/xrpld-number"
+    "wasm-host-simulator/xrpld-number"
 ]
 exclude = [
     "projects"

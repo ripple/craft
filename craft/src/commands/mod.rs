@@ -564,14 +564,16 @@ pub fn list_fixtures() -> Result<()> {
         Ok(())
     }
 
-    // Show fixtures in wasm-host directory (only for backward compatibility with escrow)
-    let wasm_host_fixtures = std::env::current_dir()?.join("wasm-host").join("fixtures");
-    if wasm_host_fixtures.exists() {
+    // Show fixtures in wasm_host_simulator directory (only for backward compatibility with escrow)
+    let wasm_host_simulator_fixtures = std::env::current_dir()?
+        .join("../../../wasm_host_simulator")
+        .join("fixtures");
+    if wasm_host_simulator_fixtures.exists() {
         println!(
             "\n{}",
-            "wasm-host/fixtures/ (legacy location for escrow):".bold()
+            "wasm-host-simulator/fixtures/ (legacy location for escrow):".bold()
         );
-        print_tree(&wasm_host_fixtures, "  ")?;
+        print_tree(&wasm_host_simulator_fixtures, "  ")?;
     }
 
     // Show fixtures in project directories
@@ -736,7 +738,9 @@ pub fn run_test(
             println!();
             println!("{}", "Debug tips:".yellow());
             println!("  • Run with --verbose to see detailed trace output");
-            println!("  • Check test fixtures in wasm-host/fixtures/<project>/{test_case}/");
+            println!(
+                "  • Check test fixtures in wasm_host_simulator/fixtures/<project>/{test_case}/"
+            );
             println!("  • Verify your WASM module exports 'allocate' and 'finish' functions");
         }
 

@@ -374,7 +374,7 @@ This repository contains multiple Rust crates. You can use rustdoc to generate a
 
 - Public crates only (recommended):
   - `cargo doc --no-deps -p craft --target-dir target`
-  - `cargo doc --no-deps -p xrpl-std --target-dir target`
+  - `cargo doc --no-deps -p xrpl-wasm-std-lib --target-dir target`
 - Entire workspace:
   - `cargo doc --workspace --no-deps`
 - Open docs in your browser:
@@ -386,14 +386,14 @@ A helper script is included:
 ./build-docs.sh
 ```
 
-This cleans previous docs, builds docs for `craft` and `xrpl-std` (into a shared target/ directory), runs doctests for `xrpl-std`, and prints the path to the rendered docs.
+This cleans previous docs, builds docs for `craft` and `xrpl-wasm-std-lib` (into a shared target/ directory), runs doctests for `xrpl-wasm-std-lib`, and prints the path to the rendered docs.
 
 ### View the documentation
 
 - After building, open: `target/doc/index.html` to see the docs index
 - Direct links:
   - Craft CLI docs: `target/doc/craft/index.html`
-  - xrpl-std library: `target/doc/xrpl_std/index.html`
+  - xrpl-wasm-std-lib library: `target/doc/xrpl_wasm_std_lib/index.html`
 - Or simply run: `cargo doc --open`
 
 ### Best practices for writing Rust docs
@@ -431,8 +431,8 @@ pub mod guides {
 
 In this repository:
 
-- The `xrpl-std` crate already includes its README via `#![doc = include_str!("../README.md")]`
-- The guide at `docs/FIELD_ACCESS.md` is included under the rendered docs at `xrpl_std::guides::field_access`
+- The `xrpl-wasm-std-lib` crate already includes its README via `#![doc = include_str!("../README.md")]`
+- The guide at `docs/FIELD_ACCESS.md` is included under the rendered docs at `xrpl_wasm_std_lib::guides::field_access`
 
 ### Notes on code blocks in docs
 

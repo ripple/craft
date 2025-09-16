@@ -30,7 +30,7 @@ checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
 name = "codecov_tests"
 version = "0.0.1"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -56,7 +56,7 @@ dependencies = [
 name = "decoder_tests"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -73,7 +73,7 @@ dependencies = [
 name = "float_tests"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -90,28 +90,28 @@ dependencies = [
 name = "host_functions_test"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
 name = "keylet_exists"
 version = "0.1.0"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
 name = "kyc"
 version = "0.0.1"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
 name = "ledger_sqn"
 version = "0.1.0"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -124,7 +124,7 @@ checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 name = "nft_owner"
 version = "0.1.0"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -132,7 +132,7 @@ name = "notary"
 version = "0.1.0"
 dependencies = [
  "xrpl-address-macro",
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -140,14 +140,14 @@ name = "notary_macro_example"
 version = "0.1.0"
 dependencies = [
  "xrpl-address-macro",
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
 name = "oracle"
 version = "0.1.0"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -209,21 +209,21 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "trace_escrow_account"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
 name = "trace_escrow_finish"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
 name = "trace_escrow_ledger_object"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std-lib",
 ]
 
 [[package]]
@@ -256,5 +256,5 @@ dependencies = [
 ]
 
 [[package]]
-name = "xrpl-std"
+name = "xrpl-wasm-std-lib"
 version = "0.5.1-devnet5"

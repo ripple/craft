@@ -1,11 +1,11 @@
 [package]
-name = "xrpl-std"
+name = "xrpl-wasm-std-lib"
 version = "0.5.1-devnet5"
 edition = "2024"
 description = "Standard library for XRPL WebAssembly smart contracts"
 license = "ISC"
 repository = "https://github.com/ripple/craft"
-homepage = "https://github.com/ripple/craft/tree/main/xrpl-std"
+homepage = "https://github.com/ripple/craft/tree/main/xrpl-wasm-std-lib"
 readme = "README.md"
 keywords = ["xrpl", "wasm", "smart-contracts", "no-std"]
 categories = ["no-std", "embedded", "cryptography::cryptocurrencies"]

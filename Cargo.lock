@@ -3510,7 +3510,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "xrpl-std"
+name = "xrpl-wasm-std-lib"
 version = "0.5.1-devnet5"
 
 [[package]]

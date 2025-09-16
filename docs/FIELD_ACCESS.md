@@ -44,8 +44,8 @@ const SFIELD_ACCOUNT: i32 = 524289;      // (8 << 16) | 1
 const SFIELD_BALANCE: i32 = 393218;      // (6 << 16) | 6
 const SFIELD_MEMOS: i32 = 983049;        // (15 << 16) | 9
 
-// Always use named constants from xrpl_std::sfield instead of raw integers
-use xrpl_std::sfield;  // Provides sfield::Account, sfield::Balance, etc.
+// Always use named constants from xrpl_wasm_std_lib::sfield instead of raw integers
+use xrpl_wasm_std_lib::sfield;  // Provides sfield::Account, sfield::Balance, etc.
 ```
 
 ## Simple Field Access
@@ -55,8 +55,8 @@ For top-level fields, use direct access functions:
 ### Transaction Fields
 
 ```rust,ignore
-use xrpl_std::host::get_tx_field;
-use xrpl_std::sfield;
+use xrpl_wasm_std_lib::host::get_tx_field;
+use xrpl_wasm_std_lib::sfield;
 
 // Get account from transaction
 let mut account_buf = [0u8; 20];
@@ -82,7 +82,7 @@ let len = unsafe {
 ### Ledger Object Fields
 
 ```rust,ignore
-use xrpl_std::host::get_ledger_obj_field;
+use xrpl_wasm_std_lib::host::get_ledger_obj_field;
 
 // First load object into cache
 let slot = unsafe {
@@ -117,7 +117,7 @@ Each i32 value can be an:
 ### Building Locators
 
 ```rust,ignore
-use xrpl_std::locator::Locator;
+use xrpl_wasm_std_lib::locator::Locator;
 
 let mut locator = Locator::new();
 
@@ -298,7 +298,7 @@ for i in 0..memo_count {
 
 ## Field Code Reference
 
-The SField codes are in: `xrpl-std/src/sfield.rs`
+The SField codes are in: `xrpl-wasm-std-lib/src/sfield.rs`
 
 Developers should use named SFields. For example, use `sfield::MemoType` instead of the int value.
 
@@ -379,7 +379,7 @@ Developers should use named SFields. For example, use `sfield::MemoType` instead
 
 **Solution**: Verify field is actually an array type
 
-**Note**: This error code list is subject to expansion. Additional error codes may be added in future versions. For the most up-to-date list, see the [error code definitions in xrpl-std](https://github.com/ripple/craft/blob/main/xrpl-std/src/host/error_codes.rs).
+**Note**: This error code list is subject to expansion. Additional error codes may be added in future versions. For the most up-to-date list, see the [error code definitions in xrpl-wasm-std-lib](https://github.com/ripple/craft/blob/main/xrpl-wasm-std-lib/src/host/error_codes.rs).
 
 ### Debugging Tips
 
@@ -402,9 +402,9 @@ Developers should use named SFields. For example, use `sfield::MemoType` instead
 ### Complete Memo Processing
 
 ```rust,ignore
-use xrpl_std::locator::Locator;
-use xrpl_std::host::{get_tx_array_len, get_tx_nested_field};
-use xrpl_std::sfield;
+use xrpl_wasm_std_lib::locator::Locator;
+use xrpl_wasm_std_lib::host::{get_tx_array_len, get_tx_nested_field};
+use xrpl_wasm_std_lib::sfield;
 
 fn process_memos() -> Result<()> {
     // Get memo count

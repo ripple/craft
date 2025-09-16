@@ -5,14 +5,14 @@
 extern crate std;
 
 use core::panic;
-use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
-use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-use xrpl_std::core::locator::Locator;
-use xrpl_std::core::types::keylets;
-use xrpl_std::host;
-use xrpl_std::host::error_codes;
-use xrpl_std::host::trace::{trace, trace_num as trace_number};
-use xrpl_std::sfield;
+use xrpl_wasm_std_lib::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
+use xrpl_wasm_std_lib::core::current_tx::traits::TransactionCommonFields;
+use xrpl_wasm_std_lib::core::locator::Locator;
+use xrpl_wasm_std_lib::core::types::keylets;
+use xrpl_wasm_std_lib::host;
+use xrpl_wasm_std_lib::host::error_codes;
+use xrpl_wasm_std_lib::host::trace::{trace, trace_num as trace_number};
+use xrpl_wasm_std_lib::sfield;
 
 mod host_bindings_loose {
     #[cfg(not(target_arch = "wasm32"))]

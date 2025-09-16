@@ -4,10 +4,10 @@
 extern crate std;
 
 use xrpl_address_macro::r_address;
-use xrpl_std::core::current_tx::escrow_finish;
-use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-use xrpl_std::host::trace::trace_num;
-use xrpl_std::host::{Result::Err, Result::Ok};
+use xrpl_wasm_std_lib::core::current_tx::escrow_finish;
+use xrpl_wasm_std_lib::core::current_tx::traits::TransactionCommonFields;
+use xrpl_wasm_std_lib::host::trace::trace_num;
+use xrpl_wasm_std_lib::host::{Result::Err, Result::Ok};
 
 // The notary account that is authorized to complete escrows
 // Using example notary account for testing

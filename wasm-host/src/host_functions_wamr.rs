@@ -1401,65 +1401,6 @@ pub fn trace_account(
     (account_id.len() + msg_read_len + 1) as i32
 }
 
-pub fn encode_amount_json(bytes: &[u8]) -> Option<serde_json::Value> {
-    use crate::decoding::{_deserialize_issued_currency_amount, NEGATIVE_MPT, POSITIVE_MPT};
-    use serde_json::{Map, Value};
-
-    if bytes.is_empty() {
-        return None;
-    }
-
-    // Check if this is an MPT amount (starts with MPT prefix bytes)
-    if !bytes.is_empty() && (bytes[0] == POSITIVE_MPT || bytes[0] == NEGATIVE_MPT) {
-        if bytes.len() != 41 {
-            // 1 byte prefix + 8 bytes amount + 32 bytes MPT issuance ID
-            return None;
-        }
-
-        let is_positive = bytes[0] == POSITIVE_MPT;
-
-        // Extract amount (bytes 1-8, big endian)
-        let amount_bytes: [u8; 8] = bytes[1..9].try_into().ok()?;
-        let amount_abs = u64::from_be_bytes(amount_bytes);
-        let amount = if is_positive {
-            amount_abs as i64
-        } else {
-            -(amount_abs as i64)
-        };
-
-        // Extract MPT issuance ID (bytes 9-40)
-        let mpt_id_bytes = &bytes[9..41];
-        let mpt_id_hex = hex::encode(mpt_id_bytes);
-
-        let mut mpt_obj = Map::new();
-        mpt_obj.insert("value".to_string(), Value::String(amount.to_string()));
-        mpt_obj.insert("mpt_issuance_id".to_string(), Value::String(mpt_id_hex));
-
-        return Some(Value::Object(mpt_obj));
-    }
-
-    // Try to decode as regular XRP/IOU amount
-    if bytes.len() == 8 {
-        // Could be XRP amount (8 bytes) or IOU amount (8 bytes)
-        let amount_u64 = u64::from_be_bytes(bytes.try_into().ok()?);
-
-        // Check if this is XRP (positive bit set, not-XRP bit clear)
-        if (amount_u64 & 0x8000000000000000) == 0 {
-            // This is XRP - the value is the amount directly
-            return Some(Value::String(amount_u64.to_string()));
-        }
-
-        // This might be an IOU amount - try to deserialize
-        if let Ok(decimal_value) = _deserialize_issued_currency_amount(bytes.try_into().ok()?) {
-            return Some(Value::String(decimal_value.to_string()));
-        }
-    }
-
-    // For other amounts (like IOU with currency/issuer), we need more complex parsing
-    // This would require parsing the full Amount structure from bytes
-    None
-}
-
 pub fn trace_amount(
     _env: wasm_exec_env_t,
     msg_read_ptr: *const u8,
@@ -1473,12 +1414,15 @@ pub fn trace_amount(
     if msg_read_len > MAX_WASM_PARAM_LENGTH || amount_len > MAX_WASM_PARAM_LENGTH {
         return HostError::DataFieldTooLarge as i32;
     }
-    if amount_len != 8 && amount_len != 41 {
+
+    // TokenAmount STAmount format is always 48 bytes
+    const TOKEN_AMOUNT_SIZE: usize = 48;
+    if amount_len != TOKEN_AMOUNT_SIZE {
         return HostError::InvalidParams as i32;
     }
 
     debug!(
-        "trace() params: msg_read_ptr={:?} msg_read_len={} amount_ptr={:?} amount_len={}",
+        "trace_amount() params: msg_read_ptr={:?} msg_read_len={} amount_ptr={:?} amount_len={}",
         msg_read_ptr, msg_read_len, amount_ptr, amount_len
     );
 
@@ -1486,22 +1430,114 @@ pub fn trace_amount(
         return HostError::InvalidDecoding as i32;
     };
 
-    let bytes: &[u8] = unsafe { std::slice::from_raw_parts(amount_ptr, amount_len) };
-    let amount_json = match encode_amount_json(bytes) {
-        Some(json) => json,
-        None => return HostError::InvalidParams as i32,
+    let amount_bytes: [u8; TOKEN_AMOUNT_SIZE] = unsafe {
+        match std::slice::from_raw_parts(amount_ptr, amount_len).try_into() {
+            Ok(arr) => arr,
+            Err(_) => return HostError::InvalidParams as i32,
+        }
     };
-    let amount_json = amount_json.to_string();
-    let amount_json_len = amount_json.len();
 
-    if amount_json_len > 0 {
-        println!(
-            "WASM TRACE: {message} ({amount_json} | {} data bytes)",
-            amount_json_len
-        );
-    } else {
-        println!("WASM TRACE: {message}");
+    // Parse the STAmount format to determine token type and display appropriate info
+    let amount_info = parse_stamount_for_display(&amount_bytes);
+
+    println!(
+        "WASM TRACE: {message} ({amount_info} | {} amount bytes)",
+        amount_len
+    );
+
+    (amount_info.len() + msg_read_len + 1) as i32
+}
+
+/// Parse STAmount bytes and format for display according to token type
+fn parse_stamount_for_display(bytes: &[u8; 48]) -> String {
+    // Check if this is XRP (first 8 bytes contain raw drops, rest are zeros)
+    if bytes[8..48].iter().all(|&b| b == 0) {
+        // XRP format: raw drop amount in first 8 bytes
+        let drops = u64::from_be_bytes([
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+        ]);
+        return format!("XRP: {} drops", drops);
     }
 
-    (amount_json_len + msg_read_len + 1) as i32
+    // Check the first byte for MPT/IOU flags
+    let first_byte = bytes[0];
+
+    // Check for MPT: flag byte 0x60 (positive) or 0x20 (negative)
+    if first_byte == 0x60 || first_byte == 0x20 {
+        // MPT format: flag byte + 8-byte amount + 24-byte MptId
+        let is_positive = first_byte == 0x60;
+        let sign_str = if is_positive { "+" } else { "-" };
+
+        let amount = u64::from_be_bytes([
+            bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8],
+        ]);
+
+        // Parse MptId: 4-byte sequence + 20-byte issuer
+        let sequence = u32::from_be_bytes([bytes[9], bytes[10], bytes[11], bytes[12]]);
+
+        let issuer_bytes: [u8; ACCOUNT_ID_LEN] =
+            bytes[13..33].try_into().unwrap_or([0u8; ACCOUNT_ID_LEN]);
+        let issuer = match encode_base58(&issuer_bytes, &[0x0], Some(20)) {
+            Ok(addr) => addr,
+            Err(_) => hex::encode_upper(&issuer_bytes),
+        };
+
+        return format!(
+            "MPT: {}{} units, Sequence: {}, Issuer: {}",
+            sign_str, amount, sequence, issuer
+        );
+    }
+
+    // Check for IOU: first byte has type bit set (0x80 or higher)
+    if first_byte & 0x80 != 0 {
+        // IOU format: 8-byte OpaqueFloat + 20-byte CurrencyCode + 20-byte AccountID
+        let opaque_float_bytes: [u8; 8] = bytes[0..8].try_into().unwrap_or([0u8; 8]);
+
+        // Try to deserialize the float value for display
+        let amount_str = match _deserialize_issued_currency_amount(opaque_float_bytes) {
+            Ok(value) => format!("{}", value),
+            Err(_) => format!("0x{}", hex::encode_upper(&opaque_float_bytes)),
+        };
+
+        // Parse currency code (20 bytes)
+        let currency_bytes: [u8; CURRENCY_LEN] =
+            bytes[8..28].try_into().unwrap_or([0u8; CURRENCY_LEN]);
+        let currency_str = format_currency_code(&currency_bytes);
+
+        // Parse issuer (20 bytes)
+        let issuer_bytes: [u8; ACCOUNT_ID_LEN] =
+            bytes[28..48].try_into().unwrap_or([0u8; ACCOUNT_ID_LEN]);
+        let issuer = match encode_base58(&issuer_bytes, &[0x0], Some(20)) {
+            Ok(addr) => addr,
+            Err(_) => hex::encode_upper(&issuer_bytes),
+        };
+
+        return format!("IOU: {} {}, Issuer: {}", amount_str, currency_str, issuer);
+    }
+
+    // Fallback for unknown format
+    format!(
+        "Unknown amount format: 0x{}",
+        hex::encode_upper(&bytes[0..8])
+    )
+}
+
+/// Format currency code for display (handles both standard 3-char codes and hex)
+fn format_currency_code(currency_bytes: &[u8; 20]) -> String {
+    // Check if it's a standard currency code (non-zero bytes at positions 12-14)
+    if currency_bytes[0..12].iter().all(|&b| b == 0)
+        && currency_bytes[15..20].iter().all(|&b| b == 0)
+        && currency_bytes[12..15].iter().any(|&b| b != 0)
+    {
+        // Standard 3-character currency code
+        let code_bytes = &currency_bytes[12..15];
+        if let Ok(code_str) = std::str::from_utf8(code_bytes) {
+            if code_str.chars().all(|c| c.is_ascii_alphanumeric()) {
+                return code_str.to_string();
+            }
+        }
+    }
+
+    // Non-standard currency code, display as hex
+    format!("0x{}", hex::encode_upper(currency_bytes))
 }

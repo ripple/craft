@@ -3,7 +3,7 @@ use colored::*;
 use std::path::Path;
 use std::process::Command;
 
-/// A unified test runner that simplifies wasm-host testing
+/// A unified test runner that simplifies wasm_host_simulator testing
 pub struct TestRunner {
     dir: std::path::PathBuf,
     project: String,
@@ -28,10 +28,10 @@ impl TestRunner {
     pub fn run_test(&self, test_case: &str, function: Option<&str>) -> Result<TestResult> {
         println!("{}", format!("Running test case: {test_case}").cyan());
 
-        // Ensure wasm-host is built
-        self.ensure_wasm_host_built()?;
+        // Ensure wasm_host_simulator is built
+        self.ensure_wasm_host_simulator_built()?;
 
-        let wasm_host_path = self.get_wasm_host_path()?;
+        let wasm_host_simulator_path = self.get_wasm_host_simulator_path()?;
 
         let mut args = vec![
             "--dir",
@@ -51,10 +51,10 @@ impl TestRunner {
             args.push("--verbose");
         }
 
-        let output = Command::new(&wasm_host_path)
+        let output = Command::new(&wasm_host_simulator_path)
             .args(&args)
             .output()
-            .map_err(|e| anyhow::anyhow!("Failed to run wasm-host: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to run wasm_host_simulator: {}", e))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -129,34 +129,37 @@ impl TestRunner {
         Ok(results)
     }
 
-    fn ensure_wasm_host_built(&self) -> Result<()> {
-        let wasm_host_path = self.get_wasm_host_path()?;
+    fn ensure_wasm_host_simulator_built(&self) -> Result<()> {
+        let wasm_host_simulator_path = self.get_wasm_host_simulator_path()?;
 
-        if !wasm_host_path.exists() {
-            println!("{}", "Building wasm-host testing environment...".yellow());
+        if !wasm_host_simulator_path.exists() {
+            println!(
+                "{}",
+                "Building wasm-host-simulator testing environment...".yellow()
+            );
 
             let status = Command::new("cargo")
-                .args(["build", "--release", "-p", "wasm-host"])
+                .args(["build", "--release", "-p", "wasm_host_simulator"])
                 .status()
                 .map_err(|e| anyhow::anyhow!("Failed to run cargo build: {}", e))?;
 
             if !status.success() {
                 return Err(anyhow::anyhow!(
-                    "Failed to build wasm-host. Make sure you're in the workspace root directory."
+                    "Failed to build wasm_host_simulator. Make sure you're in the workspace root directory."
                 ));
             }
 
-            println!("{}", "wasm-host built successfully!".green());
+            println!("{}", "wasm-host-simulator built successfully!".green());
         }
 
         Ok(())
     }
 
-    fn get_wasm_host_path(&self) -> Result<std::path::PathBuf> {
+    fn get_wasm_host_simulator_path(&self) -> Result<std::path::PathBuf> {
         let path = std::env::current_dir()?
             .join("target")
             .join("release")
-            .join("wasm-host");
+            .join("../../../wasm_host_simulator");
         Ok(path)
     }
 

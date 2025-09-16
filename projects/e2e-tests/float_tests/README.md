@@ -1,6 +1,6 @@
 # Float Operations Test Module
 
-This WebAssembly module tests floating-point operations in wasm-host.
+This WebAssembly module tests floating-point operations in wasm-host-simulator.
 
 ## Building
 
@@ -17,13 +17,13 @@ The resulting WASM file will be located at:
 ./target/wasm32-unknown-unknown/release/float_tests.wasm
 ```
 
-## Running with wasm-host
+## Running with wasm-host-simulator
 
-Run the contract using the wasm-host application:
+Run the contract using the wasm-host-simulator application:
 
 ```bash
 cd ../../../
-cargo run --package wasm-host --bin wasm-host -- --dir projects/e2e-tests/float_tests --project float_tests
+cargo run --package wasm-host-simulator --bin wasm-host-simulator -- --dir projects/e2e-tests/float_tests --project float_tests
 ```
 
 ## Rounding Modes
@@ -65,6 +65,6 @@ The test module covers:
 
 ## Notes
 
-- The wasm-host uses mock implementations and may not reflect production behavior
+- The wasm-host-simulator uses mock implementations and may not reflect production behavior
 - For production testing, use devnet or a standalone rippled node
 - Float values are represented in XRPL's custom 64-bit format, not IEEE 754

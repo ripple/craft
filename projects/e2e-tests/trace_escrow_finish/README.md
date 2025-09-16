@@ -22,16 +22,16 @@ The resulting WASM file will be located at:
 ./target/wasm32-unknown-unknown/release/trace_escrow_finish.wasm
 ```
 
-## Running with wasm-host
+## Running with wasm-host-simulator
 
-Run the contract using the wasm-host application:
+Run the contract using the wasm-host-simulator application:
 
 ```bash
 cd ../../../
-cargo run --package wasm-host --bin wasm-host -- --dir projects/e2e-tests/trace_escrow_finish --project trace_escrow_finish
+cargo run --package wasm-host-simulator --bin wasm-host-simulator -- --dir projects/e2e-tests/trace_escrow_finish --project trace_escrow_finish
 ```
 
 ### Note
 
-Please note that the wasm-host only has mock host functions. Please use the devnet (or a standalone rippled node) to
+Please note that the wasm-host-simulator only has mock host functions. Please use the devnet (or a standalone rippled node) to
 test with a real implementation and real data.

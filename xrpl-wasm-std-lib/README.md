@@ -311,8 +311,8 @@ cargo build --target wasm32-unknown-unknown --release
 ```
 
 ```shell
-# From the wasm-host crate:
-cargo run -p wasm-host -- --dir path/to/project --project project_name --function finish
+# From the wasm-host-simulator crate:
+cargo run -p wasm-host-simulator -- --dir path/to/project --project project_name --function finish
 ```
 
 ### Time-based Release
@@ -475,4 +475,4 @@ match risky_operation() {
 - [EscrowFinish Documentation](https://xrpl.org/docs/references/protocol/transactions/types/escrowfinish)
 - [Smart Escrow System Design](../DESIGN.md)
 - [Example Projects](../projects/)
-- [WASM Host Testing Tool](../wasm-host/README.md)
+- [WASM Host Testing Tool](../wasm-host-simulator/README.md)

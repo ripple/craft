@@ -138,7 +138,7 @@ jobs:
       - name: Run code in Markdown files
         run: |
           # Find all .md files and run code blocks
-          find . -type d -name target -prune -false -o -name "*.md" -print | while read -r md_file; do
+          find . -type d \( -name target -o -name node_modules \) -prune -false -o -name "*.md" -print | while read -r md_file; do
             echo "🔧 Running code blocks in $md_file"
             set -euo pipefail
             md_dir=$(dirname "$md_file")

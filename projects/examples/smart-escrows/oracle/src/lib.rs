@@ -61,7 +61,11 @@ pub extern "C" fn finish() -> i32 {
 
     let slot: i32;
     unsafe {
-        slot = xrpl_wasm_std_lib::host::cache_ledger_obj(oracle_keylet.as_ptr(), oracle_keylet.len(), 0);
+        slot = xrpl_wasm_std_lib::host::cache_ledger_obj(
+            oracle_keylet.as_ptr(),
+            oracle_keylet.len(),
+            0,
+        );
         if slot < 0 {
             return 0;
         };

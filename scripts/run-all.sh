@@ -41,13 +41,13 @@ run_script() {
 
 # Run all test scripts in order
 # Note: pre-commit checks are handled by GitHub Actions, not locally
-run_script "helpers/clippy.sh"
-run_script "helpers/fmt.sh"
-run_script "helpers/host-function-audit.sh"
-run_script "helpers/check-wasm-exports.sh"
+run_script "/clippy.sh"
+run_script "/fmt.sh"
+run_script "/host-function-audit.sh"
+run_script "/check-wasm-exports.sh"
 run_script "build-and-test.sh"
-run_script "helpers/run-markdown.sh"
-run_script "helpers/e2e-tests.sh"
+run_script "/run-markdown.sh"
+run_script "/e2e-tests.sh"
 
 # Calculate and display total time
 end_time=$(date +%s)

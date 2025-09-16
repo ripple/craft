@@ -30,13 +30,13 @@ You can also run individual test suites:
 - **`build-and-test.sh`** - Build and test the native workspace, build WASM projects, and run craft
 - **`build.sh`** - Build all projects (accepts `release` argument for release builds)
 
-### Helper Scripts (in `helpers/` folder)
+### Helper Scripts
 
-- **`helpers/clippy.sh`** - Run Clippy linting on both native and WASM workspaces
-- **`helpers/fmt.sh`** - Check Rust code formatting
-- **`helpers/run-markdown.sh`** - Execute bash code blocks in Markdown files
-- **`helpers/e2e-tests.sh`** - Run end-to-end integration tests
-- **`helpers/host-function-audit.sh`** - Audit host functions against XRPLd (requires Node.js)
+- **`clippy.sh`** - Run Clippy linting on both native and WASM workspaces
+- **`fmt.sh`** - Check Rust code formatting
+- **`run-markdown.sh`** - Execute bash code blocks in Markdown files
+- **`e2e-tests.sh`** - Run end-to-end integration tests
+- **`host-function-audit.sh`** - Audit host functions against XRPLd (requires Node.js)
 
 ## Usage Examples
 
@@ -45,7 +45,7 @@ You can also run individual test suites:
 ./scripts/setup.sh
 
 # Run quick checks before committing
-./scripts/helpers/fmt.sh
+./scripts/fmt.sh
 
 # Run comprehensive tests
 ./scripts/run-all.sh
@@ -54,10 +54,10 @@ You can also run individual test suites:
 ./scripts/build.sh release
 
 # Run only clippy checks
-./scripts/helpers/clippy.sh
+./scripts/clippy.sh
 
 # Run only end-to-end tests
-./scripts/helpers/e2e-tests.sh
+./scripts/e2e-tests.sh
 ```
 
 ## Environment Variables
@@ -94,14 +94,13 @@ Actions workflows, ensuring perfect consistency between local and CI environment
 setup.sh (run first)
 ├── build-and-test.sh
 ├── build.sh
-└── helpers/
-    ├── check-wasm-exports.sh
-    ├── clippy.sh
-    ├── e2e-tests.sh
-    │   └── ../build.sh (dependency)
-    ├── fmt.sh
-    ├── host-function-audit.sh (requires Node.js)
-    └── run-markdown.sh
+├── check-wasm-exports.sh
+├── clippy.sh
+├── e2e-tests.sh
+    └── ../build.sh (dependency)
+├── fmt.sh
+├── host-function-audit.sh (requires Node.js)
+└── run-markdown.sh
 ```
 
 **Note**: Pre-commit checks are handled by the GitHub Actions workflow using `pre-commit/action@v3.0.1` rather than a

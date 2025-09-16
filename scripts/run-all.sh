@@ -45,7 +45,7 @@ run_script "/clippy.sh"
 run_script "/fmt.sh"
 run_script "/host-function-audit.sh"
 run_script "/check-wasm-exports.sh"
-run_script "build-and-test.sh"
+run_script "/build-and-test.sh"
 run_script "/run-markdown.sh"
 run_script "/e2e-tests.sh"
 

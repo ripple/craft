@@ -24,13 +24,16 @@ use wamr_rust_sdk::instance::Instance;
 use wamr_rust_sdk::module::Module;
 use wamr_rust_sdk::runtime::Runtime;
 use wamr_rust_sdk::value::WasmValue;
+use std::time::Instant;
 
 #[rustfmt::skip]
 #[allow(unused)]
 pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_source: MockData) -> Result<bool, RuntimeError>{
     debug!("Setting up wamr runtime and registering host functions");
     let mut data_provider = DataProvider::new(data_source);
-    let runtime = Runtime::builder()
+    let t0 = Instant::now();
+    let mut pool = vec![0u8; 1024 * 1024];
+    let runtime = Runtime::builder().run_as_interpreter().use_memory_pool(pool)
         .use_system_allocator()
         .register_host_function("get_ledger_sqn", get_ledger_sqn as *mut c_void, "()i", 60, data_provider.as_ptr())
         .register_host_function("get_parent_ledger_time", get_parent_ledger_time as *mut c_void, "()i", 60, data_provider.as_ptr())
@@ -97,7 +100,12 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
     debug!("Executing WASM function: {}", func_name);
     let func = Function::find_export_func(&instance, "finish")?;
     let gas_begin = gas_cap.map_or(0, |x|x);
+    let t1 = Instant::now();
     let results = func.call(&instance, &vec![], gas_cap)?;
+    let elapsed0 = t0.elapsed();
+    let elapsed1 = t1.elapsed();
+    info!("whole execution time: {} ms", elapsed0.as_secs_f64() * 1000.0);
+    info!("func execution time : {} ms", elapsed1.as_secs_f64() * 1000.0);
     match results {
         (rv, gas_end) if rv.len() == 1 => {
             if let WasmValue::I32(r1) = rv[0] {

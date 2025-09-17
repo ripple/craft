@@ -21,9 +21,13 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Path to the WASM file
+    /// Path to the project directory containing fixtures
     #[arg(long)]
     dir: Option<String>,
+
+    /// Path to the WASM module file (.wasm). Accepts relative or absolute paths. If specified, this overrides the default build path.
+    #[arg(long)]
+    file: Option<String>,
 
     /// Test case to run (success/failure)
     #[arg(short, long, default_value = "success")]
@@ -74,7 +78,7 @@ fn load_test_data(
         )
         .into());
     }
-
+    let base_path = PathBuf::from("/Users/pwang/wasm/craft/projects/e2e-tests/host_functions_test/fixtures/success");
     let tx_path = base_path.join("tx.json");
     let lo_path = base_path.join("ledger_object.json");
     let lh_path = base_path.join("ledger_header.json");
@@ -106,11 +110,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    let wasm_file = base_path
-        .join("target/wasm32-unknown-unknown/debug")
-        .join(format!("{}.wasm", args.project))
-        .to_string_lossy()
-        .to_string();
+    let wasm_file = String::from("/Users/pwang/wasm/craft/wat/test.wasm");
+
+    //     if let Some(path) = args.file.clone() {
+    //     match std::fs::canonicalize(PathBuf::from(path)) {
+    //         Ok(p) => p.to_string_lossy().to_string(),
+    //         Err(e) => {
+    //             eprintln!("Error: Unable to resolve WASM file path: {}", e);
+    //             std::process::exit(1);
+    //         }
+    //     }
+    // } else {
+    //     base_path
+    //         .join("target/wasm32-unknown-unknown/debug")
+    //         .join(format!("{}.wasm", args.project))
+    //         .to_string_lossy()
+    //         .to_string()
+    // };
 
     // Initialize logger with appropriate level
     let log_level = if args.verbose {
@@ -136,6 +152,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Target function: {} (default is 'finish')", args.function);
     info!("Using test case: {}", args.test_case);
     info!("Project: {}", args.project);
+    info!("WASM file: {}", wasm_file);
     info!(
         "Source Directory: {}",
         args.dir.as_deref().unwrap_or("default")
@@ -156,7 +173,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
     // TODO: Make Gas Cap optional via https://github.com/ripple/craft/issues/141
-    match vm_wamr::run_func(wasm_file, &args.function, Some(args.gas_cap), data_source) {
+    match vm_wamr::run_func(wasm_file, &args.function, Some(2_000_000_000), data_source) {
         Ok(result) => {
             if (result && args.test_case == "success") || (!result && args.test_case == "failure") {
                 println!("-------------------------------------------------");

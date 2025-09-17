@@ -1,6 +1,8 @@
 use crate::data_provider::DataProvider;
 use crate::host_functions_wamr::{
     account_keylet, amm_keylet, cache_ledger_obj, check_keylet, compute_sha512_half,
+    bn254_add_helper,
+    bn254_mul_helper,
     credential_keylet, delegate_keylet, deposit_preauth_keylet, did_keylet, escrow_keylet,
     float_add, float_compare, float_divide, float_from_int, float_from_uint, float_log,
     float_multiply, float_pow, float_root, float_set, float_subtract,
@@ -50,6 +52,8 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("get_ledger_obj_nested_array_len", get_ledger_obj_nested_array_len as *mut c_void, "(i*~)i", 70, data_provider.as_ptr())
         .register_host_function("update_data", update_data as *mut c_void, "(*~)i", 1000, data_provider.as_ptr())
         .register_host_function("compute_sha512_half", compute_sha512_half as *mut c_void, "(*~*~)i", 2000, data_provider.as_ptr())
+        .register_host_function("bn254_add_helper", bn254_add_helper as *mut c_void, "(*~*~*~)i", 2000, data_provider.as_ptr())
+        .register_host_function("bn254_mul_helper", bn254_mul_helper as *mut c_void, "(*~*~*~)i", 2000, data_provider.as_ptr())
         .register_host_function("account_keylet", account_keylet as *mut c_void, "(*~*~)i", 350, data_provider.as_ptr())
         .register_host_function("amm_keylet", amm_keylet as *mut c_void, "(*~*~*~)i", 350, data_provider.as_ptr())
         .register_host_function("credential_keylet", credential_keylet as *mut c_void, "(*~*~*~*~)i", 350, data_provider.as_ptr())

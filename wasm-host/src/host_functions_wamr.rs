@@ -1505,3 +1505,180 @@ pub fn trace_amount(
 
     (amount_json_len + msg_read_len + 1) as i32
 }
+
+/// BN254 curve helper: add two points encoded as bytes and write resulting point bytes to out buffer.
+/// Stub implementation - not implemented yet. Validates basic buffer sizes and returns an error.
+use ark_bn254::{G1Affine, G2Affine, Bn254, Fr, Fq, Fq2};
+use ark_ff::{One, PrimeField};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
+
+pub fn bn254_add_helper(
+    _env: wasm_exec_env_t,
+    p1_ptr: *const u8,
+    p1_len: usize,
+    p2_ptr: *const u8,
+    p2_len: usize,
+    out_buff_ptr: *mut u8,
+    out_buff_len: usize,
+) -> i32 {
+    const G1_LEN: usize = 64;
+    const FQ_LEN: usize = 32;
+
+    if p1_ptr.is_null() || p1_len != G1_LEN 
+        || p2_ptr.is_null() || p2_len != G1_LEN 
+        || out_buff_ptr.is_null() || out_buff_len < G1_LEN 
+    {
+        return HostError::InvalidParams as i32;;
+    }
+    let mut p1_slice = get_data(p1_ptr, p1_len);
+    let mut p2_slice = get_data(p2_ptr, p2_len);
+
+    // To little-endian
+    let (p1_x_slice, p1_y_slice) = p1_slice.split_at_mut(G1_LEN/2);
+    p1_x_slice.reverse();
+    p1_y_slice.reverse();
+    let (p2_x_slice, p2_y_slice) = p2_slice.split_at_mut(G1_LEN/2);
+    p2_x_slice.reverse();
+    p2_y_slice.reverse();
+
+    let p1_x = match Fq::deserialize_uncompressed(&*p1_x_slice) {
+        Ok(v) => v,
+        Err(_) => return HostError::InvalidDecoding as i32,
+    };
+    let p1_y = match Fq::deserialize_uncompressed(&*p1_y_slice) {
+        Ok(v) => v,
+        Err(_) => return HostError::InvalidDecoding as i32,
+    };
+    let p1 = G1Affine::new_unchecked(p1_x, p1_y);
+
+    let p2_x = match Fq::deserialize_uncompressed(&*p2_x_slice) {
+        Ok(v) => v,
+        Err(_) => return HostError::InvalidDecoding as i32,
+    };
+    let p2_y = match Fq::deserialize_uncompressed(&*p2_y_slice) {
+        Ok(v) => v,
+        Err(_) => return HostError::InvalidDecoding as i32,
+    };
+    let p2 = G1Affine::new_unchecked(p2_x, p2_y);
+
+    let sum = p1.into_group() + p2;
+    let result = sum.into_affine();
+
+    let mut result_bytes = [0u8; G1_LEN];
+    let (x, y) = match result.xy() {
+        Some(pair) => pair,
+        None => return HostError::InternalError as i32,
+    };
+
+    // To big-endian
+    let mut x_bytes = [0u8; FQ_LEN];
+    if x.serialize_uncompressed(&mut x_bytes[..]).is_err() {
+        return HostError::InternalError as i32;
+    }
+    x_bytes.reverse(); 
+    let mut y_bytes = [0u8; FQ_LEN];
+    if y.serialize_uncompressed(&mut y_bytes[..]).is_err() {
+        return HostError::InternalError as i32;
+    }
+    y_bytes.reverse(); 
+
+    result_bytes[0..FQ_LEN].copy_from_slice(&x_bytes);
+    result_bytes[FQ_LEN..(2 * FQ_LEN)].copy_from_slice(&y_bytes);
+    if result_bytes.len() > out_buff_len {
+        return HostError::InvalidParams as i32;
+    }
+    let output_size: i32 = result_bytes.len() as i32;
+    set_data(output_size, out_buff_ptr, result_bytes.to_vec());
+
+    output_size
+}
+
+/// BN254 curve helper: multiply a G1 point by a scalar. Accepts point bytes `[x||y]` big-endian and
+/// scalar bytes (little-endian expected by from_le_bytes_mod_order). Writes resulting point `[x||y]` big-endian.
+pub fn bn254_mul_helper(
+    _env: wasm_exec_env_t,
+    p1_ptr: *const u8,
+    p1_len: usize,
+    scalar_ptr: *const u8,
+    scalar_len: usize,
+    out_buff_ptr: *mut u8,
+    out_buff_len: usize,
+) -> i32 {
+    const G1_LEN: usize = 64;
+    const FQ_LEN: usize = 32;
+    const SCALAR_LEN: usize = 32; // typical FE size for Fr
+
+    if p1_ptr.is_null() || p1_len != G1_LEN
+        || scalar_ptr.is_null() || scalar_len != SCALAR_LEN
+        || out_buff_ptr.is_null() || out_buff_len < G1_LEN
+    {
+        return HostError::InvalidParams as i32;
+    }
+
+    let mut p_slice = get_data(p1_ptr, p1_len);
+    let mut s_slice = get_data(scalar_ptr, scalar_len);
+
+    if p_slice.len() != G1_LEN || s_slice.len() != SCALAR_LEN {
+        return HostError::InvalidParams as i32;
+    }
+
+    // To little-endian for field deserialization
+    let (p_x_slice, p_y_slice) = p_slice.split_at_mut(G1_LEN / 2);
+    p_x_slice.reverse();
+    p_y_slice.reverse();
+    s_slice.reverse();
+
+    let p_x = match Fq::deserialize_uncompressed(&*p_x_slice) {
+        Ok(v) => v,
+        Err(_) => return HostError::InvalidDecoding as i32,
+    };
+    let p_y = match Fq::deserialize_uncompressed(&*p_y_slice) {
+        Ok(v) => v,
+        Err(_) => return HostError::InvalidDecoding as i32,
+    };
+
+    let p_aff = G1Affine::new_unchecked(p_x, p_y);
+
+    // Interpret scalar as little-endian bytes into Fr
+    let scalar_fr = Fr::from_le_bytes_mod_order(&*s_slice);
+
+    // Multiply
+    let result = p_aff.mul_bigint(scalar_fr.into_bigint()).into_affine();
+
+    // let (x, y) = match result.xy() {
+    //     Some(xy) => xy,
+    //     None => return HostError::InternalError as i32,
+    // };
+
+    let mut result_bytes = [0u8; G1_LEN];
+    let (x, y) = match result.xy() {
+        Some(pair) => pair,
+        None => return HostError::InternalError as i32,
+    };
+
+    let mut x_bytes = vec![0u8; FQ_LEN];
+    if x.serialize_uncompressed(&mut x_bytes[..]).is_err() {
+        return HostError::InternalError as i32;
+    }
+    x_bytes.reverse();
+    let mut y_bytes = vec![0u8; FQ_LEN];
+    if y.serialize_uncompressed(&mut y_bytes[..]).is_err() {
+        return HostError::InternalError as i32;
+    }
+    y_bytes.reverse();
+
+    // let mut result_bytes = Vec::with_capacity(G1_LEN);
+    // result_bytes.extend_from_slice(&x_bytes);
+    // result_bytes.extend_from_slice(&y_bytes);
+    result_bytes[0..FQ_LEN].copy_from_slice(&x_bytes);
+    result_bytes[FQ_LEN..(2 * FQ_LEN)].copy_from_slice(&y_bytes);
+
+    if result_bytes.len() > out_buff_len {
+        return HostError::InvalidParams as i32;
+    }
+    let output_size: i32 = result_bytes.len() as i32;
+    set_data(output_size, out_buff_ptr, result_bytes.to_vec());
+
+    output_size
+}

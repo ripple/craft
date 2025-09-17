@@ -399,6 +399,50 @@ unsafe extern "C" {
         out_buff_len: usize,
     ) -> i32;
 
+    /// BN254 curve helper: add two points encoded as bytes and write resulting point bytes to out buffer.
+    ///
+    /// # Parameters
+    /// - `p1_ptr`: pointer to first point bytes
+    /// - `p1_len`: length of first point bytes
+    /// - `p2_ptr`: pointer to second point bytes
+    /// - `p2_len`: length of second point bytes
+    /// - `out_buff_ptr`: pointer to output buffer where result will be written
+    /// - `out_buff_len`: length of the output buffer
+    ///
+    /// # Returns
+    /// - Returns a positive number of bytes written on success
+    /// - Returns a negative error code on failure (see `../wasm-host/src/data_provider.rs` for codes)
+    pub fn bn254_add_helper(
+        p1_ptr: *const u8,
+        p1_len: usize,
+        p2_ptr: *const u8,
+        p2_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
+    /// BN254 curve helper: multiply a point by a scalar and write resulting point bytes to out buffer.
+    ///
+    /// # Parameters
+    /// - `p1_ptr`: pointer to point bytes (x||y)
+    /// - `p1_len`: length of point bytes (expected 64)
+    /// - `scalar_ptr`: pointer to scalar bytes
+    /// - `scalar_len`: length of scalar bytes
+    /// - `out_buff_ptr`: pointer to output buffer where result will be written
+    /// - `out_buff_len`: length of the output buffer
+    ///
+    /// # Returns
+    /// - Returns a positive number of bytes written on success
+    /// - Returns a negative error code on failure (see `../wasm-host/src/data_provider.rs` for codes)
+    pub fn bn254_mul_helper(
+        p1_ptr: *const u8,
+        p1_len: usize,
+        scalar_ptr: *const u8,
+        scalar_len: usize,
+        out_buff_ptr: *mut u8,
+        out_buff_len: usize,
+    ) -> i32;
+
     /// Checks a key signature when provided the message and public key.
     ///
     /// # Parameters

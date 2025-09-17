@@ -12,6 +12,7 @@ members = [
     "examples/smart-escrows/nft_owner",
     "examples/smart-escrows/notary",
     "examples/smart-escrows/notary_macro_example",
+    "examples/smart-escrows/groth16",
     "examples/smart-escrows/oracle",
     "its/codecov_tests",
     "its/keylet_exists",

@@ -23,7 +23,7 @@ Run the contract using the wasm-host application:
 
 ```bash
 cd ../../../
-cargo run -p wasm-host -- --dir projects/its/keylet_exists --project keylet_exists
+cargo run -p wasm-host -- --dir projects/e2e-tests/keylet_exists --project keylet_exists
 ```
 
 ### Note

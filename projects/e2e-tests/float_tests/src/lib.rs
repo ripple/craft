@@ -5,19 +5,19 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_wasm_std_lib::core::locator::Locator;
-use xrpl_wasm_std_lib::core::types::amount::opaque_float::{FLOAT_NEGATIVE_ONE, FLOAT_ONE};
-use xrpl_wasm_std_lib::decode_hex_32;
-use xrpl_wasm_std_lib::host::trace::DataRepr::AsHex;
-use xrpl_wasm_std_lib::host::trace::{DataRepr, trace, trace_data, trace_float, trace_num};
-use xrpl_wasm_std_lib::host::{
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::core::types::amount::opaque_float::{FLOAT_NEGATIVE_ONE, FLOAT_ONE};
+use xrpl_wasm_std::decode_hex_32;
+use xrpl_wasm_std::host::trace::DataRepr::AsHex;
+use xrpl_wasm_std::host::trace::{DataRepr, trace, trace_data, trace_float, trace_num};
+use xrpl_wasm_std::host::{
     FLOAT_ROUNDING_MODES_TO_NEAREST, cache_ledger_obj, float_add, float_compare, float_divide,
     float_from_int, float_from_uint, float_log, float_multiply, float_pow, float_root, float_set,
     float_subtract, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
     trace_opaque_float,
 };
-use xrpl_wasm_std_lib::sfield;
-use xrpl_wasm_std_lib::sfield::{
+use xrpl_wasm_std::sfield;
+use xrpl_wasm_std::sfield::{
     Account, AccountTxnID, Balance, Domain, EmailHash, Flags, LedgerEntryType, MessageKey,
     OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey, Sequence, TicketCount, TransferRate,
 };

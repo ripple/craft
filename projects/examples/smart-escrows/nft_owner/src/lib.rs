@@ -3,16 +3,16 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_wasm_std_lib::core::ledger_objects::current_escrow;
-use xrpl_wasm_std_lib::core::ledger_objects::nft::get_nft;
-use xrpl_wasm_std_lib::core::ledger_objects::traits::CurrentEscrowFields;
-use xrpl_wasm_std_lib::core::locator::Locator;
-use xrpl_wasm_std_lib::host::Error::InternalError;
-use xrpl_wasm_std_lib::host::get_tx_nested_field;
-use xrpl_wasm_std_lib::host::trace::trace_num;
-use xrpl_wasm_std_lib::host::{Error, Result, Result::Err, Result::Ok};
-use xrpl_wasm_std_lib::sfield;
-use xrpl_wasm_std_lib::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
+use xrpl_wasm_std::core::ledger_objects::current_escrow;
+use xrpl_wasm_std::core::ledger_objects::nft::get_nft;
+use xrpl_wasm_std::core::ledger_objects::traits::CurrentEscrowFields;
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::host::Error::InternalError;
+use xrpl_wasm_std::host::get_tx_nested_field;
+use xrpl_wasm_std::host::trace::trace_num;
+use xrpl_wasm_std::host::{Error, Result, Result::Err, Result::Ok};
+use xrpl_wasm_std::sfield;
+use xrpl_wasm_std::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
 
 #[unsafe(no_mangle)]
 pub fn get_first_memo() -> Result<Option<ContractData>> {

@@ -3,13 +3,13 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_wasm_std_lib::core::locator::Locator;
-use xrpl_wasm_std_lib::core::types::account_id::AccountID;
-use xrpl_wasm_std_lib::core::types::keylets::oracle_keylet_safe;
-use xrpl_wasm_std_lib::host::error_codes::match_result_code;
-use xrpl_wasm_std_lib::host::trace::trace_num;
-use xrpl_wasm_std_lib::host::{Result, Result::Err, Result::Ok};
-use xrpl_wasm_std_lib::{host, sfield};
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::core::types::account_id::AccountID;
+use xrpl_wasm_std::core::types::keylets::oracle_keylet_safe;
+use xrpl_wasm_std::host::error_codes::match_result_code;
+use xrpl_wasm_std::host::trace::trace_num;
+use xrpl_wasm_std::host::{Result, Result::Err, Result::Ok};
+use xrpl_wasm_std::{host, sfield};
 
 const ORACLE_OWNER: AccountID =
     AccountID(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
@@ -61,7 +61,7 @@ pub extern "C" fn finish() -> i32 {
 
     let slot: i32;
     unsafe {
-        slot = xrpl_wasm_std_lib::host::cache_ledger_obj(
+        slot = xrpl_wasm_std::host::cache_ledger_obj(
             oracle_keylet.as_ptr(),
             oracle_keylet.len(),
             0,

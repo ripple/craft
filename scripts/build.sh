@@ -25,9 +25,9 @@ rustup target add wasm32-unknown-unknown
 echo "🏗️  Building Native Workspace..."
 cargo build --workspace $RELEASE_MODE
 
-echo "🏗️  Building xrpl-wasm-std-lib for WASM..."
-cargo build -p xrpl-wasm-std-lib --target wasm32-unknown-unknown $RELEASE_MODE
-cargo rustc -p xrpl-wasm-std-lib --target wasm32-unknown-unknown $RELEASE_MODE -- -D warnings
+echo "🏗️  Building xrpl-wasm-std for WASM..."
+cargo build -p xrpl-wasm-std --target wasm32-unknown-unknown $RELEASE_MODE
+cargo rustc -p xrpl-wasm-std --target wasm32-unknown-unknown $RELEASE_MODE -- -D warnings
 
 echo "🏗️  Building WASM Projects Workspace..."
 cd projects

@@ -6,25 +6,25 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_wasm_std_lib::core::locator::Locator;
-use xrpl_wasm_std_lib::core::types::account_id::AccountID;
-use xrpl_wasm_std_lib::core::types::amount::currency_code::CurrencyCode;
-use xrpl_wasm_std_lib::core::types::hash_256::Hash256;
-use xrpl_wasm_std_lib::core::types::keylets::{
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::core::types::account_id::AccountID;
+use xrpl_wasm_std::core::types::amount::currency_code::CurrencyCode;
+use xrpl_wasm_std::core::types::hash_256::Hash256;
+use xrpl_wasm_std::core::types::keylets::{
     KeyletBytes, check_keylet, credential_keylet, delegate_keylet, deposit_preauth_keylet,
     did_keylet, escrow_keylet, line_keylet, nft_offer_keylet, offer_keylet, oracle_keylet,
     paychan_keylet, signers_keylet, ticket_keylet,
 };
-use xrpl_wasm_std_lib::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
-use xrpl_wasm_std_lib::host::{
+use xrpl_wasm_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
+use xrpl_wasm_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
-use xrpl_wasm_std_lib::sfield::{
+use xrpl_wasm_std::sfield::{
     Account, AccountTxnID, Balance, CredentialType, Domain, EmailHash, Flags, Issuer,
     LedgerEntryType, MessageKey, OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey,
     Sequence, Subject, TakerGets, TicketCount, TicketSequence, TransferRate,
 };
-use xrpl_wasm_std_lib::{decode_hex_20, decode_hex_32, host, sfield};
+use xrpl_wasm_std::{decode_hex_20, decode_hex_32, host, sfield};
 
 fn test_account_root() {
     let _ = trace("\n$$$ test_account_root $$$");

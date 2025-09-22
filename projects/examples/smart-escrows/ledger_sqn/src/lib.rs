@@ -3,9 +3,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_wasm_std_lib::host;
-use xrpl_wasm_std_lib::host::error_codes::match_result_code;
-use xrpl_wasm_std_lib::host::trace::trace_num;
+use xrpl_wasm_std::host;
+use xrpl_wasm_std::host::error_codes::match_result_code;
+use xrpl_wasm_std::host::trace::trace_num;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {

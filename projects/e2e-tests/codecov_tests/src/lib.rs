@@ -5,17 +5,17 @@
 extern crate std;
 
 use core::panic;
-use xrpl_wasm_std_lib::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
-use xrpl_wasm_std_lib::core::current_tx::traits::TransactionCommonFields;
-use xrpl_wasm_std_lib::core::locator::Locator;
-use xrpl_wasm_std_lib::core::types::amount::asset::Asset;
-use xrpl_wasm_std_lib::core::types::amount::asset::XrpAsset;
-use xrpl_wasm_std_lib::core::types::amount::mpt_id::MptId;
-use xrpl_wasm_std_lib::core::types::keylets;
-use xrpl_wasm_std_lib::host;
-use xrpl_wasm_std_lib::host::error_codes;
-use xrpl_wasm_std_lib::host::trace::{trace, trace_num as trace_number};
-use xrpl_wasm_std_lib::sfield;
+use xrpl_wasm_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
+use xrpl_wasm_std::core::current_tx::traits::TransactionCommonFields;
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::core::types::amount::asset::Asset;
+use xrpl_wasm_std::core::types::amount::asset::XrpAsset;
+use xrpl_wasm_std::core::types::amount::mpt_id::MptId;
+use xrpl_wasm_std::core::types::keylets;
+use xrpl_wasm_std::host;
+use xrpl_wasm_std::host::error_codes;
+use xrpl_wasm_std::host::trace::{trace, trace_num as trace_number};
+use xrpl_wasm_std::sfield;
 
 mod host_bindings_loose {
     #[cfg(not(target_arch = "wasm32"))]

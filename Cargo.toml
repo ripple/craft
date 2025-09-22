@@ -4,7 +4,7 @@ members = [
     "craft",
     "wasm-host",
     "xrpl-address-macro",
-    "xrpl-wasm-std-lib",
+    "xrpl-wasm-std",
     "wasm-host/xrpld-number"
 ]
 exclude = [

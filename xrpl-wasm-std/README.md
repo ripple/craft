@@ -1,4 +1,4 @@
-# xrpl-wasm-std-lib Library
+# xrpl-wasm-std Library
 
 The XRPL Standard Library provides safe, type-safe access to XRPL host functions for WebAssembly smart contract development. This `no_std` library offers zero-cost abstractions over raw host function calls and handles memory management, error handling, and type conversions.
 
@@ -23,7 +23,7 @@ The XRPL Standard Library provides safe, type-safe access to XRPL host functions
 
 ## Overview
 
-The xrpl-wasm-std-lib library is designed for developing WebAssembly modules that implement conditional logic for XRPL Escrow objects. It provides:
+The xrpl-wasm-std library is designed for developing WebAssembly modules that implement conditional logic for XRPL Escrow objects. It provides:
 
 - **Type-safe access** to transaction and ledger data
 - **Memory-safe operations** with no heap allocations
@@ -37,7 +37,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-xrpl-wasm-std-lib = { path = "../xrpl-wasm-std-lib" }
+xrpl-wasm-std = { path = "../xrpl-wasm-std" }
 
 [lib]
 crate-type = ["cdylib"]
@@ -87,7 +87,7 @@ pub enum Error {
 Access fields from the current transaction being processed:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::current_tx::escrow_finish::EscrowFinish;
+use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
 
 // Create an instance to access the current EscrowFinish transaction
 let tx = EscrowFinish;
@@ -111,7 +111,7 @@ let fulfillment = tx.get_fulfillment()?;           // Optional fulfillment
 Access ledger objects like accounts, escrows, and other on-ledger data:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::ledger_objects::{
+use xrpl_wasm_std::core::ledger_objects::{
     current_escrow::get_current_escrow,
     account::get_account_balance,
 };
@@ -135,7 +135,7 @@ let balance = get_account_balance(&account)?;  // Returns drops (u64)
 Core types for XRPL data:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::types::*;
+use xrpl_wasm_std::core::types::*;
 
 // Account identifier (20 bytes)
 let account: AccountID = /* ... */;
@@ -163,8 +163,8 @@ let tx_type: TransactionType = TransactionType::EscrowFinish;
 Access top-level fields from transactions or objects:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::host::get_tx_field;
-use xrpl_wasm_std_lib::sfield;
+use xrpl_wasm_std::host::get_tx_field;
+use xrpl_wasm_std::sfield;
 
 // Get a field by its field code
 let mut buffer = [0u8; 20];
@@ -176,9 +176,9 @@ let len = get_tx_field(sfield::Account, 0, &mut buffer)?;
 Access fields within complex objects using locators:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::locator::Locator;
-use xrpl_wasm_std_lib::host::get_tx_nested_field;
-use xrpl_wasm_std_lib::sfield;
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::host::get_tx_nested_field;
+use xrpl_wasm_std::sfield;
 
 // Build a locator for Memos[0].MemoType
 let mut locator = Locator::new();
@@ -200,7 +200,7 @@ let len = get_tx_nested_field(&locator.buffer, &mut buffer)?;
 Generate unique identifiers for ledger objects:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::types::keylets::*;
+use xrpl_wasm_std::core::types::keylets::*;
 
 // Account keylet
 let account_key = account_keylet(&account_id)?;
@@ -218,7 +218,7 @@ let cred_key = credential_keylet(&subject, &issuer, credential_type)?;
 ### Cryptographic Functions
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::crypto::compute_sha512_half;
+use xrpl_wasm_std::core::crypto::compute_sha512_half;
 
 // Compute SHA-512 half (first 32 bytes)
 let mut hash = [0u8; 32];
@@ -230,7 +230,7 @@ compute_sha512_half(data, &mut hash)?;
 The only allowed state modification:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::ledger_objects::current_escrow::update_data;
+use xrpl_wasm_std::core::ledger_objects::current_escrow::update_data;
 
 // Update the escrow's data field (max 256 bytes)
 let new_data = b"execution result";
@@ -242,7 +242,7 @@ update_data(new_data)?;
 Debug output during development:
 
 ```rust,ignore
-use xrpl_wasm_std_lib::host::trace::{trace, trace_data, trace_num, DataRepr};
+use xrpl_wasm_std::host::trace::{trace, trace_data, trace_num, DataRepr};
 
 // Simple text trace
 trace("Processing escrow finish")?;
@@ -278,8 +278,8 @@ Only `finish()` must be exported.
 ### Basic Balance Check
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::current_tx::escrow_finish::EscrowFinish;
-use xrpl_wasm_std_lib::core::ledger_objects::account::get_account_balance;
+use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
+use xrpl_wasm_std::core::ledger_objects::account::get_account_balance;
 
 #[no_mangle]
 pub extern "C" fn finish() -> bool {
@@ -318,8 +318,8 @@ cargo run -p wasm-host -- --dir path/to/project --project project_name --functio
 ### Time-based Release
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::ledger_objects::current_escrow::get_current_escrow;
-use xrpl_wasm_std_lib::host::get_parent_ledger_time;
+use xrpl_wasm_std::core::ledger_objects::current_escrow::get_current_escrow;
+use xrpl_wasm_std::host::get_parent_ledger_time;
 
 #[no_mangle]
 pub extern "C" fn finish() -> bool {
@@ -344,8 +344,8 @@ pub extern "C" fn finish() -> bool {
 ### Credential Verification
 
 ```rust,ignore
-use xrpl_wasm_std_lib::core::types::keylets::credential_keylet;
-use xrpl_wasm_std_lib::host::cache_ledger_obj;
+use xrpl_wasm_std::core::types::keylets::credential_keylet;
+use xrpl_wasm_std::host::cache_ledger_obj;
 
 #[no_mangle]
 pub extern "C" fn finish() -> bool {

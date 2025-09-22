@@ -69,8 +69,8 @@ async function main() {
     const hostWrapperFile = await read(
         process.argv[2], 'src/xrpld/app/wasm/HostFuncWrapper.h',
     )
-    const rustHostFunctionFile = await readFile(__dirname, '../xrpl-wasm-std-lib/src/host/host_bindings.rs')
-    const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-wasm-std-lib/src/host/host_bindings_for_testing.rs')
+    const rustHostFunctionFile = await readFile(__dirname, '../xrpl-wasm-std/src/host/host_bindings.rs')
+    const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-wasm-std/src/host/host_bindings_for_testing.rs')
 
     let importHits = [
         ...wasmImportFile.matchAll(

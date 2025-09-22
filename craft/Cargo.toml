@@ -18,9 +18,9 @@ colored = "3.0.0"
 docker-api = "0.14"
 futures = "0.3"
 hex = "0.4"
-inquire = "0.7.5"
+inquire = "0.9.1"
 open = "5.3.2"
-regex = "1.10"
+regex = "1.11"
 reqwest = { version = "0.12", features = ["json"] }
 ripemd = "0.1"
 serde = { version = "1.0", features = ["derive"] }

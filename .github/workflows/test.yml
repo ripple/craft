@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
@@ -37,41 +37,24 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install wasm32 target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Run Clippy (Native Workspace)
-        run: cargo clippy --workspace --all-targets --all-features -- -Dclippy::all
-
-      - name: Run Clippy (WASM Projects Workspace)
-        run: |
-          cd projects
-          cargo clippy --workspace --target wasm32-unknown-unknown --all-features -- -Dclippy::all
-
-      - name: Check WASM contract exports
-        run: |
-          # Check that all WASM projects export the required finish function
-          find ./projects -type d -name "src" | while read -r src_dir; do
-            dir=$(dirname "$src_dir")
-            echo "🔧 Checking exports in $dir"
-            if [[ -f "$src_dir/lib.rs" ]]; then
-              grep -q "finish() -> i32" "$src_dir/lib.rs" || {
-              echo "❌ Missing required finish() -> i32 export in $dir"
-              exit 1
-              }
-            else
-              echo "❌ Missing lib.rs in $src_dir"
-              exit 1
-            fi
-          done
+      - name: Run Clippy linting
+        run: ./scripts/clippy.sh
 
   rustfmt:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
-      - name: Run fmt (Entire Workspace)
-        run: cargo fmt --all -- --check
+      - name: Run formatting check
+        run: ./scripts/fmt.sh
+
+  check_wasm_exports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check WASM contract exports
+        run: ./scripts/check-wasm-exports.sh
 
   # Note: This job should not be "required" for PRs, as during development there may be temporary
   # discrepancies between craft and rippled
@@ -80,8 +63,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Audit host functions to ensure they match the XRPLd host functions
-        run: node tools/compareHostFunctions.js https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
+      - name: Run host function audit
+        run: ./scripts/host-function-audit.sh
 
   build_and_test:
     runs-on: ubuntu-latest
@@ -99,36 +82,8 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Add target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Build & Test Native Workspace
-        run: |
-          # Build and test the native workspace (fast!)
-          cargo build --workspace
-          cargo test --workspace
-
-      - name: Build xrpl-std for WASM
-        run: |
-          cargo build -p xrpl-std --target wasm32-unknown-unknown
-          cargo rustc -p xrpl-std --target wasm32-unknown-unknown -- -D warnings
-
-      - name: Build WASM Projects Workspace
-        run: |
-          cd projects
-          echo "🔧 Building projects workspace for WASM"
-          cargo build --workspace --target wasm32-unknown-unknown
-          cargo build --workspace --target wasm32-unknown-unknown --release
-      - name: Install and run craft
-        run: |
-          cargo install --path craft --force
-          find ./projects/examples -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            contract_name=$(basename "$dir")
-            if [ -d "$dir/fixtures" ]; then
-              craft build $contract_name -r -O aggressive || exit 1
-            fi
-          done
+      - name: Run build and test
+        run: ./scripts/build-and-test.sh
 
   run-markdown:
     runs-on: ubuntu-latest
@@ -136,24 +91,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Run code in Markdown files
-        run: |
-          # Find all .md files and run code blocks
-          find . -type d -name target -prune -false -o -name "*.md" -print | while read -r md_file; do
-            echo "🔧 Running code blocks in $md_file"
-            set -euo pipefail
-            md_dir=$(dirname "$md_file")
-
-            awk '
-              BEGIN { inblock=0 }
-              /^```bash/ { inblock=1; next }
-              /^```/     { if (inblock) inblock=0; next }
-              inblock    { print }
-            ' "$md_file" | (cd "$md_dir" && bash) || {
-              echo "❌ Bash code blocks in $md_file failed"
-              exit 1
-            }
-            echo "✅ Bash code blocks in $md_file succeeded"
-          done
+        run: ./scripts/run-markdown.sh
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -172,20 +110,5 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Add target
-        run: rustup target add wasm32-unknown-unknown
-
-      - name: Build
-        run: |
-          ./build.sh
-          ./build.sh release
-
-      - name: Run integration tests
-        run: |
-          find ./projects -name "Cargo.toml" -type f | while read -r cargo_file; do
-            dir=$(dirname "$cargo_file")
-            contract_name=$(basename "$dir")
-            if [ -d "$dir/fixtures" ]; then
-              cargo run --package wasm-host --bin wasm-host -- -p "$contract_name" --dir $dir || exit 1
-            fi
-          done
+      - name: Run end-to-end tests
+        run: ./scripts/e2e-tests.sh

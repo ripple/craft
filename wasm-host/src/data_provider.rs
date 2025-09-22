@@ -104,7 +104,10 @@ pub struct LocatorUnpacker {
 impl LocatorUnpacker {
     pub fn from_bytes(buffer: Vec<u8>) -> Option<LocatorUnpacker> {
         let packed_bytes: usize = buffer.len();
-        if packed_bytes > LOCATOR_BUFFER_SIZE || packed_bytes == 0 || packed_bytes % 4 != 0 {
+        if packed_bytes > LOCATOR_BUFFER_SIZE
+            || packed_bytes == 0
+            || !packed_bytes.is_multiple_of(4)
+        {
             None
         } else {
             Some(LocatorUnpacker {

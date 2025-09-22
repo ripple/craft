@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
@@ -38,7 +38,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run Clippy linting
-        run: ./scripts/helpers/clippy.sh
+        run: ./scripts/clippy.sh
 
   rustfmt:
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Run formatting check
-        run: ./scripts/helpers/fmt.sh
+        run: ./scripts/fmt.sh
 
   check_wasm_exports:
     runs-on: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Check WASM contract exports
-        run: ./scripts/helpers/check-wasm-exports.sh
+        run: ./scripts/check-wasm-exports.sh
 
   # Note: This job should not be "required" for PRs, as during development there may be temporary
   # discrepancies between craft and rippled
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Run host function audit
-        run: ./scripts/helpers/host-function-audit.sh
+        run: ./scripts/host-function-audit.sh
 
   build_and_test:
     runs-on: ubuntu-latest
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Run code in Markdown files
-        run: ./scripts/helpers/run-markdown.sh
+        run: ./scripts/run-markdown.sh
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -111,4 +111,4 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run end-to-end tests
-        run: ./scripts/helpers/e2e-tests.sh
+        run: ./scripts/e2e-tests.sh

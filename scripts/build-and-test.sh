@@ -11,9 +11,6 @@ cd "$REPO_ROOT"
 
 echo "🔧 Running build and test workflow..."
 
-# Set RUSTFLAGS to match CI environment
-export RUSTFLAGS="${RUSTFLAGS:-"-Dwarnings"}"
-
 # Parse command line arguments for release mode
 RELEASE_ARG=""
 if [[ "${1:-}" == "release" ]]; then

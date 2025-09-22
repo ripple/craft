@@ -28,6 +28,7 @@ cargo install --path craft
 ## Update detection
 
 When craft starts, it detects if the installed binary is stale compared to your local source:
+
 - Compares the binary's build commit to your Git HEAD
 - Detects uncommitted changes (dirty working tree)
 - Falls back to file timestamps if Git metadata isn't available
@@ -96,29 +97,36 @@ craft open-explorer
 ## Command reference
 
 - build
+
   - Usage: `craft build [project] [--debug] [--opt <none|small|aggressive>] [--fmt] [--env KEY=VALUE ...] [-- <cargo-args>...]`
   - Defaults: release mode; `--opt small`
   - Behavior: if no `project` and running in a TTY, an interactive selector is shown
 
 - test
+
   - Usage: `craft test [project] [--case <name> | --all] [--function <name>] [--build/--no-build] [--verbose] [--list]`
   - Defaults: case = `success`; function = `finish`; `--build` is on by default
   - `--list` prints available test cases (optionally for a specific project) and exits
 
 - deploy
+
   - Usage: `craft deploy <target> [--no-build] [--env KEY=VALUE ...]`
   - Target: either a project name under `projects/` or a path to a `.wasm` file
 
 - list
+
   - Usage: `craft list <projects|tests|fixtures>`
 
 - configure
+
   - Interactive setup for preferred build/test settings used by other commands
 
 - export-hex
+
   - Builds the current selection and copies the WASM hex to your clipboard
 
 - rippled management (Docker)
+
   - `craft start-rippled [--foreground]`
   - `craft list-rippled`
   - `craft stop-rippled`
@@ -439,15 +447,16 @@ In this repository:
 - Examples that reference unavailable items or host-only APIs are marked as `rust,ignore` to prevent doctest failures
 - Prefer `rust` or `rust,no_run` for examples intended to compile
 
-
 ## Troubleshooting
 
 - Update prompt keeps appearing
+
   - Reinstall: `cargo install --path craft`
   - Ensure you are running craft from the repository root
   - To temporarily disable checks: `export CRAFT_DISABLE_UPDATE_CHECK=1`
 
 - Docker not found or not running (macOS)
+
   - Install/start Colima: `brew install colima docker && colima start`
   - If using Docker Desktop, ensure it is running
 

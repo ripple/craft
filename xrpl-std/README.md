@@ -263,11 +263,12 @@ Every WASM module must export the following function:
 #![no_std]
 #![no_main]
 
-/// Main entry point - returns true to release escrow
+/// Main entry point - returns 1 to release escrow, 0 to keep locked
+/// Can also return any positive value to release, or any negative value to keep locked
 #[no_mangle]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     // Your conditional logic here
-    true  // or false
+    1  // Release escrow (or 0 to keep locked)
 }
 ```
 
@@ -282,18 +283,24 @@ use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_std::core::ledger_objects::account::get_account_balance;
 
 #[no_mangle]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     // Get transaction sender
     let tx = EscrowFinish;
     let account = match tx.get_account() {
         Ok(acc) => acc,
-        Err(_) => return false,
+        Err(_) => return 0,
     };
 
     // Check if balance > 10 XRP
     match get_account_balance(&account) {
-        Ok(balance) => balance > 10_000_000,  // 10 XRP in drops
-        Err(_) => false,
+        Ok(balance) => {
+            if balance > 10_000_000 {  // 10 XRP in drops
+                1  // Release escrow
+            } else {
+                0  // Keep locked
+            }
+        },
+        Err(_) => 0,
     }
 }
 ```
@@ -319,25 +326,29 @@ cargo run -p wasm-host -- --dir path/to/project --project project_name --functio
 
 ```rust,ignore
 use xrpl_std::core::ledger_objects::current_escrow::get_current_escrow;
-use xrpl_std::host::get_parent_ledger_time;
+use xrpl_std::host::host_bindings::get_parent_ledger_time;
 
 #[no_mangle]
-pub extern "C" fn finish() -> bool {
-    // Get current time
-    let current_time = match get_parent_ledger_time() {
-        Ok(time) => time,
-        Err(_) => return false,
-    };
+pub extern "C" fn finish() -> i32 {
+    // Get current time (returns i32 directly)
+    let current_time = unsafe { get_parent_ledger_time() };
+    if current_time <= 0 {
+        return 0; // Error getting time, don't release
+    }
 
     // Get escrow finish_after time
     let escrow = get_current_escrow();
     let finish_after = match escrow.get_finish_after() {
         Ok(Some(time)) => time,
-        _ => return false,
+        _ => return 0, // No finish_after set, don't release
     };
 
     // Release if current time >= finish_after
-    current_time >= finish_after
+    if current_time as u32 >= finish_after {
+        1  // Release escrow
+    } else {
+        0  // Keep locked
+    }
 }
 ```
 
@@ -348,7 +359,7 @@ use xrpl_std::core::types::keylets::credential_keylet;
 use xrpl_std::host::cache_ledger_obj;
 
 #[no_mangle]
-pub extern "C" fn finish() -> bool {
+pub extern "C" fn finish() -> i32 {
     let tx = EscrowFinish;
     let account = tx.get_account().unwrap_or_default();
 
@@ -359,13 +370,13 @@ pub extern "C" fn finish() -> bool {
         b"KYC"
     ) {
         Ok(k) => k,
-        Err(_) => return false,
+        Err(_) => return 0,
     };
 
     // Try to load credential (returns slot number if exists)
     match cache_ledger_obj(&keylet.data) {
-        Ok(_) => true,   // Credential exists
-        Err(_) => false, // No credential
+        Ok(_) => 1,   // Credential exists, release escrow
+        Err(_) => 0,  // No credential, keep locked
     }
 }
 ```

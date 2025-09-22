@@ -86,11 +86,11 @@ pub fn account_keylet(account_id: &AccountID) -> Result<KeyletBytes> {
 /// # Example
 ///
 /// ```rust
-/// use xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::amount::asset::{Asset, XrpAsset, IouAsset};
-/// use xrpl_std::core::types::amount::currency_code::CurrencyCode;
-/// use xrpl_std::core::types::keylets::amm_keylet;
-/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// use xrpl_wasm_std_lib::core::types::account_id::AccountID;
+/// use xrpl_wasm_std_lib::core::types::amount::asset::{Asset, XrpAsset, IouAsset};
+/// use xrpl_wasm_std_lib::core::types::amount::currency_code::CurrencyCode;
+/// use xrpl_wasm_std_lib::core::types::keylets::amm_keylet;
+/// use xrpl_wasm_std_lib::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///  let asset1: Asset = Asset::XRP(XrpAsset {});
 ///  let issuer: AccountID =
@@ -99,10 +99,10 @@ pub fn account_keylet(account_id: &AccountID) -> Result<KeyletBytes> {
 ///  let currency: CurrencyCode = CurrencyCode::from(*currency_code);
 ///  let asset2 = Asset::IOU(IouAsset::new(issuer, currency));
 ///  match amm_keylet(&asset1, &asset2) {
-///    xrpl_std::host::Result::Ok(keylet) => {
+///    xrpl_wasm_std_lib::host::Result::Ok(keylet) => {
 ///      let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///    }
-///    xrpl_std::host::Result::Err(e) => {
+///    xrpl_wasm_std_lib::host::Result::Err(e) => {
 ///      let _ = trace_num("Error assembling keylet", e.code() as i64);
 ///    }
 ///  }
@@ -545,19 +545,19 @@ pub fn line_keylet(
 /// # Example
 ///
 /// ```rust
-/// use xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::keylets::mpt_issuance_keylet;
-/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// use xrpl_wasm_std_lib::core::types::account_id::AccountID;
+/// use xrpl_wasm_std_lib::core::types::keylets::mpt_issuance_keylet;
+/// use xrpl_wasm_std_lib::host::trace::{DataRepr, trace_data, trace_num};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///   let owner: AccountID =
 ///       AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///   let sequence = 12345;
 ///   match mpt_issuance_keylet(&owner, sequence) {
-///     xrpl_std::host::Result::Ok(keylet) => {
+///     xrpl_wasm_std_lib::host::Result::Ok(keylet) => {
 ///       let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///     }
-///     xrpl_std::host::Result::Err(e) => {
+///     xrpl_wasm_std_lib::host::Result::Err(e) => {
 ///       let _ = trace_num("Error assembling keylet", e.code() as i64);
 ///     }
 ///   }
@@ -598,10 +598,10 @@ pub fn mpt_issuance_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 /// # Example
 ///
 /// ```rust
-/// use xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::amount::mpt_id::MptId;
-/// use xrpl_std::core::types::keylets::mptoken_keylet;
-/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// use xrpl_wasm_std_lib::core::types::account_id::AccountID;
+/// use xrpl_wasm_std_lib::core::types::amount::mpt_id::MptId;
+/// use xrpl_wasm_std_lib::core::types::keylets::mptoken_keylet;
+/// use xrpl_wasm_std_lib::host::trace::{DataRepr, trace_data, trace_num};
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///     let issuer: AccountID =
 ///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
@@ -609,10 +609,10 @@ pub fn mpt_issuance_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 ///     let holder: AccountID =
 ///         AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///     match mptoken_keylet(&mptid, &holder) {
-///       xrpl_std::host::Result::Ok(keylet) => {
+///       xrpl_wasm_std_lib::host::Result::Ok(keylet) => {
 ///         let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///       }
-///       xrpl_std::host::Result::Err(e) => {
+///       xrpl_wasm_std_lib::host::Result::Err(e) => {
 ///         let _ = trace_num("Error assembling keylet", e.code() as i64);
 ///       }
 ///     }
@@ -955,19 +955,19 @@ pub fn paychan_keylet(
 /// # Example
 ///
 /// ```rust
-/// use xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::keylets::permissioned_domain_keylet;
-/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// use xrpl_wasm_std_lib::core::types::account_id::AccountID;
+/// use xrpl_wasm_std_lib::core::types::keylets::permissioned_domain_keylet;
+/// use xrpl_wasm_std_lib::host::trace::{DataRepr, trace_data, trace_num};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///   let account: AccountID =
 ///       AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///   let sequence = 12345;
 ///   match permissioned_domain_keylet(&account, sequence) {
-///     xrpl_std::host::Result::Ok(keylet) => {
+///     xrpl_wasm_std_lib::host::Result::Ok(keylet) => {
 ///       let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///     }
-///     xrpl_std::host::Result::Err(e) => {
+///     xrpl_wasm_std_lib::host::Result::Err(e) => {
 ///       let _ = trace_num("Error assembling keylet", e.code() as i64);
 ///     }
 ///   }
@@ -1118,19 +1118,19 @@ pub fn ticket_keylet(owner: &AccountID, seq: i32) -> Result<KeyletBytes> {
 /// # Example
 ///
 /// ```rust
-/// use xrpl_std::core::types::account_id::AccountID;
-/// use xrpl_std::core::types::keylets::vault_keylet;
-/// use xrpl_std::host::trace::{DataRepr, trace_data, trace_num};
+/// use xrpl_wasm_std_lib::core::types::account_id::AccountID;
+/// use xrpl_wasm_std_lib::core::types::keylets::vault_keylet;
+/// use xrpl_wasm_std_lib::host::trace::{DataRepr, trace_data, trace_num};
 ///
 /// fn main() -> Result<(), Box<dyn std::error::Error>> {
 ///   let account: AccountID =
 ///       AccountID::from(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");
 ///   let sequence = 12345;
 ///   match vault_keylet(&account, sequence) {
-///     xrpl_std::host::Result::Ok(keylet) => {
+///     xrpl_wasm_std_lib::host::Result::Ok(keylet) => {
 ///       let _ = trace_data("Generated keylet", &keylet, DataRepr::AsHex);
 ///     }
-///     xrpl_std::host::Result::Err(e) => {
+///     xrpl_wasm_std_lib::host::Result::Err(e) => {
 ///       let _ = trace_num("Error assembling keylet", e.code() as i64);
 ///     }
 ///   }

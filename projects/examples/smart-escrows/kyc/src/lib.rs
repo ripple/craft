@@ -27,9 +27,8 @@ pub extern "C" fn finish() -> i32 {
         Ok(keylet) => {
             let _ = trace_data("cred_keylet", &keylet, DataRepr::AsHex);
 
-            let slot = unsafe {
-                xrpl_wasm_std::host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0)
-            };
+            let slot =
+                unsafe { xrpl_wasm_std::host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot < 0 {
                 let _ = trace_num("CACHE ERROR", i64::from(slot));
                 return 0;

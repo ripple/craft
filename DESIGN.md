@@ -39,17 +39,24 @@ Returns:
 - `0`: The escrow cannot be finished (keep funds locked)
 
 ```rust
-#[no_mangle]
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
+
+use xrpl_std::host;
+
+#[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    // Access transaction data via host functions
-    let escrow_finish = get_current_escrow_finish();
-    let account = escrow_finish.get_account();
+    // Get the current ledger sequence number
+    let ledger_seq = unsafe { host::get_ledger_sqn() };
 
-    // Access ledger objects via host functions
-    let balance = get_account_balance(&account);
+    // Get the parent ledger time
+    let ledger_time = unsafe { host::get_parent_ledger_time() };
 
-    // Implement custom logic
-    if balance >= required_amount {
+    // Example logic: Release escrow after ledger 100 and after timestamp 750000000
+    // (These are example values - implement your actual business logic here)
+    if ledger_seq > 100 && ledger_time > 750000000 {
         1  // Release escrow
     } else {
         0  // Keep escrow locked

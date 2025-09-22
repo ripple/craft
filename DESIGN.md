@@ -35,8 +35,8 @@ The WebAssembly module must expose the following function:
 This is the main entry point that evaluates whether an escrow can be finished. The function accesses transaction and ledger data through host functions provided by the XRPL runtime.
 
 Returns:
-- `1`: The escrow can be finished (release funds)
-- `0`: The escrow cannot be finished (keep funds locked)
+- Any positive value (`> 0`): The escrow can be finished (release funds)
+- Zero or negative value (`<= 0`): The escrow cannot be finished (keep funds locked)
 
 ```rust
 #![cfg_attr(target_arch = "wasm32", no_std)]
@@ -57,9 +57,9 @@ pub extern "C" fn finish() -> i32 {
     // Example logic: Release escrow after ledger 100 and after timestamp 750000000
     // (These are example values - implement your actual business logic here)
     if ledger_seq > 100 && ledger_time > 750000000 {
-        1  // Release escrow
+        1  // Release escrow (any positive value works)
     } else {
-        0  // Keep escrow locked
+        0  // Keep escrow locked (zero or negative values work)
     }
 }
 ```

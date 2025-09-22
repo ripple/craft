@@ -13,7 +13,7 @@ use xrpl_wasm_std_lib::core::types::amount::currency_code::CurrencyCode;
 use xrpl_wasm_std_lib::core::types::amount::mpt_id::MptId;
 use xrpl_wasm_std_lib::core::types::keylets;
 use xrpl_wasm_std_lib::host;
-use xrpl_wasm_std_lib::host::trace::{DataRepr, trace, trace_data, trace_num};
+use xrpl_wasm_std_lib::host::trace::{DataRepr, trace, trace_account, trace_data, trace_num};
 use xrpl_wasm_std_lib::sfield;
 
 #[unsafe(no_mangle)]

@@ -1,5 +1,6 @@
 use crate::host::error_codes::match_result_code;
 
+use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::host;
 use crate::host::Result;
@@ -80,7 +81,41 @@ pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
 }
 
 #[inline(always)]
+pub fn trace_account_buf(msg: &str, account_id: &[u8; 20]) -> Result<i32> {
+    let result_code = unsafe {
+        host::trace_account(
+            msg.as_ptr(),
+            msg.len(),
+            account_id.as_ptr(),
+            account_id.len(),
+        )
+    };
+    match_result_code(result_code, || result_code)
+}
+
+#[inline(always)]
+pub fn trace_account(msg: &str, account_id: &AccountID) -> Result<i32> {
+    let result_code = unsafe {
+        host::trace_account(
+            msg.as_ptr(),
+            msg.len(),
+            account_id.0.as_ptr(),
+            account_id.0.len(),
+        )
+    };
+    match_result_code(result_code, || result_code)
+}
+
+#[inline(always)]
 pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
+    // let result_code = unsafe {
+    //     host::trace_amount(
+    //         msg.as_ptr(),
+    //         msg.len(),
+    //         token_amount.as_ptr(),
+    //         token_amount.len(),
+    //     )
+    // };
     // TODO: instead of manually calling `trace_num`, create a new host function called
     // `trace_amount` and call that instead.
 

@@ -8,6 +8,9 @@ use core::panic;
 use xrpl_std::core::current_tx::escrow_finish::{EscrowFinish, get_current_escrow_finish};
 use xrpl_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_std::core::locator::Locator;
+use xrpl_std::core::types::amount::asset::Asset;
+use xrpl_std::core::types::amount::asset::XrpAsset;
+use xrpl_std::core::types::amount::mpt_id::MptId;
 use xrpl_std::core::types::keylets;
 use xrpl_std::host;
 use xrpl_std::host::error_codes;
@@ -34,6 +37,7 @@ fn check_result(result: i32, expected: i32, test_name: &'static str) {
             panic!("Unexpected success code: {}", code);
         }
         code => {
+            let _ = trace(test_name);
             let _ = trace_number("TEST FAILED", code.into());
             panic!("Error code: {}", code);
         }
@@ -57,20 +61,12 @@ pub extern "C" fn finish() -> i32 {
     // Note: not testing all the keylet functions,
     // that's in a separate test file.
     // ########################################
-    with_buffer::<4, _, _>(|ptr, len| {
-        check_result(
-            unsafe { host::get_ledger_sqn(ptr, len) },
-            4,
-            "get_ledger_sqn",
-        )
-    });
-    with_buffer::<4, _, _>(|ptr, len| {
-        check_result(
-            unsafe { host::get_parent_ledger_time(ptr, len) },
-            4,
-            "get_parent_ledger_time",
-        );
-    });
+    check_result(unsafe { host::get_ledger_sqn() }, 12345, "get_ledger_sqn");
+    check_result(
+        unsafe { host::get_parent_ledger_time() },
+        67890,
+        "get_parent_ledger_time",
+    );
     with_buffer::<32, _, _>(|ptr, len| {
         check_result(
             unsafe { host::get_parent_ledger_hash(ptr, len) },
@@ -262,36 +258,88 @@ pub extern "C" fn finish() -> i32 {
             "get_nft_serial",
         )
     });
+    let message = "testing trace";
+    check_result(
+        unsafe {
+            host::trace_account(
+                message.as_ptr(),
+                message.len(),
+                account.0.as_ptr(),
+                account.0.len(),
+            )
+        },
+        47,
+        "trace_account",
+    );
+    let amount = &[0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5F]; // 95 drops of XRP
+    check_result(
+        unsafe {
+            host::trace_amount(
+                message.as_ptr(),
+                message.len(),
+                amount.as_ptr(),
+                amount.len(),
+            )
+        },
+        19,
+        "trace_amount",
+    );
 
     // ########################################
     // Step #2: Test set_data edge cases
     // ########################################
     check_result(
-        unsafe { host_bindings_loose::get_ledger_sqn(-1, 4) },
+        unsafe { host_bindings_loose::get_parent_ledger_hash(-1, 4) },
         error_codes::INVALID_PARAMS,
-        "get_ledger_sqn_neg_ptr",
+        "get_parent_ledger_hash_neg_ptr",
     );
     with_buffer::<4, _, _>(|ptr, _len| {
         check_result(
-            unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, -1) },
+            unsafe { host_bindings_loose::get_parent_ledger_hash(ptr as i32, -1) },
             error_codes::INVALID_PARAMS,
-            "get_ledger_sqn_neg_len",
+            "get_parent_ledger_hash_neg_len",
         )
     });
     with_buffer::<3, _, _>(|ptr, len| {
         check_result(
-            unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, len as i32) },
+            unsafe { host_bindings_loose::get_parent_ledger_hash(ptr as i32, len as i32) },
             error_codes::BUFFER_TOO_SMALL,
-            "get_ledger_sqn_buf_too_small",
+            "get_parent_ledger_hash_buf_too_small",
         )
     });
     with_buffer::<4, _, _>(|ptr, _len| {
         check_result(
-            unsafe { host_bindings_loose::get_ledger_sqn(ptr as i32, 1_000_000_000) },
+            unsafe { host_bindings_loose::get_parent_ledger_hash(ptr as i32, 1_000_000_000) },
             error_codes::POINTER_OUT_OF_BOUNDS,
-            "get_ledger_sqn_len_too_long",
+            "get_parent_ledger_hash_len_too_long",
         )
     });
+    let message = "testing trace";
+    check_result(
+        unsafe {
+            host::trace_account(
+                message.as_ptr(),
+                message.len(),
+                account.0.as_ptr(),
+                account.0.len(),
+            )
+        },
+        47,
+        "trace_account",
+    );
+    let amount = &[0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5F]; // 95 drops of XRP
+    check_result(
+        unsafe {
+            host::trace_amount(
+                message.as_ptr(),
+                message.len(),
+                amount.as_ptr(),
+                amount.len(),
+            )
+        },
+        19,
+        "trace_amount",
+    );
 
     // ########################################
     // Step #3: Test getData[Type] edge cases
@@ -366,7 +414,7 @@ pub extern "C" fn finish() -> i32 {
                 )
             },
             error_codes::POINTER_OUT_OF_BOUNDS,
-            "account_keylet_len_too_long",
+            "account_keylet_len_oob",
         )
     });
     with_buffer::<32, _, _>(|ptr, len| {
@@ -400,7 +448,7 @@ pub extern "C" fn finish() -> i32 {
                 )
             },
             error_codes::POINTER_OUT_OF_BOUNDS,
-            "line_keylet_len_too_long_currency",
+            "line_keylet_len_oob_currency",
         )
     });
     with_buffer::<32, _, _>(|ptr, len| {
@@ -422,6 +470,75 @@ pub extern "C" fn finish() -> i32 {
         )
     });
 
+    // Asset
+    let asset1_bytes = Asset::XRP(XrpAsset {}).as_bytes();
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host_bindings_loose::amm_keylet(
+                    asset1_bytes.as_ptr(),
+                    asset1_bytes.len(),
+                    locator.as_ptr() as i32 + 1_000_000_000,
+                    locator.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::POINTER_OUT_OF_BOUNDS,
+            "amm_keylet_len_oob_asset2",
+        )
+    });
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host_bindings_loose::amm_keylet(
+                    asset1_bytes.as_ptr(),
+                    asset1_bytes.len(),
+                    locator.as_ptr() as i32,
+                    locator.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "amm_keylet_len_wrong_len_asset2",
+        )
+    });
+    let currency: &[u8] = b"USD00000000000000000"; // 20 bytes
+    with_buffer::<32, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host_bindings_loose::amm_keylet(
+                    asset1_bytes.as_ptr(),
+                    asset1_bytes.len(),
+                    currency.as_ptr() as i32,
+                    currency.len() as i32,
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "amm_keylet_len_wrong_non_xrp_currency_len",
+        )
+    });
+    let mptid = MptId::new(1, account);
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::amm_keylet(
+                    mptid.as_ptr(),
+                    mptid.len(),
+                    asset1_bytes.as_ptr(),
+                    asset1_bytes.len(),
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "amm_keylet_mpt",
+        )
+    });
+
     // string
     check_result(
         unsafe {
@@ -432,7 +549,7 @@ pub extern "C" fn finish() -> i32 {
             )
         },
         error_codes::POINTER_OUT_OF_BOUNDS,
-        "trace_num_wrong_len_str",
+        "trace_num_oob_str",
     );
 
     // ########################################
@@ -483,7 +600,12 @@ pub extern "C" fn finish() -> i32 {
     check_result(
         unsafe { host::amendment_enabled(amendment_name.as_ptr(), long_len) },
         error_codes::DATA_FIELD_TOO_LARGE,
-        "amendment_enabled",
+        "amendment_enabled_too_big_slice",
+    );
+    check_result(
+        unsafe { host::amendment_enabled(amendment_name.as_ptr(), 65) },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "amendment_enabled_too_long",
     );
     with_buffer::<2, _, _>(|ptr, len| {
         check_result(
@@ -580,6 +702,22 @@ pub extern "C" fn finish() -> i32 {
     with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
+                host::amm_keylet(
+                    asset1_bytes.as_ptr(),
+                    long_len,
+                    asset1_bytes.as_ptr(),
+                    asset1_bytes.len(),
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::DATA_FIELD_TOO_LARGE,
+            "amm_keylet_too_big_slice",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
                 host::credential_keylet(
                     account.0.as_ptr(),
                     account.0.len(),
@@ -595,11 +733,27 @@ pub extern "C" fn finish() -> i32 {
             "credential_keylet_too_big_slice",
         )
     });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::mptoken_keylet(
+                    mptid.as_ptr(),
+                    long_len,
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::DATA_FIELD_TOO_LARGE,
+            "mptoken_keylet_too_big_slice_mptid",
+        )
+    });
     check_result(
         unsafe {
             host::trace(
-                locator.as_ptr(),
-                locator.len(),
+                message.as_ptr(),
+                message.len(),
                 locator.as_ptr().wrapping_add(1_000_000_000),
                 locator.len(),
                 0,
@@ -607,6 +761,18 @@ pub extern "C" fn finish() -> i32 {
         },
         error_codes::POINTER_OUT_OF_BOUNDS,
         "trace_oob_slice",
+    );
+    check_result(
+        unsafe {
+            host::trace_amount(
+                message.as_ptr(),
+                message.len(),
+                locator.as_ptr().wrapping_add(1_000_000_000),
+                locator.len(),
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "trace_amount_oob_slice",
     );
 
     // invalid UInt256
@@ -794,7 +960,6 @@ pub extern "C" fn finish() -> i32 {
             "escrow_keylet_wrong_size_accountid",
         )
     });
-    let currency: &[u8] = b"USD00000000000000000"; // 20 bytes
     with_buffer::<2, _, _>(|ptr, len| {
         check_result(
             unsafe {
@@ -829,6 +994,29 @@ pub extern "C" fn finish() -> i32 {
             },
             error_codes::INVALID_PARAMS,
             "line_keylet_wrong_size_accountid2",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::mpt_issuance_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
+            error_codes::INVALID_PARAMS,
+            "mpt_issuance_keylet_wrong_size_accountid",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::mptoken_keylet(
+                    mptid.as_ptr(),
+                    mptid.len(),
+                    locator.as_ptr(),
+                    locator.len(),
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "mptoken_keylet_wrong_size_accountid",
         )
     });
     with_buffer::<2, _, _>(|ptr, len| {
@@ -888,6 +1076,15 @@ pub extern "C" fn finish() -> i32 {
     });
     with_buffer::<2, _, _>(|ptr, len| {
         check_result(
+            unsafe {
+                host::permissioned_domain_keylet(locator.as_ptr(), locator.len(), 1, ptr, len)
+            },
+            error_codes::INVALID_PARAMS,
+            "permissioned_domain_keylet_wrong_size_accountid",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
             unsafe { host::signers_keylet(locator.as_ptr(), locator.len(), ptr, len) },
             error_codes::INVALID_PARAMS,
             "signers_keylet_wrong_size_accountid",
@@ -898,6 +1095,13 @@ pub extern "C" fn finish() -> i32 {
             unsafe { host::ticket_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
             error_codes::INVALID_PARAMS,
             "ticket_keylet_wrong_size_accountid",
+        )
+    });
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe { host::vault_keylet(locator.as_ptr(), locator.len(), 1, ptr, len) },
+            error_codes::INVALID_PARAMS,
+            "vault_keylet_wrong_size_accountid",
         )
     });
     let uint256: &[u8] = b"00000000000000000000000000000001";
@@ -917,6 +1121,18 @@ pub extern "C" fn finish() -> i32 {
             "get_nft_wrong_size_accountid",
         )
     });
+    check_result(
+        unsafe {
+            host::trace_account(
+                message.as_ptr(),
+                message.len(),
+                locator.as_ptr(),
+                locator.len(),
+            )
+        },
+        error_codes::INVALID_PARAMS,
+        "trace_account_wrong_size_accountid",
+    );
 
     // invalid Currency was already tested above
     // invalid string
@@ -924,15 +1140,39 @@ pub extern "C" fn finish() -> i32 {
     check_result(
         unsafe {
             host::trace(
-                locator.as_ptr().wrapping_add(1_000_000_000),
-                locator.len(),
+                message.as_ptr().wrapping_add(1_000_000_000),
+                message.len(),
                 uint256.as_ptr(),
                 uint256.len(),
                 0,
             )
         },
         error_codes::POINTER_OUT_OF_BOUNDS,
-        "get_nft_wrong_size_string",
+        "trace_oob_string",
+    );
+    check_result(
+        unsafe {
+            host::trace_account(
+                message.as_ptr().wrapping_add(1_000_000_000),
+                message.len(),
+                account.0.as_ptr(),
+                account.0.len(),
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "trace_account_oob_string",
+    );
+    check_result(
+        unsafe {
+            host::trace_amount(
+                message.as_ptr().wrapping_add(1_000_000_000),
+                message.len(),
+                amount.as_ptr(),
+                amount.len(),
+            )
+        },
+        error_codes::POINTER_OUT_OF_BOUNDS,
+        "trace_amount_oob_string",
     );
 
     // trace too large
@@ -955,6 +1195,57 @@ pub extern "C" fn finish() -> i32 {
         error_codes::DATA_FIELD_TOO_LARGE,
         "trace_num_too_long",
     );
+    check_result(
+        unsafe {
+            host::trace_account(
+                message.as_ptr(),
+                long_len,
+                account.0.as_ptr(),
+                account.0.len(),
+            )
+        },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "trace_account_too_long",
+    );
+    check_result(
+        unsafe { host::trace_amount(message.as_ptr(), long_len, amount.as_ptr(), amount.len()) },
+        error_codes::DATA_FIELD_TOO_LARGE,
+        "trace_account_too_long",
+    );
+
+    // trace amount errors
+
+    check_result(
+        unsafe {
+            host::trace_amount(
+                message.as_ptr(),
+                message.len(),
+                locator.as_ptr(),
+                locator.len(),
+            )
+        },
+        error_codes::INVALID_PARAMS,
+        "trace_amount_wrong_length",
+    );
+
+    // other misc errors
+
+    with_buffer::<2, _, _>(|ptr, len| {
+        check_result(
+            unsafe {
+                host::mptoken_keylet(
+                    locator.as_ptr(),
+                    locator.len(),
+                    account.0.as_ptr(),
+                    account.0.len(),
+                    ptr,
+                    len,
+                )
+            },
+            error_codes::INVALID_PARAMS,
+            "mptoken_keylet_mptid_wrong_length",
+        )
+    });
 
     1 // <-- Finish the escrow to indicate a successful outcome
 }

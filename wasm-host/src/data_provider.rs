@@ -221,14 +221,30 @@ impl DataProvider {
         }
     }
 
-    pub fn get_ledger_sqn(&self, buf_cap: usize) -> (i32, Vec<u8>) {
-        let field_result = self.data_source.get_ledger_sqn();
-        Self::fill_buf(field_result, buf_cap, Decodable::NOT)
+    pub fn get_ledger_sqn(&self) -> i32 {
+        match self.data_source.get_ledger_sqn() {
+            Some(value) => {
+                if let Some(num) = value.as_i64() {
+                    num as i32
+                } else {
+                    HostError::InvalidDecoding as i32
+                }
+            }
+            None => HostError::InternalError as i32,
+        }
     }
 
-    pub fn get_parent_ledger_time(&self, buf_cap: usize) -> (i32, Vec<u8>) {
-        let field_result = self.data_source.get_parent_ledger_time();
-        Self::fill_buf(field_result, buf_cap, Decodable::NOT)
+    pub fn get_parent_ledger_time(&self) -> i32 {
+        match self.data_source.get_parent_ledger_time() {
+            Some(value) => {
+                if let Some(num) = value.as_i64() {
+                    num as i32
+                } else {
+                    HostError::InvalidDecoding as i32
+                }
+            }
+            None => HostError::InternalError as i32,
+        }
     }
 
     pub fn get_parent_ledger_hash(&self, buf_cap: usize) -> (i32, Vec<u8>) {

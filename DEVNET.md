@@ -1,6 +1,47 @@
 # WASM Devnet Details
 
-## Devnet5 - 2025-08-04 Release
+## Devnet6 - 2025-09-12 Release
+
+The WASM Devnet (Smart Escrows) has been updated to its sixth monthly release.
+
+The code is essentially feature-complete and moving onto the review and testing phase.
+
+The `rippled` code can be found in this branch: https://github.com/XRPLF/rippled/tree/ripple/smart-escrow
+
+Commit: 4d4a1cfe8238be9830c7712e5879cbefd5f10668
+
+Devnet details:
+
+- URL: wasm.devnet.rippletest.net (port 51234 for HTTP, 51233 for WS)
+- Explorer: https://custom.xrpl.org/wasm.devnet.rippletest.net
+- Faucet: https://wasmfaucet.devnet.rippletest.net/accounts
+
+`rippled` Changelog:
+
+- Update the fees and reserves
+  - `EscrowCreate` for a Smart Escrow now costs 100 drops + 5 drops per byte in the `FinishFunction`, and a Smart Escrow is charged 1 additional object reserve per 500 bytes (beyond the first 500 bytes, which are included in the first object reserve)
+- Adjust the function signatures of `get_ledger_sqn` and `get_parent_ledger_time` to return the value instead of a buffer
+  - This is already reflected in XLS-102
+- Add the last set of host functions - mostly some missing keylets, like `MPTokenIssuance`
+- Various bugfixes and cleaning up code
+
+Craft Changelog:
+
+- Support the new `rippled` features mentioned above
+- Lots of additional documentation - new docs page: https://ripple.github.io/craft/
+- Significant amounts of code cleanup and reorganization
+  - We have been revamping the repo structure to improve the dev experience
+  - Examples are now in `projects/examples`
+- Various bugfixes and cleaning up code
+
+Tooling:
+- Writing Rust WASM extensions: https://github.com/ripple/craft
+- Python: `xrpl-py v4.4.0b1`
+- JS: `xrpl@4.5.0-smartescrow.2`, `ripple-binary-codec@2.6.0-smartescrow.2` (you can also use the `@smartescrow` or `@smart-escrow` tags)
+
+## Historical WASM Devnets
+
+### Devnet5 - 2025-08-04 Release
 
 The WASM Devnet (Smart Escrows) has been updated to its fifth monthly release.
 
@@ -41,9 +82,6 @@ Tooling:
 - Writing Rust WASM extensions: https://github.com/ripple/craft
 - Python: xrpl-py v4.4.0b0
 - JS: `xrpl@4.5.0-smartescrow.0`, `ripple-binary-codec@2.6.0-smartescrow.0` (you can also use the `@smartescrow` or `@smart-escrow` tags)
-
-
-## Historical WASM Devnets
 
 ### Devnet4 - 2025-07-03 Release
 

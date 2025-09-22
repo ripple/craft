@@ -5,27 +5,54 @@ An interactive CLI tool for building and testing [XLS-102 WASM](https://github.c
 ## Table of Contents
 
 - [Installation](#installation)
+- [Update detection](#update-detection)
 - [Requirements](#requirements)
-- [Usage](#usage)
-- [Command-Line Options](#command-line-options)
+- [Quick start](#quick-start)
+- [Command reference](#command-reference)
 - [Project Structure](#project-structure)
-- [WASM Host Testing Tool](#wasm-host-testing-tool)
 - [Managing rippled](#managing-rippled)
 - [Running the XRPL Explorer](#running-the-xrpl-explorer)
+- [Troubleshooting](#troubleshooting)
 
 ## Installation
 
+Run from the repository root:
+
 ```bash
-cargo install --path ./craft
+cargo install --path craft
 ```
 
-To update the tool, use the same command.
+- This installs the craft binary built from the local source in ./craft
+- To update to the latest local changes, re-run the same command
+
+## Update detection
+
+When craft starts, it detects if the installed binary is stale compared to your local source:
+
+- Compares the binary's build commit to your Git HEAD
+- Detects uncommitted changes (dirty working tree)
+- Falls back to file timestamps if Git metadata isn't available
+
+If an update is recommended, craft prints a clear message and offers to run:
+
+```bash
+cargo install --path craft
+```
+
+To disable the check (e.g., in CI), set:
+
+```bash
+export CRAFT_DISABLE_UPDATE_CHECK=1
+```
 
 ## Requirements
 
 - Rust
 - Cargo (with rustup)
 - Docker (recommended for running rippled; optional if you build rippled locally)
+- Optional: wasm-opt (Binaryen) for optimized WASM output
+  - macOS: `brew install binaryen`
+  - Linux (Debian/Ubuntu): `sudo apt-get install -y binaryen`
 
 ### Installing Docker
 
@@ -37,64 +64,76 @@ Docker is recommended to run the rippled server. Alternatively, you can build an
 
 After installation, ensure Docker is running before using rippled-related commands.
 
-## Usage
+## Quick start
 
-Use specific commands:
+Common examples:
 
-```bash
+```shell
+# Interactive menu (TTY only)
 craft
+
+# Build a project (defaults to release mode for WASM)
+craft build <project-name>
+craft build <project-name> --debug --opt none --fmt
+
+# Test a WASM library function
+craft test <project-name> --case success --function finish
+craft test <project-name> --all --verbose
+
+# Deploy to WASM Devnet
+craft deploy <project-name>
+craft deploy path/to/module.wasm --no-build
+
+# Manage rippled (Docker)
+craft start-rippled --foreground
+craft list-rippled
+craft advance-ledger --count 5
+craft stop-rippled
+
+# Open the XRPL Explorer in a browser
+craft open-explorer
 ```
 
-Or, run the tool without any arguments for an interactive experience:
+## Command reference
 
-```bash
-craft
-craft start-rippled   # Start rippled in Docker container
-craft list-rippled    # List rippled Docker containers
-craft stop-rippled    # Stop the rippled container
-craft advance-ledger  # Advance the ledger in stand-alone mode
-craft open-explorer   # Open the XRPL Explorer
-```
+- build
 
-### Command-Line Options
+  - Usage: `craft build [project] [--debug] [--opt <none|small|aggressive>] [--fmt] [--env KEY=VALUE ...] [-- <cargo-args>...]`
+  - Defaults: release mode; `--opt small`
+  - Behavior: if no `project` and running in a TTY, an interactive selector is shown
 
-Currently, the `craft` tool primarily uses interactive prompts to gather information such as build mode, optimization level, and project selection.
+- test
 
-- **Build**: Non-interactive build with options:
+  - Usage: `craft test [project] [--case <name> | --all] [--function <name>] [--build/--no-build] [--verbose] [--list]`
+  - Defaults: case = `success`; function = `finish`; `--build` is on by default
+  - `--list` prints available test cases (optionally for a specific project) and exits
 
-  ```bash
-  craft build [project-name] [--mode <debug|release>] [--opt <none|small|aggressive>]
-  ```
+- deploy
 
-  Options:
+  - Usage: `craft deploy <target> [--no-build] [--env KEY=VALUE ...]`
+  - Target: either a project name under `projects/` or a path to a `.wasm` file
 
-  - `project-name` Name of the project subfolder under `projects/` (positional argument).
-  - `--mode, -m` Build mode (`debug` or `release`). Default: `release`.
-  - `--opt, -O` Optimization level (`none`, `small`, `aggressive`). Default: `small`.
+- list
 
-  Example:
+  - Usage: `craft list <projects|tests|fixtures>`
 
-  ```bash
-  craft build notary --mode debug --opt aggressive
-  ```
+- configure
 
-The `test` command supports direct command-line options:
+  - Interactive setup for preferred build/test settings used by other commands
 
-```bash
-craft test --function <name>  # Test a specific function in your WASM module
-```
+- export-hex
 
-#### Non-Interactive Mode
+  - Builds the current selection and copies the WASM hex to your clipboard
 
-For scripting purposes, you may want to specify options directly without interactive prompts. If there are specific options you'd like to set via command line (for example: `craft build --mode release --opt-level small`), please open a GitHub issue to let us know which interactive prompts you'd like to bypass.
+- rippled management (Docker)
 
-### Testing WASM Modules
+  - `craft start-rippled [--foreground]`
+  - `craft list-rippled`
+  - `craft stop-rippled`
+  - `craft advance-ledger [--count <n>]`
 
-The `test` command provides an interactive environment for testing your WASM modules:
-
-```bash
-craft test
-```
+- open-explorer
+  - `craft open-explorer` opens the XRPL Explorer in your default browser
 
 ## Project Structure
 
@@ -110,7 +149,7 @@ Organize your WASM modules in the `projects` directory:
 └── ...
 ```
 
-The tool automatically detects WASM projects in the `projects` directory.
+The tool automatically discovers WASM projects under `projects/` (including nested subprojects).
 
 # WASM Host Testing Tool
 
@@ -164,7 +203,7 @@ The host_functions_test project includes fixtures for testing various host funct
 
 To clone this repository, use:
 
-```bash
+```shell
 git clone git@github.com:ripple/craft.git
 ```
 
@@ -174,7 +213,7 @@ The `craft` tool uses Docker to manage a `rippled` instance.
 
 Ensure Docker Desktop is installed and running. Then manage rippled using these commands:
 
-```bash
+```shell
 craft start-rippled                 # Start rippled container (background mode)
 craft start-rippled --foreground    # Start with visible console output
 craft list-rippled                  # List running rippled containers
@@ -189,7 +228,7 @@ The tool uses the Docker image `legleux/rippled_smart_escrow:bb9bb5f5` which inc
 
 You can also manage the container directly with Docker:
 
-```bash
+```shell
 # View logs
 docker logs -f craft-rippled
 
@@ -210,7 +249,7 @@ docker rm craft-rippled
 
 The `craft` tool includes commands to open the XRPL Explorer:
 
-```bash
+```shell
 # Open the Explorer
 craft open-explorer
 ```
@@ -221,7 +260,7 @@ craft open-explorer
 
 From the `wasm-host` directory:
 
-```bash
+```shell
 # Run with success test case
 cargo run -- --dir path/to/your/project_name --test-case success
 
@@ -231,7 +270,7 @@ cargo run -- --dir path/to/your/project_name --test-case failure
 
 From any workspace directory:
 
-```bash
+```shell
 cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --project <project_name>
 ```
 
@@ -247,7 +286,7 @@ cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --
 
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
-```bash
+```shell
 cargo run -p wasm-host --dir path/to/folder --project project --test-case success --verbose
 ```
 
@@ -278,7 +317,7 @@ Example verbose output:
 
 The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
 
-```bash
+```shell
 # Test a WASM module
 craft test
 
@@ -351,7 +390,7 @@ This repository contains multiple Rust crates. You can use rustdoc to generate a
 
 A helper script is included:
 
-```bash
+```shell
 ./build-docs.sh
 ```
 
@@ -407,3 +446,19 @@ In this repository:
 
 - Examples that reference unavailable items or host-only APIs are marked as `rust,ignore` to prevent doctest failures
 - Prefer `rust` or `rust,no_run` for examples intended to compile
+
+## Troubleshooting
+
+- Update prompt keeps appearing
+
+  - Reinstall: `cargo install --path craft`
+  - Ensure you are running craft from the repository root
+  - To temporarily disable checks: `export CRAFT_DISABLE_UPDATE_CHECK=1`
+
+- Docker not found or not running (macOS)
+
+  - Install/start Colima: `brew install colima docker && colima start`
+  - If using Docker Desktop, ensure it is running
+
+- wasm-opt not found
+  - Install Binaryen: macOS `brew install binaryen`, Linux `sudo apt-get install -y binaryen`

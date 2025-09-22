@@ -7,6 +7,6 @@
     "test": "node reference/js/escrow_extension.js"
   },
   "dependencies": {
-    "xrpl": "^4.3.0-smartescrow.3"
+    "xrpl": "^4.5.0-smartescrow.1"
   }
 }

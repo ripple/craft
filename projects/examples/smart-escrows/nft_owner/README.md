@@ -65,7 +65,7 @@ The contract expects:
 
 ### Build Commands
 
-```shell
+```bash
 cargo build --target wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
@@ -80,6 +80,7 @@ The resulting WASM file will be located at:
 
 Run the contract using the wasm-host application:
 
+[//]: # (TODO: Replace `shell` with `bash` once https://github.com/ripple/craft/issues/180 merges)
 ```shell
 cd ../../../../
 cargo run --package wasm-host --bin wasm-host -- --dir projects/examples/smart-escrows/nft_owner --project nft_owner

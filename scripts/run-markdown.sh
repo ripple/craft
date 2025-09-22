@@ -11,9 +11,6 @@ cd "$REPO_ROOT"
 
 echo "🔧 Running code blocks in Markdown files..."
 
-# Set RUSTFLAGS to match CI environment
-export RUSTFLAGS="${RUSTFLAGS:-"-Dwarnings"}"
-
 # Find markdown files in project folders, excluding dependencies and reference folder
 # Include: root level .md files, docs/, projects/, and project-specific folders
 # Exclude: target/, reference/, and dependency folders like ~/.cargo/

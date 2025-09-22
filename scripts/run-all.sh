@@ -12,9 +12,6 @@ cd "$REPO_ROOT"
 echo "🚀 Running complete Build and Test suite..."
 echo ""
 
-# Set RUSTFLAGS to match CI environment
-export RUSTFLAGS="${RUSTFLAGS:-"-Dwarnings"}"
-
 # Track start time
 start_time=$(date +%s)
 

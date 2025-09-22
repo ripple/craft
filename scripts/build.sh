@@ -18,9 +18,6 @@ else
     echo "🔧 Building in debug mode..."
 fi
 
-# Set RUSTFLAGS to match CI environment
-export RUSTFLAGS="${RUSTFLAGS:-"-Dwarnings"}"
-
 # Ensure wasm32 target is available
 echo "📦 Ensuring wasm32-unknown-unknown target is installed..."
 rustup target add wasm32-unknown-unknown

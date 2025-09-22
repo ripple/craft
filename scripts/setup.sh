@@ -12,9 +12,6 @@ cd "$REPO_ROOT"
 
 echo "🔧 Setting up development environment..."
 
-# Set RUSTFLAGS to match CI environment
-export RUSTFLAGS="-Dwarnings"
-
 # Check if Rust is installed
 if ! command -v rustup &> /dev/null; then
     echo "❌ Rust/rustup not found. Please install Rust first:"

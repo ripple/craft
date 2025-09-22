@@ -11,9 +11,6 @@ cd "$REPO_ROOT"
 
 echo "🔧 Running Rust formatting check..."
 
-# Set RUSTFLAGS to match CI environment
-export RUSTFLAGS="${RUSTFLAGS:-"-Dwarnings"}"
-
 echo "📝 Checking formatting for entire workspace..."
 cargo fmt --all -- --check
 

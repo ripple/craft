@@ -20,8 +20,6 @@
 
 pub mod assert;
 pub mod error_codes;
-mod host_bindings;
-mod host_bindings_for_testing;
 pub mod trace;
 
 //////////////////////////////////////

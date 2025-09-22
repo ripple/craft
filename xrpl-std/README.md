@@ -313,7 +313,7 @@ Contracts compare 20-byte AccountID values. If you have a classic XRPL address (
 
 Build a contract for WASM and run it with the host:
 
-```bash
+```shell
 cargo build --target wasm32-unknown-unknown --release
 ```
 

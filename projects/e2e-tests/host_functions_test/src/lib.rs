@@ -28,7 +28,9 @@ extern crate std;
 use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_wasm_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_wasm_std::host;
-use xrpl_wasm_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num, trace_num_with_result};
+use xrpl_wasm_std::host::trace::{
+    DataRepr, trace, trace_account_buf, trace_data, trace_num, trace_num_with_result,
+};
 use xrpl_wasm_std::sfield;
 
 #[unsafe(no_mangle)]

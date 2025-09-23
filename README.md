@@ -159,7 +159,7 @@ For details on the WASM VM integration, see [XLS-102: WASM VM Configuration](htt
 
 ## Purpose
 
-The wasm-host tool:
+The wasm-host-simulator tool:
 
 1. Loads and executes WebAssembly modules
 2. Provides test transaction and ledger object data
@@ -258,7 +258,7 @@ craft open-explorer
 
 ### Direct Usage
 
-From the `wasm-host` directory:
+From the `wasm-host-simulator` directory:
 
 ```shell
 # Run with success test case
@@ -271,7 +271,7 @@ cargo run -- --dir path/to/your/project_name --test-case failure
 From any workspace directory:
 
 ```shell
-cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --project <project_name>
+cargo run -p wasm-host-simulator -- --dir path/to/your/project_name --test-case success --project <project_name>
 ```
 
 ### Command Line Options
@@ -287,7 +287,7 @@ cargo run -p wasm-host -- --dir path/to/your/project_name --test-case success --
 To see detailed execution information, including memory allocation, data processing, and function execution steps, use the `--verbose` flag:
 
 ```shell
-cargo run -p wasm-host --dir path/to/folder --project project --test-case success --verbose
+cargo run -p wasm-host-simulator --dir path/to/folder --project project --test-case success --verbose
 ```
 
 The verbose output may include:
@@ -300,22 +300,22 @@ The verbose output may include:
 Example verbose output:
 
 ```text
-[INFO wasm_host] Starting Wasm host application
-[INFO wasm_host] Loading WASM module from: path/to/module.wasm
-[INFO wasm_host] Target function: finish (XLS-100d)
-[INFO wasm_host] Using test case: success
-[DEBUG wasm_host] Initializing WasiModule
-[DEBUG wasm_host] WasiModule initialized successfully
-[INFO wasm_host::vm] Executing WASM function: finish
-[DEBUG wasm_host::vm] TX data size: 610 bytes, LO data size: 919 bytes
-[INFO wasm_host::vm] Allocating memory for transaction data
-[DEBUG wasm_host::vm] Allocated memory at address: 0x110008
+[INFO wasm_host_simulator] Starting Wasm host application
+[INFO wasm_host_simulator] Loading WASM module from: path/to/module.wasm
+[INFO wasm_host_simulator] Target function: finish (XLS-100d)
+[INFO wasm_host_simulator] Using test case: success
+[DEBUG wasm_host_simulator] Initializing WasiModule
+[DEBUG wasm_host_simulator] WasiModule initialized successfully
+[INFO wasm_host_simulator::vm] Executing WASM function: finish
+[DEBUG wasm_host_simulator::vm] TX data size: 610 bytes, LO data size: 919 bytes
+[INFO wasm_host_simulator::vm] Allocating memory for transaction data
+[DEBUG wasm_host_simulator::vm] Allocated memory at address: 0x110008
 ...
 ```
 
 ### Integration with `craft`
 
-The wasm-host tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
+The wasm-host-simulator tool is typically used through the `craft test` command, which provides an interactive interface for selecting test cases:
 
 ```shell
 # Test a WASM module

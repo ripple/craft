@@ -27,8 +27,15 @@ extern crate std;
 
 use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_wasm_std::core::current_tx::traits::TransactionCommonFields;
+use xrpl_wasm_std::core::types::account_id::AccountID;
+use xrpl_wasm_std::core::types::amount::currency_code::CurrencyCode;
+use xrpl_wasm_std::core::types::amount::mpt_id::MptId;
+use xrpl_wasm_std::core::types::amount::opaque_float::OpaqueFloat;
+use xrpl_wasm_std::core::types::amount::token_amount::TokenAmount;
 use xrpl_wasm_std::host;
-use xrpl_wasm_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
+use xrpl_wasm_std::host::trace::{
+    DataRepr, trace, trace_account_buf, trace_amount, trace_data, trace_num,
+};
 use xrpl_wasm_std::sfield;
 
 #[unsafe(no_mangle)]

@@ -17,16 +17,16 @@ The resulting WASM file will be located at:
 ./target/wasm32-unknown-unknown/release/keylet_example.wasm
 ```
 
-## Running with wasm-host
+## Running with wasm-host-simulator
 
-Run the contract using the wasm-host application:
+Run the contract using the wasm-host-simulator application:
 
 ```bash
 cd ../../../
-cargo run -p wasm-host -- --dir projects/e2e-tests/keylet_exists --project keylet_exists
+cargo run -p wasm-host-simulator -- --dir projects/e2e-tests/keylet_exists --project keylet_exists
 ```
 
 ### Note
 
-Please note that the wasm-host only has mock host functions. Please use the devnet (or a standalone rippled node) to
+Please note that the wasm-host-simulator only has mock host functions. Please use the devnet (or a standalone rippled node) to
 test with real data.

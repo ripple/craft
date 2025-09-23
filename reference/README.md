@@ -11,8 +11,8 @@ This directory contains utility scripts (in JavaScript) for common XRPL operatio
 A utility script for finishing an escrow transaction. This script creates and submits an EscrowFinish transaction.
 
 Example usage:
-```bash
-node reference/js/finish_escrow rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3 sEd7u9QQjspQBNxGbXZLc2NQjpKUE1L rnNTgUoCakpcSmY3yiHyBi6zusSQdU3Vzy 461231
+```shell
+node reference/js/finish_escrow.js rPPLRQwB3KGvpfDMABZucA8ifJJcvQhHD3 sEd7u9QQjspQBNxGbXZLc2NQjpKUE1L rnNTgUoCakpcSmY3yiHyBi6zusSQdU3Vzy 461231
 ```
 
 Where:

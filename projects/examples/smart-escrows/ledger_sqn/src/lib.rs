@@ -3,19 +3,17 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_std::host;
-use xrpl_std::host::error_codes::match_result_code;
-use xrpl_std::host::trace::trace_num;
+use xrpl_wasm_std::host;
+use xrpl_wasm_std::host::error_codes::match_result_code;
+use xrpl_wasm_std::host::trace::trace_num;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     unsafe {
-        let mut buffer = [0u8; 4]; // Enough to hold an u32
-
-        let result_code = host::get_ledger_sqn(buffer.as_mut_ptr(), 8);
+        let result_code = host::get_ledger_sqn();
 
         let ledger_sequence = match_result_code(result_code, || {
-            Some(u32::from_le_bytes(buffer)) // <-- Move the value into a buffer
+            Some(result_code) // <-- Move the value into a buffer
         })
         .unwrap()
         .unwrap();

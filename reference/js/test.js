@@ -1,5 +1,5 @@
 const fs = require('fs'); // Only in Node.js
-const wasmBuffer = fs.readFileSync('../../projects/ledger_sqn/target/wasm32-unknown-unknown/release/ledger_sqn.wasm');
+const wasmBuffer = fs.readFileSync('../../projects/target/wasm32-unknown-unknown/release/ledger_sqn.wasm');
 
 const importObject = {
     host_lib: {

@@ -7,14 +7,14 @@ build = "build.rs"
 [workspace]
 resolver = "2"
 members = [
+    "e2e-tests/codecov_tests",
     "e2e-tests/decoder_tests",
     "e2e-tests/float_tests",
     "e2e-tests/host_functions_test",
+    "e2e-tests/keylet_exists",
     "e2e-tests/trace_escrow_account",
     "e2e-tests/trace_escrow_finish",
-    "e2e-tests/trace_escrow_ledger_object",
-    "its/codecov_tests",
-    "its/keylet_exists",
+    "e2e-tests/trace_escrow_ledger_object"
 ]
 
 [profile.release]

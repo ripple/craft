@@ -6,25 +6,25 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use xrpl_std::core::locator::Locator;
-use xrpl_std::core::types::account_id::AccountID;
-use xrpl_std::core::types::amount::currency_code::CurrencyCode;
-use xrpl_std::core::types::hash_256::Hash256;
-use xrpl_std::core::types::keylets::{
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::core::types::account_id::AccountID;
+use xrpl_wasm_std::core::types::amount::currency_code::CurrencyCode;
+use xrpl_wasm_std::core::types::hash_256::Hash256;
+use xrpl_wasm_std::core::types::keylets::{
     KeyletBytes, check_keylet, credential_keylet, delegate_keylet, deposit_preauth_keylet,
     did_keylet, escrow_keylet, line_keylet, nft_offer_keylet, offer_keylet, oracle_keylet,
     paychan_keylet, signers_keylet, ticket_keylet,
 };
-use xrpl_std::host::trace::{DataRepr, trace, trace_data, trace_num};
-use xrpl_std::host::{
+use xrpl_wasm_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
+use xrpl_wasm_std::host::{
     cache_ledger_obj, get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_field,
 };
-use xrpl_std::sfield::{
+use xrpl_wasm_std::sfield::{
     Account, AccountTxnID, Balance, CredentialType, Domain, EmailHash, Flags, Issuer,
     LedgerEntryType, MessageKey, OwnerCount, PreviousTxnID, PreviousTxnLgrSeq, RegularKey,
     Sequence, Subject, TakerGets, TicketCount, TicketSequence, TransferRate,
 };
-use xrpl_std::{decode_hex_20, decode_hex_32, host, sfield};
+use xrpl_wasm_std::{decode_hex_20, decode_hex_32, host, sfield};
 
 fn test_account_root() {
     let _ = trace("\n$$$ test_account_root $$$");
@@ -37,7 +37,7 @@ fn test_account_root() {
     let out_len = unsafe {
         get_ledger_obj_field(slot, Account, out_buf.as_mut_ptr(), out_buf.len()) as usize
     };
-    let _ = trace_data("  Account:", &out_buf[0..out_len], DataRepr::AsHex);
+    let _ = trace_account_buf("  Account:", &out_buf);
 
     let mut out_buf = [0u8; 32];
     let out_len = unsafe {
@@ -112,7 +112,7 @@ fn test_account_root() {
     let out_len = unsafe {
         get_ledger_obj_field(slot, RegularKey, out_buf.as_mut_ptr(), out_buf.len()) as usize
     };
-    let _ = trace_data("  RegularKey:", &out_buf[0..out_len], DataRepr::AsHex);
+    let _ = trace_account_buf("  RegularKey:", &out_buf);
 
     let mut out_buf = 0i32;
     let out_len = unsafe {
@@ -509,7 +509,7 @@ fn get_account(slot: i32, field: i32) -> AccountID {
     let mut acc_buf = [0u8; 20];
     let acc_len =
         unsafe { get_ledger_obj_field(slot, field, acc_buf.as_mut_ptr(), acc_buf.len()) as usize };
-    let _ = trace_data("  accountID:", &acc_buf[0..acc_len], DataRepr::AsHex);
+    let _ = trace_account_buf("  accountID:", &acc_buf);
     AccountID::from(acc_buf)
 }
 

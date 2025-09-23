@@ -6,35 +6,35 @@ version = 4
 name = "codecov_tests"
 version = "0.0.1"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
 name = "decoder_tests"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
 name = "float_tests"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
 name = "host_functions_test"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
 name = "keylet_exists"
 version = "0.1.0"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
@@ -45,23 +45,23 @@ version = "0.1.0"
 name = "trace_escrow_account"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
 name = "trace_escrow_finish"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
 name = "trace_escrow_ledger_object"
 version = "0.5.1-devnet5"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
-name = "xrpl-std"
+name = "xrpl-wasm-std"
 version = "0.5.1-devnet5"

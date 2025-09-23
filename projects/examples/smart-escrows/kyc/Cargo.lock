@@ -6,9 +6,9 @@ version = 4
 name = "kyc"
 version = "0.0.1"
 dependencies = [
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
-name = "xrpl-std"
+name = "xrpl-wasm-std"
 version = "0.5.1-devnet5"

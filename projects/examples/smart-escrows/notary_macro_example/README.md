@@ -12,6 +12,7 @@ Otherwise, the escrow does not unlock.
 ### Build Commands
 
 ```bash
+cargo build
 cargo build --target wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
@@ -27,6 +28,6 @@ The resulting WASM file will be located at:
 Run the contract using the wasm-host-simulator application:
 
 ```bash
-cd ../../../../wasm-host-simulator
-cargo run -- --dir ../projects/examples/smart-escrows/notary_macro_example --project notary_macro_example
+cd ../../../..
+cargo run --package wasm-host-simulator --bin wasm-host-simulator -- --dir projects/examples/smart-escrows/notary_macro_example --project notary_macro_example
 ```

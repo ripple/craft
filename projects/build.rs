@@ -3,12 +3,6 @@ use std::path::Path;
 use std::process::Command;
 
 fn main() {
-    // Only build smart escrows if we're building the workspace root
-    // (not when building individual workspace members)
-    if env::var("CARGO_PKG_NAME").unwrap_or_default() != "craft-projects" {
-        return;
-    }
-
     println!("cargo:rerun-if-changed=examples/smart-escrows");
 
     let smart_escrows_dir = Path::new("examples/smart-escrows");
@@ -26,6 +20,45 @@ fn main() {
         "notary_macro_example",
         "oracle",
     ];
+
+    // Check if this is a clean operation
+    let is_clean = env::args().any(|arg| arg == "clean");
+
+    if is_clean {
+        println!("cargo:warning=Cleaning smart escrow examples");
+
+        for project in &projects {
+            let project_dir = smart_escrows_dir.join(project);
+
+            if !project_dir.exists() {
+                continue;
+            }
+
+            println!("cargo:warning=Cleaning smart escrow: {}", project);
+
+            let output = Command::new("cargo")
+                .arg("clean")
+                .current_dir(&project_dir)
+                .output();
+
+            match output {
+                Ok(output) => {
+                    if !output.status.success() {
+                        let stderr = String::from_utf8_lossy(&output.stderr);
+                        println!("cargo:warning=Failed to clean {}: {}", project, stderr);
+                    } else {
+                        println!("cargo:warning=Successfully cleaned {}", project);
+                    }
+                }
+                Err(e) => {
+                    println!("cargo:warning=Failed to execute cargo clean for {}: {}", project, e);
+                }
+            }
+        }
+
+        println!("cargo:warning=Finished cleaning smart escrow examples");
+        return;
+    }
 
     let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
     let target = env::var("TARGET").unwrap_or_else(|_| "native".to_string());

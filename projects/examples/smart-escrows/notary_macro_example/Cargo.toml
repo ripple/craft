@@ -11,5 +11,5 @@ crate-type = ["cdylib"]
 
 
 [dependencies]
-xrpl-std = { path = "../../../../xrpl-std" }
+xrpl-wasm-std = { path = "../../../../xrpl-wasm-std" }
 xrpl-address-macro = { path = "../../../../xrpl-address-macro" }

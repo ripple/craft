@@ -3,13 +3,13 @@
 #[cfg(not(target_arch = "wasm32"))]
 extern crate std;
 
-use crate::host::trace::{DataRepr, trace_data, trace_num};
-use xrpl_std::core::locator::Locator;
-use xrpl_std::core::types::account_id::AccountID;
-use xrpl_std::core::types::keylets::oracle_keylet;
-use xrpl_std::host::error_codes::match_result_code;
-use xrpl_std::host::{Result, Result::Err, Result::Ok};
-use xrpl_std::{host, sfield};
+use xrpl_wasm_std::core::locator::Locator;
+use xrpl_wasm_std::core::types::account_id::AccountID;
+use xrpl_wasm_std::core::types::keylets::oracle_keylet;
+use xrpl_wasm_std::host::error_codes::match_result_code;
+use xrpl_wasm_std::host::trace::{DataRepr, trace_data, trace_num};
+use xrpl_wasm_std::host::{Result, Result::Err, Result::Ok};
+use xrpl_wasm_std::{host, sfield};
 
 const ORACLE_OWNER: AccountID =
     AccountID(*b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3");

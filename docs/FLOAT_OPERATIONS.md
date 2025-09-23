@@ -162,4 +162,4 @@ float_compare(a: *const u8, b: *const u8) -> i32
 
 - [XRPL Amount Fields Specification](https://xrpl.org/docs/references/protocol/binary-format#amount-fields)
 - [rippled Number Implementation](https://github.com/XRPLF/rippled/blob/develop/src/ripple/basics/Number.h)
-- xrpl-std documentation: `cargo doc --open -p xrpl-std`
+- xrpl-wasm-std documentation: `cargo doc --open -p xrpl-wasm-std`

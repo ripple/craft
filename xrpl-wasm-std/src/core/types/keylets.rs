@@ -5,7 +5,6 @@ use crate::core::types::amount::mpt_id::MptId;
 use crate::host;
 use crate::host::Result;
 use crate::host::error_codes::match_result_code_with_expected_bytes;
-use crate::host::trace::{DataRepr, trace_data, trace_num};
 
 pub const XRPL_KEYLET_SIZE: usize = 32;
 // Type aliases for specific keylets, all currently using the same underlying array type.
@@ -795,76 +794,6 @@ pub fn oracle_keylet(owner: &AccountID, document_id: i32) -> Result<KeyletBytes>
             keylet_buffer_len,
         )
     })
-}
-
-/// Creates an Oracle keylet with panic-on-failure behavior for safe Oracle object lookups.
-///
-/// This function wraps the `oracle_keylet` function and provides guaranteed success by panicking
-/// if the keylet creation fails. It's designed for use cases where Oracle keylet creation
-/// is expected to always succeed, and failure indicates a critical error condition.
-///
-/// # Arguments
-///
-/// * `owner` - A reference to the `AccountID` that owns the Oracle object
-/// * `document_id` - The document identifier for the specific Oracle instance
-///
-/// # Returns
-///
-/// Returns a `KeyletBytes` that can be used to locate and access the Oracle object
-/// in the ledger.
-///
-/// # Panics
-///
-/// This function will panic if:
-/// - The underlying `oracle_keylet` function fails to create a valid keylet
-/// - Invalid account ID or document ID parameters are provided
-///
-/// When a panic occurs, the function will:
-/// - Log the account ID as hexadecimal using `trace_data`
-/// - Log the document ID using `trace_num`
-/// - Panic with a descriptive error message including the error details
-///
-/// # Safety
-///
-/// This function is marked as "safe" because it guarantees a valid keylet return value
-/// or program termination. Use this when Oracle keylet creation failure should be
-/// treated as an unrecoverable error.
-///
-/// # Example
-///
-/// ```rust
-/// use crate::xrpl_wasm_std::core::types::account_id::AccountID;
-/// use xrpl_wasm_std::core::types::keylets::oracle_keylet;
-/// use xrpl_wasm_std::host::trace::{trace_data, DataRepr};
-/// use xrpl_wasm_std::core::types::keylets::oracle_keylet_safe;
-/// use xrpl_wasm_std::core::types::keylets::KeyletBytes;
-///
-/// fn main() -> Result<(), Box<dyn std::error::Error>> {
-///   let owner: AccountID = AccountID::from(
-///       *b"\xd5\xb9\x84VP\x9f \xb5'\x9d\x1eJ.\xe8\xb2\xaa\x82\xaec\xe3"
-///   );
-///   let document_id = 12345;
-///   let keylet:KeyletBytes = oracle_keylet_safe(&owner, document_id);
-///   Ok(())
-/// }
-/// ```
-pub fn oracle_keylet_safe(owner: &AccountID, document_id: i32) -> KeyletBytes {
-    let keylet = oracle_keylet(owner, document_id);
-    match keylet {
-        Result::Ok(keylet) => keylet,
-        Result::Err(error) => {
-            let _ = trace_data(
-                "Failed to get oracle_keylet for account_id=",
-                &owner.0,
-                DataRepr::AsHex,
-            );
-            let _ = trace_num(
-                "Failed to get oracle_keylet for document_id=",
-                document_id as i64,
-            );
-            core::panic!("Failed to get oracle_keylet (error_code={})", error.code())
-        }
-    }
 }
 
 /// Generates a payment channel keylet for a given owner and sequence in the XRP Ledger.

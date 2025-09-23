@@ -24,33 +24,33 @@ pub fn object_exists(
 ) -> Result<bool> {
     match keylet_result {
         Ok(keylet) => {
-            let _ = trace_data(keylet_type, &keylet, DataRepr::AsHex);
+            trace_data(keylet_type, &keylet, DataRepr::AsHex);
 
             let slot = unsafe { host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot <= 0 {
-                let _ = trace_num("Error: ", slot.into());
+                trace_num("Error: ", slot.into());
                 return Err(Error::from_code(slot));
             }
             if field == 0 {
                 let new_field = sfield::PreviousTxnID;
-                let _ = trace_num("Getting field: ", new_field.into());
+                trace_num("Getting field: ", new_field.into());
                 match ledger_object::get_hash_256_field(slot, new_field) {
                     Ok(data) => {
-                        let _ = trace_data("Field data: ", &data.0, DataRepr::AsHex);
+                        trace_data("Field data: ", &data.0, DataRepr::AsHex);
                     }
                     Err(result_code) => {
-                        let _ = trace_num("Error getting field: ", result_code.into());
+                        trace_num("Error getting field: ", result_code.into());
                         return Err(result_code);
                     }
                 }
             } else {
-                let _ = trace_num("Getting field: ", field.into());
+                trace_num("Getting field: ", field.into());
                 match ledger_object::get_account_id_field(slot, field) {
                     Ok(data) => {
-                        let _ = trace_data("Field data: ", &data.0, DataRepr::AsHex);
+                        trace_data("Field data: ", &data.0, DataRepr::AsHex);
                     }
                     Err(result_code) => {
-                        let _ = trace_num("Error getting field: ", result_code.into());
+                        trace_num("Error getting field: ", result_code.into());
                         return Err(result_code);
                     }
                 }
@@ -59,7 +59,7 @@ pub fn object_exists(
             Ok(true)
         }
         Err(error) => {
-            let _ = trace_num("Error getting keylet: ", error.into());
+            trace_num("Error getting keylet: ", error.into());
             Err(error)
         }
     }
@@ -67,15 +67,15 @@ pub fn object_exists(
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
+    trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
     let escrow: CurrentEscrow = get_current_escrow();
 
     let account = escrow.get_account().unwrap_or_panic();
-    let _ = trace_account("Account:", &account);
+    trace_account("Account:", &account);
 
     let destination = escrow.get_destination().unwrap_or_panic();
-    let _ = trace_account("Destination:", &destination);
+    trace_account("Destination:", &destination);
 
     let mut seq = 5;
 
@@ -84,13 +84,13 @@ pub extern "C" fn finish() -> i32 {
             match object_exists($keylet, $type, $field) {
                 Ok(_exists) => {
                     // false isn't returned
-                    let _ = trace(concat!(
+                    trace(concat!(
                         $type,
                         " object exists, proceeding with escrow finish."
                     ));
                 }
                 Err(error) => {
-                    let _ = trace_num("Current seq value:", seq.try_into().unwrap());
+                    trace_num("Current seq value:", seq.try_into().unwrap());
                     return error.code();
                 }
             }

@@ -22,7 +22,49 @@ pub mod guides {
 /// Host Simulator) the standard lib is available, which includes a panic handler.
 #[cfg(target_arch = "wasm32")]
 #[panic_handler]
-fn panic(_info: &::core::panic::PanicInfo) -> ! {
+fn panic(info: &::core::panic::PanicInfo) -> ! {
+    // Emit panic information to the trace log before halting execution
+    // This ensures that panic messages are visible in the terminal/logs
+
+    // Try to emit the panic message using trace functions
+    // We use unsafe operations here because we're in a panic handler
+    // and need to be very careful about what we do
+
+    // First, emit a clear panic indicator
+    let panic_msg = "WASM PANIC OCCURRED";
+    unsafe {
+        crate::host::trace(
+            panic_msg.as_ptr(),
+            panic_msg.len(),
+            ::core::ptr::null(),
+            0,
+            0, // as UTF-8
+        )
+    };
+
+    // Note: info.payload() is deprecated and doesn't provide useful information
+    // We rely on the panic message from the panic! macro instead
+
+    // Try to emit location information if available
+    if let Some(location) = info.location() {
+        let location_msg = "Panic location: ";
+        let file_name = location.file();
+        unsafe {
+            crate::host::trace(
+                location_msg.as_ptr(),
+                location_msg.len(),
+                file_name.as_ptr(),
+                file_name.len(),
+                0, // as UTF-8
+            )
+        };
+
+        // Emit line number separately since we can't format strings in no_std
+        let line_msg = "Line number: ";
+        let _ =
+            unsafe { host::trace_num(line_msg.as_ptr(), line_msg.len(), location.line() as i64) };
+    }
+
     // This instruction will halt execution of the WASM module.
     // It's the WASM equivalent of a trap or an unrecoverable error.
     ::core::arch::wasm32::unreachable();

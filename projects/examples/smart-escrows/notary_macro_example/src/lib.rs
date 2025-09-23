@@ -24,7 +24,7 @@ pub extern "C" fn finish() -> i32 {
     let tx_account = match escrow_finish.get_account() {
         Ok(v) => v,
         Err(e) => {
-            let _ = trace_num("Error in Notary contract", e.code() as i64);
+            trace_num("Error in Notary contract", e.code() as i64);
             return e.code();
         }
     };

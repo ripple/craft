@@ -207,7 +207,7 @@ impl From<[u8; TOKEN_AMOUNT_SIZE]> for TokenAmount {
         match Self::from_bytes(&bytes) {
             Ok(token_amount) => token_amount,
             Err(error) => {
-                let _ = trace_num("Error parsing token_amount", error.code() as i64);
+                trace_num("Error parsing token_amount", error.code() as i64);
                 panic!("Invalid TokenAmount byte array");
             }
         }

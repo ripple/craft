@@ -4,55 +4,55 @@
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_ledger_sqn() -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_parent_ledger_time() -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_parent_ledger_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_ledger_account_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_ledger_tx_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_base_fee() -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn amendment_enabled(_amendment_ptr: *const u8, _amendment_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn cache_ledger_obj(_keylet_ptr: *const u8, _keylet_len: usize, _cache_num: i32) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_field(_field: i32, _out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -62,7 +62,7 @@ pub unsafe fn get_current_ledger_obj_field(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -73,7 +73,7 @@ pub unsafe fn get_ledger_obj_field(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -84,7 +84,7 @@ pub unsafe fn get_tx_nested_field(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -95,7 +95,7 @@ pub unsafe fn get_current_ledger_obj_nested_field(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -107,31 +107,31 @@ pub unsafe fn get_ledger_obj_nested_field(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_array_len(_field: i32) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_current_ledger_obj_array_len(_field: i32) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_ledger_obj_array_len(_cache_num: i32, _field: i32) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_tx_nested_array_len(_locator_ptr: *const u8, _locator_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -140,7 +140,7 @@ pub unsafe fn get_current_ledger_obj_nested_array_len(
     _locator_ptr: *const u8,
     _locator_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -150,13 +150,13 @@ pub unsafe fn get_ledger_obj_nested_array_len(
     _locator_ptr: *const u8,
     _locator_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn update_data(_data_ptr: *const u8, _data_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -167,7 +167,7 @@ pub unsafe fn compute_sha512_half(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -180,7 +180,7 @@ pub unsafe fn check_sig(
     _pubkey_ptr: *const u8,
     _pubkey_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -432,7 +432,7 @@ pub unsafe fn get_nft(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -443,7 +443,7 @@ pub unsafe fn get_nft_issuer(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -454,19 +454,19 @@ pub unsafe fn get_nft_taxon(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_nft_flags(_nft_id_ptr: *const u8, _nft_id_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_nft_transfer_fee(_nft_id_ptr: *const u8, _nft_id_len: usize) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -477,7 +477,7 @@ pub unsafe fn get_nft_serial(
     _out_buff_ptr: *mut u8,
     _out_buff_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -488,7 +488,7 @@ pub unsafe fn float_from_int(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -500,7 +500,7 @@ pub unsafe fn float_from_uint(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -512,7 +512,7 @@ pub unsafe fn float_set(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -523,7 +523,7 @@ pub unsafe fn float_compare(
     _in_buff2: *const u8,
     _in_buff2_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -537,7 +537,7 @@ pub unsafe fn float_add(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -551,7 +551,7 @@ pub unsafe fn float_subtract(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -565,7 +565,7 @@ pub unsafe fn float_multiply(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -579,7 +579,7 @@ pub unsafe fn float_divide(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -592,7 +592,7 @@ pub unsafe fn float_pow(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -605,7 +605,7 @@ pub unsafe fn float_root(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -617,7 +617,7 @@ pub unsafe fn float_log(
     _out_buff_len: usize,
     _rounding_mode: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -629,13 +629,13 @@ pub unsafe fn trace(
     _data_read_len: usize,
     _as_hex: i32,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
 pub unsafe fn trace_num(_msg_read_ptr: *const u8, _msg_read_len: usize, _number: i64) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -646,7 +646,7 @@ pub unsafe fn trace_account(
     _account_ptr: *const u8,
     _account_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -657,7 +657,7 @@ pub unsafe fn trace_opaque_float(
     _opaque_float_ptr: *const u8,
     _opaque_float_len: usize,
 ) -> i32 {
-    -1
+    32
 }
 
 #[allow(unused)]
@@ -668,5 +668,5 @@ pub unsafe fn trace_amount(
     _amount_ptr: *const u8,
     _amount_len: usize,
 ) -> i32 {
-    -1
+    32
 }

@@ -20,7 +20,7 @@ pub fn trace_value<T>(msg: &str, value: &T) {
     let data_ptr = value as *const T as *const u8;
     let data_len = core::mem::size_of::<T>();
     let data_slice = unsafe { core::slice::from_raw_parts(data_ptr, data_len) };
-    let _ = trace_data(msg, data_slice, DataRepr::AsHex);
+    trace_data(msg, data_slice, DataRepr::AsHex);
 }
 
 /// Trace a numeric value.
@@ -38,7 +38,7 @@ macro_rules! impl_numeric_trace {
             impl NumericTrace for $t {
                 #[inline]
                 fn trace_as_num(msg: &str, value: &$t) {
-                    let _ = trace_num(msg, *value as i64);
+                    trace_num(msg, *value as i64);
                 }
             }
         )*
@@ -69,7 +69,7 @@ macro_rules! assert_eq {
             let left_val = $left;
             let right_val = $right;
             if left_val != right_val {
-                let _ = $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " != ", stringify!($right)));
+                $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " != ", stringify!($right)));
                 $crate::host::assert::trace_value("  left: ", &left_val);
                 $crate::host::assert::trace_value("  right: ", &right_val);
                 panic!("assertion failed: {} != {}", stringify!($left), stringify!($right));
@@ -81,10 +81,10 @@ macro_rules! assert_eq {
             let left_val = $left;
             let right_val = $right;
             if left_val != right_val {
-                let _ = $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " != ", stringify!($right)));
+                $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " != ", stringify!($right)));
                 $crate::host::assert::trace_value("  left: ", &left_val);
                 $crate::host::assert::trace_value("  right: ", &right_val);
-                let _ = $crate::host::trace::trace("  message: (see panic message for details)");
+                $crate::host::trace::trace("  message: (see panic message for details)");
                 panic!("assertion failed: {} != {}: {}", stringify!($left), stringify!($right), format_args!($($arg)+));
             }
         }
@@ -109,14 +109,14 @@ macro_rules! assert_eq {
 macro_rules! assert {
     ($cond:expr) => {
         if !$cond {
-            let _ = $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($cond)));
+            $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($cond)));
             panic!("assertion failed: {}", stringify!($cond));
         }
     };
     ($cond:expr, $($arg:tt)+) => {
         if !$cond {
-            let _ = $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($cond)));
-            let _ = $crate::host::trace::trace("  message: (see panic message for details)");
+            $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($cond)));
+            $crate::host::trace::trace("  message: (see panic message for details)");
             panic!("assertion failed: {}: {}", stringify!($cond), format_args!($($arg)+));
         }
     };
@@ -143,7 +143,7 @@ macro_rules! assert_ne {
             let left_val = $left;
             let right_val = $right;
             if left_val == right_val {
-                let _ = $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " == ", stringify!($right)));
+                $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " == ", stringify!($right)));
                 $crate::host::assert::trace_value("  value: ", &left_val);
                 panic!("assertion failed: {} == {}", stringify!($left), stringify!($right));
             }
@@ -154,9 +154,9 @@ macro_rules! assert_ne {
             let left_val = $left;
             let right_val = $right;
             if left_val == right_val {
-                let _ = $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " == ", stringify!($right)));
+                $crate::host::trace::trace(concat!("Assertion failed: ", stringify!($left), " == ", stringify!($right)));
                 $crate::host::assert::trace_value("  value: ", &left_val);
-                let _ = $crate::host::trace::trace("  message: (see panic message for details)");
+                $crate::host::trace::trace("  message: (see panic message for details)");
                 panic!("assertion failed: {} == {}: {}", stringify!($left), stringify!($right), format_args!($($arg)+));
             }
         }

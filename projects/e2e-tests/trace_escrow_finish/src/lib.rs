@@ -20,8 +20,8 @@ use xrpl_wasm_std::{assert_eq, sfield};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
-    let _ = trace("");
+    trace("$$$$$ STARTING WASM EXECUTION $$$$$");
+    trace("");
 
     // The transaction prompting execution of this contract.
     let escrow_finish: EscrowFinish = get_current_escrow_finish();
@@ -30,22 +30,22 @@ pub extern "C" fn finish() -> i32 {
     // Trace All EscrowFinish Fields
     // ########################################
     {
-        let _ = trace("### Trace All EscrowFinish Fields");
-        let _ = trace("{ ");
-        let _ = trace("  -- Common Fields");
+        trace("### Trace All EscrowFinish Fields");
+        trace("{ ");
+        trace("  -- Common Fields");
 
         // Trace Field: TransactionID
         let current_tx_id: Hash256 = escrow_finish.get_id().unwrap();
-        let _ = trace_data("  EscrowFinish TxId:", &current_tx_id.0, DataRepr::AsHex);
+        trace_data("  EscrowFinish TxId:", &current_tx_id.0, DataRepr::AsHex);
         assert_eq!(current_tx_id, EXPECTED_TX_ID.into());
 
         // Trace Field: Account
         let account = escrow_finish.get_account().unwrap();
-        let _ = trace_account("  Account:", &account);
+        trace_account("  Account:", &account);
         if account.0.eq(&ACCOUNT_ONE.0) {
-            let _ = trace("    AccountID == ACCOUNT_ONE => TRUE");
+            trace("    AccountID == ACCOUNT_ONE => TRUE");
         } else {
-            let _ = trace("    AccountID == ACCOUNT_ONE => FALSE");
+            trace("    AccountID == ACCOUNT_ONE => FALSE");
             assert_eq!(account, ACCOUNT_ONE);
         }
 
@@ -53,7 +53,7 @@ pub extern "C" fn finish() -> i32 {
         let transaction_type: TransactionType = escrow_finish.get_transaction_type().unwrap();
         assert_eq!(transaction_type, TransactionType::EscrowFinish);
         let tx_type_bytes: [u8; 2] = transaction_type.into();
-        let _ = trace_data(
+        trace_data(
             "  TransactionType (EscrowFinish):",
             &tx_type_bytes,
             DataRepr::AsHex,
@@ -62,67 +62,67 @@ pub extern "C" fn finish() -> i32 {
         // Trace Field: ComputationAllowance
         let computation_allowance: u32 = escrow_finish.get_computation_allowance().unwrap();
         assert_eq!(computation_allowance, 1000001);
-        let _ = trace_num("  ComputationAllowance:", computation_allowance as i64);
+        trace_num("  ComputationAllowance:", computation_allowance as i64);
 
         // Trace Field: Fee
         let fee = escrow_finish.get_fee().unwrap();
-        let _ = trace_amount("  Fee:", &fee);
+        trace_amount("  Fee:", &fee);
 
         // Trace Field: Sequence
         let sequence: u32 = escrow_finish.get_sequence().unwrap();
         assert_eq!(sequence, 4294967295);
-        let _ = trace_num("  Sequence:", sequence as i64);
+        trace_num("  Sequence:", sequence as i64);
 
         // Trace Field: AccountTxnID
         let opt_account_txn_id = escrow_finish.get_account_txn_id().unwrap();
         if let Some(account_txn_id) = opt_account_txn_id {
             assert_eq!(account_txn_id.0, EXPECTED_ACCOUNT_TXN_ID);
-            let _ = trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
+            trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
         }
 
         // Trace Field: Flags
         let opt_flags = escrow_finish.get_flags().unwrap();
         if let Some(flags) = opt_flags {
             assert_eq!(flags, 4294967294);
-            let _ = trace_num("  Flags:", flags as i64);
+            trace_num("  Flags:", flags as i64);
         }
 
         // Trace Field: LastLedgerSequence
         let opt_last_ledger_sequence = escrow_finish.get_last_ledger_sequence().unwrap();
         if let Some(last_ledger_sequence) = opt_last_ledger_sequence {
             assert_eq!(last_ledger_sequence, 4294967292);
-            let _ = trace_num("  LastLedgerSequence:", last_ledger_sequence as i64);
+            trace_num("  LastLedgerSequence:", last_ledger_sequence as i64);
         }
 
         // Trace Field: NetworkID
         let opt_network_id = escrow_finish.get_network_id().unwrap();
         if let Some(network_id) = opt_network_id {
             assert_eq!(network_id, 4294967291);
-            let _ = trace_num("  NetworkID:", network_id as i64);
+            trace_num("  NetworkID:", network_id as i64);
         }
 
         // Trace Field: SourceTag
         let opt_source_tag = escrow_finish.get_source_tag().unwrap();
         if let Some(source_tag) = opt_source_tag {
             assert_eq!(source_tag, 4294967290);
-            let _ = trace_num("  SourceTag:", source_tag as i64);
+            trace_num("  SourceTag:", source_tag as i64);
         }
 
         // Trace Field: SigningPubKey
         let signing_pub_key = escrow_finish.get_signing_pub_key().unwrap();
         assert_eq!(signing_pub_key.0, EXPECTED_TX_SIGNING_PUB_KEY);
-        let _ = trace_data("  SigningPubKey:", &signing_pub_key.0, DataRepr::AsHex);
+        trace_data("  SigningPubKey:", &signing_pub_key.0, DataRepr::AsHex);
 
         // Trace Field: TicketSequence
         let opt_ticket_sequence = escrow_finish.get_ticket_sequence().unwrap();
         if let Some(ticket_sequence) = opt_ticket_sequence {
             assert_eq!(ticket_sequence, 4294967289);
-            let _ = trace_num("  TicketSequence:", ticket_sequence as i64);
+            trace_num("  TicketSequence:", ticket_sequence as i64);
         }
 
         let array_len = unsafe { host::get_tx_array_len(sfield::Memos) };
         assert_eq!(array_len, 1);
-        let _ = trace_num("  Memos array len:", array_len as i64);
+        trace_num("  Memos array len:", array_len as i64);
 
         let mut memo_buf = [0u8; 1024];
         let mut locator = Locator::new();
@@ -138,8 +138,8 @@ pub extern "C" fn finish() -> i32 {
                 memo_buf.len(),
             )
         };
-        let _ = trace("    Memo #: 1");
-        let _ = trace_data(
+        trace("    Memo #: 1");
+        trace_data(
             "      MemoType:",
             &memo_buf[..output_len as usize],
             DataRepr::AsHex,
@@ -154,7 +154,7 @@ pub extern "C" fn finish() -> i32 {
                 memo_buf.len(),
             )
         };
-        let _ = trace_data(
+        trace_data(
             "      MemoData:",
             &memo_buf[..output_len as usize],
             DataRepr::AsHex,
@@ -169,7 +169,7 @@ pub extern "C" fn finish() -> i32 {
                 memo_buf.len(),
             )
         };
-        let _ = trace_data(
+        trace_data(
             "      MemoFormat:",
             &memo_buf[..output_len as usize],
             DataRepr::AsHex,
@@ -177,7 +177,7 @@ pub extern "C" fn finish() -> i32 {
 
         let array_len = unsafe { host::get_tx_array_len(sfield::Signers) };
         assert_eq!(array_len, 2);
-        let _ = trace_num("  Signers array len:", array_len as i64);
+        trace_num("  Signers array len:", array_len as i64);
 
         for i in 0..array_len {
             let mut buf = [0x00; 64];
@@ -194,11 +194,11 @@ pub extern "C" fn finish() -> i32 {
                 )
             };
             if output_len < 0 {
-                let _ = trace_num("  cannot get Account, error:", output_len as i64);
+                trace_num("  cannot get Account, error:", output_len as i64);
                 panic!()
             }
-            let _ = trace_num("    Signer #:", i as i64);
-            let _ = trace_account_buf("     Account:", &buf[..20].try_into().unwrap());
+            trace_num("    Signer #:", i as i64);
+            trace_account_buf("     Account:", &buf[..20].try_into().unwrap());
 
             locator.repack_last(sfield::TxnSignature);
             let output_len = unsafe {
@@ -210,10 +210,10 @@ pub extern "C" fn finish() -> i32 {
                 )
             };
             if output_len < 0 {
-                let _ = trace_num("  cannot get TxnSignature, error:", output_len as i64);
+                trace_num("  cannot get TxnSignature, error:", output_len as i64);
                 panic!()
             }
-            let _ = trace_data(
+            trace_data(
                 "     TxnSignature:",
                 &buf[..output_len as usize],
                 DataRepr::AsHex,
@@ -232,13 +232,13 @@ pub extern "C" fn finish() -> i32 {
             assert_eq!(signing_pub_key.0, EXPECTED_TX_SIGNING_PUB_KEY);
 
             if output_len < 0 {
-                let _ = trace_num(
+                trace_num(
                     "  Error getting SigningPubKey. error_code = ",
                     output_len as i64,
                 );
                 break;
             }
-            let _ = trace_data(
+            trace_data(
                 "     SigningPubKey:",
                 &buf[..output_len as usize],
                 DataRepr::AsHex,
@@ -249,30 +249,30 @@ pub extern "C" fn finish() -> i32 {
         let mut signature_bytes = [0u8; 71];
         signature_bytes.copy_from_slice(&txn_signature.data[..71]);
         assert_eq!(signature_bytes, EXPECTED_TXN_SIGNATURE);
-        let _ = trace_data("  TxnSignature:", &signature_bytes, DataRepr::AsHex);
+        trace_data("  TxnSignature:", &signature_bytes, DataRepr::AsHex);
 
-        let _ = trace("  -- EscrowFinish Fields");
+        trace("  -- EscrowFinish Fields");
 
         // Trace Field: Account
         let owner: AccountID = escrow_finish.get_owner().unwrap();
-        let _ = trace_account("  Owner:", &owner);
+        trace_account("  Owner:", &owner);
         if owner.0[0].eq(&ACCOUNT_ZERO.0[0]) {
-            let _ = trace("    AccountID == ACCOUNT_ZERO => TRUE");
+            trace("    AccountID == ACCOUNT_ZERO => TRUE");
         } else {
-            let _ = trace("    AccountID == ACCOUNT_ZERO => FALSE");
+            trace("    AccountID == ACCOUNT_ZERO => FALSE");
             assert_eq!(owner, ACCOUNT_ZERO);
         }
 
         // Trace Field: OfferSequence
         let offer_sequence: u32 = escrow_finish.get_offer_sequence().unwrap();
         assert_eq!(offer_sequence, 4294967293);
-        let _ = trace_num("  OfferSequence:", offer_sequence as i64);
+        trace_num("  OfferSequence:", offer_sequence as i64);
 
         // Trace Field: Condition
         let opt_condition = escrow_finish.get_condition().unwrap();
         if let Some(condition) = opt_condition {
             assert_eq!(condition.0, EXPECTED_ESCROW_FINISH_CONDITION);
-            let _ = trace_data("  Condition:", &condition.0, DataRepr::AsHex);
+            trace_data("  Condition:", &condition.0, DataRepr::AsHex);
         }
 
         let opt_fulfillment = escrow_finish.get_fulfillment().unwrap();
@@ -281,7 +281,7 @@ pub extern "C" fn finish() -> i32 {
                 &fulfillment.data[..fulfillment.len],
                 EXPECTED_ESCROW_FINISH_FULFILLMENT
             );
-            let _ = trace_data(
+            trace_data(
                 "  Fulfillment:",
                 &fulfillment.data[..fulfillment.len],
                 DataRepr::AsHex,
@@ -290,7 +290,7 @@ pub extern "C" fn finish() -> i32 {
 
         // CredentialIDs (Array of Hashes)
         let array_len = unsafe { host::get_tx_array_len(sfield::CredentialIDs) };
-        let _ = trace_num("  CredentialIDs array len:", array_len as i64);
+        trace_num("  CredentialIDs array len:", array_len as i64);
         for i in 0..array_len {
             let mut buf = [0x00; 32];
             let mut locator = Locator::new();
@@ -314,18 +314,18 @@ pub extern "C" fn finish() -> i32 {
                 panic!()
             }
 
-            let _ = trace_data(
+            trace_data(
                 "  CredentialID:",
                 &buf[..output_len as usize],
                 DataRepr::AsHex,
             );
         }
 
-        let _ = trace("}");
-        let _ = trace(""); // Newline
+        trace("}");
+        trace(""); // Newline
     }
 
-    let _ = trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
+    trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
     1 // <-- Finish the escrow to indicate a successful outcome
 }
 

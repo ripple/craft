@@ -15,8 +15,8 @@ use xrpl_wasm_std::{assert_eq, decode_hex_32};
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
-    let _ = trace("");
+    trace("$$$$$ STARTING WASM EXECUTION $$$$$");
+    trace("");
 
     // The transaction prompting execution of this contract.
     let escrow_finish: EscrowFinish = get_current_escrow_finish();
@@ -25,8 +25,8 @@ pub extern "C" fn finish() -> i32 {
     // Step #1 [EscrowFinish Account]: Trace Current Balance
     // ########################################
     {
-        let _ = trace("### Step #1: Trace Account Balance for Account Finishing the Escrow");
-        let _ = trace("{ ");
+        trace("### Step #1: Trace Account Balance for Account Finishing the Escrow");
+        trace("{ ");
         let account: AccountID = escrow_finish.get_account().unwrap();
         let balance = match get_account_balance(&account).unwrap().unwrap() {
             TokenAmount::XRP { num_drops } => num_drops,
@@ -41,9 +41,9 @@ pub extern "C" fn finish() -> i32 {
         // GET some other field... can't due to not knowing
 
         assert_eq!(balance, 55426479402);
-        let _ = trace_num("  Balance of Account Finishing the Escrow:", balance);
-        let _ = trace("}");
-        let _ = trace("");
+        trace_num("  Balance of Account Finishing the Escrow:", balance);
+        trace("}");
+        trace("");
     }
 
     // ########################################
@@ -59,32 +59,32 @@ pub extern "C" fn finish() -> i32 {
         // Try to cache the ledger object inside rippled
         let slot = unsafe { cache_ledger_obj(account_keylet.as_ptr(), 32, 0) };
         if slot <= 0 {
-            let _ = trace_num("Error slotting Account object", slot as i64);
+            trace_num("Error slotting Account object", slot as i64);
             panic!()
         } else {
-            let _ = trace_num("Account object slotted at", slot as i64);
+            trace_num("Account object slotted at", slot as i64);
         }
 
         // We use the trait-bound implementation so as not to duplicate accessor logic.
         let account = AccountRoot { slot_num: slot };
 
-        let _ = trace("### Step #2: Trace AccountRoot Ledger Object");
-        let _ = trace("{ ");
-        let _ = trace("  -- Common Fields");
+        trace("### Step #2: Trace AccountRoot Ledger Object");
+        trace("{ ");
+        trace("  -- Common Fields");
 
         // Trace the `Flags`
         let flags = account.get_flags().unwrap();
         assert_eq!(flags, 1703936);
-        let _ = trace_num("  Flags:", flags as i64);
+        trace_num("  Flags:", flags as i64);
 
         // Trace the `LedgerEntryType`
         let ledger_entry_type = account.ledger_entry_type().unwrap();
         assert_eq!(ledger_entry_type, 97); // 97 is the code for "AccountRoot"
-        let _ = trace_num("  LedgerEntryType (AccountRoot):", ledger_entry_type as i64);
-        let _ = trace("} ");
+        trace_num("  LedgerEntryType (AccountRoot):", ledger_entry_type as i64);
+        trace("} ");
 
-        let _ = trace("{ ");
-        let _ = trace("  -- Account Specific Fields");
+        trace("{ ");
+        trace("  -- Account Specific Fields");
 
         // Trace the `Account`
         let account_id = account.get_account().unwrap();
@@ -95,7 +95,7 @@ pub extern "C" fn finish() -> i32 {
                 0xCF, 0xF8, 0xF2, 0xF9, 0x37, 0xE8
             ]
         );
-        let _ = trace_data("  Account:", &account_id.0, DataRepr::AsHex);
+        trace_data("  Account:", &account_id.0, DataRepr::AsHex);
 
         // Trace the `AccountTxnID`
         let account_txn_id = account.account_txn_id().unwrap().unwrap();
@@ -107,7 +107,7 @@ pub extern "C" fn finish() -> i32 {
                 0xDF, 0x14, 0xA1, 0x1E
             ]
         );
-        let _ = trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
+        trace_data("  AccountTxnID:", &account_txn_id.0, DataRepr::AsHex);
 
         // Trace `AMMID`
         let amm_id = account.amm_id().unwrap().unwrap();
@@ -119,7 +119,7 @@ pub extern "C" fn finish() -> i32 {
                 0xDF, 0x14, 0xA1, 0x1E
             ]
         );
-        let _ = trace_data("  AMMID:", &amm_id.0, DataRepr::AsHex);
+        trace_data("  AMMID:", &amm_id.0, DataRepr::AsHex);
 
         // Trace the `Balance`
         let balance = match account.balance().unwrap().unwrap() {
@@ -132,17 +132,17 @@ pub extern "C" fn finish() -> i32 {
             }
         };
         assert_eq!(balance, 55426479402);
-        let _ = trace_num("  Balance of arbitrary Account:", balance);
+        trace_num("  Balance of arbitrary Account:", balance);
 
         // Trace the `BurnedNFTokens`
         let burned_nf_tokens = account.burned_nf_tokens().unwrap().unwrap();
         assert_eq!(burned_nf_tokens, 20);
-        let _ = trace_num("  BurnedNFTokens:", burned_nf_tokens as i64);
+        trace_num("  BurnedNFTokens:", burned_nf_tokens as i64);
 
         // Trace the `Domain`
         let domain = account.domain().unwrap().unwrap();
         assert_eq!(&domain.data[..domain.len], &[0xC8, 0xE8, 0xB4, 0x6E]);
-        let _ = trace_data("  Domain:", &domain.data[..domain.len], DataRepr::AsHex);
+        trace_data("  Domain:", &domain.data[..domain.len], DataRepr::AsHex);
 
         // Trace the `EmailHash`
         let email_hash = account.email_hash().unwrap().unwrap();
@@ -153,12 +153,12 @@ pub extern "C" fn finish() -> i32 {
                 0x65, 0xEB
             ]
         );
-        let _ = trace_data("  EmailHash:", &email_hash.0, DataRepr::AsHex);
+        trace_data("  EmailHash:", &email_hash.0, DataRepr::AsHex);
 
         // Trace the `FirstNFTokenSequence`
         let first_nf_token_sequence = account.first_nf_token_sequence().unwrap().unwrap();
         assert_eq!(first_nf_token_sequence, 21);
-        let _ = trace_num("  FirstNFTokenSequence:", first_nf_token_sequence as i64);
+        trace_num("  FirstNFTokenSequence:", first_nf_token_sequence as i64);
 
         // Trace the `MessageKey`
         let message_key = account.message_key().unwrap().unwrap();
@@ -166,7 +166,7 @@ pub extern "C" fn finish() -> i32 {
             &message_key.data[..message_key.len],
             &[0xC8, 0xE8, 0xB4, 0x6D]
         );
-        let _ = trace_data(
+        trace_data(
             "  MessageKey:",
             &message_key.data[..message_key.len],
             DataRepr::AsHex,
@@ -175,7 +175,7 @@ pub extern "C" fn finish() -> i32 {
         // Trace the `MintedNFTokens`
         let minted_nf_tokens = account.minted_nf_tokens().unwrap().unwrap();
         assert_eq!(minted_nf_tokens, 22);
-        let _ = trace_num("  MintedNFTokens:", minted_nf_tokens as i64);
+        trace_num("  MintedNFTokens:", minted_nf_tokens as i64);
 
         // Trace the `NFTokenMinter`
         let nf_token_minter = account.nf_token_minter().unwrap().unwrap();
@@ -186,12 +186,12 @@ pub extern "C" fn finish() -> i32 {
                 0xCF, 0xF8, 0xF2, 0xF9, 0x37, 0xE8
             ]
         );
-        let _ = trace_data("  NFTokenMinter:", &nf_token_minter.0, DataRepr::AsHex);
+        trace_data("  NFTokenMinter:", &nf_token_minter.0, DataRepr::AsHex);
 
         // Trace the `OwnerCount`
         let owner_count = account.owner_count().unwrap();
         assert_eq!(owner_count, 1);
-        let _ = trace_num("  OwnerCount:", owner_count as i64);
+        trace_num("  OwnerCount:", owner_count as i64);
 
         // Trace the `PreviousTxnID`
         let previous_txn_id = account.previous_txn_id().unwrap();
@@ -203,12 +203,12 @@ pub extern "C" fn finish() -> i32 {
                 0xDF, 0x14, 0xA1, 0x1F,
             ]
         );
-        let _ = trace_data("  PreviousTxnID:", &previous_txn_id.0, DataRepr::AsHex);
+        trace_data("  PreviousTxnID:", &previous_txn_id.0, DataRepr::AsHex);
 
         // Trace the `PreviousTxnLgrSeq`
         let previous_txn_lgr_seq = account.previous_txn_lgr_seq().unwrap();
         assert_eq!(previous_txn_lgr_seq, 95945324);
-        let _ = trace_num("  PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
+        trace_num("  PreviousTxnLgrSeq:", previous_txn_lgr_seq as i64);
 
         // Trace the `RegularKey`
         let regular_key = account.regular_key().unwrap().unwrap();
@@ -219,27 +219,27 @@ pub extern "C" fn finish() -> i32 {
                 0xE9, 0x5D, 0x02, 0xDB, 0x7E, 0xE1
             ]
         );
-        let _ = trace_data("  RegularKey:", &regular_key.0, DataRepr::AsHex);
+        trace_data("  RegularKey:", &regular_key.0, DataRepr::AsHex);
 
         // Trace the `Sequence`
         let sequence = account.sequence().unwrap();
         assert_eq!(sequence, 44196);
-        let _ = trace_num("  Sequence:", sequence as i64);
+        trace_num("  Sequence:", sequence as i64);
 
         // Trace the `TicketCount`
         let ticket_count = account.ticket_count().unwrap().unwrap();
         assert_eq!(ticket_count, 23);
-        let _ = trace_num("  TicketCount:", ticket_count as i64);
+        trace_num("  TicketCount:", ticket_count as i64);
 
         // Trace the `TickSize`
         let tick_size = account.tick_size().unwrap().unwrap();
         assert_eq!(tick_size, 24);
-        let _ = trace_num("  TickSize:", tick_size as i64);
+        trace_num("  TickSize:", tick_size as i64);
 
         // Trace the `TransferRate`
         let transfer_rate = account.transfer_rate().unwrap().unwrap();
         assert_eq!(transfer_rate, 1220000000);
-        let _ = trace_num("  TransferRate:", transfer_rate as i64);
+        trace_num("  TransferRate:", transfer_rate as i64);
 
         // Trace the `WalletLocator`
         let wallet_locator = account.wallet_locator().unwrap().unwrap();
@@ -251,17 +251,17 @@ pub extern "C" fn finish() -> i32 {
                 0xDF, 0x14, 0xA1, 0x1D,
             ]
         );
-        let _ = trace_data("  WalletLocator:", &wallet_locator.0, DataRepr::AsHex);
+        trace_data("  WalletLocator:", &wallet_locator.0, DataRepr::AsHex);
 
         // Trace the `WalletSize`
         let wallet_size = account.wallet_size().unwrap().unwrap();
         assert_eq!(wallet_size, 25);
-        let _ = trace_num("  WalletSize:", wallet_size as i64);
+        trace_num("  WalletSize:", wallet_size as i64);
 
-        let _ = trace("}");
-        let _ = trace("");
+        trace("}");
+        trace("");
     }
 
-    let _ = trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
+    trace("$$$$$ WASM EXECUTION COMPLETE $$$$$");
     1 // <-- Finish the escrow to indicate a successful outcome
 }

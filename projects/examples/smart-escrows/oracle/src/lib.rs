@@ -48,7 +48,7 @@ pub fn get_price_from_oracle(slot: i32) -> Result<u64> {
     let asset_price = match match_result_code(result_code, || data) {
         Ok(asset_bytes) => get_u64_from_buffer(&asset_bytes[0..8]),
         Err(error) => {
-            let _ = trace_num("Error getting asset_price", error.code() as i64);
+            trace_num("Error getting asset_price", error.code() as i64);
             return Err(error); // Must return to short circuit.
         }
     };
@@ -60,12 +60,12 @@ pub extern "C" fn finish() -> i32 {
     let oracle_keylet = match oracle_keylet(&ORACLE_OWNER, ORACLE_DOCUMENT_ID) {
         Ok(keylet) => keylet,
         Err(error) => {
-            let _ = trace_data(
+            trace_data(
                 "Failed to get oracle_keylet for account_id=",
                 &ORACLE_OWNER.0,
                 DataRepr::AsHex,
             );
-            let _ = trace_num(
+            trace_num(
                 "Failed to get oracle_keylet for document_id=",
                 ORACLE_DOCUMENT_ID as i64,
             );

@@ -18,7 +18,7 @@ pub extern "C" fn finish() -> i32 {
         .unwrap()
         .unwrap();
 
-        let _ = trace_num("Ledger Sequence", ledger_sequence as i64);
+        trace_num("Ledger Sequence", ledger_sequence as i64);
         (ledger_sequence >= 5) as i32 // Return 1 if true (successful outcome), 0 if false (failed outcome)
     }
 }

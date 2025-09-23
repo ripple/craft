@@ -17,7 +17,7 @@ pub extern "C" fn finish() -> i32 {
     let account_id = match current_escrow.get_destination() {
         Ok(account_id) => account_id,
         Err(e) => {
-            let _ = trace_num("Error getting destination", e.code() as i64);
+            trace_num("Error getting destination", e.code() as i64);
             return e.code(); // <-- Do not execute the escrow.
         }
     };
@@ -25,18 +25,18 @@ pub extern "C" fn finish() -> i32 {
     let cred_type: &[u8] = b"termsandconditions";
     match credential_keylet(&account_id, &account_id, cred_type) {
         Ok(keylet) => {
-            let _ = trace_data("cred_keylet", &keylet, DataRepr::AsHex);
+            trace_data("cred_keylet", &keylet, DataRepr::AsHex);
 
             let slot =
                 unsafe { xrpl_wasm_std::host::cache_ledger_obj(keylet.as_ptr(), keylet.len(), 0) };
             if slot < 0 {
-                let _ = trace_num("CACHE ERROR", i64::from(slot));
+                trace_num("CACHE ERROR", i64::from(slot));
                 return 0;
             };
             1 // <-- Finish the escrow to indicate a successful outcome
         }
         Err(e) => {
-            let _ = trace_num("Error getting credential keylet", e.code() as i64);
+            trace_num("Error getting credential keylet", e.code() as i64);
             e.code() // <-- Do not execute the escrow.
         }
     }

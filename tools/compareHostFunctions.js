@@ -1,12 +1,12 @@
 if (process.argv.length !== 3) {
-  console.error(
-    'Usage: ' +
-      process.argv[0] +
-      ' ' +
-      process.argv[1] +
-      ' path/to/rippled',
-  )
-  process.exit(1)
+    console.error(
+        'Usage: ' +
+        process.argv[0] +
+        ' ' +
+        process.argv[1] +
+        ' path/to/rippled',
+    )
+    process.exit(1)
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -69,8 +69,8 @@ async function main() {
     const hostWrapperFile = await read(
         process.argv[2], 'src/xrpld/app/wasm/HostFuncWrapper.h',
     )
-    const rustHostFunctionFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings.rs')
-    const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-std/src/host/host_bindings_for_testing.rs')
+    const rustHostFunctionFile = await readFile(__dirname, '../xrpl-wasm-std/src/host/host_bindings.rs')
+    const rustHostFunctionTestFile = await readFile(__dirname, '../xrpl-wasm-std/src/host/host_bindings_for_testing.rs')
 
     let importHits = [
         ...wasmImportFile.matchAll(
@@ -82,7 +82,7 @@ async function main() {
 
     let wrapperHits = [
         ...hostWrapperFile.matchAll(
-            // parse the `proto` functions in `WasmHostFuncWrapper.h`
+            // parse the `proto` functions in `HostFuncWrapper.h.h`
             /^ *using ([A-Za-z0-9]+)_proto =[ \n]*([A-Za-z0-9_]+)\(([A-Za-z0-9_\* \n,]*)\);$/gm,
         ),
     ]
@@ -92,16 +92,16 @@ async function main() {
         const importsMissing = wrappers.filter(f => !imports.some(func => func[0] === f[0]))
         const hfMissing = imports.filter(f => !wrappers.some(func => func[0] === f[0]))
         if (importsMissing.length > 0)
-            console.error('Missing Imports:', importsMissing.map(func => func[0]).join(', '))
+            console.error('Missing Imports:', '\x1b[31m' + importsMissing.map(func => func[0]).join(', ') + '\x1b[0m')
         if (hfMissing.length > 0)
-            console.error('Missing C++ Host Functions:', hfMissing.map(func => func[0]).join(', '))
+            console.error('Missing C++ Host Functions:', '\x1b[31m' + hfMissing.map(func => func[0]).join(', ') + '\x1b[0m')
         process.exit(1)
     }
 
     for (let i = 0; i < imports.length; i++) {
         if (imports[i][0] !== wrappers[i][0]) {
             console.error(
-            'Imports and Host Functions do not match at index ' +
+                'Imports and Host Functions do not match at index ' +
                 i +
                 ': ' +
                 imports[i][0] +
@@ -143,9 +143,9 @@ async function main() {
             const rustMissing = cppHostFunctions.filter(f => !rustHostFunctions.some(rf => rf.name === f.name))
             const cppMissing = rustHostFunctions.filter(f => !cppHostFunctions.some(rf => rf.name === f.name))
             if (rustMissing.length > 0)
-                console.error('Missing Rust Host Functions:', rustMissing.map(f => f.name).join(', '))
+                console.error('Missing Rust Host Functions:', '\x1b[31m' + rustMissing.map(f => f.name).join(', ') + '\x1b[0m')
             if (cppMissing.length > 0)
-                console.error('Missing C++ Host Functions:', cppMissing.map(f => f.name).join(', '))
+                console.error('Missing C++ Host Functions:', '\x1b[31m' + cppMissing.map(f => f.name).join(', ') + '\x1b[0m')
             process.exit(1)
         }
 
@@ -157,14 +157,12 @@ async function main() {
                     `Rust Host Function name mismatch in ${fileTitle}: ${hit.name} !== ${cppHit.name}`,
                 )
                 hasError = true
-            }
-            else if (hit.return !== cppHit.return) {
+            } else if (hit.return !== cppHit.return) {
                 console.error(
                     `Rust Host Function return type mismatch in ${fileTitle} for ${hit.name}: ${hit.return} !== ${cppHit.return}`,
                 )
                 hasError = true
-            }
-            else if (hit.params.length !== cppHit.params.length) {
+            } else if (hit.params.length !== cppHit.params.length) {
                 console.error(
                     `Rust Host Function parameter count mismatch in ${fileTitle} for ${hit.name}: ${hit.params.length} !== ${cppHit.params.length} (${hit.params.join(', ')}) !== (${cppHit.params.join(', ')})`,
                 )

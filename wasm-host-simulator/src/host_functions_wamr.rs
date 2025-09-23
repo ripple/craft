@@ -20,6 +20,7 @@ use wamr_rust_sdk::sys::{
     wasm_runtime_validate_native_addr,
 };
 use xrpl::core::addresscodec::utils::encode_base58;
+use xrpl_wasm_std::core::types::amount::token_amount::TokenAmount;
 use xrpld_number::{
     FLOAT_NEGATIVE_ONE, FLOAT_ONE, Number, RoundingMode as NumberRoundingMode, XrplIouValue,
 };
@@ -1449,77 +1450,67 @@ pub fn trace_amount(
 }
 
 /// Parse STAmount bytes and format for display according to token type
+/// Uses the actual logic from TokenAmount::from_bytes to ensure consistency
 fn parse_stamount_for_display(bytes: &[u8; 48]) -> String {
-    // Check if this is XRP (first 8 bytes contain raw drops, rest are zeros)
-    if bytes[8..48].iter().all(|&b| b == 0) {
-        // XRP format: raw drop amount in first 8 bytes
-        let drops = u64::from_be_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-        ]);
-        return format!("XRP: {} drops", drops);
+    // Use the actual TokenAmount parsing logic from xrpl-wasm-std
+    match TokenAmount::from_bytes(bytes) {
+        Ok(token_amount) => format_token_amount_for_display(&token_amount),
+        Err(_) => {
+            // Fallback to the original logic for unknown formats
+            format!(
+                "Unknown amount format: 0x{}",
+                hex::encode_upper(&bytes[0..8])
+            )
+        }
     }
+}
 
-    // Check the first byte for MPT/IOU flags
-    let first_byte = bytes[0];
+/// Format a TokenAmount for display
+fn format_token_amount_for_display(token_amount: &TokenAmount) -> String {
+    match token_amount {
+        TokenAmount::XRP { num_drops } => {
+            format!("XRP: {} drops", num_drops.abs())
+        }
+        TokenAmount::MPT {
+            num_units,
+            is_positive,
+            mpt_id,
+        } => {
+            let sign_str = if *is_positive { "+" } else { "-" };
+            let sequence = mpt_id.get_sequence_num();
+            let issuer_bytes = mpt_id.get_issuer().0;
+            let issuer = match encode_base58(&issuer_bytes, &[0x0], Some(20)) {
+                Ok(addr) => addr,
+                Err(_) => hex::encode_upper(issuer_bytes),
+            };
+            format!(
+                "MPT: {}{} units, Sequence: {}, Issuer: {}",
+                sign_str, num_units, sequence, issuer
+            )
+        }
+        TokenAmount::IOU {
+            amount,
+            issuer,
+            currency_code,
+        } => {
+            // Try to deserialize the float value for display
+            let amount_str = match _deserialize_issued_currency_amount(amount.0) {
+                Ok(value) => format!("{}", value),
+                Err(_) => format!("0x{}", hex::encode_upper(amount.0)),
+            };
 
-    // Check for MPT: flag byte 0x60 (positive) or 0x20 (negative)
-    if first_byte == 0x60 || first_byte == 0x20 {
-        // MPT format: flag byte + 8-byte amount + 24-byte MptId
-        let is_positive = first_byte == 0x60;
-        let sign_str = if is_positive { "+" } else { "-" };
+            let currency_str = format_currency_code(currency_code.as_bytes());
+            let issuer_str = match encode_base58(&issuer.0, &[0x0], Some(20)) {
+                Ok(addr) => addr,
+                Err(_) => hex::encode_upper(issuer.0),
+            };
 
-        let amount = u64::from_be_bytes([
-            bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8],
-        ]);
-
-        // Parse MptId: 4-byte sequence + 20-byte issuer
-        let sequence = u32::from_be_bytes([bytes[9], bytes[10], bytes[11], bytes[12]]);
-
-        let issuer_bytes: [u8; ACCOUNT_ID_LEN] =
-            bytes[13..33].try_into().unwrap_or([0u8; ACCOUNT_ID_LEN]);
-        let issuer = match encode_base58(&issuer_bytes, &[0x0], Some(20)) {
-            Ok(addr) => addr,
-            Err(_) => hex::encode_upper(&issuer_bytes),
-        };
-
-        return format!(
-            "MPT: {}{} units, Sequence: {}, Issuer: {}",
-            sign_str, amount, sequence, issuer
-        );
+            format!(
+                "IOU: {} {}, Issuer: {}",
+                amount_str, currency_str, issuer_str
+            )
+        }
     }
-
-    // Check for IOU: first byte has type bit set (0x80 or higher)
-    if first_byte & 0x80 != 0 {
-        // IOU format: 8-byte OpaqueFloat + 20-byte CurrencyCode + 20-byte AccountID
-        let opaque_float_bytes: [u8; 8] = bytes[0..8].try_into().unwrap_or([0u8; 8]);
-
-        // Try to deserialize the float value for display
-        let amount_str = match _deserialize_issued_currency_amount(opaque_float_bytes) {
-            Ok(value) => format!("{}", value),
-            Err(_) => format!("0x{}", hex::encode_upper(&opaque_float_bytes)),
-        };
-
-        // Parse currency code (20 bytes)
-        let currency_bytes: [u8; CURRENCY_LEN] =
-            bytes[8..28].try_into().unwrap_or([0u8; CURRENCY_LEN]);
-        let currency_str = format_currency_code(&currency_bytes);
-
-        // Parse issuer (20 bytes)
-        let issuer_bytes: [u8; ACCOUNT_ID_LEN] =
-            bytes[28..48].try_into().unwrap_or([0u8; ACCOUNT_ID_LEN]);
-        let issuer = match encode_base58(&issuer_bytes, &[0x0], Some(20)) {
-            Ok(addr) => addr,
-            Err(_) => hex::encode_upper(&issuer_bytes),
-        };
-
-        return format!("IOU: {} {}, Issuer: {}", amount_str, currency_str, issuer);
-    }
-
-    // Fallback for unknown format
-    format!(
-        "Unknown amount format: 0x{}",
-        hex::encode_upper(&bytes[0..8])
-    )
 }
 
 /// Format currency code for display (handles both standard 3-char codes and hex)
@@ -1531,13 +1522,73 @@ fn format_currency_code(currency_bytes: &[u8; 20]) -> String {
     {
         // Standard 3-character currency code
         let code_bytes = &currency_bytes[12..15];
-        if let Ok(code_str) = std::str::from_utf8(code_bytes) {
-            if code_str.chars().all(|c| c.is_ascii_alphanumeric()) {
-                return code_str.to_string();
-            }
+        if let Ok(code_str) = std::str::from_utf8(code_bytes)
+            && code_str.chars().all(|c| c.is_ascii_alphanumeric())
+        {
+            return code_str.to_string();
         }
     }
 
     // Non-standard currency code, display as hex
     format!("0x{}", hex::encode_upper(currency_bytes))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use xrpl_wasm_std::core::types::{
+        account_id::AccountID,
+        amount::{
+            currency_code::CurrencyCode, mpt_id::MptId, opaque_float::OpaqueFloat,
+            token_amount::TokenAmount,
+        },
+    };
+
+    #[test]
+    fn test_parse_stamount_for_display_xrp() {
+        // Test XRP amount using TokenAmount's to_stamount_bytes
+        let xrp_amount = TokenAmount::XRP {
+            num_drops: 1_000_000,
+        };
+        let (bytes, _) = xrp_amount.to_stamount_bytes();
+
+        let display_str = parse_stamount_for_display(&bytes);
+        assert_eq!(display_str, "XRP: 1000000 drops");
+    }
+
+    #[test]
+    fn test_parse_stamount_for_display_mpt() {
+        // Test MPT amount using TokenAmount's to_stamount_bytes
+        let issuer = AccountID::from([0xAB; 20]);
+        let mpt_id = MptId::new(12345, issuer);
+        let mpt_amount = TokenAmount::MPT {
+            num_units: 750_000,
+            is_positive: true,
+            mpt_id,
+        };
+        let (bytes, _) = mpt_amount.to_stamount_bytes();
+
+        let display_str = parse_stamount_for_display(&bytes);
+        assert!(display_str.starts_with("MPT: +750000 units"));
+        assert!(display_str.contains("Sequence: 12345"));
+    }
+
+    #[test]
+    fn test_parse_stamount_for_display_iou() {
+        // Test IOU amount using TokenAmount's to_stamount_bytes
+        let opaque_float = OpaqueFloat([0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]);
+        let currency_code = CurrencyCode::from([0u8; 20]); // Standard currency code format
+        let issuer = AccountID::from([0xCD; 20]);
+
+        let iou_amount = TokenAmount::IOU {
+            amount: opaque_float,
+            issuer,
+            currency_code,
+        };
+        let (bytes, _) = iou_amount.to_stamount_bytes();
+
+        let display_str = parse_stamount_for_display(&bytes);
+        assert!(display_str.starts_with("IOU:"));
+        assert!(display_str.contains("Issuer:"));
+    }
 }

@@ -76,7 +76,7 @@ name = "notary"
 version = "0.1.0"
 dependencies = [
  "xrpl-address-macro",
- "xrpl-std",
+ "xrpl-wasm-std",
 ]
 
 [[package]]
@@ -164,5 +164,5 @@ dependencies = [
 ]
 
 [[package]]
-name = "xrpl-std"
+name = "xrpl-wasm-std"
 version = "0.5.1-devnet5"

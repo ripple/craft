@@ -3092,7 +3092,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasm-host"
+name = "wasm-host-simulator"
 version = "0.5.1-devnet5"
 dependencies = [
  "bigdecimal",

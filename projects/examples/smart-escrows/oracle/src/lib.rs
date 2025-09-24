@@ -5,9 +5,9 @@ extern crate std;
 
 use xrpl_wasm_std::core::locator::Locator;
 use xrpl_wasm_std::core::types::account_id::AccountID;
-use xrpl_wasm_std::core::types::keylets::oracle_keylet_safe;
+use xrpl_wasm_std::core::types::keylets::oracle_keylet;
 use xrpl_wasm_std::host::error_codes::match_result_code;
-use xrpl_wasm_std::host::trace::trace_num;
+use xrpl_wasm_std::host::trace::{DataRepr, trace_data, trace_num};
 use xrpl_wasm_std::host::{Result, Result::Err, Result::Ok};
 use xrpl_wasm_std::{host, sfield};
 
@@ -57,12 +57,25 @@ pub fn get_price_from_oracle(slot: i32) -> Result<u64> {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let oracle_keylet = oracle_keylet_safe(&ORACLE_OWNER, ORACLE_DOCUMENT_ID);
+    let oracle_keylet = match oracle_keylet(&ORACLE_OWNER, ORACLE_DOCUMENT_ID) {
+        Ok(keylet) => keylet,
+        Err(error) => {
+            let _ = trace_data(
+                "Failed to get oracle_keylet for account_id=",
+                &ORACLE_OWNER.0,
+                DataRepr::AsHex,
+            );
+            let _ = trace_num(
+                "Failed to get oracle_keylet for document_id=",
+                ORACLE_DOCUMENT_ID as i64,
+            );
+            return error.code(); // <-- Do not execute the escrow; return the error code instead.
+        }
+    };
 
     let slot: i32;
     unsafe {
-        slot =
-            xrpl_wasm_std::host::cache_ledger_obj(oracle_keylet.as_ptr(), oracle_keylet.len(), 0);
+        slot = host::cache_ledger_obj(oracle_keylet.as_ptr(), oracle_keylet.len(), 0);
         if slot < 0 {
             return 0;
         };

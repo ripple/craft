@@ -102,13 +102,13 @@ node finish_escrow.js $NOTARY_ADDRESS $NOTARY_SEED $OWNER_ADDRESS $OFFER_SEQUENC
 Expected result: `tesSUCCESS` and “Escrow finished successfully!”. If you try to finish from a different account, you
 should get `tecNO_PERMISSION` due to the notary check.
 
-## Local testing with wasm-host (optional)
+## Local testing with wasm-host-simulator (optional)
 
 You can also run the WASM locally with the included host emulator:
 
 ```shell
 cd ../../../../
-cargo run --package wasm-host --bin wasm-host -- --dir projects/examples/smart-escrows/notary --project notary
+cargo run --package wasm-host-simulator --bin wasm-host-simulator -- --dir projects/examples/smart-escrows/notary --project notary
 ```
 
 ## Modifying the notary account

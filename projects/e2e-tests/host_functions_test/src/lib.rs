@@ -25,11 +25,11 @@ extern crate std;
 // -700 to -799: Data Update Functions (1 function)
 //
 
-use xrpl_std::core::current_tx::escrow_finish::EscrowFinish;
-use xrpl_std::core::current_tx::traits::TransactionCommonFields;
-use xrpl_std::host;
-use xrpl_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
-use xrpl_std::sfield;
+use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
+use xrpl_wasm_std::core::current_tx::traits::TransactionCommonFields;
+use xrpl_wasm_std::host;
+use xrpl_wasm_std::host::trace::{DataRepr, trace, trace_account_buf, trace_data, trace_num};
+use xrpl_wasm_std::sfield;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
@@ -732,7 +732,7 @@ fn test_utility_functions() -> i32 {
     let test_number = 42i64;
     let trace_num_result = trace_num("Test number trace", test_number);
 
-    use xrpl_std::host::Result;
+    use xrpl_wasm_std::host::Result;
     match trace_num_result {
         Result::Ok(_) => {
             let _ = trace_num("Trace_num function succeeded", 0);

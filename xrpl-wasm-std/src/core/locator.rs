@@ -5,8 +5,8 @@
 //!
 //! Example
 //! ```no_run
-//! use xrpl_std::core::locator::Locator;
-//! use xrpl_std::sfield;
+//! use xrpl_wasm_std::core::locator::Locator;
+//! use xrpl_wasm_std::sfield;
 //! let mut l = Locator::new();
 //! l.pack(sfield::Memos);
 //! l.pack(0);

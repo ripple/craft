@@ -66,21 +66,17 @@ pub extern "C" fn finish() -> i32 {
 
 #### Host Functions
 
-The WASM module can import and use various host functions to access blockchain data:
+The WASM module can import and use various host functions to access blockchain data.
 
-- **Ledger access**: `get_ledger_sqn()`, `get_parent_ledger_time()`, `get_parent_ledger_hash()`
-- **Transaction data**: `get_tx_field()`, `get_tx_array_len()`, `get_tx_nested_field()`
-- **Ledger objects**: `cache_ledger_obj()`, `get_ledger_obj_field()`, `get_ledger_obj_array_len()`
-- **Keylets**: Various keylet functions for accessing specific object types
-- **Utilities**: `trace()`, `compute_sha512_half()`, `update_data()`
+For a complete list of available host functions and their documentation, see the [xrpl-wasm-std host module](./xrpl-wasm-std/src/host/) or view the rendered docs by running `cargo doc --open -p xrpl-wasm-std`.
 
 #### Execution Flow
 
-1. The XRPL validator loads the WASM module
-2. The validator calls the `finish()` function
+1. The XRPL server loads the WASM module
+2. The server calls the `finish()` function
 3. The function uses host functions to access necessary data
-4. The function returns 1 (finish) or 0 (don't finish)
-5. The validator uses this result to determine escrow outcome
+4. The function returns a positive value (finish) or zero/negative (don't finish)
+5. The server uses this result to determine escrow outcome
 
 ### 3.2. Memory Management
 

@@ -52,7 +52,7 @@ A WASM module fingerprint must:
 npm install --prefix reference/js/wasm-fingerprint
 
 # Generate fingerprint from WASM file
-./reference/js/wasm-fingerprint/wasm-fingerprint.js ./projects/notary/target/wasm32-unknown-unknown/release/notary.wasm
+./reference/js/wasm-fingerprint/wasm-fingerprint.js ./projects/notary/target/wasm32v1-none/release/notary.wasm
 ```
 
 ### Example Rust Implementation

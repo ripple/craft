@@ -19,7 +19,7 @@ pub enum WasmTarget {
 impl std::fmt::Display for WasmTarget {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            WasmTarget::UnknownUnknown => write!(f, "wasm32-unknown-unknown"),
+            WasmTarget::UnknownUnknown => write!(f, "wasm32v1-none"),
             WasmTarget::Wasip1 => write!(f, "wasm32-wasi-preview1"),
         }
     }

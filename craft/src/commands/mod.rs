@@ -350,7 +350,7 @@ pub async fn configure() -> Result<Config> {
         }
     };
 
-    // Always use wasm32-unknown-unknown target
+    // Always use wasm32v1-none target
     let target = WasmTarget::UnknownUnknown;
 
     let build_modes = vec![

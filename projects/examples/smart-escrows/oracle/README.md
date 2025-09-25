@@ -40,7 +40,7 @@ const ORACLE_DOCUMENT_ID: i32 = 1;
 
 ### Prerequisites
 
-- Rust with `wasm32-unknown-unknown` target
+- Rust with `wasm32v1-none` target
   - This is necessary for blockchain deployments because WebAssembly does not require a specific vendor (e.g., `apple`) or operating system (e.g., `darwin`), so both are `unknown`
 - XRPL standard library (dependency)
 
@@ -48,10 +48,10 @@ const ORACLE_DOCUMENT_ID: i32 = 1;
 
 ```bash
 # Debug build
-cargo build --target wasm32-unknown-unknown
+cargo build --target wasm32v1-none
 
 # Release build (optimized)
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none --release
 ```
 
 ## Testing
@@ -63,8 +63,8 @@ A comprehensive integration test is available at [`../oracle_integration_test/`]
 ```bash
 # Build integration tests
 cd ../oracle_integration_test
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 ### Test Coverage

@@ -26,8 +26,8 @@ rustup toolchain install stable
 rustup default stable
 
 # Add WASM target
-echo "📦 Adding wasm32-unknown-unknown target..."
-rustup target add wasm32-unknown-unknown
+echo "📦 Adding wasm32v1-none target..."
+rustup target add wasm32v1-none
 
 # Note: Pre-commit checks are handled by GitHub Actions using pre-commit/action@v3.0.1
 # Local pre-commit installation is optional for development convenience

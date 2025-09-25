@@ -22,7 +22,7 @@ Configuring WASM build settings...
 > Select optimization level: Aggressive (-Oz: optimize aggressively for size)
 Building WASM module...
 Running cargo build...
-args: ["build", "--target", "wasm32-unknown-unknown", "--release"]
+args: ["build", "--target", "wasm32v1-none", "--release"]
 
     Finished `release` profile [optimized] target(s) in 0.03s
 
@@ -30,7 +30,7 @@ args: ["build", "--target", "wasm32-unknown-unknown", "--release"]
 Build completed successfully!
 
 WASM file location:
-/Users/mvadari/Documents/craft/projects/kyc/target/wasm32-unknown-unknown/release/kyc.wasm
+/Users/mvadari/Documents/craft/projects/kyc/target/wasm32v1-none/release/kyc.wasm
 Size: 1198 bytes
 WASM Fingerprint: w7HwHG281DxCQf43VyE7tx1CFheTop12cM # note, this might be wrong
 > Would you like to export the WASM as hex (copied to clipboard)? No

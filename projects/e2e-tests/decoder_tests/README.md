@@ -7,14 +7,14 @@ This WebAssembly module is for testing the decoder in the simulated host.
 Build using:
 
 ```bash
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 The resulting WASM file will be located at:
 
 ```
-./target/wasm32-unknown-unknown/release/decoder_tests.wasm
+./target/wasm32v1-none/release/decoder_tests.wasm
 ```
 
 ## Running with wasm-host-simulator

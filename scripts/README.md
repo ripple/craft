@@ -86,7 +86,7 @@ Actions workflows, ensuring perfect consistency between local and CI environment
 - **Permission denied**: Run `chmod +x scripts/*.sh` to make scripts executable
 - **Pre-commit not found**: Run `./scripts/setup.sh` to install dependencies
 - **Node.js required**: Install Node.js for the host function audit, or skip that script
-- **WASM target missing**: The scripts automatically install the `wasm32-unknown-unknown` target
+- **WASM target missing**: The scripts automatically install the `wasm32v1-none` target
 
 ## Script Dependencies
 

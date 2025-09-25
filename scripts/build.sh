@@ -19,26 +19,26 @@ else
 fi
 
 # Ensure wasm32 target is available
-echo "📦 Ensuring wasm32-unknown-unknown target is installed..."
-rustup target add wasm32-unknown-unknown
+echo "📦 Ensuring wasm32v1-none target is installed..."
+rustup target add wasm32v1-none
 
 echo "🏗️  Building Native Workspace..."
 cargo build --workspace $RELEASE_MODE
 
 echo "🏗️  Building xrpl-wasm-std for WASM..."
-cargo build -p xrpl-wasm-std --target wasm32-unknown-unknown $RELEASE_MODE
-cargo rustc -p xrpl-wasm-std --target wasm32-unknown-unknown $RELEASE_MODE -- -D warnings
+cargo build -p xrpl-wasm-std --target wasm32v1-none $RELEASE_MODE
+cargo rustc -p xrpl-wasm-std --target wasm32v1-none $RELEASE_MODE -- -D warnings
 
 echo "🏗️  Building WASM Projects Workspace..."
 cd projects
 echo "🔧 Building projects workspace for WASM"
 if [[ -n "$RELEASE_MODE" ]]; then
     # Only build release if specifically requested
-    cargo build --workspace --target wasm32-unknown-unknown $RELEASE_MODE
+    cargo build --workspace --target wasm32v1-none $RELEASE_MODE
 else
     # Build both debug and release when no specific mode is requested
-    cargo build --workspace --target wasm32-unknown-unknown
-    cargo build --workspace --target wasm32-unknown-unknown --release
+    cargo build --workspace --target wasm32v1-none
+    cargo build --workspace --target wasm32v1-none --release
 fi
 cd ..
 

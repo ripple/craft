@@ -11,7 +11,8 @@ cd "$REPO_ROOT"
 
 echo "🔍 Checking WASM contract exports..."
 # Check that all WASM projects export the required finish function
-find projects -type d -name "src" | while read -r src_dir; do
+# Skip the direct projects/src folder and only check src folders in sub-folders
+find projects -mindepth 2 -type d -name "src" | while read -r src_dir; do
     dir=$(dirname "$src_dir")
     echo "🔧 Checking exports in $dir"
     if [[ -f "$src_dir/lib.rs" ]]; then

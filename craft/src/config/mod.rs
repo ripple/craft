@@ -12,14 +12,14 @@ pub struct Config {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum WasmTarget {
-    UnknownUnknown,
+    V1None,
     Wasip1,
 }
 
 impl std::fmt::Display for WasmTarget {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            WasmTarget::UnknownUnknown => write!(f, "wasm32-unknown-unknown"),
+            WasmTarget::V1None => write!(f, "wasm32v1-none"),
             WasmTarget::Wasip1 => write!(f, "wasm32-wasi-preview1"),
         }
     }
@@ -60,7 +60,7 @@ impl std::fmt::Display for OptimizationLevel {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            wasm_target: WasmTarget::UnknownUnknown,
+            wasm_target: WasmTarget::V1None,
             build_mode: BuildMode::Release,
             optimization_level: OptimizationLevel::Small,
             project_path: std::env::current_dir().unwrap_or_default(),

@@ -7,14 +7,14 @@ This WebAssembly module is an example using the XRPL std lib to determine if an 
 Build using:
 
 ```bash
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 The resulting WASM file will be located at:
 
 ```
-./target/wasm32-unknown-unknown/release/keylet_example.wasm
+./target/wasm32v1-none/release/keylet_example.wasm
 ```
 
 ## Running with wasm-host-simulator

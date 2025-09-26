@@ -11,7 +11,7 @@
 //! l.pack(sfield::Memos);
 //! l.pack(0);
 //! l.pack(sfield::MemoType);
-//! # let _ = (l.len() >= 3);
+//! # (l.len() >= 3);
 //! ```
 
 /// The size of the buffer, in bytes, to use for any new locator

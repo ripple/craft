@@ -1,5 +1,5 @@
 use crate::host::Error::{InternalError, PointerOutOfBounds};
-use crate::host::trace::trace_num;
+use crate::host::trace::trace_num_with_result;
 use crate::host::{Error, Result, Result::Err, Result::Ok};
 
 /// Reserved for internal invariant trips, generally unrelated to inputs.
@@ -73,6 +73,71 @@ where
     match result_code {
         code if code >= 0 => Ok(on_success()),
         code => Err(Error::from_code(code)),
+    }
+}
+
+/// Evaluates a result code and executes a closure on success, panicking on error.
+///
+/// This is a panic-based derivation of `match_result_code` that does not return a Result
+/// but instead panics when encountering error codes. This is useful in contexts where
+/// errors are considered unrecoverable and should immediately terminate execution.
+///
+/// # Arguments
+///
+/// * `result_code` - An integer representing the operation result code
+/// * `on_success` - A closure that will be executed if result_code >= 0
+///
+/// # Type Parameters
+///
+/// * `F` - The type of the closure
+/// * `T` - The return type of the closure
+///
+/// # Returns
+///
+/// Returns `T` directly from the closure if result_code >= 0.
+///
+/// # Panics
+///
+/// Panics with a descriptive message for any negative result code, including
+/// the specific error code and its meaning.
+///
+/// # Note
+///
+/// This function treats all non-negative result codes as success, similar to
+/// `match_result_code`. Use this only when errors should cause immediate program
+/// termination rather than graceful error handling.
+#[inline(always)]
+pub fn match_result_code_or_panic<F, T>(result_code: i32, on_success: F) -> T
+where
+    F: FnOnce() -> T,
+{
+    match result_code {
+        code if code >= 0 => on_success(),
+        code => {
+            let error = Error::from_code(code);
+
+            // Emit error information to trace log before panicking
+            // This ensures error details are visible even if panic handler fails
+            // Use _with_result variant to avoid infinite recursion
+            let _ = trace_num_with_result("OPERATION FAILED - Error code: ", code as i64);
+
+            // Get error description from the Error enum
+            let error_msg = "Error details: ";
+            let error_desc = error.description();
+
+            // Emit the error description using trace
+            unsafe {
+                crate::host::trace(
+                    error_msg.as_ptr(),
+                    error_msg.len(),
+                    error_desc.as_ptr(),
+                    error_desc.len(),
+                    0, // as UTF-8
+                )
+            };
+
+            panic!("Operation failed with error code {}: {:?}", code, error);
+        }
     }
 }
 
@@ -198,16 +263,16 @@ where
         code if code == FIELD_NOT_FOUND => Ok(None),
         // Handle all positive, unexpected values as an internal error.
         code if code >= 0 => {
-            let _ = trace_num(
+            let _ = trace_num_with_result(
                 "Byte array was expected to have this many bytes: ",
                 expected_num_bytes as i64,
             );
-            let _ = trace_num("Byte array had this many bytes: ", code as i64);
+            let _ = trace_num_with_result("Byte array had this many bytes: ", code as i64);
             Err(PointerOutOfBounds)
         }
         // Handle all error values overtly.
         code => {
-            let _ = trace_num("Encountered error_code:", code as i64);
+            let _ = trace_num_with_result("Encountered error_code:", code as i64);
             Err(Error::from_code(code))
         }
     }
@@ -527,5 +592,58 @@ mod tests {
             match_result_code_with_expected_bytes(result_code, expected_bytes, || "converted");
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "converted");
+    }
+
+    #[test]
+    fn test_match_result_code_or_panic_success_positive() {
+        let result = match_result_code_or_panic(5, || "success");
+        assert_eq!(result, "success");
+    }
+
+    #[test]
+    fn test_match_result_code_or_panic_success_zero() {
+        let result = match_result_code_or_panic(0, || "zero_success");
+        assert_eq!(result, "zero_success");
+    }
+
+    #[test]
+    #[should_panic(expected = "Operation failed with error code -1")]
+    fn test_match_result_code_or_panic_internal_error() {
+        match_result_code_or_panic(INTERNAL_ERROR, || "should_not_execute");
+    }
+
+    #[test]
+    #[should_panic(expected = "Operation failed with error code -2")]
+    fn test_match_result_code_or_panic_field_not_found() {
+        match_result_code_or_panic(FIELD_NOT_FOUND, || "should_not_execute");
+    }
+
+    #[test]
+    #[should_panic(expected = "Operation failed with error code -3")]
+    fn test_match_result_code_or_panic_buffer_too_small() {
+        match_result_code_or_panic(BUFFER_TOO_SMALL, || "should_not_execute");
+    }
+
+    // Note: We can't test panic behavior in no_std environment without std::panic::catch_unwind
+    // The panic tests above use #[should_panic] which works in no_std
+
+    #[test]
+    fn test_match_result_code_or_panic_large_positive() {
+        let large_positive = 1024;
+        let result = match_result_code_or_panic(large_positive, || "large_success");
+        assert_eq!(result, "large_success");
+    }
+
+    #[test]
+    fn test_match_result_code_or_panic_closure_execution_count() {
+        let mut execution_count = 0;
+        let closure = || {
+            execution_count += 1;
+            "executed"
+        };
+
+        // Test that closure is executed exactly once on success
+        let _result = match_result_code_or_panic(1, closure);
+        assert_eq!(execution_count, 1);
     }
 }

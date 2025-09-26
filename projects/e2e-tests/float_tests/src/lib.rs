@@ -23,7 +23,7 @@ use xrpl_wasm_std::sfield::{
 };
 
 fn test_float_from_host() {
-    let _ = trace("\n$$$ test_float_from_host $$$");
+    trace("\n$$$ test_float_from_host $$$");
 
     let keylet =
         decode_hex_32(b"97DD92D4F3A791254A530BA769F6669DEBF6B2FC8CCA46842B9031ADCD4D1ADA").unwrap();
@@ -32,7 +32,7 @@ fn test_float_from_host() {
     let output_len =
         unsafe { get_ledger_obj_field(slot, sfield::LPTokenBalance, buf.as_mut_ptr(), buf.len()) };
     let f_lptokenbalance: [u8; 8] = buf[0..8].try_into().unwrap();
-    let _ = trace_float("  LPTokenBalance value:", &f_lptokenbalance);
+    trace_float("  LPTokenBalance value:", &f_lptokenbalance);
 
     let mut locator = Locator::new();
     locator.pack(sfield::AuctionSlot);
@@ -47,7 +47,7 @@ fn test_float_from_host() {
         )
     };
     let f_auctionslot: [u8; 8] = buf[0..8].try_into().unwrap();
-    let _ = trace_float("  AuctionSlot Price value:", &f_auctionslot);
+    trace_float("  AuctionSlot Price value:", &f_auctionslot);
 
     let keylet =
         decode_hex_32(b"D0A063DEE0B0EC9522CF35CD55771B5DCAFA19A133EE46A0295E4D089AF86438").unwrap();
@@ -56,18 +56,18 @@ fn test_float_from_host() {
     let output_len =
         unsafe { get_ledger_obj_field(slot, sfield::TakerPays, buf.as_mut_ptr(), buf.len()) };
     let f_takerpays: [u8; 8] = buf[0..8].try_into().unwrap();
-    let _ = trace_float("  TakerPays:", &f_takerpays);
+    trace_float("  TakerPays:", &f_takerpays);
 }
 
 fn test_float_from_wasm() {
-    let _ = trace("\n$$$ test_float_from_wasm $$$");
+    trace("\n$$$ test_float_from_wasm $$$");
 
     let mut f: [u8; 8] = [0u8; 8];
     if 8 == unsafe { float_from_int(12300, f.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) } {
-        let _ = trace_float("  float from i64 12300:", &f);
-        let _ = trace_data("  float from i64 12300 as HEX:", &f, AsHex);
+        trace_float("  float from i64 12300:", &f);
+        trace_data("  float from i64 12300 as HEX:", &f, AsHex);
     } else {
-        let _ = trace("  float from i64 12300: failed");
+        trace("  float from i64 12300: failed");
     }
 
     let u64_value: u64 = 12300;
@@ -80,52 +80,52 @@ fn test_float_from_wasm() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     } {
-        let _ = trace_float("  float from u64 12300:", &f);
+        trace_float("  float from u64 12300:", &f);
     } else {
-        let _ = trace("  float from u64 12300: failed");
+        trace("  float from u64 12300: failed");
     }
 
     if 8 == unsafe { float_set(2, 123, f.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) } {
-        let _ = trace_float("  float from exp 2, mantissa 123:", &f);
+        trace_float("  float from exp 2, mantissa 123:", &f);
     } else {
-        let _ = trace("  float from exp 2, mantissa 3: failed");
+        trace("  float from exp 2, mantissa 3: failed");
     }
 
-    let _ = trace_float("  float from const 1:", &FLOAT_ONE);
-    let _ = trace_float("  float from const -1:", &FLOAT_NEGATIVE_ONE);
+    trace_float("  float from const 1:", &FLOAT_ONE);
+    trace_float("  float from const -1:", &FLOAT_NEGATIVE_ONE);
 }
 
 fn test_float_compare() {
-    let _ = trace("\n$$$ test_float_compare $$$");
+    trace("\n$$$ test_float_compare $$$");
 
     let mut f1: [u8; 8] = [0u8; 8];
     if 8 != unsafe { float_from_int(1, f1.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) } {
-        let _ = trace("  float from 1: failed");
+        trace("  float from 1: failed");
     } else {
-        let _ = trace_float("  float from 1:", &f1);
+        trace_float("  float from 1:", &f1);
     }
 
     if 0 == unsafe { float_compare(f1.as_ptr(), 8, FLOAT_ONE.as_ptr(), 8) } {
-        let _ = trace("  float from 1 == FLOAT_ONE");
+        trace("  float from 1 == FLOAT_ONE");
     } else {
-        let _ = trace("  float from 1 != FLOAT_ONE");
+        trace("  float from 1 != FLOAT_ONE");
     }
 
     if 1 == unsafe { float_compare(f1.as_ptr(), 8, FLOAT_NEGATIVE_ONE.as_ptr(), 8) } {
-        let _ = trace("  float from 1 > FLOAT_NEGATIVE_ONE");
+        trace("  float from 1 > FLOAT_NEGATIVE_ONE");
     } else {
-        let _ = trace("  float from 1 !> FLOAT_NEGATIVE_ONE");
+        trace("  float from 1 !> FLOAT_NEGATIVE_ONE");
     }
 
     if 2 == unsafe { float_compare(FLOAT_NEGATIVE_ONE.as_ptr(), 8, f1.as_ptr(), 8) } {
-        let _ = trace("  FLOAT_NEGATIVE_ONE < float from 1");
+        trace("  FLOAT_NEGATIVE_ONE < float from 1");
     } else {
-        let _ = trace("  FLOAT_NEGATIVE_ONE !< float from 1");
+        trace("  FLOAT_NEGATIVE_ONE !< float from 1");
     }
 }
 
 fn test_float_add_subtract() {
-    let _ = trace("\n$$$ test_float_add_subtract $$$");
+    trace("\n$$$ test_float_add_subtract $$$");
 
     let mut f_compute: [u8; 8] = FLOAT_ONE;
     for i in 0..9 {
@@ -140,16 +140,16 @@ fn test_float_add_subtract() {
                 FLOAT_ROUNDING_MODES_TO_NEAREST,
             )
         };
-        // let _ = trace_float("  float:", &f_compute);
+        // trace_float("  float:", &f_compute);
     }
     let mut f10: [u8; 8] = [0u8; 8];
     if 8 != unsafe { float_from_int(10, f10.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) } {
-        // let _ = trace("  float from 10: failed");
+        // trace("  float from 10: failed");
     }
     if 0 == unsafe { float_compare(f10.as_ptr(), 8, f_compute.as_ptr(), 8) } {
-        let _ = trace("  repeated add: good");
+        trace("  repeated add: good");
     } else {
-        let _ = trace("  repeated add: bad");
+        trace("  repeated add: bad");
     }
 
     for i in 0..11 {
@@ -166,14 +166,14 @@ fn test_float_add_subtract() {
         };
     }
     if 0 == unsafe { float_compare(f_compute.as_ptr(), 8, FLOAT_NEGATIVE_ONE.as_ptr(), 8) } {
-        let _ = trace("  repeated subtract: good");
+        trace("  repeated subtract: good");
     } else {
-        let _ = trace("  repeated subtract: bad");
+        trace("  repeated subtract: bad");
     }
 }
 
 fn test_float_multiply_divide() {
-    let _ = trace("\n$$$ test_float_multiply_divide $$$");
+    trace("\n$$$ test_float_multiply_divide $$$");
 
     let mut f10: [u8; 8] = [0u8; 8];
     unsafe { float_from_int(10, f10.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) };
@@ -190,7 +190,7 @@ fn test_float_multiply_divide() {
                 FLOAT_ROUNDING_MODES_TO_NEAREST,
             )
         };
-        // let _ = trace_float("  float:", &f_compute);
+        // trace_float("  float:", &f_compute);
     }
     let mut f1000000: [u8; 8] = [0u8; 8];
     unsafe {
@@ -203,9 +203,9 @@ fn test_float_multiply_divide() {
     };
 
     if 0 == unsafe { float_compare(f1000000.as_ptr(), 8, f_compute.as_ptr(), 8) } {
-        let _ = trace("  repeated multiply: good");
+        trace("  repeated multiply: good");
     } else {
-        let _ = trace("  repeated multiply: bad");
+        trace("  repeated multiply: bad");
     }
 
     for i in 0..7 {
@@ -225,14 +225,14 @@ fn test_float_multiply_divide() {
     unsafe { float_set(-1, 1, f01.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) };
 
     if 0 == unsafe { float_compare(f_compute.as_ptr(), 8, f01.as_ptr(), 8) } {
-        let _ = trace("  repeated divide: good");
+        trace("  repeated divide: good");
     } else {
-        let _ = trace("  repeated divide: bad");
+        trace("  repeated divide: bad");
     }
 }
 
 fn test_float_pow() {
-    let _ = trace("\n$$$ test_float_pow $$$");
+    trace("\n$$$ test_float_pow $$$");
 
     let mut f_compute: [u8; 8] = [0u8; 8];
     unsafe {
@@ -245,7 +245,7 @@ fn test_float_pow() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float cube of 1:", &f_compute);
+    trace_float("  float cube of 1:", &f_compute);
 
     unsafe {
         float_pow(
@@ -257,7 +257,7 @@ fn test_float_pow() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float 6th power of -1:", &f_compute);
+    trace_float("  float 6th power of -1:", &f_compute);
 
     let mut f9: [u8; 8] = [0u8; 8];
     unsafe { float_from_int(9, f9.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) };
@@ -271,7 +271,7 @@ fn test_float_pow() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float square of 9:", &f_compute);
+    trace_float("  float square of 9:", &f_compute);
 
     unsafe {
         float_pow(
@@ -283,7 +283,7 @@ fn test_float_pow() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float 0th power of 9:", &f_compute);
+    trace_float("  float 0th power of 9:", &f_compute);
 
     let mut f0: [u8; 8] = [0u8; 8];
     unsafe { float_from_int(0, f0.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) };
@@ -297,7 +297,7 @@ fn test_float_pow() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float square of 0:", &f_compute);
+    trace_float("  float square of 0:", &f_compute);
 
     let r = unsafe {
         float_pow(
@@ -309,14 +309,14 @@ fn test_float_pow() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_num(
+    trace_num(
         "  float 0th power of 0 (expecting INVALID_PARAMS error):",
         r as i64,
     );
 }
 
 fn test_float_root() {
-    let _ = trace("\n$$$ test_float_root $$$");
+    trace("\n$$$ test_float_root $$$");
 
     let mut f9: [u8; 8] = [0u8; 8];
     unsafe { float_from_int(9, f9.as_mut_ptr(), 8, FLOAT_ROUNDING_MODES_TO_NEAREST) };
@@ -331,7 +331,7 @@ fn test_float_root() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float sqrt of 9:", &f_compute);
+    trace_float("  float sqrt of 9:", &f_compute);
     unsafe {
         float_root(
             f9.as_ptr(),
@@ -342,7 +342,7 @@ fn test_float_root() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float cbrt of 9:", &f_compute);
+    trace_float("  float cbrt of 9:", &f_compute);
 
     let mut f1000000: [u8; 8] = [0u8; 8];
     unsafe {
@@ -363,7 +363,7 @@ fn test_float_root() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float cbrt of 1000000:", &f_compute);
+    trace_float("  float cbrt of 1000000:", &f_compute);
     unsafe {
         float_root(
             f1000000.as_ptr(),
@@ -374,11 +374,11 @@ fn test_float_root() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  float 6th root of 1000000:", &f_compute);
+    trace_float("  float 6th root of 1000000:", &f_compute);
 }
 
 fn test_float_log() {
-    let _ = trace("\n$$$ test_float_log $$$");
+    trace("\n$$$ test_float_log $$$");
 
     let mut f1000000: [u8; 8] = [0u8; 8];
     unsafe {
@@ -399,11 +399,11 @@ fn test_float_log() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  log_10 of 1000000:", &f_compute);
+    trace_float("  log_10 of 1000000:", &f_compute);
 }
 
 fn test_float_negate() {
-    let _ = trace("\n$$$ test_float_negate $$$");
+    trace("\n$$$ test_float_negate $$$");
 
     let mut f_compute: [u8; 8] = [0u8; 8];
     unsafe {
@@ -417,11 +417,11 @@ fn test_float_negate() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    // let _ = trace_float("  float:", &f_compute);
+    // trace_float("  float:", &f_compute);
     if 0 == unsafe { float_compare(FLOAT_NEGATIVE_ONE.as_ptr(), 8, f_compute.as_ptr(), 8) } {
-        let _ = trace("  negate const 1: good");
+        trace("  negate const 1: good");
     } else {
-        let _ = trace("  negate const 1: bad");
+        trace("  negate const 1: bad");
     }
 
     unsafe {
@@ -435,16 +435,16 @@ fn test_float_negate() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    // let _ = trace_float("  float:", &f_compute);
+    // trace_float("  float:", &f_compute);
     if 0 == unsafe { float_compare(FLOAT_ONE.as_ptr(), 8, f_compute.as_ptr(), 8) } {
-        let _ = trace("  negate const -1: good");
+        trace("  negate const -1: good");
     } else {
-        let _ = trace("  negate const -1: bad");
+        trace("  negate const -1: bad");
     }
 }
 
 fn test_float_invert() {
-    let _ = trace("\n$$$ test_float_invert $$$");
+    trace("\n$$$ test_float_invert $$$");
 
     let mut f_compute: [u8; 8] = [0u8; 8];
     let mut f10: [u8; 8] = [0u8; 8];
@@ -460,7 +460,7 @@ fn test_float_invert() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  invert a float from 10:", &f_compute);
+    trace_float("  invert a float from 10:", &f_compute);
     unsafe {
         float_divide(
             FLOAT_ONE.as_ptr(),
@@ -472,13 +472,13 @@ fn test_float_invert() {
             FLOAT_ROUNDING_MODES_TO_NEAREST,
         )
     };
-    let _ = trace_float("  invert again:", &f_compute);
+    trace_float("  invert again:", &f_compute);
 
     // if f10's value is 7, then invert twice won't match the original value
     if 0 == unsafe { float_compare(f10.as_ptr(), 8, f_compute.as_ptr(), 8) } {
-        let _ = trace("  invert twice: good");
+        trace("  invert twice: good");
     } else {
-        let _ = trace("  invert twice: bad");
+        trace("  invert twice: bad");
     }
 }
 

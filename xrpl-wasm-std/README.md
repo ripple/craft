@@ -244,15 +244,22 @@ Debug output during development:
 ```rust,ignore
 use xrpl_wasm_std::host::trace::{trace, trace_data, trace_num, DataRepr};
 
-// Simple text trace
-trace("Processing escrow finish")?;
+// Simple text trace (panics on error)
+trace("Processing escrow finish");
 
-// Trace with data
-trace_data("Account ID", &account_id, DataRepr::AsHex)?;
-trace_data("Message", b"Hello", DataRepr::AsUTF8)?;
+// Trace with data (panics on error)
+trace_data("Account ID", &account_id, DataRepr::AsHex);
+trace_data("Message", b"Hello", DataRepr::AsUTF8);
 
-// Trace with number
-trace_num("Balance", balance as i64)?;
+// Trace with number (panics on error)
+trace_num("Balance", balance as i64);
+
+// For error handling, use the _with_result variants:
+use xrpl_wasm_std::host::trace::{trace_with_result, trace_data_with_result, trace_num_with_result};
+
+trace_with_result("Processing escrow finish")?;
+trace_data_with_result("Account ID", &account_id, DataRepr::AsHex)?;
+trace_num_with_result("Balance", balance as i64)?;
 ```
 
 ## Required Module Exports

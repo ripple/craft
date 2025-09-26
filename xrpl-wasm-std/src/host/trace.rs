@@ -1,10 +1,10 @@
-use crate::host::error_codes::match_result_code;
+use crate::host::error_codes::{match_result_code, match_result_code_or_panic};
+use core::ptr;
 
 use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::host;
 use crate::host::Result;
-use core::ptr;
 
 /// Data representation
 #[derive(Clone, Copy)]
@@ -15,21 +15,13 @@ pub enum DataRepr {
     AsHex = 1,
 }
 
-/// Write the contents of a message to the xrpld trace log.
-///
-/// # Parameters
-/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
-///
-/// # Returns
-///
-/// Returns an integer representing the result of the operation. A value of `0` or higher signifies
-/// the number of message bytes that were written to the trace function. Non-zero values indicate
-/// an error (e.g., incorrect buffer sizes).
-#[inline(always)] // <-- Inline because this function is very small
-pub fn trace(msg: &str) -> Result<i32> {
-    let null_ptr: *const u8 = ptr::null::<u8>();
+// Internal helper functions to eliminate duplicate logic
 
-    let result_code = unsafe {
+/// Internal helper for basic trace functionality
+#[inline(always)]
+fn trace_internal(msg: &str) -> i32 {
+    let null_ptr: *const u8 = ptr::null::<u8>();
+    unsafe {
         host::trace(
             msg.as_ptr(),
             msg.len(),
@@ -37,9 +29,72 @@ pub fn trace(msg: &str) -> Result<i32> {
             0usize,
             DataRepr::AsUTF8 as _,
         )
-    };
+    }
+}
 
-    match_result_code(result_code, || result_code)
+/// Internal helper for trace_data functionality
+#[inline(always)]
+fn trace_data_internal(msg: &str, data: &[u8], data_repr: DataRepr) -> i32 {
+    unsafe {
+        let data_ptr = data.as_ptr();
+        let data_len = data.len();
+        host::trace(msg.as_ptr(), msg.len(), data_ptr, data_len, data_repr as _)
+    }
+}
+
+/// Internal helper for trace_num functionality
+#[inline(always)]
+fn trace_num_internal(msg: &str, number: i64) -> i32 {
+    unsafe { host::trace_num(msg.as_ptr(), msg.len(), number) }
+}
+
+/// Internal helper for trace_account_buf functionality
+#[inline(always)]
+fn trace_account_buf_internal(msg: &str, account_id: &[u8; 20]) -> i32 {
+    unsafe {
+        host::trace_account(
+            msg.as_ptr(),
+            msg.len(),
+            account_id.as_ptr(),
+            account_id.len(),
+        )
+    }
+}
+
+/// Internal helper for trace_account functionality
+#[inline(always)]
+fn trace_account_internal(msg: &str, account_id: &AccountID) -> i32 {
+    unsafe {
+        host::trace_account(
+            msg.as_ptr(),
+            msg.len(),
+            account_id.0.as_ptr(),
+            account_id.0.len(),
+        )
+    }
+}
+
+/// Internal helper for trace_amount functionality
+#[inline(always)]
+fn trace_amount_internal(msg: &str, token_amount: &TokenAmount) -> i32 {
+    match token_amount {
+        TokenAmount::XRP { num_drops, .. } => unsafe {
+            host::trace_num(msg.as_ptr(), msg.len(), *num_drops)
+        },
+        TokenAmount::IOU { amount, .. } => unsafe {
+            host::trace_opaque_float(msg.as_ptr(), msg.len(), amount.0.as_ptr(), 8)
+        },
+        TokenAmount::MPT { num_units, .. } => unsafe {
+            // TODO: Consider trace_amount?
+            host::trace_num(msg.as_ptr(), msg.len(), *num_units as i64)
+        },
+    }
+}
+
+/// Internal helper for trace_float functionality
+#[inline(always)]
+fn trace_float_internal(msg: &str, f: &[u8; 8]) -> i32 {
+    unsafe { host::trace_opaque_float(msg.as_ptr(), msg.len(), f.as_ptr(), 8) }
 }
 
 /// Write the contents of a message to the xrpld trace log.
@@ -53,17 +108,64 @@ pub fn trace(msg: &str) -> Result<i32> {
 /// the number of message bytes that were written to the trace function. Non-zero values indicate
 /// an error (e.g., incorrect buffer sizes).
 #[inline(always)] // <-- Inline because this function is very small
-pub fn trace_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
-    let result_code = unsafe {
-        let data_ptr = data.as_ptr();
-        let data_len = data.len();
-        host::trace(msg.as_ptr(), msg.len(), data_ptr, data_len, data_repr as _)
-    };
+pub fn trace(msg: &str) -> i32 {
+    let result_code = trace_internal(msg);
+    match_result_code_or_panic(result_code, || result_code)
+}
 
+/// Write the contents of a message to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)] // <-- Inline because this function is very small
+pub fn trace_with_result(msg: &str) -> Result<i32> {
+    let result_code = trace_internal(msg);
     match_result_code(result_code, || result_code)
 }
 
-/// Write the contents of a message, and a number, to the xrpld trace log.
+/// Write the contents of a message and data to the xrpld trace log.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `data`: A byte slice containing the data to trace.
+/// * `data_repr`: How to represent the data (UTF-8 or hex).
+///
+/// # Returns
+///
+/// Returns an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)] // <-- Inline because this function is very small
+pub fn trace_data(msg: &str, data: &[u8], data_repr: DataRepr) -> i32 {
+    let result_code = trace_data_internal(msg, data, data_repr);
+    match_result_code_or_panic(result_code, || result_code)
+}
+
+/// Write the contents of a message and data to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `data`: A byte slice containing the data to trace.
+/// * `data_repr`: How to represent the data (UTF-8 or hex).
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)] // <-- Inline because this function is very small
+pub fn trace_data_with_result(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
+    let result_code = trace_data_internal(msg, data, data_repr);
+    match_result_code(result_code, || result_code)
+}
+
+/// Write the contents of a message and a number to the xrpld trace log.
 ///
 /// # Parameters
 /// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
@@ -75,69 +177,160 @@ pub fn trace_data(msg: &str, data: &[u8], data_repr: DataRepr) -> Result<i32> {
 /// the number of message bytes that were written to the trace function. Non-zero values indicate
 /// an error (e.g., incorrect buffer sizes).
 #[inline(always)]
-pub fn trace_num(msg: &str, number: i64) -> Result<i32> {
-    let result_code = unsafe { host::trace_num(msg.as_ptr(), msg.len(), number) };
+pub fn trace_num(msg: &str, number: i64) -> i32 {
+    let result_code = trace_num_internal(msg, number);
+    match_result_code_or_panic(result_code, || result_code)
+}
+
+/// Write the contents of a message and a number to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `number`: A number to emit into the trace logs.
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)]
+pub fn trace_num_with_result(msg: &str, number: i64) -> Result<i32> {
+    let result_code = trace_num_internal(msg, number);
     match_result_code(result_code, || result_code)
 }
 
+/// Write the contents of a message and an account ID buffer to the xrpld trace log.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `account_id`: A 20-byte account ID buffer.
+///
+/// # Returns
+///
+/// Returns an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
 #[inline(always)]
-pub fn trace_account_buf(msg: &str, account_id: &[u8; 20]) -> Result<i32> {
-    let result_code = unsafe {
-        host::trace_account(
-            msg.as_ptr(),
-            msg.len(),
-            account_id.as_ptr(),
-            account_id.len(),
-        )
-    };
+pub fn trace_account_buf(msg: &str, account_id: &[u8; 20]) -> i32 {
+    let result_code = trace_account_buf_internal(msg, account_id);
+    match_result_code_or_panic(result_code, || result_code)
+}
+
+/// Write the contents of a message and an account ID buffer to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `account_id`: A 20-byte account ID buffer.
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)]
+pub fn trace_account_buf_with_result(msg: &str, account_id: &[u8; 20]) -> Result<i32> {
+    let result_code = trace_account_buf_internal(msg, account_id);
     match_result_code(result_code, || result_code)
 }
 
+/// Write the contents of a message and an AccountID to the xrpld trace log.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `account_id`: An AccountID to trace.
+///
+/// # Returns
+///
+/// Returns an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
 #[inline(always)]
-pub fn trace_account(msg: &str, account_id: &AccountID) -> Result<i32> {
-    let result_code = unsafe {
-        host::trace_account(
-            msg.as_ptr(),
-            msg.len(),
-            account_id.0.as_ptr(),
-            account_id.0.len(),
-        )
-    };
+pub fn trace_account(msg: &str, account_id: &AccountID) -> i32 {
+    let result_code = trace_account_internal(msg, account_id);
+    match_result_code_or_panic(result_code, || result_code)
+}
+
+/// Write the contents of a message and an AccountID to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `account_id`: An AccountID to trace.
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)]
+pub fn trace_account_with_result(msg: &str, account_id: &AccountID) -> Result<i32> {
+    let result_code = trace_account_internal(msg, account_id);
     match_result_code(result_code, || result_code)
 }
 
+/// Write the contents of a message and a TokenAmount to the xrpld trace log.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `token_amount`: A TokenAmount to trace.
+///
+/// # Returns
+///
+/// Returns an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
 #[inline(always)]
-pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
-    // let result_code = unsafe {
-    //     host::trace_amount(
-    //         msg.as_ptr(),
-    //         msg.len(),
-    //         token_amount.as_ptr(),
-    //         token_amount.len(),
-    //     )
-    // };
-    // TODO: instead of manually calling `trace_num`, create a new host function called
-    // `trace_amount` and call that instead.
+pub fn trace_amount(msg: &str, token_amount: &TokenAmount) -> i32 {
+    let result_code = trace_amount_internal(msg, token_amount);
+    match_result_code_or_panic(result_code, || result_code)
+}
 
-    let result_code: i32 = match token_amount {
-        TokenAmount::XRP { num_drops, .. } => unsafe {
-            host::trace_num(msg.as_ptr(), msg.len(), *num_drops)
-        },
-        TokenAmount::IOU { amount, .. } => unsafe {
-            host::trace_opaque_float(msg.as_ptr(), msg.len(), amount.0.as_ptr(), 8)
-        },
-        TokenAmount::MPT { num_units, .. } => unsafe {
-            // TODO: Consider trace_amount?
-            host::trace_num(msg.as_ptr(), msg.len(), *num_units as i64)
-        },
-    };
-
+/// Write the contents of a message and a TokenAmount to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `token_amount`: A TokenAmount to trace.
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)]
+pub fn trace_amount_with_result(msg: &str, token_amount: &TokenAmount) -> Result<i32> {
+    let result_code = trace_amount_internal(msg, token_amount);
     match_result_code(result_code, || result_code)
 }
 
-/// Write a float to the XRPLD trace log
+/// Write the contents of a message and a float to the xrpld trace log.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `f`: An 8-byte float buffer to trace.
+///
+/// # Returns
+///
+/// Returns an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
 #[inline(always)]
-pub fn trace_float(msg: &str, f: &[u8; 8]) -> Result<i32> {
-    let result_code = unsafe { host::trace_opaque_float(msg.as_ptr(), msg.len(), f.as_ptr(), 8) };
+pub fn trace_float(msg: &str, f: &[u8; 8]) -> i32 {
+    let result_code = trace_float_internal(msg, f);
+    match_result_code_or_panic(result_code, || result_code)
+}
+
+/// Write the contents of a message and a float to the xrpld trace log, returning a Result.
+///
+/// # Parameters
+/// * `msg`: A str ref pointing to an array of bytes containing UTF-8 characters.
+/// * `f`: An 8-byte float buffer to trace.
+///
+/// # Returns
+///
+/// Returns a Result containing an integer representing the result of the operation. A value of `0` or higher signifies
+/// the number of message bytes that were written to the trace function. Non-zero values indicate
+/// an error (e.g., incorrect buffer sizes).
+#[inline(always)]
+pub fn trace_float_with_result(msg: &str, f: &[u8; 8]) -> Result<i32> {
+    let result_code = trace_float_internal(msg, f);
     match_result_code(result_code, || result_code)
 }

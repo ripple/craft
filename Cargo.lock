@@ -3107,6 +3107,7 @@ dependencies = [
  "sha2 0.11.0-rc.0",
  "wamr-rust-sdk",
  "xrpl-rust",
+ "xrpl-wasm-std",
  "xrpld-number",
 ]
 

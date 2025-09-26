@@ -18,3 +18,4 @@ bigdecimal = {version = "0.4.8", features = ["serde-json"]}
 num-traits = "0.2.19"
 num-derive = "0.4.2"
 xrpld-number = { path = "xrpld-number" }
+xrpl-wasm-std = { path = "../xrpl-wasm-std" }

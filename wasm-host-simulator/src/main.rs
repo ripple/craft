@@ -107,7 +107,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let wasm_file = base_path
-        .join("target/wasm32-unknown-unknown/debug")
+        .join("target/wasm32v1-none/debug")
         .join(format!("{}.wasm", args.project))
         .to_string_lossy()
         .to_string();

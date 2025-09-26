@@ -103,7 +103,7 @@ fn is_valid_wasm_project(cargo_toml_path: &Path) -> bool {
         content.contains("cdylib") ||
         // Also accept projects that might have wasm-related dependencies
         content.contains("wasm-bindgen") ||
-        content.contains("wasm32-unknown-unknown")
+        content.contains("wasm32v1-none")
     } else {
         false
     }
@@ -581,28 +581,28 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     // Try release first, then debug
     let candidates = vec![
         project_dir
-            .join("target/wasm32-unknown-unknown/release")
+            .join("target/wasm32v1-none/release")
             .join(format!("{project_name}.wasm")),
         project_dir
-            .join("target/wasm32-unknown-unknown/release")
+            .join("target/wasm32v1-none/release")
             .join(format!("lib{project_name}.wasm")),
         project_dir
-            .join("target/wasm32-unknown-unknown/debug")
+            .join("target/wasm32v1-none/debug")
             .join(format!("{project_name}.wasm")),
         project_dir
-            .join("target/wasm32-unknown-unknown/debug")
+            .join("target/wasm32v1-none/debug")
             .join(format!("lib{project_name}.wasm")),
         project_main_dir
-            .join("target/wasm32-unknown-unknown/release")
+            .join("target/wasm32v1-none/release")
             .join(format!("{project_name}.wasm")),
         project_main_dir
-            .join("target/wasm32-unknown-unknown/release")
+            .join("target/wasm32v1-none/release")
             .join(format!("lib{project_name}.wasm")),
         project_main_dir
-            .join("target/wasm32-unknown-unknown/debug")
+            .join("target/wasm32v1-none/debug")
             .join(format!("{project_name}.wasm")),
         project_main_dir
-            .join("target/wasm32-unknown-unknown/debug")
+            .join("target/wasm32v1-none/debug")
             .join(format!("lib{project_name}.wasm")),
     ];
 
@@ -613,7 +613,7 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     }
 
     Err(anyhow::anyhow!(
-        "No WASM output found for project '{}'.\n\n{}\n  • Run: craft build {}\n  • Make sure the project has a [lib] section in Cargo.toml\n  • Check if the build target is set to wasm32-unknown-unknown\n  • Look for .wasm files in target/wasm32-unknown-unknown/",
+        "No WASM output found for project '{}'.\n\n{}\n  • Run: craft build {}\n  • Make sure the project has a [lib] section in Cargo.toml\n  • Check if the build target is set to wasm32v1-none\n  • Look for .wasm files in target/wasm32v1-none/",
         project_name,
         "Suggestions:",
         project_name

@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -15,9 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Cache dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
+          components: clippy, rustfmt
       # This runs the pre-commit hooks defined in .pre-commit-config.yaml
       # TODO: figure out how to update to use pre-commit.ci
       - uses: pre-commit/action@v3.0.1

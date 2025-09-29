@@ -12,14 +12,14 @@ Otherwise, the escrow does not unlock.
 ### Build Commands
 
 ```bash
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 The resulting WASM file will be located at:
 
 ```
-./target/wasm32-unknown-unknown/release/notary_macro_example.wasm
+./target/wasm32v1-none/release/notary_macro_example.wasm
 ```
 
 ## Running with wasm-host-simulator

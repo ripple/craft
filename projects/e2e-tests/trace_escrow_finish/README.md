@@ -12,14 +12,14 @@ Build using:
 
 ```bash
 cargo build
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 The resulting WASM file will be located at:
 
 ```
-./target/wasm32-unknown-unknown/release/trace_escrow_finish.wasm
+./target/wasm32v1-none/release/trace_escrow_finish.wasm
 ```
 
 ## Running with wasm-host-simulator

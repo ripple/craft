@@ -58,7 +58,7 @@ The contract expects:
 
 ### Prerequisites
 
-- Rust with `wasm32-unknown-unknown` target
+- Rust with `wasm32v1-none` target
   - This is necessary for blockchain deployments because WebAssembly does not require a specific vendor (e.g.,
     `apple`) or operating system (e.g., `darwin`), so both are `unknown`
 - XRPL standard library (dependency)
@@ -66,14 +66,14 @@ The contract expects:
 ### Build Commands
 
 ```bash
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 The resulting WASM file will be located at:
 
 ```
-./target/wasm32-unknown-unknown/release/nft_owner.wasm
+./target/wasm32v1-none/release/nft_owner.wasm
 ```
 
 ## Running with wasm-host-simulator

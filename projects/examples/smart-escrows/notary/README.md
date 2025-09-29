@@ -15,7 +15,7 @@ returns a non-zero error code from the host.
 
 ## Prerequisites
 
-- Rust toolchain with `wasm32-unknown-unknown` target
+- Rust toolchain with `wasm32v1-none` target
 - Node.js 18+
 - Dependencies installed in `reference/js`:
 
@@ -53,14 +53,14 @@ The notary address is hardcoded in the source code. To change it, edit `src/lib.
 
 ```shell
 cargo build
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 Artifact:
 
 ```
-projects/examples/smart-escrows/notary/target/wasm32-unknown-unknown/release/notary.wasm
+projects/examples/smart-escrows/notary/target/wasm32v1-none/release/notary.wasm
 ```
 
 ### 3) Deploy an escrow using your FinishFunction on Devnet

@@ -28,7 +28,7 @@ function getFinishFunctionFromFile(filePath) {
   if (filePath.endsWith('.wasm') || filePath.endsWith('.hex')) {
     absolutePath = path.resolve(filePath)
   } else {
-    absolutePath = path.resolve(__dirname, `../../projects/target/wasm32-unknown-unknown/release/${filePath}.wasm`)
+    absolutePath = path.resolve(__dirname, `../../projects/target/wasm32v1-none/release/${filePath}.wasm`)
   }
   try {
       const data = fs.readFileSync(absolutePath)

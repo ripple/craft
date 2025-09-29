@@ -7,14 +7,14 @@ This WebAssembly module tests floating-point operations in wasm-host-simulator.
 Build using:
 
 ```bash
-cargo build --target wasm32-unknown-unknown
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none
+cargo build --target wasm32v1-none --release
 ```
 
 The resulting WASM file will be located at:
 
 ```
-./target/wasm32-unknown-unknown/release/float_tests.wasm
+./target/wasm32v1-none/release/float_tests.wasm
 ```
 
 ## Running with wasm-host-simulator

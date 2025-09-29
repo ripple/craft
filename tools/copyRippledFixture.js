@@ -10,7 +10,7 @@ if (process.argv.length < 4) {
 function main() {
     const projectName = process.argv[2]
     const projectPath = path.resolve(__dirname, `../rippled-tests/${projectName}`)
-    execSync(`(cd ${projectPath} && cargo build --target wasm32-unknown-unknown --release && wasm-opt target/wasm32-unknown-unknown/release/${projectName}.wasm -Oz -o target/wasm32-unknown-unknown/release/${projectName}.wasm)`,
+    execSync(`(cd ${projectPath} && cargo build --target wasm32v1-none --release && wasm-opt target/wasm32v1-none/release/${projectName}.wasm -Oz -o target/wasm32v1-none/release/${projectName}.wasm)`,
         function (error, stdout, stderr) {
             if (stderr) {
                 console.error(`stderr: ${stderr}`)
@@ -24,7 +24,7 @@ function main() {
         }
     )
 
-    const srcPath = path.resolve(__dirname, `../rippled-tests/${projectName}/target/wasm32-unknown-unknown/release/${projectName}.wasm`)
+    const srcPath = path.resolve(__dirname, `../rippled-tests/${projectName}/target/wasm32v1-none/release/${projectName}.wasm`)
     const data = fs.readFileSync(srcPath)
     const wasm = data.toString('hex')
 

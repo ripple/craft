@@ -12,8 +12,8 @@ cd "$REPO_ROOT"
 echo "🔧 Running end-to-end tests..."
 
 # Ensure wasm32 target is available
-echo "📦 Ensuring wasm32-unknown-unknown target is installed..."
-rustup target add wasm32-unknown-unknown
+echo "📦 Ensuring wasm32v1-none target is installed..."
+rustup target add wasm32v1-none
 
 echo "🏗️  Building projects..."
 scripts/build.sh

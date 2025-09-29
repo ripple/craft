@@ -21,9 +21,13 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Path to the WASM file
+    /// Project directory containing fixtures (optional)
     #[arg(long)]
     dir: Option<String>,
+
+    /// Path to the WASM file to execute (optional; if absent, use default projects/<project>/target/...)
+    #[arg(long, alias = "wasm-file")]
+    wasm: Option<String>,
 
     /// Test case to run (success/failure)
     #[arg(short, long, default_value = "success")]
@@ -106,12 +110,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    let wasm_file = base_path
-        .join("target/wasm32v1-none/debug")
-        .join(format!("{}.wasm", args.project))
-        .to_string_lossy()
-        .to_string();
-
+    let wasm_file = if let Some(w) = args.wasm.clone() {
+        w
+    } else {
+        base_path
+            .join("target/wasm32v1-none/debug")
+            .join(format!("{}.wasm", args.project))
+            .to_string_lossy()
+            .to_string()
+    };
     // Initialize logger with appropriate level
     let log_level = if args.verbose {
         LevelFilter::Debug

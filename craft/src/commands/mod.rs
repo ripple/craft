@@ -749,3 +749,121 @@ pub fn run_test(
 
     Ok(())
 }
+
+/// Execute a pre-built WASM file using wasm-host-simulator with optional fixtures
+///
+/// # Arguments
+/// * `wasm_file` - Path to the WASM file to execute
+/// * `function` - Optional function name to execute (defaults to "finish")
+/// * `test_case` - Test case name (e.g., "success", "failure")
+/// * `verbose` - Enable verbose output
+/// * `fixtures_dir` - Optional directory containing test fixtures
+/// * `project_name` - Optional project name (defaults to WASM filename)
+///
+/// # Example
+/// ```no_run
+/// use std::path::Path;
+/// use craft::commands::execute_wasm;
+/// # fn main() -> anyhow::Result<()> {
+/// execute_wasm(
+///     Path::new("/tmp/contract.wasm"),
+///     Some("my_function"),
+///     "success",
+///     false,
+///     None,
+///     None
+/// )?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn execute_wasm(
+    wasm_file: &Path,
+    function: Option<&str>,
+    test_case: &str,
+    verbose: bool,
+    fixtures_dir: Option<&Path>,
+    project_name: Option<&str>,
+) -> Result<()> {
+    // Validate that the WASM file exists
+    if !wasm_file.exists() {
+        anyhow::bail!("WASM file not found: {}", wasm_file.display());
+    }
+
+    // Ensure wasm-host-simulator is built
+    let simulator_path = {
+        // Resolve path relative to workspace root (parent of craft crate dir)
+        let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .context("Failed to get workspace root")?
+            .to_path_buf();
+        let path = workspace_root
+            .join("target")
+            .join("release")
+            .join("wasm-host-simulator");
+        if !path.exists() {
+            println!(
+                "{}",
+                "Building wasm-host-simulator testing environment...".yellow()
+            );
+            let status = Command::new("cargo")
+                .current_dir(&workspace_root)
+                .args(["build", "--release", "-p", "wasm-host-simulator"])
+                .status()
+                .context("Failed to run cargo build for wasm-host-simulator")?;
+            if !status.success() {
+                anyhow::bail!(
+                    "Failed to build wasm-host-simulator. See build output above for details."
+                );
+            }
+            println!("{}", "wasm-host-simulator built successfully!".green());
+        }
+        path
+    };
+
+    // Extract project name from WASM file if not provided
+    let proj = project_name
+        .map(String::from)
+        .or_else(|| {
+            wasm_file
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .map(String::from)
+        })
+        .unwrap_or_else(|| "unknown".to_string());
+
+    let mut args: Vec<String> = vec![
+        "--project".into(),
+        proj,
+        "--test-case".into(),
+        test_case.into(),
+    ];
+
+    if let Some(func) = function {
+        args.push("--function".into());
+        args.push(func.into());
+    }
+    if verbose {
+        args.push("--verbose".into());
+    }
+
+    // Always pass explicit wasm file path
+    args.push("--wasm".into());
+    args.push(wasm_file.display().to_string());
+
+    // Optionally override fixtures base directory
+    if let Some(dir) = fixtures_dir {
+        args.push("--dir".into());
+        args.push(dir.display().to_string());
+    }
+
+    let status = Command::new(&simulator_path)
+        .args(&args)
+        .status()
+        .context("Failed to execute wasm-host-simulator")?;
+
+    if !status.success() {
+        anyhow::bail!("wasm-host-simulator returned non-zero exit status");
+    }
+
+    Ok(())
+}

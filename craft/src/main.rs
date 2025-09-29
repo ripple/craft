@@ -41,6 +41,9 @@ enum Commands {
     Build {
         /// Project name under projects directory
         project: Option<String>,
+        /// Build any project by specifying a filesystem path to a Cargo project directory
+        #[arg(long, value_name = "PATH")]
+        path: Option<std::path::PathBuf>,
         /// Build in release mode (default for WASM)
         #[arg(short, long)]
         release: bool,
@@ -70,6 +73,21 @@ enum Commands {
         /// Set environment variable(s) (repeatable): KEY=VALUE
         #[arg(long = "env", value_name = "KEY=VALUE")]
         envs: Vec<String>,
+    },
+    /// Execute a pre-built WASM module
+    Execute {
+        /// Path to a .wasm file to execute
+        #[arg(long, alias = "wasm-file", value_name = "PATH")]
+        wasm: std::path::PathBuf,
+        /// Function to execute (default: finish)
+        #[arg(short, long)]
+        function: Option<String>,
+        /// Test case/fixture name (default: success)
+        #[arg(short = 'c', long = "case")]
+        case: Option<String>,
+        /// Verbose output
+        #[arg(short, long)]
+        verbose: bool,
     },
     /// List available projects, tests, or other resources
     List {
@@ -297,6 +315,7 @@ async fn main() -> Result<()> {
         Some(cmd) => match cmd {
             Commands::Build {
                 project,
+                path,
                 release: _,
                 debug,
                 opt,
@@ -317,7 +336,19 @@ async fn main() -> Result<()> {
                     config::BuildMode::Release
                 };
 
-                let project_path = if let Some(proj) = project {
+                let project_path = if let Some(path) = path {
+                    // Validate that the path exists and contains a Cargo.toml
+                    if !path.exists() {
+                        anyhow::bail!("Path does not exist: {}", path.display());
+                    }
+                    if !path.is_dir() {
+                        anyhow::bail!("Path is not a directory: {}", path.display());
+                    }
+                    if !path.join("Cargo.toml").exists() {
+                        anyhow::bail!("No Cargo.toml found in directory: {}", path.display());
+                    }
+                    path
+                } else if let Some(proj) = project {
                     // Find the project from all discovered WASM projects
                     let current_dir = std::env::current_dir()?;
                     let all_projects = utils::find_wasm_projects(&current_dir);
@@ -398,6 +429,32 @@ async fn main() -> Result<()> {
                     "{}",
                     format!("Build complete. WASM at: {}", wasm_path.display()).green()
                 );
+            }
+            Commands::Execute {
+                wasm,
+                function,
+                case,
+                verbose,
+            } => {
+                use std::path::{Path, PathBuf};
+                let wasm_file = wasm;
+                let project_name = Path::new(&wasm_file)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown");
+
+                let test_case = case.unwrap_or_else(|| "success".to_string());
+                let fixtures_dir: Option<PathBuf> =
+                    Path::new(&wasm_file).parent().map(|p| p.to_path_buf());
+
+                commands::execute_wasm(
+                    &wasm_file,
+                    function.as_deref(),
+                    &test_case,
+                    verbose,
+                    fixtures_dir.as_deref(),
+                    Some(project_name),
+                )?;
             }
             Commands::Deploy {
                 target,
@@ -670,4 +727,75 @@ mod cli_tests {
             other => panic!("Expected Build command, got: {other:?}"),
         }
     }
+}
+
+#[test]
+fn test_build_accepts_path_flag() {
+    // Allow building by specifying an arbitrary filesystem path
+    let res = Cli::try_parse_from(["craft", "build", "--path", "/tmp/my-outside-project"]);
+    assert!(
+        res.is_ok(),
+        "Expected build to accept --path flag, but parsing failed: {:?}",
+        res.err()
+    );
+}
+
+#[test]
+fn test_execute_accepts_wasm_file_flag() {
+    // Allow executing a pre-built wasm via a top-level execute subcommand
+    let res = Cli::try_parse_from(["craft", "execute", "--wasm", "/tmp/contract.wasm"]);
+    assert!(
+        res.is_ok(),
+        "Expected execute to accept --wasm flag, but parsing failed: {:?}",
+        res.err()
+    );
+}
+
+#[test]
+fn test_build_path_takes_precedence_over_project() {
+    // When both --path and project name are provided, --path should take precedence
+    let cli = Cli::parse_from(["craft", "build", "myproj", "--path", "/tmp/other-project"]);
+    match cli.command {
+        Some(Commands::Build { project, path, .. }) => {
+            assert_eq!(project, Some("myproj".to_string()));
+            assert_eq!(path, Some(std::path::PathBuf::from("/tmp/other-project")));
+        }
+        other => panic!("Expected Build command, got: {other:?}"),
+    }
+}
+
+#[test]
+fn test_execute_with_all_options() {
+    let cli = Cli::parse_from([
+        "craft",
+        "execute",
+        "--wasm",
+        "/tmp/contract.wasm",
+        "--function",
+        "my_func",
+        "--case",
+        "failure",
+        "--verbose",
+    ]);
+    match cli.command {
+        Some(Commands::Execute {
+            wasm,
+            function,
+            case,
+            verbose,
+        }) => {
+            assert_eq!(wasm, std::path::PathBuf::from("/tmp/contract.wasm"));
+            assert_eq!(function, Some("my_func".to_string()));
+            assert_eq!(case, Some("failure".to_string()));
+            assert!(verbose);
+        }
+        other => panic!("Expected Execute command, got: {other:?}"),
+    }
+}
+
+#[test]
+fn test_execute_wasm_file_alias() {
+    // Test that --wasm-file works as an alias for --wasm
+    let res = Cli::try_parse_from(["craft", "execute", "--wasm-file", "/tmp/contract.wasm"]);
+    assert!(res.is_ok(), "Expected --wasm-file alias to work");
 }

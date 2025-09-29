@@ -569,7 +569,26 @@ pub fn run_cargo_fmt() -> Result<()> {
 pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     let cargo_toml = find_cargo_toml(project_path).context("Could not find Cargo.toml")?;
     let project_dir = cargo_toml.parent().unwrap();
-    let project_name = project_dir.file_name().unwrap().to_str().unwrap();
+
+    // Determine crate name from Cargo.toml [package] name; fall back to folder name
+    let project_name = std::fs::read_to_string(&cargo_toml)
+        .ok()
+        .and_then(|content| content.parse::<toml::Value>().ok())
+        .and_then(|parsed| {
+            parsed
+                .get("package")?
+                .get("name")?
+                .as_str()
+                .map(String::from)
+        })
+        .unwrap_or_else(|| {
+            project_dir
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        });
+
     let project_main_dir = project_dir
         .parent()
         .unwrap()

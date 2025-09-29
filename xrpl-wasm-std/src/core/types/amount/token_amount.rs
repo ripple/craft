@@ -102,6 +102,68 @@ pub enum TokenAmount {
 const MASK_57_BIT: u64 = 0x01FFFFFFFFFFFFFFu64;
 
 impl TokenAmount {
+    /// Converts a TokenAmount to STAmount bytes format.
+    ///
+    /// All TokenAmount types return a 48-byte array for consistency with the XRPL STAmount format.
+    /// The format follows the XRPL binary layout:
+    /// - XRP: Raw drop amount (no flag bits) in first 8 bytes + 40 bytes padding
+    /// - MPT: Flag byte (0b_0110_0000) in byte 0, raw amount in bytes 1-9, MptId in bytes 9-33 + 15 bytes padding
+    /// - IOU: OpaqueFloat in first 8 bytes, CurrencyCode in bytes 8-28, AccountID in bytes 28-48
+    ///
+    /// Returns a tuple of (bytes, length) where length is always 48.
+    pub fn to_stamount_bytes(&self) -> ([u8; TOKEN_AMOUNT_SIZE], usize) {
+        let mut bytes = [0u8; TOKEN_AMOUNT_SIZE];
+
+        match self {
+            TokenAmount::XRP { num_drops } => {
+                // For tracing, XRP uses raw drop amount without flag bits
+                // The host function will interpret this as XRP based on the format
+                let abs_drops = num_drops.unsigned_abs();
+                bytes[0..8].copy_from_slice(&abs_drops.to_be_bytes());
+                // Remaining 40 bytes stay as zeros (padding)
+            }
+
+            TokenAmount::MPT {
+                num_units,
+                is_positive,
+                mpt_id,
+            } => {
+                // MPT format for tracing: flag byte + amount + mpt_id
+                let mut control_byte = 0u8;
+
+                // Set the sign bit (bit 6)
+                if *is_positive {
+                    control_byte |= 0x40; // Set bit 6
+                }
+
+                // Set the is-MPT bit (bit 5)
+                control_byte |= 0x20; // Set bit 5
+
+                // Type bit (bit 7) is 0 for XRP/MPT - already 0
+                // Reserved bits (bits 4-0) are 0 - already 0
+
+                bytes[0] = control_byte;
+                bytes[1..9].copy_from_slice(&num_units.to_be_bytes());
+                bytes[9..33].copy_from_slice(mpt_id.as_bytes());
+                // Remaining 15 bytes stay as zeros (padding)
+            }
+
+            TokenAmount::IOU {
+                amount,
+                issuer,
+                currency_code,
+            } => {
+                // IOU format for tracing: opaque float + currency + issuer
+                bytes[0..8].copy_from_slice(&amount.0);
+                bytes[8..28].copy_from_slice(currency_code.as_bytes());
+                bytes[28..48].copy_from_slice(&issuer.0);
+                // No padding needed - uses all 48 bytes
+            }
+        }
+
+        (bytes, TOKEN_AMOUNT_SIZE)
+    }
+
     /// Parses a TokenAmount from a byte array.
     ///
     /// The byte array can be one of three formats:
@@ -374,5 +436,292 @@ mod tests {
 
         // Test with an invalid type bit pattern
         assert!(TokenAmount::from_bytes(&[0xA0, 0, 0, 0, 0, 0, 0, 0]).is_err());
+    }
+
+    #[test]
+    fn test_round_trip_xrp_positive() {
+        // Test positive XRP amount
+        let original = TokenAmount::XRP {
+            num_drops: 1_000_000,
+        };
+
+        // Create the expected byte layout for XRP
+        // XRP format: [0/type][1/sign][0/is-mpt][4/reserved][57/value]
+        let mut expected_bytes = [0u8; 48];
+        expected_bytes[0] = 0x40; // Positive XRP flag (0b0100_0000)
+        expected_bytes[1..8].copy_from_slice(&1_000_000u64.to_be_bytes()[1..8]);
+
+        // Test from_bytes -> to_bytes round trip
+        let parsed = TokenAmount::from_bytes(&expected_bytes).unwrap();
+        assert_eq!(parsed, original);
+
+        // Test to_stamount_bytes format (should be raw drops for STAmount)
+        let (stamount_bytes, len) = original.to_stamount_bytes();
+        assert_eq!(len, 48);
+        assert_eq!(&stamount_bytes[0..8], &1_000_000u64.to_be_bytes());
+        // Remaining bytes should be zero padding
+        assert_eq!(&stamount_bytes[8..48], &[0u8; 40]);
+    }
+
+    #[test]
+    fn test_round_trip_xrp_negative() {
+        // Test negative XRP amount
+        let original = TokenAmount::XRP {
+            num_drops: -500_000,
+        };
+
+        // Create the expected byte layout for negative XRP
+        // XRP format: [0/type][0/sign][0/is-mpt][4/reserved][57/value]
+        let mut expected_bytes = [0u8; 48];
+        expected_bytes[0] = 0x00; // Negative XRP flag (0b0000_0000)
+        expected_bytes[1..8].copy_from_slice(&500_000u64.to_be_bytes()[1..8]);
+
+        // Test from_bytes -> to_bytes round trip
+        let parsed = TokenAmount::from_bytes(&expected_bytes).unwrap();
+        assert_eq!(parsed, original);
+
+        // Test to_stamount_bytes format (should be raw absolute drops for STAmount)
+        let (stamount_bytes, len) = original.to_stamount_bytes();
+        assert_eq!(len, 48);
+        assert_eq!(&stamount_bytes[0..8], &500_000u64.to_be_bytes());
+        // Remaining bytes should be zero padding
+        assert_eq!(&stamount_bytes[8..48], &[0u8; 40]);
+    }
+
+    #[test]
+    fn test_round_trip_mpt_positive() {
+        // Test positive MPT amount
+        const VALUE: u64 = 750_000;
+        const SEQUENCE_NUM: u32 = 54321;
+        const ISSUER_BYTES: [u8; 20] = [0xAB; 20];
+
+        let issuer = AccountID::from(ISSUER_BYTES);
+        let mpt_id = MptId::new(SEQUENCE_NUM, issuer);
+        let original = TokenAmount::MPT {
+            num_units: VALUE,
+            is_positive: true,
+            mpt_id,
+        };
+
+        // Create the expected byte layout for positive MPT
+        // MPT format: [0/type][1/sign][1/is-mpt][5/reserved][64/value][32/sequence][160/issuer]
+        let mut expected_bytes = [0u8; 48];
+        expected_bytes[0] = 0x60; // Positive MPT flag (0b0110_0000)
+        expected_bytes[1..9].copy_from_slice(&VALUE.to_be_bytes());
+        expected_bytes[9..13].copy_from_slice(&SEQUENCE_NUM.to_be_bytes());
+        expected_bytes[13..33].copy_from_slice(&ISSUER_BYTES);
+
+        // Test from_bytes -> to_bytes round trip
+        let parsed = TokenAmount::from_bytes(&expected_bytes).unwrap();
+        assert_eq!(parsed, original);
+
+        // Test to_stamount_bytes format
+        let (stamount_bytes, len) = original.to_stamount_bytes();
+        assert_eq!(len, 48);
+        assert_eq!(stamount_bytes[0], 0x60); // Flag byte
+        assert_eq!(&stamount_bytes[1..9], &VALUE.to_be_bytes()); // Amount
+        assert_eq!(&stamount_bytes[9..33], mpt_id.as_bytes()); // MptId
+        // Remaining bytes should be zero padding
+        assert_eq!(&stamount_bytes[33..48], &[0u8; 15]);
+    }
+
+    #[test]
+    fn test_round_trip_mpt_negative() {
+        // Test negative MPT amount
+        const VALUE: u64 = 250_000;
+        const SEQUENCE_NUM: u32 = 98765;
+        const ISSUER_BYTES: [u8; 20] = [0xCD; 20];
+
+        let issuer = AccountID::from(ISSUER_BYTES);
+        let mpt_id = MptId::new(SEQUENCE_NUM, issuer);
+        let original = TokenAmount::MPT {
+            num_units: VALUE,
+            is_positive: false,
+            mpt_id,
+        };
+
+        // Create the expected byte layout for negative MPT
+        // MPT format: [0/type][0/sign][1/is-mpt][5/reserved][64/value][32/sequence][160/issuer]
+        let mut expected_bytes = [0u8; 48];
+        expected_bytes[0] = 0x20; // Negative MPT flag (0b0010_0000)
+        expected_bytes[1..9].copy_from_slice(&VALUE.to_be_bytes());
+        expected_bytes[9..13].copy_from_slice(&SEQUENCE_NUM.to_be_bytes());
+        expected_bytes[13..33].copy_from_slice(&ISSUER_BYTES);
+
+        // Test from_bytes -> to_bytes round trip
+        let parsed = TokenAmount::from_bytes(&expected_bytes).unwrap();
+        assert_eq!(parsed, original);
+
+        // Test to_stamount_bytes format
+        let (stamount_bytes, len) = original.to_stamount_bytes();
+        assert_eq!(len, 48);
+        assert_eq!(stamount_bytes[0], 0x20); // Flag byte (negative)
+        assert_eq!(&stamount_bytes[1..9], &VALUE.to_be_bytes()); // Amount
+        assert_eq!(&stamount_bytes[9..33], mpt_id.as_bytes()); // MptId
+        // Remaining bytes should be zero padding
+        assert_eq!(&stamount_bytes[33..48], &[0u8; 15]);
+    }
+
+    #[test]
+    fn test_round_trip_iou_positive() {
+        // Test positive IOU amount
+        const EXPONENT: u8 = 7;
+        const MANTISSA: u64 = 98765;
+        const CURRENCY_BYTES: [u8; 20] = [0xEF; 20];
+        const ISSUER_BYTES: [u8; 20] = [0x12; 20];
+
+        // Create the OpaqueFloat bytes manually
+        // IOU format: [1/type][1/sign][8/exponent][54/mantissa]
+        let mut opaque_float_bytes = [0u8; 8];
+
+        // First byte: IOU positive flag (0xC0) with exponent bits
+        opaque_float_bytes[0] = 0xC0 | ((EXPONENT >> 2) & 0x3F);
+
+        // Second byte: first 2 bits for exponent, rest will be part of mantissa
+        opaque_float_bytes[1] = (EXPONENT & 0x03) << 6;
+
+        let mantissa_bytes = MANTISSA.to_be_bytes();
+
+        // Copy the mantissa bytes, preserving the exponent bits in opaque_float_bytes[1]
+        opaque_float_bytes[1] |= mantissa_bytes[0] & 0x3F;
+        opaque_float_bytes[2] = mantissa_bytes[1];
+        opaque_float_bytes[3] = mantissa_bytes[2];
+        opaque_float_bytes[4] = mantissa_bytes[3];
+        opaque_float_bytes[5] = mantissa_bytes[4];
+        opaque_float_bytes[6] = mantissa_bytes[5];
+        opaque_float_bytes[7] = mantissa_bytes[6];
+
+        let original = TokenAmount::IOU {
+            amount: OpaqueFloat(opaque_float_bytes),
+            issuer: AccountID::from(ISSUER_BYTES),
+            currency_code: CurrencyCode::from(CURRENCY_BYTES),
+        };
+
+        // Create the expected byte layout for IOU
+        // IOU format: [1/type][1/sign][8/exponent][54/mantissa][160/currency][160/issuer]
+        let mut expected_bytes = [0u8; 48];
+        expected_bytes[0..8].copy_from_slice(&opaque_float_bytes);
+        expected_bytes[8..28].copy_from_slice(&CURRENCY_BYTES);
+        expected_bytes[28..48].copy_from_slice(&ISSUER_BYTES);
+
+        // Test from_bytes -> to_bytes round trip
+        let parsed = TokenAmount::from_bytes(&expected_bytes).unwrap();
+        assert_eq!(parsed, original);
+
+        // Test to_stamount_bytes format
+        let (stamount_bytes, len) = original.to_stamount_bytes();
+        assert_eq!(len, 48);
+        assert_eq!(&stamount_bytes[0..8], &opaque_float_bytes); // OpaqueFloat
+        assert_eq!(&stamount_bytes[8..28], &CURRENCY_BYTES); // CurrencyCode
+        assert_eq!(&stamount_bytes[28..48], &ISSUER_BYTES); // AccountID
+        // No padding for IOU - uses all 48 bytes
+    }
+
+    #[test]
+    fn test_round_trip_iou_negative() {
+        // Test negative IOU amount
+        const EXPONENT: u8 = 3;
+        const MANTISSA: u64 = 12345;
+        const CURRENCY_BYTES: [u8; 20] = [0x34; 20];
+        const ISSUER_BYTES: [u8; 20] = [0x56; 20];
+
+        // Create the OpaqueFloat bytes manually for negative amount
+        // IOU format: [1/type][0/sign][8/exponent][54/mantissa]
+        let mut opaque_float_bytes = [0u8; 8];
+
+        // First byte: IOU negative flag (0x80) with exponent bits
+        opaque_float_bytes[0] = 0x80 | ((EXPONENT >> 2) & 0x3F);
+
+        // Second byte: first 2 bits for exponent, rest will be part of mantissa
+        opaque_float_bytes[1] = (EXPONENT & 0x03) << 6;
+
+        let mantissa_bytes = MANTISSA.to_be_bytes();
+
+        // Copy the mantissa bytes, preserving the exponent bits in opaque_float_bytes[1]
+        opaque_float_bytes[1] |= mantissa_bytes[0] & 0x3F;
+        opaque_float_bytes[2] = mantissa_bytes[1];
+        opaque_float_bytes[3] = mantissa_bytes[2];
+        opaque_float_bytes[4] = mantissa_bytes[3];
+        opaque_float_bytes[5] = mantissa_bytes[4];
+        opaque_float_bytes[6] = mantissa_bytes[5];
+        opaque_float_bytes[7] = mantissa_bytes[6];
+
+        let original = TokenAmount::IOU {
+            amount: OpaqueFloat(opaque_float_bytes),
+            issuer: AccountID::from(ISSUER_BYTES),
+            currency_code: CurrencyCode::from(CURRENCY_BYTES),
+        };
+
+        // Create the expected byte layout for negative IOU
+        let mut expected_bytes = [0u8; 48];
+        expected_bytes[0..8].copy_from_slice(&opaque_float_bytes);
+        expected_bytes[8..28].copy_from_slice(&CURRENCY_BYTES);
+        expected_bytes[28..48].copy_from_slice(&ISSUER_BYTES);
+
+        // Test from_bytes -> to_bytes round trip
+        let parsed = TokenAmount::from_bytes(&expected_bytes).unwrap();
+        assert_eq!(parsed, original);
+
+        // Test to_stamount_bytes format
+        let (stamount_bytes, len) = original.to_stamount_bytes();
+        assert_eq!(len, 48);
+        assert_eq!(&stamount_bytes[0..8], &opaque_float_bytes); // OpaqueFloat
+        assert_eq!(&stamount_bytes[8..28], &CURRENCY_BYTES); // CurrencyCode
+        assert_eq!(&stamount_bytes[28..48], &ISSUER_BYTES); // AccountID
+        // No padding for IOU - uses all 48 bytes
+    }
+
+    #[test]
+    fn test_round_trip_edge_cases() {
+        // Test XRP with maximum value that fits in 57 bits
+        let max_57_bit_value = MASK_57_BIT as i64;
+        let max_xrp = TokenAmount::XRP {
+            num_drops: max_57_bit_value,
+        };
+        let mut max_xrp_bytes = [0u8; 48];
+
+        // Create the full 64-bit value with flag bits
+        let full_value = (max_57_bit_value as u64) | 0x4000000000000000u64; // Add positive flag
+        max_xrp_bytes[0..8].copy_from_slice(&full_value.to_be_bytes());
+
+        let parsed_max_xrp = TokenAmount::from_bytes(&max_xrp_bytes).unwrap();
+        assert_eq!(parsed_max_xrp, max_xrp);
+
+        // Test XRP with maximum negative value that fits in 57 bits
+        let min_xrp = TokenAmount::XRP {
+            num_drops: -max_57_bit_value,
+        };
+        let mut min_xrp_bytes = [0u8; 48];
+
+        // Create the full 64-bit value without positive flag (negative)
+        let full_value = max_57_bit_value as u64; // No positive flag = negative
+        min_xrp_bytes[0..8].copy_from_slice(&full_value.to_be_bytes());
+
+        let parsed_min_xrp = TokenAmount::from_bytes(&min_xrp_bytes).unwrap();
+        assert_eq!(parsed_min_xrp, min_xrp);
+
+        // Test XRP with zero value
+        let zero_xrp = TokenAmount::XRP { num_drops: 0 };
+        let mut zero_xrp_bytes = [0u8; 48];
+        zero_xrp_bytes[0] = 0x40; // Positive flag (zero is considered positive)
+
+        let parsed_zero_xrp = TokenAmount::from_bytes(&zero_xrp_bytes).unwrap();
+        assert_eq!(parsed_zero_xrp, zero_xrp);
+
+        // Test that values larger than 57 bits get properly masked during parsing
+        let large_value = i64::MAX;
+        let expected_masked_value = (large_value as u64 & MASK_57_BIT) as i64;
+        let large_xrp = TokenAmount::XRP {
+            num_drops: expected_masked_value,
+        };
+
+        let mut large_xrp_bytes = [0u8; 48];
+        // Create the full 64-bit value with XRP positive flag and the large value
+        let masked_value = (large_value as u64) & MASK_57_BIT;
+        let full_value = masked_value | 0x4000000000000000u64; // Add positive flag (bit 62)
+        large_xrp_bytes[0..8].copy_from_slice(&full_value.to_be_bytes());
+
+        let parsed_large_xrp = TokenAmount::from_bytes(&large_xrp_bytes).unwrap();
+        assert_eq!(parsed_large_xrp, large_xrp);
     }
 }

@@ -28,52 +28,70 @@ The XRPL validators will execute the WASM code in a sandboxed environment with t
 
 #### Required Functions
 
-The WebAssembly module must expose the following functions:
+The WebAssembly module must expose the following function:
 
-##### `allocate(size: usize) -> *mut u8`
+##### `finish() -> i32`
 
-This function is called by the host environment to request memory allocation within the WebAssembly module's memory space. It returns a pointer to the allocated memory region.
+This is the main entry point that evaluates whether an escrow can be finished. The function accesses transaction and ledger data through host functions provided by the XRPL runtime.
+
+Returns:
+- Any positive value (`> 0`): The escrow can be finished (release funds)
+- Zero or negative value (`<= 0`): The escrow cannot be finished (keep funds locked)
 
 ```rust
-#[no_mangle]
-pub extern fn allocate(size: usize) -> *mut u8 {
-    let mut buffer = Vec::with_capacity(size);
-    let pointer = buffer.as_mut_ptr();
-    std::mem::forget(buffer);
-    pointer
+#![cfg_attr(target_arch = "wasm32", no_std)]
+
+#[cfg(not(target_arch = "wasm32"))]
+extern crate std;
+
+use xrpl_std::host;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn finish() -> i32 {
+    // Get the current ledger sequence number
+    let ledger_seq = unsafe { host::get_ledger_sqn() };
+
+    // Get the parent ledger time
+    let ledger_time = unsafe { host::get_parent_ledger_time() };
+
+    // Example logic: Release escrow after ledger 100 and after timestamp 750000000
+    // (These are example values - implement your actual business logic here)
+    if ledger_seq > 100 && ledger_time > 750000000 {
+        1  // Release escrow (any positive value works)
+    } else {
+        0  // Keep escrow locked (zero or negative values work)
+    }
 }
 ```
 
-##### `finish(tx_json_ptr: *mut u8, tx_json_size: usize, lo_json_ptr: *mut u8, lo_json_size: usize) -> bool`
+#### Host Functions
 
-This function evaluates whether an escrow can be finished based on the transaction and ledger object data provided.
+The WASM module can import and use various host functions to access blockchain data.
 
-Parameters:
-- `tx_json_ptr`: Pointer to the JSON data of the EscrowFinish transaction
-- `tx_json_size`: Size in bytes of the transaction JSON data
-- `lo_json_ptr`: Pointer to the JSON data of the Escrow ledger object
-- `lo_json_size`: Size in bytes of the ledger object JSON data
-
-Returns a boolean indicating whether the escrow can be finished.
+For a complete list of available host functions and their documentation, see the [xrpl-wasm-std host module](./xrpl-wasm-std/src/host/) or view the rendered docs by running `cargo doc --open -p xrpl-wasm-std`.
 
 #### Execution Flow
 
-1. The host environment calls `allocate` to request memory for transaction data.
-2. The host writes transaction JSON data to the allocated memory.
-3. The host calls `allocate` again to request memory for ledger object data.
-4. The host writes ledger object JSON data to the allocated memory.
-5. The host calls `finish` with the memory pointers and sizes.
-6. The `finish` function processes the data and returns a boolean result.
+1. The XRPL server loads the WASM module
+2. The server calls the `finish()` function
+3. The function uses host functions to access necessary data
+4. The function returns a positive value (finish) or zero/negative (don't finish)
+5. The server uses this result to determine escrow outcome
 
 ### 3.2. Memory Management
 
-The WebAssembly module manages memory explicitly through the `allocate` function, which allows the host to request memory regions where it can write data. This pattern provides:
+The WebAssembly module uses a stack-based memory model with pre-allocated buffers:
 
-- **Safe data exchange**: Complex data structures like JSON can be safely passed between the host and WebAssembly module.
-- **Memory control**: The WebAssembly module maintains control over its own memory.
-- **Explicit ownership**: Memory allocation and access patterns are clearly defined for both the host and the module.
+- **No dynamic allocation**: The module does not export an `allocate` function
+- **Stack buffers**: All data is passed through fixed-size stack buffers
+- **Host-managed**: The host environment manages data transfer through function parameters
+- **Deterministic**: Fixed memory usage ensures predictable execution
 
-Since WebAssembly modules have their own linear memory, this explicit allocation mechanism creates a standard protocol for hosts to interact with the module's memory space.
+This approach provides:
+- **Safety**: No memory leaks or allocation failures
+- **Simplicity**: No complex memory management code needed
+- **Performance**: Stack allocation is faster than heap allocation
+- **Determinism**: Memory usage is predictable across all validators
 
 ## 4. Restrictions and Limitations
 

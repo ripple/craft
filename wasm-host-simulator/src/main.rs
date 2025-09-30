@@ -5,7 +5,6 @@ mod decoding;
 mod hashing;
 mod host_functions_wamr;
 mod mock_data;
-mod sfield;
 mod vm_wamr;
 
 use crate::mock_data::MockData;

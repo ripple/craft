@@ -1,0 +1,9 @@
+{
+  "Account": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+  "TransactionType": "EscrowFinish",
+  "Fee": 12,
+  "Sequence": 1000,
+  "Memos": [ { "Memo": { "MemoData": "00" } } ],
+  "Signers": []
+}
+

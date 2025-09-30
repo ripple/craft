@@ -29,6 +29,9 @@ pub enum HostError {
     IndexOutOfBounds = -18,
     InvalidFloatInput = -19,
     InvalidFloatComputation = -20,
+    InvalidEncoding = -21,
+    InvalidEcPoint = -22,
+    InvalidPairingCheck = -23,
 }
 
 impl From<i64> for HostError {
@@ -52,6 +55,9 @@ impl From<i64> for HostError {
             -16 => HostError::InvalidAccount,
             -17 => HostError::InvalidField,
             -18 => HostError::IndexOutOfBounds,
+            -21 => HostError::InvalidEncoding,
+            -22 => HostError::InvalidEcPoint,
+            -23 => HostError::InvalidPairingCheck,
             _ => HostError::InternalError, // Default to InternalError for unknown error codes
         }
     }
@@ -93,6 +99,9 @@ pub fn error_code_to_string(code: i64) -> &'static str {
         HostError::IndexOutOfBounds => "INDEX_OUT_OF_BOUNDS (-18)",
         HostError::InvalidFloatInput => "INVALID_FLOAT_INPUT (-19)",
         HostError::InvalidFloatComputation => "INVALID_FLOAT_COMPUTATION (-20)",
+        HostError::InvalidEncoding => "INVALID_ENCODING (-21)",
+        HostError::InvalidEcPoint => "INVALID_EC_POINT (-22)",
+        HostError::InvalidPairingCheck => "INVALID_PAIRING_CHECK (-23)",
     }
 }
 

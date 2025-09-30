@@ -338,15 +338,7 @@ async fn main() -> Result<()> {
 
                 let project_path = if let Some(path) = path {
                     // Validate that the path exists and contains a Cargo.toml
-                    if !path.exists() {
-                        anyhow::bail!("Path does not exist: {}", path.display());
-                    }
-                    if !path.is_dir() {
-                        anyhow::bail!("Path is not a directory: {}", path.display());
-                    }
-                    if !path.join("Cargo.toml").exists() {
-                        anyhow::bail!("No Cargo.toml found in directory: {}", path.display());
-                    }
+                    utils::validate_cargo_project_path(&path)?;
                     path
                 } else if let Some(proj) = project {
                     // Find the project from all discovered WASM projects

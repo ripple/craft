@@ -9,6 +9,37 @@ use std::time::Duration;
 use walkdir::WalkDir;
 use which::which;
 
+/// Validates that a path exists, is a directory, and contains a Cargo.toml file.
+///
+/// # Arguments
+/// * `path` - The path to validate
+///
+/// # Returns
+/// * `Ok(())` if the path is a valid Cargo project directory
+/// * `Err` with a descriptive error message otherwise
+///
+/// # Example
+/// ```no_run
+/// use std::path::Path;
+/// use craft::utils::validate_cargo_project_path;
+/// # fn main() -> anyhow::Result<()> {
+/// validate_cargo_project_path(Path::new("/path/to/project"))?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn validate_cargo_project_path(path: &Path) -> Result<()> {
+    if !path.exists() {
+        anyhow::bail!("Path does not exist: {}", path.display());
+    }
+    if !path.is_dir() {
+        anyhow::bail!("Path is not a directory: {}", path.display());
+    }
+    if !path.join("Cargo.toml").exists() {
+        anyhow::bail!("No Cargo.toml found in directory: {}", path.display());
+    }
+    Ok(())
+}
+
 pub fn find_wasm_projects(base_path: &Path) -> Vec<PathBuf> {
     let mut projects = Vec::new();
 
@@ -571,23 +602,50 @@ pub fn find_wasm_output(project_path: &Path) -> Result<PathBuf> {
     let project_dir = cargo_toml.parent().unwrap();
 
     // Determine crate name from Cargo.toml [package] name; fall back to folder name
-    let project_name = std::fs::read_to_string(&cargo_toml)
-        .ok()
-        .and_then(|content| content.parse::<toml::Value>().ok())
-        .and_then(|parsed| {
-            parsed
-                .get("package")?
-                .get("name")?
-                .as_str()
+    let project_name = match std::fs::read_to_string(&cargo_toml) {
+        Ok(content) => match content.parse::<toml::Value>() {
+            Ok(parsed) => parsed
+                .get("package")
+                .and_then(|p| p.get("name"))
+                .and_then(|n| n.as_str())
                 .map(String::from)
-        })
-        .unwrap_or_else(|| {
+                .unwrap_or_else(|| {
+                    eprintln!(
+                        "Warning: Could not find [package] name in {}. Using directory name.",
+                        cargo_toml.display()
+                    );
+                    project_dir
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string()
+                }),
+            Err(e) => {
+                eprintln!(
+                    "Warning: Failed to parse TOML in {}: {}. Using directory name.",
+                    cargo_toml.display(),
+                    e
+                );
+                project_dir
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string()
+            }
+        },
+        Err(e) => {
+            eprintln!(
+                "Warning: Failed to read {}: {}. Using directory name.",
+                cargo_toml.display(),
+                e
+            );
             project_dir
                 .file_name()
                 .unwrap()
                 .to_string_lossy()
                 .to_string()
-        });
+        }
+    };
 
     let project_main_dir = project_dir
         .parent()

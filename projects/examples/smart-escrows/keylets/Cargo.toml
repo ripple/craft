@@ -1,0 +1,14 @@
+[package]
+name = "keylets"
+version = "0.1.0"
+edition = "2024"
+description = "Example: compute keylets, cache ledger objects, and sanity-check fields"
+license = "ISC"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+xrpl-wasm-std = { path = "../../../../xrpl-wasm-std" }
+xrpl-address-macro = { path = "../../../../xrpl-address-macro" }
+

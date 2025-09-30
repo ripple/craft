@@ -15,6 +15,7 @@ members = [
     "examples/smart-escrows/notary",
     "examples/smart-escrows/notary_macro_example",
     "examples/smart-escrows/oracle",
+    "examples/smart-escrows/keylets",
 ]
 
 [profile.release]

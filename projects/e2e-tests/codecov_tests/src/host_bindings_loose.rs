@@ -1,7 +1,6 @@
 /// This file exists as a host_binding stand-in to allow calls that Rust wouldn't ordinarily allow (for testing
 /// purposes) because this contract is actually executed against rippled in that build (see here:
 /// https://github.com/XRPLF/rippled/blob/ripple/smart-escrow/src/test/app/TestHostFunctions.h
-
 #[allow(unused)]
 #[link(wasm_import_module = "host_lib")]
 unsafe extern "C" {

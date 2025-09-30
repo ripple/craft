@@ -25,6 +25,7 @@ extern crate std;
 // -700 to -799: Data Update Functions (1 function)
 //
 
+use crate::host::{Result::Err, Result::Ok};
 use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_wasm_std::core::current_tx::traits::TransactionCommonFields;
 use xrpl_wasm_std::core::types::account_id::AccountID;
@@ -739,12 +740,11 @@ fn test_utility_functions() -> i32 {
     let test_number = 42i64;
     let trace_num_result = trace_num("Test number trace", test_number);
 
-    use xrpl_wasm_std::host::Result;
     match trace_num_result {
-        Result::Ok(_) => {
+        Ok(_) => {
             let _ = trace_num("Trace_num function succeeded", 0);
         }
-        Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_num() failed:", -604);
             return -604; // Trace number function failed
         }
@@ -795,10 +795,10 @@ fn test_trace_amount_functions() -> i32 {
     };
     let trace_result = trace_amount("Test XRP amount (1 XRP)", &xrp_amount);
     match trace_result {
-        host::Result::Ok(_) => {
+        Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with positive XRP");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount XRP failed:", -605);
             return -605; // Trace amount XRP failed
         }
@@ -813,7 +813,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with negative XRP");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount negative XRP failed:", -606);
             return -606; // Trace amount negative XRP failed
         }
@@ -826,7 +826,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with zero XRP");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount zero XRP failed:", -607);
             return -607; // Trace amount zero XRP failed
         }
@@ -839,7 +839,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with small XRP");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount small XRP failed:", -608);
             return -608; // Trace amount small XRP failed
         }
@@ -854,7 +854,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with large XRP");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount large XRP failed:", -609);
             return -609; // Trace amount large XRP failed
         }
@@ -881,7 +881,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with IOU");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount IOU failed:", -610);
             return -610; // Trace amount IOU failed
         }
@@ -904,7 +904,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with positive MPT");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount positive MPT failed:", -611);
             return -611; // Trace amount positive MPT failed
         }
@@ -921,7 +921,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with negative MPT");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount negative MPT failed:", -612);
             return -612; // Trace amount negative MPT failed
         }
@@ -938,7 +938,7 @@ fn test_trace_amount_functions() -> i32 {
         host::Result::Ok(_) => {
             let _ = trace("SUCCESS: trace_amount with zero MPT");
         }
-        host::Result::Err(_) => {
+        Err(_) => {
             let _ = trace_num("ERROR: trace_amount zero MPT failed:", -613);
             return -613; // Trace amount zero MPT failed
         }

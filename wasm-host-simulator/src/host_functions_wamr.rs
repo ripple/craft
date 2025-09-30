@@ -23,6 +23,10 @@ use xrpl::core::addresscodec::utils::encode_base58;
 use xrpld_number::{
     FLOAT_NEGATIVE_ONE, FLOAT_ONE, Number, RoundingMode as NumberRoundingMode, XrplIouValue,
 };
+use ark_bn254::{G1Affine, G2Affine, Bn254, Fr, Fq, Fq2};
+use ark_ff::{One, PrimeField};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 
 /// RAII guard for temporarily setting rounding mode
 /// Automatically restores the previous rounding mode when dropped
@@ -1504,4 +1508,278 @@ pub fn trace_amount(
     }
 
     (amount_json_len + msg_read_len + 1) as i32
+}
+
+const FQ_LEN: usize = 32;
+const G1_LEN: usize = 2 * FQ_LEN;
+const G2_LEN: usize = 128;
+const SCALAR_LEN: usize = 32;
+
+pub fn bn254_add_helper(
+    _env: wasm_exec_env_t,
+    p1_ptr: *mut u8,
+    p1_len: usize,
+    p2_ptr: *mut u8,
+    p2_len: usize,
+    out_buff_ptr: *mut u8,
+    out_buff_len: usize,
+) -> i32 {
+
+    if p1_ptr.is_null() || p1_len != G1_LEN
+        || p2_ptr.is_null() || p2_len != G1_LEN
+        || out_buff_ptr.is_null() || out_buff_len < G1_LEN
+    {
+        return HostError::InvalidParams as i32;
+    }
+    let mut p1_slice = get_data(p1_ptr, p1_len);
+    let mut p2_slice = get_data(p2_ptr, p2_len);
+
+    // To little-endian
+    let (p1_x_slice, p1_y_slice) = p1_slice.split_at_mut(G1_LEN/2);
+    p1_x_slice.reverse();
+    p1_y_slice.reverse();
+    let (p2_x_slice, p2_y_slice) = p2_slice.split_at_mut(G1_LEN/2);
+    p2_x_slice.reverse();
+    p2_y_slice.reverse();
+
+    // let n1 = match unpack_in_float(env, in_buff1) {
+    //     Ok(val) => val,
+    //     Err(e) => return e as i32,
+    // };
+
+    let p1_x = match Fq::deserialize_uncompressed(&*p1_x_slice) {
+        Ok(v) => v,
+        Err(e) => return HostError::InvalidDecoding as i32,
+    };
+    // let p1_x = Fq::deserialize_uncompressed(&*p1_x_slice).expect("Invalid BN254 field element");
+    let p1_y = match Fq::deserialize_uncompressed(&*p1_y_slice) {
+        Ok(v) => v,
+        Err(e) => return HostError::InvalidDecoding as i32,
+    };
+    let p1 = G1Affine::new_unchecked(p1_x, p1_y);
+
+    // let p2_x = Fq::deserialize_uncompressed(&*p2_x_slice).expect("Invalid BN254 field element");
+    // let p2_y = Fq::deserialize_uncompressed(&*p2_y_slice).expect("Invalid BN254 field element");
+    let p2_x = match Fq::deserialize_uncompressed(&*p2_x_slice) {
+        Ok(v) => v,
+        Err(e) => return HostError::InvalidDecoding as i32,
+    };
+    // let p1_x = Fq::deserialize_uncompressed(&*p1_x_slice).expect("Invalid BN254 field element");
+    let p2_y = match Fq::deserialize_uncompressed(&*p2_y_slice) {
+        Ok(v) => v,
+        Err(e) => return HostError::InvalidDecoding as i32,
+    };
+    let p2 = G1Affine::new_unchecked(p2_x, p2_y);
+
+    let sum = p1.into_group() + p2;
+    let result = sum.into_affine();
+
+    let mut result_bytes = [0u8; G1_LEN];
+    let Some((x, y)) = result.xy() else {
+        return HostError::InvalidEcPoint as i32;
+    };
+
+    // To big-endian
+    let mut x_bytes = [0u8; FQ_LEN];
+    match x.serialize_uncompressed(&mut x_bytes[..]) {
+        Ok(_) => {},
+        Err(_e) => return HostError::InvalidEncoding as i32,
+    };
+    x_bytes.reverse();
+    let mut y_bytes = [0u8; FQ_LEN];
+    match y.serialize_uncompressed(&mut y_bytes[..]) {
+        Ok(_) => {},
+        Err(_e) => return HostError::InvalidEncoding as i32,
+    };
+    y_bytes.reverse();
+
+    result_bytes[0..FQ_LEN].copy_from_slice(&x_bytes);
+    result_bytes[FQ_LEN..(2 * FQ_LEN)].copy_from_slice(&y_bytes);
+    if result_bytes.len() > out_buff_len {
+        return HostError::BufferTooSmall as i32;
+    }
+    let output_size: i32 = result_bytes.len() as i32;
+    set_data(output_size, out_buff_ptr, result_bytes.to_vec());
+
+    output_size
+}
+
+pub fn bn254_mul_helper(
+    _env: wasm_exec_env_t,
+    p1_ptr: *mut u8,
+    p1_len: usize,
+    scalar_ptr: *mut u8,
+    scalar_len: usize,
+    out_buff_ptr: *mut u8,
+    out_buff_len: usize,
+) -> i32 {
+    if p1_ptr.is_null() || p1_len != G1_LEN
+        || scalar_ptr.is_null() || scalar_len != SCALAR_LEN 
+        || out_buff_ptr.is_null() || out_buff_len < G1_LEN
+    {
+        return HostError::InvalidParams as i32;
+    }
+
+    let mut p_slice = get_data(p1_ptr, p1_len);
+    let mut s_slice = get_data(scalar_ptr, scalar_len);
+
+    // To little-endian
+    let (p_x_slice, p_y_slice) = p_slice.split_at_mut(G1_LEN/2);
+    p_x_slice.reverse();
+    p_y_slice.reverse();
+    s_slice.reverse();
+
+    let p1_x = match Fq::deserialize_uncompressed(&*p_x_slice){
+        Ok(v) => v,
+        Err(e) => return HostError::InvalidDecoding as i32,
+    };
+
+    let p1_y = match Fq::deserialize_uncompressed(&*p_y_slice){
+        Ok(v) => v,
+        Err(e) => return HostError::InvalidDecoding as i32,
+    };
+
+    let p = G1Affine::new_unchecked(p1_x, p1_y);
+    // Can directly use from_be_bytes_mod_order without reversing s_slice first
+    let s = Fr::from_le_bytes_mod_order(&*s_slice);
+
+    let result = p.mul_bigint(s.into_bigint()).into_affine();
+
+    let mut result_bytes = [0u8; G1_LEN];
+    let Some((x, y)) = result.xy() else {
+        return HostError::InvalidEcPoint as i32;
+    };
+    // To big-endian
+    let mut x_bytes = [0u8; FQ_LEN];
+    match x.serialize_uncompressed(&mut x_bytes[..]) {
+        Ok(_) => {},
+        Err(_e) => return HostError::InvalidEncoding as i32,
+    };
+    x_bytes.reverse();
+    let mut y_bytes = [0u8; FQ_LEN];
+    match y.serialize_uncompressed(&mut y_bytes[..]){
+        Ok(_) => {},
+        Err(_e) => return HostError::InvalidEncoding as i32,
+    };
+    y_bytes.reverse();
+
+    result_bytes[0..FQ_LEN].copy_from_slice(&x_bytes);
+    result_bytes[FQ_LEN..(2 * FQ_LEN)].copy_from_slice(&y_bytes);
+
+    if result_bytes.len() > out_buff_len {
+        return HostError::BufferTooSmall as i32;
+    }
+
+    let output_size: i32 = result_bytes.len() as i32;
+    set_data(output_size, out_buff_ptr, result_bytes.to_vec());
+
+    output_size
+}
+
+
+// ec_pairing for bn254
+pub fn bn254_pairing_helper(
+    _env: wasm_exec_env_t,
+    pair_ptr: *mut u8,
+    pair_len: usize
+) -> i32 {
+    const PAIR_SIZE: usize = G1_LEN + G2_LEN;
+    const ERROR: i32 = 0;
+
+    if pair_ptr.is_null() || pair_len % PAIR_SIZE != 0 {
+        return ERROR;
+    }
+
+    let mut bytes = get_data(pair_ptr, pair_len);
+    // println!("{:?}", bytes.len());
+    let mut g1_points = Vec::new();
+    let mut g2_points = Vec::new();
+
+    for chunk in bytes.chunks_mut(PAIR_SIZE) {
+        let (g1_bytes, g2_bytes) = chunk.split_at_mut(G1_LEN);
+
+        // To little-endian
+        let (g1_x_slice, g1_y_slice) = g1_bytes.split_at_mut(G1_LEN/2);
+        g1_x_slice.reverse();
+        g1_y_slice.reverse();
+        let g1_x = Fq::deserialize_uncompressed(&*g1_x_slice).expect("Invalid BN254 field element");
+        let g1_y = Fq::deserialize_uncompressed(&*g1_y_slice).expect("Invalid BN254 field element");
+        let g1 = G1Affine::new_unchecked(g1_x, g1_y);
+        
+        // To little-endian
+        // For each coordinate, c1 is encoded before c0
+        let (g2_x_c1_slice, rest) = g2_bytes.split_at_mut(G2_LEN/4);
+        let (g2_x_c0_slice, rest) = rest.split_at_mut(G2_LEN/4);
+        let (g2_y_c1_slice, g2_y_c0_slice) = rest.split_at_mut(G2_LEN/4);
+        g2_x_c0_slice.reverse();
+        g2_x_c1_slice.reverse();
+        g2_y_c0_slice.reverse();
+        g2_y_c1_slice.reverse();
+        let g2_x_c0 = Fq::deserialize_uncompressed(&*g2_x_c0_slice).expect("Invalid BN254 field element");
+        let g2_x_c1 = Fq::deserialize_uncompressed(&*g2_x_c1_slice).expect("Invalid BN254 field element");
+        let g2_y_c0 = Fq::deserialize_uncompressed(&*g2_y_c0_slice).expect("Invalid BN254 field element");
+        let g2_y_c1 = Fq::deserialize_uncompressed(&*g2_y_c1_slice).expect("Invalid BN254 field element");
+
+        let g2_x = Fq2::new(g2_x_c0, g2_x_c1);
+        let g2_y = Fq2::new(g2_y_c0, g2_y_c1);
+        let g2 = G2Affine::new_unchecked(g2_x, g2_y);
+
+        g1_points.push(g1);
+        g2_points.push(g2);
+    }
+
+
+    let result = Bn254::multi_pairing(g1_points, g2_points);
+    if result.0.is_one() {
+        return 1
+    }
+
+    HostError::InvalidField as i32
+    // result.0.is_one().then_some(1).unwrap_or(-1)
+}
+
+
+pub fn bn254_neg_helper(
+    _env: wasm_exec_env_t,
+    p_ptr: *mut u8,
+    p_len: usize,
+    out_buff_ptr: *mut u8,
+    out_buff_len: usize,
+) -> i32 {
+    const ERROR: i32 = -97;
+
+    if p_ptr.is_null() || p_len != G1_LEN {
+        return ERROR;
+    }
+    let mut input_slice = get_data(p_ptr, p_len);
+
+    // To little-endian
+    let (p_x_slice, p_y_slice) = input_slice.split_at_mut(G1_LEN/2);
+    p_x_slice.reverse();
+    p_y_slice.reverse();
+
+    let p_x = Fq::deserialize_uncompressed(&*p_x_slice).expect("Invalid BN254 field element");
+    let p_y = Fq::deserialize_uncompressed(&*p_y_slice).expect("Invalid BN254 field element");
+    let p = G1Affine::new_unchecked(p_x, p_y);
+    let neg_point = -p;
+
+    let mut result_bytes = [0u8; G1_LEN];
+    let Some((x, y)) = neg_point.xy() else {
+        return ERROR;
+    };
+    // to big-endian
+    let mut x_bytes = [0u8; FQ_LEN];
+    x.serialize_uncompressed(&mut x_bytes[..]).expect("serialize x");
+    x_bytes.reverse();
+    let mut y_bytes = [0u8; FQ_LEN];
+    y.serialize_uncompressed(&mut y_bytes[..]).expect("serialize y");
+    y_bytes.reverse();
+
+    result_bytes[0..FQ_LEN].copy_from_slice(&x_bytes);
+    result_bytes[FQ_LEN..(2 * FQ_LEN)].copy_from_slice(&y_bytes);
+
+    let output_size: i32 = result_bytes.len() as i32;
+    set_data(output_size, out_buff_ptr, result_bytes.to_vec());
+
+    output_size
 }

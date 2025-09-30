@@ -12,7 +12,8 @@ use crate::host_functions_wamr::{
     get_tx_nested_field, line_keylet, mpt_issuance_keylet, mptoken_keylet, nft_offer_keylet,
     offer_keylet, oracle_keylet, paychan_keylet, permissioned_domain_keylet, signers_keylet,
     ticket_keylet, trace, trace_account, trace_amount, trace_num, trace_opaque_float, update_data,
-    vault_keylet,
+    vault_keylet, 
+    bn254_add_helper, bn254_mul_helper, bn254_neg_helper, bn254_pairing_helper,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};
@@ -86,6 +87,10 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("trace_opaque_float", trace_opaque_float as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .register_host_function("trace_account", trace_account as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .register_host_function("trace_amount", trace_amount as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
+        .register_host_function("bn254_add_helper", bn254_add_helper as *mut c_void, "(*~*~*~)i", 500, data_provider.as_ptr())
+        .register_host_function("bn254_mul_helper", bn254_mul_helper as *mut c_void, "(*~*~*~)i", 500, data_provider.as_ptr())
+        .register_host_function("bn254_pairing_helper", bn254_pairing_helper as *mut c_void, "(*~)i", 500, data_provider.as_ptr())
+        .register_host_function("bn254_neg_helper", bn254_neg_helper as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .build()?;
 
     debug!("Loading WASM module from file: {}", wasm_file);

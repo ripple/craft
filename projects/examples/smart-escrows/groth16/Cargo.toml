@@ -1,0 +1,16 @@
+[package]
+name = "groth16"
+version = "0.1.0"
+edition = "2024"
+description = "Smart Escrow example using Groth16 zk-SNARK verification in WASM host"
+license = "ISC"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+xrpl-wasm-std = { path = "../../../../xrpl-wasm-std" }
+xrpl-address-macro = { path = "../../../../xrpl-address-macro" }
+
+# Optional: add arkworks crates if this example demonstrates proofs
+# arkworks crates should be added carefully to avoid increasing wasm size for examples

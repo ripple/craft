@@ -255,6 +255,16 @@ impl DataProvider {
         Self::fill_buf(field_result, buf_cap, Decodable::UINT256)
     }
 
+    pub fn get_ledger_tx_hash(&self, buf_cap: usize) -> (i32, Vec<u8>) {
+        let field_result = self.data_source.get_ledger_tx_hash();
+        Self::fill_buf(field_result, buf_cap, Decodable::UINT256)
+    }
+
+    pub fn get_ledger_account_hash(&self, buf_cap: usize) -> (i32, Vec<u8>) {
+        let field_result = self.data_source.get_ledger_account_hash();
+        Self::fill_buf(field_result, buf_cap, Decodable::UINT256)
+    }
+
     pub fn get_nft_uri(
         &self,
         nft_id: &Hash256,
@@ -384,5 +394,58 @@ impl DataProvider {
     #[allow(unused)]
     pub fn as_ptr(&mut self) -> *mut c_void {
         self as *mut _ as *mut c_void
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_ledger_account_hash() {
+        let header_json = r#"{
+            "account_hash": "F457CED76CA8B83B1E1443A354E9F20644E847DF2D852954232FAA21E3136B16",
+            "ledger_index": 12345,
+            "parent_close_time": 67890,
+            "parent_hash": "E367C455467EF560515AB024C736359C50D52194BD4C6CA037F3A988984357F3",
+            "transaction_hash": "E812AAA38BDD51DBCF667F87942989BD6D0897795189ED199ED84810AC068994"
+        }"#;
+
+        let mock_data = MockData::new("{}", "{}", header_json, "[]", "[]");
+        let data_provider = DataProvider::new(mock_data);
+
+        let (result, data) = data_provider.get_ledger_account_hash(32);
+        assert_eq!(result, 32);
+        assert_eq!(data.len(), 32);
+
+        // Verify the hash matches the expected value
+        let expected_hash =
+            hex::decode("F457CED76CA8B83B1E1443A354E9F20644E847DF2D852954232FAA21E3136B16")
+                .unwrap();
+        assert_eq!(&data[..32], &expected_hash[..]);
+    }
+
+    #[test]
+    fn test_get_ledger_tx_hash() {
+        let header_json = r#"{
+            "account_hash": "F457CED76CA8B83B1E1443A354E9F20644E847DF2D852954232FAA21E3136B16",
+            "ledger_index": 12345,
+            "parent_close_time": 67890,
+            "parent_hash": "E367C455467EF560515AB024C736359C50D52194BD4C6CA037F3A988984357F3",
+            "transaction_hash": "E812AAA38BDD51DBCF667F87942989BD6D0897795189ED199ED84810AC068994"
+        }"#;
+
+        let mock_data = MockData::new("{}", "{}", header_json, "[]", "[]");
+        let data_provider = DataProvider::new(mock_data);
+
+        let (result, data) = data_provider.get_ledger_tx_hash(32);
+        assert_eq!(result, 32);
+        assert_eq!(data.len(), 32);
+
+        // Verify the hash matches the expected value
+        let expected_hash =
+            hex::decode("E812AAA38BDD51DBCF667F87942989BD6D0897795189ED199ED84810AC068994")
+                .unwrap();
+        assert_eq!(&data[..32], &expected_hash[..]);
     }
 }

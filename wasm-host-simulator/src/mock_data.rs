@@ -142,6 +142,14 @@ impl MockData {
         self.header.get("parent_hash")
     }
 
+    pub fn get_ledger_tx_hash(&self) -> Option<&serde_json::Value> {
+        self.header.get("transaction_hash")
+    }
+
+    pub fn get_ledger_account_hash(&self) -> Option<&serde_json::Value> {
+        self.header.get("account_hash")
+    }
+
     pub fn set_current_ledger_obj_data(&mut self, data: Vec<u8>) {
         self.hosting_ledger_obj["data"] = serde_json::Value::from(data);
     }

@@ -969,14 +969,30 @@ pub fn get_ledger_account_hash(
     out_buf_ptr: *mut u8,
     out_buf_cap: usize,
 ) -> i32 {
-    if HASH256_LEN > out_buf_cap {
-        return HostError::BufferTooSmall as i32;
+    // Validate parameters
+    if out_buf_ptr.is_null() || (out_buf_ptr as i32) < 0 {
+        return HostError::InvalidParams as i32;
     }
-    // For now, return a zero hash as a stub implementation
-    // In a real implementation, this would retrieve the account state hash from the ledger
-    let hash = vec![0u8; HASH256_LEN];
-    set_data(HASH256_LEN as i32, out_buf_ptr, hash);
-    HASH256_LEN as i32
+    if out_buf_cap > MAX_WASM_PARAM_LENGTH {
+        return HostError::PointerOutOfBound as i32;
+    }
+
+    // Validate memory access
+    unsafe {
+        let inst = wasm_runtime_get_module_inst(env);
+        if !wasm_runtime_validate_native_addr(
+            inst,
+            out_buf_ptr as *mut ::core::ffi::c_void,
+            out_buf_cap as u64,
+        ) {
+            return HostError::PointerOutOfBound as i32;
+        }
+    }
+
+    let data_provider = get_dp(env);
+    let dp_res = data_provider.get_ledger_account_hash(out_buf_cap);
+    set_data(dp_res.0, out_buf_ptr, dp_res.1);
+    dp_res.0
 }
 
 pub fn get_ledger_tx_hash(env: wasm_exec_env_t, out_buf_ptr: *mut u8, out_buf_cap: usize) -> i32 {
@@ -1622,6 +1638,12 @@ pub fn trace_amount(
 
     if msg_read_len > MAX_WASM_PARAM_LENGTH || amount_len > MAX_WASM_PARAM_LENGTH {
         return HostError::DataFieldTooLarge as i32;
+    }
+
+    // TokenAmount STAmount format is always 48 bytes
+    const TOKEN_AMOUNT_SIZE: usize = 48;
+    if amount_len != TOKEN_AMOUNT_SIZE {
+        return HostError::InvalidParams as i32;
     }
 
     debug!(

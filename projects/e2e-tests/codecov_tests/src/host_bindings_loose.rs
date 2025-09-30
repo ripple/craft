@@ -1,6 +1,8 @@
 /// This file exists as a host_binding stand-in to allow calls that Rust wouldn't ordinarily allow (for testing
-/// purposes) because this contract is actually executed against rippled in that build (see here:
-/// https://github.com/XRPLF/rippled/blob/ripple/smart-escrow/src/test/app/TestHostFunctions.h
+/// purposes) because this contract is actually executed against rippled and tests certain host function behavior that
+/// is possible in a C++ project, but not in Rust. Note that `codecov_tests` is only built in Craft, but purposefully
+/// not executed as part of this build. Instead, this file is only used in the context of the `rippled` build (see here:
+/// https://github.com/XRPLF/rippled/blob/ripple/smart-escrow/src/test/app/TestHostFunctions.h).
 #[allow(unused)]
 #[link(wasm_import_module = "host_lib")]
 unsafe extern "C" {

@@ -265,7 +265,7 @@ pub extern "C" fn finish() -> i32 {
                 account.0.len(),
             )
         },
-        40,
+        34,
         "trace_account",
     );
     // TokenAmount STAmount format is always 48 bytes
@@ -281,7 +281,7 @@ pub extern "C" fn finish() -> i32 {
                 amount.len(),
             )
         },
-        27,
+        62,
         "trace_amount",
     );
 
@@ -320,7 +320,7 @@ pub extern "C" fn finish() -> i32 {
                 account.0.len(),
             )
         },
-        40,
+        34,
         "trace_account",
     );
     // Test that trace_amount returns INVALID_PARAMS when given wrong size (8 bytes instead of 48)

@@ -1555,7 +1555,7 @@ pub fn trace_account(
         println!("WASM TRACE: {message}");
     }
 
-    (account_id.len() + msg_read_len + 1) as i32
+    (account_len + msg_read_len + 1) as i32
 }
 
 pub fn trace_amount(
@@ -1602,7 +1602,7 @@ pub fn trace_amount(
         amount_len
     );
 
-    (amount_info.len() + msg_read_len + 1) as i32
+    (amount_len + msg_read_len + 1) as i32
 }
 
 /// Parse STAmount bytes and format for display according to token type

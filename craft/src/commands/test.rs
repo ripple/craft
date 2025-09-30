@@ -33,14 +33,27 @@ impl TestRunner {
 
         let wasm_host_simulator_path = self.get_wasm_host_simulator_path()?;
 
-        let mut args = vec![
-            "--dir",
-            self.dir.to_str().unwrap(),
-            "--test-case",
-            test_case,
-            "--project",
-            &self.project,
-        ];
+        let mut args: Vec<&str> = Vec::new();
+
+        // If dir points to a .wasm file, pass it via --wasm; otherwise treat as fixtures base via --dir
+        if self
+            .dir
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.eq_ignore_ascii_case("wasm"))
+            .unwrap_or(false)
+        {
+            args.push("--wasm");
+            args.push(self.dir.to_str().unwrap());
+        } else {
+            args.push("--dir");
+            args.push(self.dir.to_str().unwrap());
+        }
+
+        args.push("--test-case");
+        args.push(test_case);
+        args.push("--project");
+        args.push(&self.project);
 
         if let Some(func) = function {
             args.push("--function");

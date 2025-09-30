@@ -5,7 +5,7 @@ extern crate std;
 
 //
 // Host Functions Test
-// Tests 26 host functions (across 7 categories)
+// Tests 27 host functions (across 7 categories)
 //
 // With craft you can run this test with:
 //   craft test --project host_functions_test --test-case host_functions_test
@@ -27,16 +27,22 @@ extern crate std;
 
 use xrpl_wasm_std::core::current_tx::escrow_finish::EscrowFinish;
 use xrpl_wasm_std::core::current_tx::traits::TransactionCommonFields;
+use xrpl_wasm_std::core::types::account_id::AccountID;
+use xrpl_wasm_std::core::types::amount::currency_code::CurrencyCode;
+use xrpl_wasm_std::core::types::amount::mpt_id::MptId;
+use xrpl_wasm_std::core::types::amount::opaque_float::OpaqueFloat;
+use xrpl_wasm_std::core::types::amount::token_amount::TokenAmount;
 use xrpl_wasm_std::host;
 use xrpl_wasm_std::host::trace::{
-    DataRepr, trace, trace_account_buf, trace_data, trace_num, trace_num_with_result,
+    DataRepr, trace, trace_account_buf, trace_amount_with_result, trace_data, trace_num,
+    trace_num_with_result,
 };
 use xrpl_wasm_std::sfield;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
     trace("=== HOST FUNCTIONS TEST ===");
-    trace("Testing 26 host functions");
+    trace("Testing 27 host functions");
 
     // Category 1: Ledger Header Data Functions (3 functions)
     // Error range: -100 to -199
@@ -73,7 +79,7 @@ pub extern "C" fn finish() -> i32 {
         err => return err,
     }
 
-    // Category 6: Utility Functions (4 functions)
+    // Category 6: Utility Functions (5 functions)
     // Error range: -600 to -699
     match test_utility_functions() {
         0 => (),
@@ -656,7 +662,7 @@ fn test_keylet_generation_functions() -> i32 {
     0
 }
 
-/// Test Category 6: Utility Functions (4 functions)
+/// Test Category 6: Utility Functions (5 functions)
 /// Tests utility functions for hashing, NFT access, and tracing
 fn test_utility_functions() -> i32 {
     trace("--- Category 6: Utility Functions ---");
@@ -745,6 +751,12 @@ fn test_utility_functions() -> i32 {
         }
     }
 
+    // Test 6.5: trace_amount() - Debug logging with TokenAmount
+    match test_trace_amount_functions() {
+        0 => (),
+        err => return err,
+    }
+
     trace("SUCCESS: Utility functions");
     0
 }
@@ -771,4 +783,170 @@ fn test_data_update_functions() -> i32 {
     );
     trace("SUCCESS: Data update functions");
     1 // <-- Finish the escrow to indicate a successful outcome
+}
+
+/// Test trace_amount() function with different TokenAmount types
+/// Tests the trace_amount host function with XRP, IOU, and MPT amounts
+fn test_trace_amount_functions() -> i32 {
+    trace("--- Testing trace_amount() function ---");
+
+    // Test 6.5.1: trace_amount() with XRP amount (positive)
+    let xrp_amount = TokenAmount::XRP {
+        num_drops: 1_000_000, // 1 XRP
+    };
+    let trace_result = trace_amount_with_result("Test XRP amount (1 XRP)", &xrp_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with positive XRP");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount XRP failed:", -605);
+            return -605; // Trace amount XRP failed
+        }
+    }
+
+    // Test 6.5.2: trace_amount() with negative XRP amount
+    let negative_xrp_amount = TokenAmount::XRP {
+        num_drops: -500_000, // -0.5 XRP
+    };
+    let trace_result =
+        trace_amount_with_result("Test negative XRP amount (-0.5 XRP)", &negative_xrp_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with negative XRP");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount negative XRP failed:", -606);
+            return -606; // Trace amount negative XRP failed
+        }
+    }
+
+    // Test 6.5.3: trace_amount() with zero XRP amount
+    let zero_xrp_amount = TokenAmount::XRP { num_drops: 0 };
+    let trace_result = trace_amount_with_result("Test zero XRP amount", &zero_xrp_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with zero XRP");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount zero XRP failed:", -607);
+            return -607; // Trace amount zero XRP failed
+        }
+    }
+
+    // Test 6.5.4: trace_amount() with small XRP amount (fee-like)
+    let fee_amount = TokenAmount::XRP { num_drops: 10 }; // 10 drops (typical fee)
+    let trace_result = trace_amount_with_result("Test small XRP amount (10 drops)", &fee_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with small XRP");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount small XRP failed:", -608);
+            return -608; // Trace amount small XRP failed
+        }
+    }
+
+    // Test 6.5.5: trace_amount() with large XRP amount
+    let large_xrp_amount = TokenAmount::XRP {
+        num_drops: 100_000_000_000, // 100,000 XRP
+    };
+    let trace_result =
+        trace_amount_with_result("Test large XRP amount (100,000 XRP)", &large_xrp_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with large XRP");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount large XRP failed:", -609);
+            return -609; // Trace amount large XRP failed
+        }
+    }
+
+    trace("SUCCESS: trace_amount XRP tests completed");
+
+    // Test 6.5.6: trace_amount() with IOU amount
+    let currency_bytes = [2u8; 20]; // Test currency code
+    let issuer_bytes = [3u8; 20]; // Test issuer
+    let amount_bytes = [0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x39]; // Test float value
+
+    let currency_code = CurrencyCode::from(currency_bytes);
+    let issuer = AccountID::from(issuer_bytes);
+    let amount = OpaqueFloat(amount_bytes);
+
+    let iou_amount = TokenAmount::IOU {
+        amount,
+        issuer,
+        currency_code,
+    };
+    let trace_result = trace_amount_with_result("Test IOU amount", &iou_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with IOU");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount IOU failed:", -610);
+            return -610; // Trace amount IOU failed
+        }
+    }
+
+    // Test 6.5.7: trace_amount() with MPT amount (positive)
+    const MPT_VALUE: u64 = 500_000;
+    const MPT_SEQUENCE_NUM: u32 = 12345;
+    const MPT_ISSUER_BYTES: [u8; 20] = [1u8; 20];
+
+    let mpt_issuer = AccountID::from(MPT_ISSUER_BYTES);
+    let mpt_id = MptId::new(MPT_SEQUENCE_NUM, mpt_issuer);
+    let mpt_amount = TokenAmount::MPT {
+        num_units: MPT_VALUE,
+        is_positive: true,
+        mpt_id,
+    };
+    let trace_result = trace_amount_with_result("Test positive MPT amount", &mpt_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with positive MPT");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount positive MPT failed:", -611);
+            return -611; // Trace amount positive MPT failed
+        }
+    }
+
+    // Test 6.5.8: trace_amount() with MPT amount (negative)
+    let negative_mpt_amount = TokenAmount::MPT {
+        num_units: MPT_VALUE,
+        is_positive: false,
+        mpt_id,
+    };
+    let trace_result = trace_amount_with_result("Test negative MPT amount", &negative_mpt_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with negative MPT");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount negative MPT failed:", -612);
+            return -612; // Trace amount negative MPT failed
+        }
+    }
+
+    // Test 6.5.9: trace_amount() with zero MPT amount
+    let zero_mpt_amount = TokenAmount::MPT {
+        num_units: 0,
+        is_positive: true,
+        mpt_id,
+    };
+    let trace_result = trace_amount_with_result("Test zero MPT amount", &zero_mpt_amount);
+    match trace_result {
+        host::Result::Ok(_) => {
+            trace("SUCCESS: trace_amount with zero MPT");
+        }
+        host::Result::Err(_) => {
+            trace_num("ERROR: trace_amount zero MPT failed:", -613);
+            return -613; // Trace amount zero MPT failed
+        }
+    }
+
+    trace("SUCCESS: All trace_amount tests completed");
+    0
 }

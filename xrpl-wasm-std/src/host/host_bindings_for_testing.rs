@@ -668,5 +668,5 @@ pub unsafe fn trace_amount(
     _amount_ptr: *const u8,
     _amount_len: usize,
 ) -> i32 {
-    32
+    32 // Success for testing
 }

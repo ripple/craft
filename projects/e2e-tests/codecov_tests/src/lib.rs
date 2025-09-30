@@ -32,8 +32,8 @@ fn check_result(result: i32, expected: i32, test_name: &'static str) {
             panic!("Unexpected success code: {}", code);
         }
         code => {
-            let _ =  trace(test_name);
-            let _ =  trace_number("TEST FAILED", code.into());
+            let _ = trace(test_name);
+            let _ = trace_number("TEST FAILED", code.into());
             panic!("Error code: {}", code);
         }
     }

@@ -22,6 +22,7 @@ pub struct MockData {
     header: serde_json::Value,
     ledger: HashMap<Keylet, serde_json::Value>,
     nfts: HashMap<Hash256, (AccountId, serde_json::Value)>,
+    nft_data: HashMap<Hash256, serde_json::Value>,
 }
 
 impl MockData {
@@ -52,8 +53,9 @@ impl MockData {
             combined_hashmap
         };
 
-        let nfts = {
+        let (nfts, nft_data) = {
             let mut nft_map = HashMap::new();
+            let mut nft_data_map = HashMap::new();
             let parsed_json: serde_json::Value =
                 serde_json::from_str(nfts_str).expect("Failed to parse NFT JSON");
             for item in parsed_json.as_array().expect("NFT JSON not an array") {
@@ -62,18 +64,21 @@ impl MockData {
                 let uri = item.get("uri");
 
                 if let (Some(id), Some(owner), Some(uri)) = (nft_id, owner, uri) {
+                    let nft_id_bytes =
+                        decode(id, Decodable::UINT256).expect("NFT file, bad nft_id");
                     nft_map.insert(
-                        decode(id, Decodable::UINT256).expect("NFT file, bad nft_id"),
+                        nft_id_bytes.clone(),
                         (
                             decode(owner, Decodable::ACCOUNT).expect("NFT file, bad owner"),
                             uri.clone(),
                         ),
                     );
+                    nft_data_map.insert(nft_id_bytes, item.clone());
                 } else {
                     panic!("NFT missing field(s)");
                 }
             }
-            nft_map
+            (nft_map, nft_data_map)
         };
 
         MockData {
@@ -82,6 +87,7 @@ impl MockData {
             header,
             ledger,
             nfts,
+            nft_data,
         }
     }
 
@@ -172,23 +178,31 @@ impl MockData {
     }
 
     pub fn is_amendment_enabled(&self, amendment_id: &Hash256) -> bool {
-        // Find the Amendments ledger object
-        if let Some((_keylet, obj)) = self.ledger.iter().next()
-            && let Some(entry_type) = obj.get("LedgerEntryType")
-            && entry_type.as_str() == Some("Amendments")
-            && let Some(amendments) = obj.get("Amendments")
-            && let Some(amendments_array) = amendments.as_array()
-        {
-            // Check if the amendment ID is in the list
-            let amendment_hex = hex::encode(amendment_id);
-            for amendment in amendments_array {
-                if let Some(amendment_str) = amendment.as_str()
-                    && amendment_str.eq_ignore_ascii_case(&amendment_hex)
-                {
-                    return true;
+        // Find the Amendments ledger object by iterating through all ledger objects
+        for (_keylet, obj) in self.ledger.iter() {
+            if let Some(entry_type) = obj.get("LedgerEntryType")
+                && entry_type.as_str() == Some("Amendments")
+                && let Some(amendments) = obj.get("Amendments")
+                && let Some(amendments_array) = amendments.as_array()
+            {
+                // Check if the amendment ID is in the list
+                let amendment_hex = hex::encode(amendment_id);
+                for amendment in amendments_array {
+                    if let Some(amendment_str) = amendment.as_str()
+                        && amendment_str.eq_ignore_ascii_case(&amendment_hex)
+                    {
+                        return true;
+                    }
                 }
+                // Found the Amendments object but the amendment wasn't in it
+                return false;
             }
         }
+        // No Amendments object found in the ledger
         false
+    }
+
+    pub fn get_nft_data(&self, nft_id: &Hash256) -> Option<&serde_json::Value> {
+        self.nft_data.get(nft_id)
     }
 }

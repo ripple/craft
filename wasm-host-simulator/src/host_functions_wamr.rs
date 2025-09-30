@@ -1022,11 +1022,22 @@ pub fn get_ledger_tx_hash(env: wasm_exec_env_t, out_buf_ptr: *mut u8, out_buf_ca
     dp_res.0
 }
 
-pub fn get_nft_flags(_env: wasm_exec_env_t, nft_id_ptr: *const u8, nft_id_len: usize) -> i32 {
+pub fn get_nft_flags(env: wasm_exec_env_t, nft_id_ptr: *const u8, nft_id_len: usize) -> i32 {
     if nft_id_len != HASH256_LEN {
         return HostError::InvalidParams as i32;
     }
     let nft_id = get_data(nft_id_ptr, nft_id_len);
+    let data_provider = get_dp(env);
+
+    // Try to get NFT from fixture data
+    if let Some(nft_data) = data_provider.get_nft_data(&nft_id)
+        && let Some(flags) = nft_data.get("flags")
+        && let Some(flags_val) = flags.as_i64()
+    {
+        return flags_val as i32;
+    }
+
+    // Fallback: parse from NFT ID structure
     // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
     // Extract flags from bytes 0-1 (big-endian)
     let flags = u16::from_be_bytes([nft_id[0], nft_id[1]]);
@@ -1096,15 +1107,22 @@ pub fn get_nft_taxon(
     4
 }
 
-pub fn get_nft_transfer_fee(
-    _env: wasm_exec_env_t,
-    nft_id_ptr: *const u8,
-    nft_id_len: usize,
-) -> i32 {
+pub fn get_nft_transfer_fee(env: wasm_exec_env_t, nft_id_ptr: *const u8, nft_id_len: usize) -> i32 {
     if nft_id_len != HASH256_LEN {
         return HostError::InvalidParams as i32;
     }
     let nft_id = get_data(nft_id_ptr, nft_id_len);
+    let data_provider = get_dp(env);
+
+    // Try to get NFT from fixture data
+    if let Some(nft_data) = data_provider.get_nft_data(&nft_id)
+        && let Some(transfer_fee) = nft_data.get("transfer_fee")
+        && let Some(fee_val) = transfer_fee.as_i64()
+    {
+        return fee_val as i32;
+    }
+
+    // Fallback: parse from NFT ID structure
     // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
     // Extract transfer fee from bytes 2-3 (big-endian)
     let transfer_fee = u16::from_be_bytes([nft_id[2], nft_id[3]]);

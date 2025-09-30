@@ -283,6 +283,10 @@ impl DataProvider {
         self.data_source.is_amendment_enabled(amendment_id)
     }
 
+    pub fn get_nft_data(&self, nft_id: &Hash256) -> Option<&serde_json::Value> {
+        self.data_source.get_nft_data(nft_id)
+    }
+
     fn fill_buf(
         field_result: Option<&serde_json::Value>,
         buf_cap: usize,

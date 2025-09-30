@@ -162,4 +162,29 @@ impl MockData {
             }
         }
     }
+
+    pub fn is_amendment_enabled(&self, amendment_id: &Hash256) -> bool {
+        // Find the Amendments ledger object
+        for (_keylet, obj) in &self.ledger {
+            if let Some(entry_type) = obj.get("LedgerEntryType") {
+                if entry_type.as_str() == Some("Amendments") {
+                    if let Some(amendments) = obj.get("Amendments") {
+                        if let Some(amendments_array) = amendments.as_array() {
+                            // Check if the amendment ID is in the list
+                            let amendment_hex = hex::encode(amendment_id);
+                            for amendment in amendments_array {
+                                if let Some(amendment_str) = amendment.as_str() {
+                                    if amendment_str.eq_ignore_ascii_case(&amendment_hex) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        false
+    }
 }

@@ -269,6 +269,10 @@ impl DataProvider {
         self.data_source.set_current_ledger_obj_data(data);
     }
 
+    pub fn is_amendment_enabled(&self, amendment_id: &Hash256) -> bool {
+        self.data_source.is_amendment_enabled(amendment_id)
+    }
+
     fn fill_buf(
         field_result: Option<&serde_json::Value>,
         buf_cap: usize,

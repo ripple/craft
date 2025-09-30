@@ -21,7 +21,6 @@
 pub mod assert;
 pub mod error_codes;
 pub mod trace;
-
 //////////////////////////////////////
 // Host functions (defined by the host)
 //////////////////////////////////////

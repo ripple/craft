@@ -887,6 +887,162 @@ pub fn get_nft(
     dp_res.0
 }
 
+pub fn amendment_enabled(
+    env: wasm_exec_env_t,
+    amendment_ptr: *const u8,
+    amendment_len: usize,
+) -> i32 {
+    let data_provider = get_dp(env);
+    if amendment_len > MAX_WASM_PARAM_LENGTH {
+        return HostError::DataFieldTooLarge as i32;
+    }
+    // For now, return 0 (not enabled) as a stub implementation
+    // In a real implementation, this would check against the ledger's enabled amendments
+    0
+}
+
+pub fn check_sig(
+    _env: wasm_exec_env_t,
+    message_ptr: *const u8,
+    message_len: usize,
+    signature_ptr: *const u8,
+    signature_len: usize,
+    pubkey_ptr: *const u8,
+    pubkey_len: usize,
+) -> i32 {
+    if message_len > MAX_WASM_PARAM_LENGTH
+        || signature_len > MAX_WASM_PARAM_LENGTH
+        || pubkey_len > MAX_WASM_PARAM_LENGTH
+    {
+        return HostError::DataFieldTooLarge as i32;
+    }
+    // For now, return 0 (invalid signature) as a stub implementation
+    // In a real implementation, this would verify the signature using the public key
+    0
+}
+
+pub fn get_base_fee(env: wasm_exec_env_t) -> i32 {
+    let data_provider = get_dp(env);
+    // For now, return a default base fee of 10 drops
+    // In a real implementation, this would retrieve the base fee from the ledger
+    10
+}
+
+pub fn get_ledger_account_hash(
+    env: wasm_exec_env_t,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    // For now, return a zero hash as a stub implementation
+    // In a real implementation, this would retrieve the account state hash from the ledger
+    let hash = vec![0u8; HASH256_LEN];
+    set_data(HASH256_LEN as i32, out_buf_ptr, hash);
+    HASH256_LEN as i32
+}
+
+pub fn get_ledger_tx_hash(env: wasm_exec_env_t, out_buf_ptr: *mut u8, out_buf_cap: usize) -> i32 {
+    if HASH256_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    // For now, return a zero hash as a stub implementation
+    // In a real implementation, this would retrieve the transaction tree hash from the ledger
+    let hash = vec![0u8; HASH256_LEN];
+    set_data(HASH256_LEN as i32, out_buf_ptr, hash);
+    HASH256_LEN as i32
+}
+
+pub fn get_nft_flags(_env: wasm_exec_env_t, nft_id_ptr: *const u8, nft_id_len: usize) -> i32 {
+    if nft_id_len != HASH256_LEN {
+        return HostError::InvalidParams as i32;
+    }
+    let nft_id = get_data(nft_id_ptr, nft_id_len);
+    // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
+    // Extract flags from bytes 0-1 (big-endian)
+    let flags = u16::from_be_bytes([nft_id[0], nft_id[1]]);
+    flags as i32
+}
+
+pub fn get_nft_issuer(
+    _env: wasm_exec_env_t,
+    nft_id_ptr: *const u8,
+    nft_id_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if nft_id_len != HASH256_LEN {
+        return HostError::InvalidParams as i32;
+    }
+    if ACCOUNT_ID_LEN > out_buf_cap {
+        return HostError::BufferTooSmall as i32;
+    }
+    let nft_id = get_data(nft_id_ptr, nft_id_len);
+    // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
+    // Extract issuer from bytes 4-23
+    let issuer = nft_id[4..24].to_vec();
+    set_data(ACCOUNT_ID_LEN as i32, out_buf_ptr, issuer);
+    ACCOUNT_ID_LEN as i32
+}
+
+pub fn get_nft_serial(
+    _env: wasm_exec_env_t,
+    nft_id_ptr: *const u8,
+    nft_id_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if nft_id_len != HASH256_LEN {
+        return HostError::InvalidParams as i32;
+    }
+    if out_buf_cap < 4 {
+        return HostError::BufferTooSmall as i32;
+    }
+    let nft_id = get_data(nft_id_ptr, nft_id_len);
+    // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
+    // Extract sequence from bytes 28-31
+    let serial = nft_id[28..32].to_vec();
+    set_data(4, out_buf_ptr, serial);
+    4
+}
+
+pub fn get_nft_taxon(
+    _env: wasm_exec_env_t,
+    nft_id_ptr: *const u8,
+    nft_id_len: usize,
+    out_buf_ptr: *mut u8,
+    out_buf_cap: usize,
+) -> i32 {
+    if nft_id_len != HASH256_LEN {
+        return HostError::InvalidParams as i32;
+    }
+    if out_buf_cap < 4 {
+        return HostError::BufferTooSmall as i32;
+    }
+    let nft_id = get_data(nft_id_ptr, nft_id_len);
+    // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
+    // Extract taxon from bytes 24-27
+    let taxon = nft_id[24..28].to_vec();
+    set_data(4, out_buf_ptr, taxon);
+    4
+}
+
+pub fn get_nft_transfer_fee(
+    _env: wasm_exec_env_t,
+    nft_id_ptr: *const u8,
+    nft_id_len: usize,
+) -> i32 {
+    if nft_id_len != HASH256_LEN {
+        return HostError::InvalidParams as i32;
+    }
+    let nft_id = get_data(nft_id_ptr, nft_id_len);
+    // NFT ID structure: Flags (2 bytes) | TransferFee (2 bytes) | Issuer (20 bytes) | Taxon (4 bytes) | Sequence (4 bytes)
+    // Extract transfer fee from bytes 2-3 (big-endian)
+    let transfer_fee = u16::from_be_bytes([nft_id[2], nft_id[3]]);
+    transfer_fee as i32
+}
+
 fn unpack_in_float(env: wasm_exec_env_t, in_buf: *const u8) -> Result<Number, HostError> {
     let bytes: [u8; 8] = unsafe {
         let inst = wasm_runtime_get_module_inst(env);

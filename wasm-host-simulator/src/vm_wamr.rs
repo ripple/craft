@@ -1,18 +1,19 @@
 use crate::data_provider::DataProvider;
 use crate::host_functions_wamr::{
-    account_keylet, amm_keylet, cache_ledger_obj, check_keylet, compute_sha512_half,
-    credential_keylet, delegate_keylet, deposit_preauth_keylet, did_keylet, escrow_keylet,
-    float_add, float_compare, float_divide, float_from_int, float_from_uint, float_log,
-    float_multiply, float_pow, float_root, float_set, float_subtract,
+    account_keylet, amendment_enabled, amm_keylet, cache_ledger_obj, check_keylet, check_sig,
+    compute_sha512_half, credential_keylet, delegate_keylet, deposit_preauth_keylet, did_keylet,
+    escrow_keylet, float_add, float_compare, float_divide, float_from_int, float_from_uint,
+    float_log, float_multiply, float_pow, float_root, float_set, float_subtract, get_base_fee,
     get_current_ledger_obj_array_len, get_current_ledger_obj_field,
     get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
-    get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
-    get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
-    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len,
-    get_tx_nested_field, line_keylet, mpt_issuance_keylet, mptoken_keylet, nft_offer_keylet,
-    offer_keylet, oracle_keylet, paychan_keylet, permissioned_domain_keylet, signers_keylet,
-    ticket_keylet, trace, trace_account, trace_amount, trace_num, trace_opaque_float, update_data,
-    vault_keylet,
+    get_ledger_account_hash, get_ledger_obj_array_len, get_ledger_obj_field,
+    get_ledger_obj_nested_array_len, get_ledger_obj_nested_field, get_ledger_sqn,
+    get_ledger_tx_hash, get_nft, get_nft_flags, get_nft_issuer, get_nft_serial, get_nft_taxon,
+    get_nft_transfer_fee, get_parent_ledger_hash, get_parent_ledger_time, get_tx_array_len,
+    get_tx_field, get_tx_nested_array_len, get_tx_nested_field, line_keylet, mpt_issuance_keylet,
+    mptoken_keylet, nft_offer_keylet, offer_keylet, oracle_keylet, paychan_keylet,
+    permissioned_domain_keylet, signers_keylet, ticket_keylet, trace, trace_account, trace_amount,
+    trace_num, trace_opaque_float, update_data, vault_keylet,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};
@@ -86,6 +87,16 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("trace_opaque_float", trace_opaque_float as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .register_host_function("trace_account", trace_account as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .register_host_function("trace_amount", trace_amount as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
+        .register_host_function("amendment_enabled", amendment_enabled as *mut c_void, "(*~)i", 500, data_provider.as_ptr())
+        .register_host_function("check_sig", check_sig as *mut c_void, "(*~*~*~)i", 2000, data_provider.as_ptr())
+        .register_host_function("get_base_fee", get_base_fee as *mut c_void, "()i", 60, data_provider.as_ptr())
+        .register_host_function("get_ledger_account_hash", get_ledger_account_hash as *mut c_void, "(*~)i", 60, data_provider.as_ptr())
+        .register_host_function("get_ledger_tx_hash", get_ledger_tx_hash as *mut c_void, "(*~)i", 60, data_provider.as_ptr())
+        .register_host_function("get_nft_flags", get_nft_flags as *mut c_void, "(*~)i", 350, data_provider.as_ptr())
+        .register_host_function("get_nft_issuer", get_nft_issuer as *mut c_void, "(*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("get_nft_serial", get_nft_serial as *mut c_void, "(*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("get_nft_taxon", get_nft_taxon as *mut c_void, "(*~*~)i", 350, data_provider.as_ptr())
+        .register_host_function("get_nft_transfer_fee", get_nft_transfer_fee as *mut c_void, "(*~)i", 350, data_provider.as_ptr())
         .build()?;
 
     debug!("Loading WASM module from file: {}", wasm_file);

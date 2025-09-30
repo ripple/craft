@@ -7,7 +7,6 @@ use xrpl_wasm_std::core::ledger_objects::current_escrow;
 use xrpl_wasm_std::core::ledger_objects::nft::get_nft;
 use xrpl_wasm_std::core::ledger_objects::traits::CurrentEscrowFields;
 use xrpl_wasm_std::core::locator::Locator;
-use xrpl_wasm_std::host::Error::InternalError;
 use xrpl_wasm_std::host::get_tx_nested_field;
 use xrpl_wasm_std::host::trace::trace_num;
 use xrpl_wasm_std::host::{Error, Result, Result::Err, Result::Ok};
@@ -15,11 +14,12 @@ use xrpl_wasm_std::sfield;
 use xrpl_wasm_std::types::{ContractData, XRPL_CONTRACT_DATA_SIZE, XRPL_NFTID_SIZE};
 
 #[unsafe(no_mangle)]
-pub fn get_first_memo() -> Result<Option<ContractData>> {
+pub fn get_first_memo() -> Result<Option<(ContractData, usize)>> {
     let mut data: ContractData = [0; XRPL_CONTRACT_DATA_SIZE];
     let mut locator = Locator::new();
     locator.pack(sfield::Memos);
     locator.pack(0);
+    locator.pack(sfield::Memo);
     locator.pack(sfield::MemoData);
     let result_code = unsafe {
         get_tx_nested_field(
@@ -32,16 +32,16 @@ pub fn get_first_memo() -> Result<Option<ContractData>> {
 
     match result_code {
         result_code if result_code > 0 => {
-            Ok(Some(data)) // <-- Move the buffer into an AccountID
+            Ok(Some((data, result_code as usize)))
         }
-        0 => Err(InternalError),
+        0 => Ok(None),
         result_code => Err(Error::from_code(result_code)),
     }
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let memo: ContractData = match get_first_memo() {
+    let (memo, memo_len): (ContractData, usize) = match get_first_memo() {
         Ok(v) => {
             match v {
                 Some(v) => v,
@@ -54,7 +54,13 @@ pub extern "C" fn finish() -> i32 {
         }
     };
 
-    let nft: [u8; XRPL_NFTID_SIZE] = memo[0..32].try_into().unwrap();
+    if memo_len < XRPL_NFTID_SIZE {
+        let _ = trace_num("Memo too short for NFT ID:", memo_len as i64);
+        return 0;
+    }
+
+    let mut nft: [u8; XRPL_NFTID_SIZE] = [0; XRPL_NFTID_SIZE];
+    nft.copy_from_slice(&memo[0..XRPL_NFTID_SIZE]);
 
     let current_escrow = current_escrow::get_current_escrow();
     let destination = match current_escrow.get_destination() {
@@ -68,7 +74,7 @@ pub extern "C" fn finish() -> i32 {
     match get_nft(&destination, &nft) {
         Ok(_) => 1, // <-- Finish the escrow to indicate a successful outcome
         Err(e) => {
-            let _ = trace_num("Error getting first memo:", e.code() as i64);
+            let _ = trace_num("Error getting NFT:", e.code() as i64);
             e.code() // <-- Do not execute the escrow.
         }
     }

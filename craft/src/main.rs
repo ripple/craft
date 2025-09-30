@@ -105,11 +105,7 @@ enum Commands {
         list: bool,
     },
     /// Check if rippled is running and start it if not
-    StartRippled {
-        /// Run rippled in foreground with visible console output (can be terminated with Ctrl+C)
-        #[arg(short, long)]
-        foreground: bool,
-    },
+    StartRippled,
     /// List running rippled processes and show how to terminate them
     ListRippled,
     /// Stop the rippled Docker container
@@ -538,9 +534,9 @@ async fn main() -> Result<()> {
                     )?;
                 }
             }
-            Commands::StartRippled { foreground } => {
+            Commands::StartRippled => {
                 let docker_manager = docker::DockerManager::new()?;
-                docker_manager.start_rippled(foreground).await?;
+                docker_manager.start_rippled().await?;
             }
             Commands::ListRippled => {
                 let docker_manager = docker::DockerManager::new()?;
@@ -593,12 +589,8 @@ async fn main() -> Result<()> {
                     commands::test(&wasm_path, None).await?;
                 }
                 "Start rippled" => {
-                    let foreground = Confirm::new("Run rippled in foreground with console output? (Can be terminated with Ctrl+C)")
-                      .with_default(true)
-                      .prompt()?;
-
                     let docker_manager = docker::DockerManager::new()?;
-                    docker_manager.start_rippled(foreground).await?;
+                    docker_manager.start_rippled().await?;
                 }
                 "List rippled processes" => {
                     let docker_manager = docker::DockerManager::new()?;

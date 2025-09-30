@@ -49,7 +49,7 @@ pub extern "C" fn finish() -> i32 {
             }
         }
         Err(e) => {
-            let _ = trace_num("Error getting first memo:", e.code() as i64);
+            trace_num("Error getting first memo:", e.code() as i64);
             return e.code(); // <-- Do not execute the escrow.
         }
     };
@@ -60,7 +60,7 @@ pub extern "C" fn finish() -> i32 {
     let destination = match current_escrow.get_destination() {
         Ok(destination) => destination,
         Err(e) => {
-            let _ = trace_num("Error getting current ledger destination:", e.code() as i64);
+            trace_num("Error getting current ledger destination:", e.code() as i64);
             return e.code(); // <-- Do not execute the escrow.
         }
     };
@@ -68,7 +68,7 @@ pub extern "C" fn finish() -> i32 {
     match get_nft(&destination, &nft) {
         Ok(_) => 1, // <-- Finish the escrow to indicate a successful outcome
         Err(e) => {
-            let _ = trace_num("Error getting first memo:", e.code() as i64);
+            trace_num("Error getting first memo:", e.code() as i64);
             e.code() // <-- Do not execute the escrow.
         }
     }

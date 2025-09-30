@@ -29,16 +29,16 @@ mod host_bindings_loose {
 fn check_result(result: i32, expected: i32, test_name: &'static str) {
     match result {
         code if code == expected => {
-            let _ = trace_number(test_name, code.into());
+            trace_number(test_name, code.into());
         }
         code if code >= 0 => {
-            let _ = trace(test_name);
-            let _ = trace_number("TEST FAILED", code.into());
+            trace(test_name);
+            trace_number("TEST FAILED", code.into());
             panic!("Unexpected success code: {}", code);
         }
         code => {
-            let _ = trace(test_name);
-            let _ = trace_number("TEST FAILED", code.into());
+            trace(test_name);
+            trace_number("TEST FAILED", code.into());
             panic!("Error code: {}", code);
         }
     }
@@ -54,7 +54,7 @@ where
 
 #[unsafe(no_mangle)]
 pub extern "C" fn finish() -> i32 {
-    let _ = trace("$$$$$ STARTING WASM EXECUTION $$$$$");
+    trace("$$$$$ STARTING WASM EXECUTION $$$$$");
 
     // ########################################
     // Step #1: Test all host function happy paths

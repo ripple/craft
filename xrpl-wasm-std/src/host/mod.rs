@@ -90,7 +90,7 @@ impl<T> Result<T> {
         match self {
             Result::Ok(t) => t,
             Result::Err(error) => {
-                let _ = trace::trace_num("error_code=", error.code() as i64);
+                trace::trace_num("error_code=", error.code() as i64);
                 panic!(
                     "called `Result::unwrap()` on an `Err` with code: {}",
                     error.code()
@@ -120,7 +120,7 @@ impl<T> Result<T> {
     #[inline]
     pub fn unwrap_or_panic(self) -> T {
         self.unwrap_or_else(|error| {
-            let _ = trace::trace_num("error_code=", error.code() as i64);
+            trace::trace_num("error_code=", error.code() as i64);
             core::panic!(
                 "Failed in {}: error_code={}",
                 core::panic::Location::caller(),
@@ -270,10 +270,91 @@ impl Error {
     pub fn code(self) -> i32 {
         self as _
     }
+
+    /// Returns a human-readable description of the error
+    #[inline(always)]
+    pub fn description(self) -> &'static str {
+        match self {
+            Error::InternalError => "Internal error",
+            Error::FieldNotFound => "Field not found",
+            Error::BufferTooSmall => "Buffer too small",
+            Error::NoArray => "Not an array",
+            Error::NotLeafField => "Not a leaf field",
+            Error::LocatorMalformed => "Locator malformed",
+            Error::SlotOutRange => "Slot out of range",
+            Error::SlotsFull => "Slots full",
+            Error::EmptySlot => "Empty slot",
+            Error::LedgerObjNotFound => "Ledger object not found",
+            Error::InvalidDecoding => "Invalid decoding",
+            Error::DataFieldTooLarge => "Data field too large",
+            Error::PointerOutOfBounds => "Pointer out of bounds",
+            Error::NoMemoryExported => "No memory exported",
+            Error::InvalidParams => "Invalid parameters",
+            Error::InvalidAccount => "Invalid account",
+            Error::InvalidField => "Invalid field",
+            Error::IndexOutOfBounds => "Index out of bounds",
+            Error::InvalidFloatInput => "Invalid float input",
+            Error::InvalidFloatComputation => "Invalid float computation",
+        }
+    }
 }
 
 impl From<Error> for i64 {
     fn from(val: Error) -> Self {
         val as i64
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_description_all_variants() {
+        // Test that all error variants have non-empty descriptions
+        let test_cases = [
+            (Error::InternalError, "Internal error"),
+            (Error::FieldNotFound, "Field not found"),
+            (Error::BufferTooSmall, "Buffer too small"),
+            (Error::NoArray, "Not an array"),
+            (Error::NotLeafField, "Not a leaf field"),
+            (Error::LocatorMalformed, "Locator malformed"),
+            (Error::SlotOutRange, "Slot out of range"),
+            (Error::SlotsFull, "Slots full"),
+            (Error::EmptySlot, "Empty slot"),
+            (Error::LedgerObjNotFound, "Ledger object not found"),
+            (Error::InvalidDecoding, "Invalid decoding"),
+            (Error::DataFieldTooLarge, "Data field too large"),
+            (Error::PointerOutOfBounds, "Pointer out of bounds"),
+            (Error::NoMemoryExported, "No memory exported"),
+            (Error::InvalidParams, "Invalid parameters"),
+            (Error::InvalidAccount, "Invalid account"),
+            (Error::InvalidField, "Invalid field"),
+            (Error::IndexOutOfBounds, "Index out of bounds"),
+            (Error::InvalidFloatInput, "Invalid float input"),
+            (Error::InvalidFloatComputation, "Invalid float computation"),
+        ];
+
+        for (error, expected_desc) in test_cases {
+            assert_eq!(error.description(), expected_desc);
+            assert!(!error.description().is_empty());
+        }
+    }
+
+    #[test]
+    fn test_error_description_from_code() {
+        // Test that Error::from_code produces errors with correct descriptions
+        let test_cases = [
+            (error_codes::INTERNAL_ERROR, "Internal error"),
+            (error_codes::FIELD_NOT_FOUND, "Field not found"),
+            (error_codes::BUFFER_TOO_SMALL, "Buffer too small"),
+            (error_codes::INVALID_PARAMS, "Invalid parameters"),
+        ];
+
+        for (code, expected_desc) in test_cases {
+            let error = Error::from_code(code);
+            assert_eq!(error.description(), expected_desc);
+            assert_eq!(error.code(), code);
+        }
     }
 }

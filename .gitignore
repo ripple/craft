@@ -25,3 +25,6 @@ target/
 
 reference/build-rippled-*/
 /.idea
+
+/projects/gambit
+/projects/gambit-oracle

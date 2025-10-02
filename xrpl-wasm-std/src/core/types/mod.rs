@@ -9,3 +9,6 @@ pub mod keylets;
 pub mod public_key;
 pub mod transaction_type;
 pub mod uint_128;
+pub mod uint_160;
+pub mod uint_192;
+pub mod number;

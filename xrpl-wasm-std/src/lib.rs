@@ -4,6 +4,7 @@
 pub mod core;
 pub mod host;
 pub mod sfield;
+pub mod sflags;
 pub mod types;
 
 /// Additional guides and how-tos

@@ -21,18 +21,6 @@ pub unsafe fn get_parent_ledger_hash(_out_buff_ptr: *mut u8, _out_buff_len: usiz
 
 #[allow(unused)]
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_ledger_account_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
-pub unsafe fn get_ledger_tx_hash(_out_buff_ptr: *mut u8, _out_buff_len: usize) -> i32 {
-    -1
-}
-
-#[allow(unused)]
-#[allow(clippy::missing_safety_doc)]
 pub unsafe fn get_base_fee() -> i32 {
     -1
 }

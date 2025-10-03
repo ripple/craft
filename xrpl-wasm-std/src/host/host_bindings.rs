@@ -65,46 +65,6 @@ unsafe extern "C" {
     ///   `../core/error_codes.rs`
     pub fn get_parent_ledger_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
 
-    /// Retrieves the account hash of the current ledger.
-    ///
-    /// This function fetches the account hash of the current ledger and stores it in the buffer
-    /// provided. The hash is expected to be written to the memory location pointed by
-    /// `out_buff_ptr`, and its length should not exceed the `out_buff_len`.
-    ///
-    /// # Parameters
-    /// - `out_buff_ptr`: A mutable pointer to a buffer where the account hash will be written.
-    ///   The buffer must be allocated and managed by the caller.
-    /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///   buffer and ensures that the function does not write beyond the allowed
-    ///   length.
-    ///
-    /// # Returns
-    ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success
-    /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
-    pub fn get_ledger_account_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-
-    /// Retrieves the transaction hash of the current ledger.
-    ///
-    /// This function fetches the transaction hash of the current ledger and stores it in the buffer
-    /// provided. The hash is expected to be written to the memory location pointed by
-    /// `out_buff_ptr`, and its length should not exceed the `out_buff_len`.
-    ///
-    /// # Parameters
-    /// - `out_buff_ptr`: A mutable pointer to a buffer where the transaction hash will be written.
-    ///   The buffer must be allocated and managed by the caller.
-    /// - `out_buff_len`: The maximum length of the buffer in bytes. This indicates the size of the
-    ///   buffer and ensures that the function does not write beyond the allowed
-    ///   length.
-    ///
-    /// # Returns
-    ///
-    /// - Returns a positive number of bytes wrote to an output buffer on success
-    /// - Returns a negative error code on failure. The list of error codes is defined in
-    ///   ../core/error_codes.rs
-    pub fn get_ledger_tx_hash(out_buff_ptr: *mut u8, out_buff_len: usize) -> i32;
-
     /// Retrieves the current transaction base fee.
     ///
     /// # Returns

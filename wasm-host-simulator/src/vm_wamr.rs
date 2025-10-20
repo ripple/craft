@@ -1,19 +1,18 @@
 use crate::data_provider::DataProvider;
 use crate::host_functions_wamr::{
-    account_keylet, amm_keylet, cache_ledger_obj, check_keylet, compute_sha512_half,
-    credential_keylet, delegate_keylet, deposit_preauth_keylet, did_keylet, escrow_keylet,
-    float_add, float_compare, float_divide, float_from_int, float_from_uint, float_log,
-    float_multiply, float_pow, float_root, float_set, float_subtract,
-    get_current_ledger_obj_array_len, get_current_ledger_obj_field,
-    get_current_ledger_obj_nested_array_len, get_current_ledger_obj_nested_field,
-    get_ledger_obj_array_len, get_ledger_obj_field, get_ledger_obj_nested_array_len,
-    get_ledger_obj_nested_field, get_ledger_sqn, get_nft, get_parent_ledger_hash,
-    get_parent_ledger_time, get_tx_array_len, get_tx_field, get_tx_nested_array_len,
-    get_tx_nested_field, line_keylet, mpt_issuance_keylet, mptoken_keylet, nft_offer_keylet,
-    offer_keylet, oracle_keylet, paychan_keylet, permissioned_domain_keylet, signers_keylet,
-    ticket_keylet, trace, trace_account, trace_amount, trace_num, trace_opaque_float, update_data,
-    vault_keylet, 
-    bn254_add_helper, bn254_mul_helper, bn254_neg_helper, bn254_pairing_helper,
+    account_keylet, amm_keylet, bn254_add_helper, bn254_mul_helper, bn254_neg_helper,
+    bn254_pairing_helper, cache_ledger_obj, check_keylet, compute_sha512_half, credential_keylet,
+    delegate_keylet, deposit_preauth_keylet, did_keylet, escrow_keylet, float_add, float_compare,
+    float_divide, float_from_int, float_from_uint, float_log, float_multiply, float_pow,
+    float_root, float_set, float_subtract, get_current_ledger_obj_array_len,
+    get_current_ledger_obj_field, get_current_ledger_obj_nested_array_len,
+    get_current_ledger_obj_nested_field, get_ledger_obj_array_len, get_ledger_obj_field,
+    get_ledger_obj_nested_array_len, get_ledger_obj_nested_field, get_ledger_sqn, get_nft,
+    get_parent_ledger_hash, get_parent_ledger_time, get_tx_array_len, get_tx_field,
+    get_tx_nested_array_len, get_tx_nested_field, line_keylet, mpt_issuance_keylet, mptoken_keylet,
+    nft_offer_keylet, offer_keylet, oracle_keylet, paychan_keylet, permissioned_domain_keylet,
+    signers_keylet, ticket_keylet, trace, trace_account, trace_amount, trace_num,
+    trace_opaque_float, update_data, vault_keylet,
 };
 use crate::mock_data::MockData;
 use log::{debug, info, warn};
@@ -28,7 +27,7 @@ use wamr_rust_sdk::value::WasmValue;
 
 #[rustfmt::skip]
 #[allow(unused)]
-pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_source: MockData) -> Result<bool, RuntimeError>{
+pub fn run_func(wasm_file: String, func_name: Option<&str>, gas_cap: Option<u32>, data_source: MockData) -> Result<bool, RuntimeError>{
     debug!("Setting up wamr runtime and registering host functions");
     let mut data_provider = DataProvider::new(data_source);
     let runtime = Runtime::builder()
@@ -99,8 +98,9 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
     // rippled currently allows 128kb for each VM instance, so we use the same here in Craft.
     let instance = Instance::new(&runtime, &module, 1024 * 128)?;
 
+    let func_name = func_name.unwrap_or("finish");
     debug!("Executing WASM function: {}", func_name);
-    let func = Function::find_export_func(&instance, "finish")?;
+    let func = Function::find_export_func(&instance, func_name)?;
     let gas_begin = gas_cap.map_or(0, |x|x);
     let results = func.call(&instance, &vec![], gas_cap)?;
     match results {

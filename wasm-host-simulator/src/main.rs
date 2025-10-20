@@ -1,14 +1,5 @@
 extern crate core;
 
-mod data_provider;
-mod decoding;
-mod hashing;
-mod host_functions_wamr;
-mod mock_data;
-mod sfield;
-mod vm_wamr;
-
-use crate::mock_data::MockData;
 use clap::Parser;
 use env_logger::Builder;
 use log::LevelFilter;
@@ -16,6 +7,7 @@ use log::{debug, error, info};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+use wasm_host_simulator::mock_data::MockData;
 
 /// Wasm WASM testing utility
 #[derive(Parser, Debug)]
@@ -107,7 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let wasm_file = base_path
-        .join("target/wasm32v1-none/debug")
+        .join("target/wasm32v1-none/release")
         .join(format!("{}.wasm", args.project))
         .to_string_lossy()
         .to_string();
@@ -156,7 +148,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let data_source = MockData::new(&tx_json, &lo_json, &lh_json, &l_json, &nft_json);
     info!("Executing function: {}", args.function);
     // TODO: Make Gas Cap optional via https://github.com/ripple/craft/issues/141
-    match vm_wamr::run_func(wasm_file, &args.function, Some(args.gas_cap), data_source) {
+    match wasm_host_simulator::vm_wamr::run_func(
+        wasm_file,
+        Some(&args.function),
+        Some(args.gas_cap),
+        data_source,
+    ) {
         Ok(result) => {
             if (result && args.test_case == "success") || (!result && args.test_case == "failure") {
                 println!("-------------------------------------------------");

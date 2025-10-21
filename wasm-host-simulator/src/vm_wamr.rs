@@ -18,6 +18,7 @@ use crate::mock_data::MockData;
 use log::{debug, info, warn};
 use std::ffi::c_void;
 use std::path::PathBuf;
+use std::time::Instant;
 use wamr_rust_sdk::RuntimeError;
 use wamr_rust_sdk::function::Function;
 use wamr_rust_sdk::instance::Instance;
@@ -28,8 +29,17 @@ use wamr_rust_sdk::value::WasmValue;
 #[rustfmt::skip]
 #[allow(unused)]
 pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_source: MockData) -> Result<bool, RuntimeError>{
-    debug!("Setting up wamr runtime and registering host functions");
+    // debug!("Setting up wamr runtime and registering host functions");
+
+    let wasm_code = "0061736d010000000105016000017f03020100070a010666696e69736800000a0601040041010b";
+    let wasm_binary = hex::decode(wasm_code).expect("Invalid hex string");
+    let start_all = Instant::now();
+
+    let start = Instant::now();
     let mut data_provider = DataProvider::new(data_source);
+    let duration_data_provider = start.elapsed();
+
+    let start = Instant::now();
     let runtime = Runtime::builder()
         .use_system_allocator()
         .register_host_function("get_ledger_sqn", get_ledger_sqn as *mut c_void, "()i", 60, data_provider.as_ptr())
@@ -87,32 +97,58 @@ pub fn run_func(wasm_file: String, func_name: &str, gas_cap: Option<u32>, data_s
         .register_host_function("trace_account", trace_account as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .register_host_function("trace_amount", trace_amount as *mut c_void, "(*~*~)i", 500, data_provider.as_ptr())
         .build()?;
+    let duration_engine = start.elapsed();
 
-    debug!("Loading WASM module from file: {}", wasm_file);
-    let wasm_path = PathBuf::from(wasm_file);
-    let module = Module::from_file(&runtime, wasm_path.as_path())?;
+    // debug!("Loading WASM module from file: {}", wasm_file);
+    // let wasm_path = PathBuf::from(wasm_file);
+    // let module = Module::from_file(&runtime, wasm_path.as_path())?;
     // rippled currently allows 128kb for each VM instance, so we use the same here in Craft.
-    let instance = Instance::new(&runtime, &module, 1024 * 128)?;
 
-    debug!("Executing WASM function: {}", func_name);
+    let start = Instant::now();
+    let module = Module::from_vec(&runtime, wasm_binary, "return_1").unwrap();
+    let duration_module = start.elapsed();
+
+    let start = Instant::now();
+    let instance = Instance::new(&runtime, &module, 1024 * 128)?;
+    let duration_instance = start.elapsed();
+
+    let start = Instant::now();
+    // debug!("Executing WASM function: {}", func_name);
     let func = Function::find_export_func(&instance, "finish")?;
-    let gas_begin = gas_cap.map_or(0, |x|x);
-    let results = func.call(&instance, &vec![], gas_cap)?;
+    let duration_func = start.elapsed();
+
+    let start = Instant::now();
+    let results = func.call(&instance, &vec![], Some(2_000_000_000))?;
+
+    let duration_call = start.elapsed();
+
+    println!(" " );
+    println!(" " );
+    println!("data provider   : {:?}", duration_data_provider );
+    println!("create engine   : {:?}", duration_engine );
+    println!("load module     : {:?}", duration_module);
+    println!("create instance : {:?}", duration_instance);
+    println!("get function    : {:?}", duration_func);
+    println!("call function   : {:?}", duration_call);
+    println!("all with timer  : {:?}", start_all.elapsed());
+    println!(" " );
+    println!(" " );
+
     match results {
         (rv, gas_end) if rv.len() == 1 => {
             if let WasmValue::I32(r1) = rv[0] {
                 info!("run_func result: {}", r1);
-                if gas_begin > 0 {
-                    info!("run_func gas cost: {}", gas_begin - gas_end);
+                if 2_000_000_000 > 0 {
+                    info!("run_func gas cost: {}", 2_000_000_000 - gas_end);
                 }
                 Ok(r1 == 1)
             } else {
-                warn!("Unexpected run_func result vec: {:?}", rv[0]);
+                // warn!("Unexpected run_func result vec: {:?}", rv[0]);
                 Ok(false)
             }
         }
         _ => {
-            warn!("run_func error: {:?}", results);
+            // warn!("run_func error: {:?}", results);
             Ok(false)
         }
     }

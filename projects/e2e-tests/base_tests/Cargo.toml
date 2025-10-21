@@ -21,4 +21,4 @@ debug = false           # Disable debug info generation
 overflow-checks = false # Disable overflow checks (use cautiously)
 
 [dependencies]
-xrpl-std = { path = "../../../xrpl-std" }
+xrpl-wasm-std = { path = "../../../xrpl-wasm-std" }

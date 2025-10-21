@@ -401,6 +401,7 @@ pub extern "C" fn object_with_arrays_update() -> i32 {
 // TEST 4: Object with Nested Arrays - Objects containing arrays of objects
 // Creates: { "nested_array": [{"field1": 55, "field2": 66}, {"field1": 77}] }
 // This is the most complex structure allowed (depth 1)
+// DA: I wouldnt use this. If you are doing this, consider redesigning your data model
 // ============================================================================
 
 #[unsafe(no_mangle)]

@@ -12,3 +12,4 @@ pub mod uint_128;
 pub mod uint_192;
 pub mod issue;
 pub mod mpt_id;
+pub mod asset;

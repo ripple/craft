@@ -42,6 +42,15 @@ use crate::core::current_tx::{
     get_account_id_field, get_amount_field, get_blob_field, get_hash_256_field,
     get_hash_256_field_optional, get_public_key_field, get_u32_field, get_u32_field_optional,
 };
+// use crate::core::error_codes::{
+//     match_result_code_optional, match_result_code_with_expected_bytes,
+//     match_result_code_with_expected_bytes_optional,
+// };
+// use crate::core::field_codes::{
+//     SF_ACCOUNT, SF_ACCOUNT_TXN_ID, SF_CONDITION, SF_FEE, SF_FLAGS, SF_FULFILLMENT, SF_HASH,
+//     SF_LAST_LEDGER_SEQUENCE, SF_NETWORK_ID, SF_OFFER_SEQUENCE, SF_OWNER, SF_SEQUENCE,
+//     SF_SIGNING_PUB_KEY, SF_SOURCE_TAG, SF_TICKET_SEQUENCE, SF_TRANSACTION_TYPE, SF_TXN_SIGNATURE, SF_CONTRACT_ACCOUNT,
+// };
 use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::blob::Blob;
@@ -293,6 +302,20 @@ pub trait TransactionCommonFields {
     /// analysis purposes, but signature validation has already been performed.
     fn get_txn_signature(&self) -> Result<Blob> {
         get_blob_field(sfield::TxnSignature)
+    }
+}
+
+pub trait ContractCallFields: TransactionCommonFields {
+    fn get_contract_account(&self) -> Result<AccountID> {
+        get_account_id_field(sfield::ContractAccount)
+    }
+
+    fn get_id(&self) -> Result<Hash256> {
+        get_hash_256_field(sfield::hash)
+    }
+
+    fn get_owner(&self) -> Result<AccountID> {
+        get_account_id_field(sfield::Owner)
     }
 }
 

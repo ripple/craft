@@ -3472,6 +3472,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "xrpl-wasm-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "xrpl-wasm-std"
 version = "0.5.1-devnet5"
 

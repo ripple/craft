@@ -3,6 +3,7 @@ use crate::core::types::account_id::AccountID;
 use crate::core::types::amount::token_amount::TokenAmount;
 use crate::core::types::keylets::account_keylet;
 use crate::host;
+use crate::sfield;
 use host::Error;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -36,4 +37,35 @@ pub fn get_account_balance(account_id: &AccountID) -> host::Result<Option<TokenA
     // We use the trait-bound implementation so as not to duplicate accessor logic.
     let account = AccountRoot { slot_num: slot };
     account.balance()
+}
+
+pub fn get_account_sequence(account_id: &AccountID) -> host::Result<u32> {
+    // Construct the account keylet. This calls a host function, so propagate the error via `?`
+    let account_keylet = match account_keylet(account_id) {
+        host::Result::Ok(keylet) => keylet,
+        host::Result::Err(e) => return host::Result::Err(e),
+    };
+
+    // Try to cache the ledger object inside rippled
+    let slot = unsafe { host::cache_ledger_obj(account_keylet.as_ptr(), account_keylet.len(), 0) };
+    if slot <= 0 {
+        return host::Result::Err(Error::SlotsFull);
+    }
+
+    // Get the sequence.
+    let mut sequence = 0u32;
+    let result_code = unsafe {
+        host::get_ledger_obj_field(
+            slot,
+            sfield::Sequence,
+            (&mut sequence) as *mut u32 as *mut u8,
+            4,
+        )
+    };
+
+    match result_code {
+        4 => host::Result::Ok(sequence), // <-- 4 bytes were written
+        code if code < 0 => host::Result::Err(Error::from_code(code)),
+        _ => host::Result::Err(Error::InternalError), // <-- Used for an unexpected result.
+    }
 }

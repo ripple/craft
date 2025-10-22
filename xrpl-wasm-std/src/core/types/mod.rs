@@ -13,3 +13,4 @@ pub mod uint_192;
 pub mod issue;
 pub mod mpt_id;
 pub mod asset;
+pub mod amountv2;

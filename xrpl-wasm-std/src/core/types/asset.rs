@@ -1,6 +1,6 @@
 
 use crate::core::types::account_id::AccountID;
-use crate::core::types::amount::currency_code::CurrencyCode;
+use crate::core::types::amountv1::currency_code::CurrencyCode;
 use crate::core::types::issue::{Issue, MPTIssue, is_xrp_currency, xrp_issue};
 use crate::core::types::mpt_id::MptId;
 

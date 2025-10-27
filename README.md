@@ -1,3 +1,5 @@
+NOTE: Craft is no longer maintained. Please see https://github.com/ripple/xrpl-wasm-std instead.
+
 # `craft`
 
 An interactive CLI tool for building and testing [XLS-102 WASM](https://github.com/XRPLF/XRPL-Standards/discussions/303) modules for the XRP Ledger.
